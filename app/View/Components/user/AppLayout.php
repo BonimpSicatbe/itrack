@@ -1,17 +1,13 @@
 <?php
 
-namespace App\View\Components\admin;
+namespace App\View\Components\user;
 
 use Closure;
 use Illuminate\Contracts\View\View;
 use Illuminate\View\Component;
 
-class NavigationController extends Component
+class AppLayout extends Component
 {
-    public $navLink = [
-        ['label' => 'Dashboard', 'icon' => 'th', 'route' => 'admin.dashboard']
-    ];
-
     /**
      * Create a new component instance.
      */
@@ -25,8 +21,6 @@ class NavigationController extends Component
      */
     public function render(): View|Closure|string
     {
-        return view('components.admin.navigation-controller', [
-            'navLink' => $this->navLink
-        ]);
+        return view('layouts.user.app');
     }
 }

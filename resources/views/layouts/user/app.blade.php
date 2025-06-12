@@ -19,12 +19,14 @@
         @livewireStyles
     </head>
 
-    <body wire:poll.500ms class="font-sans antialiased min-h-screen bg-gray-100 max-w-screen">
-        <div class="space-y-6 p-6 container mx-auto">
-            <x-admin.navigation />
+    <body wire:poll.500ms class="flex font-sans antialiased w-screen h-screen bg-gray-100">
+        <div class="flex flex-row gap-4 space-y-6 p-6 w-full h-full">
+            <x-user.navigation />
 
             <!-- Page Content -->
-            {{ $slot }}
+            <div class="w-full h-full overflow-auto">
+                {{ $slot }}
+            </div>
         </div>
 
         <x-session-alert-messages />

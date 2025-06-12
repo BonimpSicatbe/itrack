@@ -8,15 +8,29 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::middleware(['auth', 'role:user'])->group(function () {
-    Route::get('/super-admin/test', function () {
-        return view('super-admin.test');
-    })->name('super-admin.test');
+Route::middleware(['auth', 'role:user'])
+    ->prefix('user')
+    ->group(function () {
+        Route::get('/dashboard', function () {
+            return view('user.dashboard');
+        })->name('user.dashboard');
 
-    Route::get('/super-admin/dashboard', function () {
-        return view('super-admin.dashboard');
-    })->name('super-admin.dashboard');
-});
+        Route::get('/file-manager', function () {
+            return view('user.file-manager');
+        })->name('user.file-manager');
+
+        Route::get('/pending-task', function () {
+            return view('user.pending-task');
+        })->name('user.pending-task');
+
+        Route::get('/recents', function () {
+            return view('user.recents');
+        })->name('user.recents');
+
+        Route::get('/archive', function () {
+            return view('user.archive');
+        })->name('user.archive');
+    });
 
 // admin and super-admin routes
 Route::middleware(['auth', 'role:admin|super-admin'])->group(function () {
@@ -29,9 +43,9 @@ Route::middleware(['auth', 'role:admin|super-admin'])->group(function () {
     })->name('admin.dashboard');
 });
 
-Route::get('/dashboard', function () {
-    return view('dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+//Route::get('/dashboard', function () {
+//    return view('dashboard');
+//})->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -39,4 +53,4 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';

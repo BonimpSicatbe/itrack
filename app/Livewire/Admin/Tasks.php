@@ -29,6 +29,9 @@ class Tasks extends Component
     #[Validate('nullable|exists:departments,id')]
     public $targetDepartment;
 
+    #[Validate('required|file|max:15240|mimes:pdf,doc,docx,ppt,pptx,xls,xlsx,jpg,jpeg,png,gif,bmp,svg,mp4,avi,mov,wmv,mkv,webm')] // max: 10MB, allowed: pdf, word, ppt, excel, image, video
+    public $uploadedFile;
+
     public function updated($property)
     {
         // Ensure at least one of targetCollege or targetDepartment is filled
@@ -41,9 +44,6 @@ class Tasks extends Component
             $this->resetErrorBag('target');
         }
     }
-
-    #[Validate('nullable|file|max:15240|mimes:pdf,doc,docx,ppt,pptx,xls,xlsx,jpg,jpeg,png,gif,bmp,svg,mp4,avi,mov,wmv,mkv,webm')] // max: 10MB, allowed: pdf, word, ppt, excel, image, video
-    public $uploadedFile;
 
     public function create()
     {
