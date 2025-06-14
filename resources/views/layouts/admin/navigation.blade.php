@@ -15,7 +15,7 @@
                     </button>
                 </form>
             @else
-                <a href="{{ route($navlink['route']) }}" class="btn btn-sm btn-ghost capitalize">
+                <a wire:navigate href="{{ route($navlink['route']) }}" class="btn btn-sm btn-ghost capitalize">
                     <i class="fa-solid fa-{{ $navlink['icon'] }}"></i>
                     {{ $navlink['label'] }}
                 </a>

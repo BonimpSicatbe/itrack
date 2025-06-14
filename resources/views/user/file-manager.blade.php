@@ -26,64 +26,29 @@
                 {{-- buttons --}}
                 <input type="text" name="search" id="search" class="input input-bordered input-sm w-128"
                     placeholder="Search files..." />
-                <label for="uploadFile" class="btn btn-sm btn-default"><i class="fa-solid fa-file-import"></i></label>
-                <label for="createFolder" class="btn btn-sm btn-default"><i class="fa-solid fa-folder-plus"></i></label>
             </div>
+
             {{-- content | body --}}
-            <div
-                class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-4 overflow-x-auto w-full">
-                @for ($i = 0; $i < 15; $i++)
-                    <a href=""
-                        class="text-center border rounded-lg p-4 w-full max-w-[300px] hover:bg-gray-200 transition-all">
-                        <i class="fa-solid fa-file-lines text-3xl"></i>
-                        <div class="w-full text-sm font-bold truncate">Lorem ipsum dolor sit.</div>
-                        {{-- <div class="w-full text-sm text-gray-500 truncate">description</div>
-                        <div class="w-full text-xs text-gray-500 truncate">created_at</div> --}}
-                    </a>
-                @endfor
-            </div>
+            @isset($files)
+                <div
+                    class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-4 overflow-x-auto w-full">
+                    @foreach ($files as $file)
+                        <div class="flex items-center justify-center w-full h-full">
+                            <i class="fa-solid fa-files text-3xl"></i>
+                            <div class="text-md font-bold">Lorem, ipsum dolor.</div>
+                        </div>
+                    @endforeach
+                </div>
+            @else
+                <div class="flex flex-col gap-4 text-gray-500 items-center justify-center w-full h-full">
+                    <div class="flex flex-row gap-4">
+                        <i class="fa-solid fa-folder-open text-3xl"></i>
+                        <div class="divider divider-horizontal"></div>
+                        <i class="fa-solid fa-file text-3xl"></i>
+                    </div>
+                    <div class="text-xl font-bold">No files found.</div>
+                </div>
+            @endisset
         </div>
-    </div>
-
-    {{-- Upload File --}}
-    <input type="checkbox" id="uploadFile" class="modal-toggle" />
-    <div class="modal" role="dialog">
-        <div class="modal-box">
-            <h3 class="text-lg font-bold">Upload File</h3>
-            <form action="" method="POST">
-                @csrf
-                <div class="form-control w-full">
-                    <label class="label"><span class="label-text">Folder Name</span></label>
-                    <input type="text" name="folder_name" class="input input-bordered" required>
-                </div>
-                <input type="hidden" name="parent_id" value="{{ request('folder') ?? null }}" />
-                <div class="modal-action">
-                    <label for="createFolder" class="btn btn-sm">Cancel</label>
-                    <button type="submit" class="btn btn-sm btn-primary">Create</button>
-                </div>
-            </form>
-        </div>
-        <label class="modal-backdrop" for="uploadFile"></label>
-    </div>
-
-    {{-- Create Folder --}}
-    <input type="checkbox" id="createFolder" class="modal-toggle" />
-    <div class="modal" role="dialog">
-        <div class="modal-box">
-            <h3 class="text-lg font-bold">Create Folder</h3>
-            <form action="" method="POST" enctype="multipart/form-data">
-                @csrf
-                <div class="form-control w-full">
-                    <label class="label"><span class="label-text">Select File</span></label>
-                    <input type="file" name="file" class="file-input file-input-bordered w-full" required>
-                </div>
-                <input type="hidden" name="parent_id" value="{{ request('folder') ?? null }}" />
-                <div class="modal-action">
-                    <label for="uploadFile" class="btn btn-sm">Cancel</label>
-                    <button type="submit" class="btn btn-sm btn-primary">Upload</button>
-                </div>
-            </form>
-        </div>
-        <label class="modal-backdrop" for="createFolder"></label>
     </div>
 </x-user.app-layout>

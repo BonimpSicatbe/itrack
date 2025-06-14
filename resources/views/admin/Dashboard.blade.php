@@ -1,9 +1,7 @@
 <x-admin.app-layout>
     {{-- overview --}}
-    @livewire('admin.overview')
+    @livewire('admin.dashboard.overview')
 
-    {{-- accordion --}}
-    <div class="flex flex-col gap-4">
-        @livewire('admin.tasks')
-    </div>
+    {{-- requirements --}}
+    @livewire('admin.dashboard.requirement')
 </x-admin.app-layout>

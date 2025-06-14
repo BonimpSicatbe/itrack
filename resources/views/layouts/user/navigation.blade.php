@@ -18,7 +18,7 @@
             </form>
         @else
             <li>
-                <a href="{{ route($navlink['route']) }}"
+                <a wire:navigate href="{{ route($navlink['route']) }}"
                     class="{{ Route::currentRouteName() === $navlink['route'] ? 'menu-active' : '' }}">
                     <i class="fa-solid fa-{{ $navlink['icon'] }} min-w-[20px] text-center"></i>
                     {{ $navlink['label'] }}

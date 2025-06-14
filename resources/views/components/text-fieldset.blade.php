@@ -1,0 +1,26 @@
+{{--
+    label
+    type
+    name
+--}}
+
+<fieldset class="fieldset w-full">
+    <legend class="fieldset-legend w-full capitalize">{{ $label }}</legend>
+
+    <input
+        type="{{ $type }}"
+        wire:model="{{ $name }}"
+        id="{{ $name }}"
+        class="input w-full lowercase"
+        placeholder="Enter {{ $label }}"
+        value="{{ old($name) }}"
+        @if($type === 'date') min="{{ \Carbon\Carbon::today()->format('Y-m-d') }}" @endif
+        required
+        autofocus
+        autocomplete="{{ $name }}"
+    />
+
+    @error($name)
+        <p class="label w-full truncate">{{ $message }}</p>
+    @enderror
+</fieldset>

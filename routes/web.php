@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\admin\RequirementController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -33,15 +34,17 @@ Route::middleware(['auth', 'role:user'])
     });
 
 // admin and super-admin routes
-Route::middleware(['auth', 'role:admin|super-admin'])->group(function () {
-    Route::get('/admin/test', function () {
-        return view('admin.test');
-    })->name('admin.test');
+Route::middleware(['auth', 'role:admin|super-admin'])
+    ->prefix('/admin')
+    ->as('admin.')
+    ->group(function () {
+        Route::get('/dashboard', function () {
+            return view('admin.dashboard');
+        })->name('dashboard');
 
-    Route::get('/admin/dashboard', function () {
-        return view('admin.dashboard');
-    })->name('admin.dashboard');
-});
+        // ========== ========== REQUIREMENT ROUTES ========== ==========
+        Route::resource('requirements', RequirementController::class);
+    });
 
 //Route::get('/dashboard', function () {
 //    return view('dashboard');

@@ -14,43 +14,43 @@ class Overview extends Component
         $this->stats = [
             [
                 'title' => 'Images',
-                'count' => File::whereIn('type', ['image', 'jpg', 'jpeg', 'png', 'gif', 'bmp', 'svg', 'webp'])->count(),
-                'desc' => File::whereIn('type', ['image', 'jpg', 'jpeg', 'png', 'gif', 'bmp', 'svg', 'webp'])->sum('size'),
+                'count' => '',
+                'desc' => '',
                 'icon' => 'fa-file-image',
                 'color' => 'success',
             ],
             [
                 'title' => 'Videos',
-                'count' => File::whereIn('type', ['video', 'mp4', 'avi', 'mov', 'wmv', 'flv', 'mkv', 'webm'])->count(),
-                'desc' => File::whereIn('type', ['video', 'mp4', 'avi', 'mov', 'wmv', 'flv', 'mkv', 'webm'])->sum('size'),
+                'count' => '',
+                'desc' => '',
                 'icon' => 'fa-file-video',
                 'color' => 'warning',
             ],
             [
                 'title' => 'PowerPoint Files',
-                'count' => File::whereIn('type', ['ppt', 'pptx', 'powerpoint'])->count(),
-                'desc' => File::whereIn('type', ['ppt', 'pptx', 'powerpoint'])->sum('size'),
+                'count' => '',
+                'desc' => '',
                 'icon' => 'fa-file-powerpoint',
                 'color' => 'accent',
             ],
             [
                 'title' => 'Excel Files',
-                'count' => File::whereIn('type', ['excel', 'xls', 'xlsx'])->count(),
-                'desc' => File::whereIn('type', ['excel', 'xls', 'xlsx'])->sum('size'),
+                'count' => '',
+                'desc' => '',
                 'icon' => 'fa-file-excel',
                 'color' => 'secondary',
             ],
             [
                 'title' => 'Word Files',
-                'count' => File::whereIn('type', ['docs', 'doc', 'docx', 'word'])->count(),
-                'desc' => File::whereIn('type', ['docs', 'doc', 'docx', 'word'])->sum('size'),
+                'count' => '',
+                'desc' => '',
                 'icon' => 'fa-file-word',
                 'color' => 'primary',
             ],
             [
                 'title' => 'PDF Files',
-                'count' => File::where('type', 'pdf')->orWhere('type', 'PDF')->count(),
-                'desc' => File::where('type', 'pdf')->orWhere('type', 'PDF')->sum('size'),
+                'count' => '',
+                'desc' => '',
                 'icon' => 'fa-file-pdf',
                 'color' => 'info',
             ],
@@ -60,7 +60,7 @@ class Overview extends Component
     public function render()
     {
         return view('livewire.user.dashboard.overview', [
-            'totalFiles' => File::sum('size'),
+            'totalFiles' => '',
         ]);
     }
 }
