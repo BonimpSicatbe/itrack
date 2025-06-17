@@ -10,7 +10,7 @@
     </div>
     {{-- content --}}
     <div class="overflow-x-auto">
-        <table class="table table-zebra w-full">
+        <table class="table table-zebra w-full text-center">
             <thead>
                 <tr>
                     <th>Name</th>
@@ -21,10 +21,10 @@
                 </tr>
             </thead>
             <tbody>
-                @isset($requirements)
+                @if ($requirements->isNotEmpty())
                     @foreach ($requirements as $requirement)
                         <tr class="items-center cursor-pointer hover:bg-gray-100 transition-colors">
-                            <td>
+                            <td class="text-start">
                                 <i class="fa-solid fa-file min-w-[20px] text-center"></i>
                                 <span class="font-semibold">{{ $requirement->name }}</span>
                             </td>
@@ -36,20 +36,15 @@
                             <td>{{ $requirement->created_by }}</td>
                             <td>{{ $requirement->created_at }}</td>
                             <td>
-                                <x-dropdown label="action">
-                                    <li><a href="{{ route('admin.requirements.show', ['requirement' => $requirement]) }}"
-                                            class="uppercase hover:bg-green-700 text-green-700 hover:text-white transition-all"><i
-                                                class="fa-solid fa-eye min-w-[20px] text-center"></i>view</a></li>
-                                    {{-- <li><a href="{{route('admin.requirement.edit')}}" class="uppercase hover:bg-blue-700 text-blue-700 hover:text-white transition-all"><i class="fa-solid fa-eye min-w-[20px] text-center"></i>edit</a></li> --}}
-                                    {{-- <li><a href="{{route('admin.requirement.delete')}}" class="uppercase hover:bg-red-700 text-red-700 hover:text-white transition-all"><i class="fa-solid fa-trash min-w-[20px] text-center"></i>delete</a></li> --}}
-                                    {{-- <li><a href="" class="uppercase hover:bg-green-700 text-green-700 hover:text-white transition-all"><i class="fa-solid fa-eye min-w-[20px] text-center"></i>view</a></li> --}}
-                                    <li><a href=""
-                                            class="uppercase hover:bg-blue-700 text-blue-700 hover:text-white transition-all"><i
-                                                class="fa-solid fa-eye min-w-[20px] text-center"></i>edit</a></li>
-                                    <li><a href=""
-                                            class="uppercase hover:bg-red-700 text-red-700 hover:text-white transition-all"><i
-                                                class="fa-solid fa-trash min-w-[20px] text-center"></i>delete</a></li>
-                                </x-dropdown>
+                                <a href="{{ route('admin.requirements.show', ['requirement' => $requirement]) }}"
+                                    class="btn btn-sm btn-ghost btn-success btn-square text-success hover:text-white"><i
+                                        class="fa-solid fa-eye min-w-[20px] text-center"></i></a>
+                                <a href="{{ route('admin.requirements.show', ['requirement' => $requirement]) }}"
+                                    class="btn btn-sm btn-ghost btn-info btn-square text-info hover:text-white"><i
+                                        class="fa-solid fa-edit min-w-[20px] text-center"></i></a>
+                                <button type="button" wire:click='deleteRequirement({{ $requirement->id }})'
+                                    class="btn btn-sm btn-ghost btn-error btn-square text-error hover:text-white"><i
+                                        class="fa-solid fa-trash min-w-[20px] text-center"></i></button>
                             </td>
                         </tr>
                     @endforeach
@@ -57,7 +52,7 @@
                     <tr>
                         <td colspan="5" class="text-center text-gray-500 text-sm">No requirements found.</td>
                     </tr>
-                @endisset
+                @endif
             </tbody>
         </table>
     </div>
@@ -99,6 +94,6 @@
                 </div>
             </form>
         </div>
-        <label class="modal-backdrop" for="createRequirement">Close</label>
+        <label class="modal-backdrop" for="createRequirement"></label>
     </div>
 </div>

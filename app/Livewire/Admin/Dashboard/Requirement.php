@@ -4,6 +4,7 @@ namespace App\Livewire\Admin\Dashboard;
 
 use App\Models\Requirement as ModelsRequirement;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Livewire\Component;
 use Livewire\Features\SupportFileUploads\WithFileUploads;
 
@@ -16,7 +17,7 @@ class Requirement extends Component
     public $due;
     public $required_files;
     public $target; // college or department
-    public $target_id; // college or department
+    public $target_id; // college_id or department_id
 
     protected $rules = [
         'name' => 'required|string|max:255',
@@ -39,7 +40,20 @@ class Requirement extends Component
 
     public function createRequirement()
     {
+        Log::info('Starting requirement creation', [
+            'user_id' => Auth::id(),
+            'input' => [
+                'name' => $this->name,
+                'description' => $this->description,
+                'due' => $this->due,
+                'target' => $this->target,
+                'target_id' => $this->target_id,
+            ]
+        ]);
+
         $validated = $this->validate();
+
+        Log::info('Validation passed', $validated);
 
         $requirement = ModelsRequirement::create([
             'name' => $validated['name'],
@@ -50,7 +64,17 @@ class Requirement extends Component
             'created_by' => Auth::id(),
         ]);
 
-        dd($requirement);
+        Log::info('Requirement created', ['requirement_id' => $requirement->id]);
+
+        $media = $requirement->addMedia($validated['required_files'])
+            ->toMediaCollection('requirements');
+
+        Log::info('Media added to requirement', [
+            'requirement_id' => $requirement->id,
+            'media_id' => $media->id ?? null
+        ]);
+
+        // dd('success', $requirement->getMedia('requirements'));
 
         session()->flash('success', 'Requirement created successfully.');
         $this->reset(['name', 'description', 'due', 'required_files']);
@@ -58,18 +82,49 @@ class Requirement extends Component
 
     public function updateRequirement($requirementId, $data)
     {
-        // 1. update requirement by id with data
-        // 2. update media collection with requirement id or name if needed
+        $requirement = ModelsRequirement::findOrFail($requirementId);
+
+        // Validate the data
+        $validated = validator($data, [
+            'name' => 'required|string|max:255',
+            'description' => 'required|string',
+            'due' => 'required|date|after_or_equal:today',
+            'target' => 'required|in:college,department',
+            'target_id' => 'required|integer',
+            'required_files' => 'nullable|file|max:15360|mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,jpg,jpeg,png,gif,txt,zip,rar,7z,mp4,avi,mkv,mp3,wav',
+        ])->validate();
+
+        // Update requirement fields
+        $requirement->update([
+            'name' => $validated['name'],
+            'description' => $validated['description'],
+            'due' => $validated['due'],
+            'target' => $validated['target'],
+            'target_id' => $validated['target_id'],
+        ]);
+
+        // If a new file is uploaded, replace the media
+        if (!empty($validated['required_files'])) {
+            $requirement->clearMediaCollection('requirements');
+            $requirement->addMedia($validated['required_files'])
+                ->toMediaCollection('requirements');
+        }
+
         session()->flash('success', 'Requirement updated successfully.');
     }
 
     public function deleteRequirement($requirementId)
     {
-        // 1. delete requirement by id
-        // 2. delete media collection with requirement id or name
+        $requirement = ModelsRequirement::findOrFail($requirementId);
+
+        // Delete associated media
+        $requirement->clearMediaCollection('requirements');
+
+        // Delete the requirement
+        $requirement->delete();
+
         session()->flash('success', 'Requirement deleted successfully.');
     }
-
 
     public function render()
     {

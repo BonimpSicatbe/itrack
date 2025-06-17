@@ -3,7 +3,7 @@
 @plugin '@tailwindcss/forms';
 
 @plugin "daisyui" {
-    exclude: rootscrollgutter, rootcolor;
+    exclude: rootscrollgutter;
 }
 
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
