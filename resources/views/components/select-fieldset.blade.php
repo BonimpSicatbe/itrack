@@ -1,7 +1,8 @@
 <fieldset class="fieldset w-full">
     <legend class="fieldset-legend w-full">{{ $label }}</legend>
-    <select wire:model="{{ $name }}" id="{{ $name }}" class="select w-full">
-        <option value="" disabled>{{ $label }}</option>
+    <select
+        {{ $attributes->merge(['class' => 'select w-full']) }}>
+        <option value="" disabled selected>{{ $label }}</option>
         {{ $slot }}
     </select>
     @error($name)

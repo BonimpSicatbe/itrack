@@ -17,18 +17,4 @@ class Department extends Model
     {
         return $this->hasMany(User::class);
     }
-
-    public function taskTargets()
-    {
-        return $this->morphMany(TaskTarget::class, 'target', 'target_type', 'target_id');
-    }
-
-    public function files()
-    {
-        return $this->hasMany(File::class);
-    }
-    public function tasks()
-    {
-        return $this->hasMany(Task::class);
-    }
 }

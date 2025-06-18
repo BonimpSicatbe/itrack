@@ -2,9 +2,12 @@
 
 namespace App\Livewire\Admin\Dashboard;
 
+use App\Models\College;
+use App\Models\Department;
 use App\Models\Requirement as ModelsRequirement;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Livewire\Attributes\Computed;
 use Livewire\Component;
 use Livewire\Features\SupportFileUploads\WithFileUploads;
 
@@ -12,12 +15,14 @@ class Requirement extends Component
 {
     use WithFileUploads;
 
-    public $name;
-    public $description;
-    public $due;
-    public $required_files;
-    public $target; // college or department
-    public $target_id; // college_id or department_id
+    public $name = '';
+    public $description = '';
+    public $due = '';
+    public $required_files = '';
+    public $search = '';
+
+    public $target = ""; // college or department
+    public $target_id = ""; // college_id or department_id
 
     protected $rules = [
         'name' => 'required|string|max:255',
@@ -28,14 +33,37 @@ class Requirement extends Component
         'target_id' => 'required|integer',
     ];
 
-    public function updated($propertyName)
+    #[Computed()]
+    public function targets()
     {
-        $this->validateOnly($propertyName);
+        return collect([
+            'college' => 'College',
+            'department' => 'Department',
+        ]);
+    }
+
+    #[Computed()]
+    public function target_ids()
+    {
+        return $this->target === 'college' ?
+            College::all() :
+            Department::all();
+    }
+
+    public function updatedTarget()
+    {
+        $this->target_id = null;
     }
 
     public function mount()
     {
-        $this->target = $this->target; // default target
+        $this->target = $this->target; // Default target
+        $this->target_id = $this->target_id; // Default target ID
+    }
+
+    public function updated($propertyName)
+    {
+        $this->validateOnly($propertyName);
     }
 
     public function createRequirement()
@@ -77,7 +105,8 @@ class Requirement extends Component
         // dd('success', $requirement->getMedia('requirements'));
 
         session()->flash('success', 'Requirement created successfully.');
-        $this->reset(['name', 'description', 'due', 'required_files']);
+        $this->reset(['name', 'description', 'due', 'required_files', 'target', 'target_id']);
+        $this->dispatch('close-modal');
     }
 
     public function updateRequirement($requirementId, $data)
@@ -110,7 +139,8 @@ class Requirement extends Component
                 ->toMediaCollection('requirements');
         }
 
-        session()->flash('success', 'Requirement updated successfully.');
+        $this->dispatchBrowserEvent('toast-success', ['message' => 'Requirement created successfully.']);
+
     }
 
     public function deleteRequirement($requirementId)
@@ -126,14 +156,37 @@ class Requirement extends Component
         session()->flash('success', 'Requirement deleted successfully.');
     }
 
+    public $sortField = 'created_at';
+    public $sortDirection = 'desc';
+
+    public function sortBy($field)
+    {
+        if ($this->sortField === $field) {
+            $this->sortDirection = $this->sortDirection === 'asc' ? 'desc' : 'asc';
+        } else {
+            $this->sortField = $field;
+            $this->sortDirection = 'asc';
+        }
+    }
+
     public function render()
     {
+        $query = ModelsRequirement::query();
+
+        if (!empty($this->search)) {
+            $query->where(function ($q) {
+                $q->where('name', 'like', '%' . $this->search . '%')
+                    ->orWhere('description', 'like', '%' . $this->search . '%');
+            });
+        }
+
+        $query->orderBy($this->sortField, $this->sortDirection);
 
         return view('livewire.admin.dashboard.requirement', [
             'target' => $this->target,
-            'colleges' => \App\Models\College::all(),
-            'departments' => \App\Models\Department::all(),
-            'requirements' => ModelsRequirement::all(),
+            'colleges' => College::all(),
+            'departments' => Department::all(),
+            'requirements' => $query->paginate(20),
         ]);
     }
 }

@@ -57,22 +57,4 @@ class User extends Authenticatable
     {
         return $this->belongsTo(College::class);
     }
-
-    public function tasks()
-    {
-        return Task::whereHas('targets', function ($query) {
-            $query->where(function ($q) {
-                $q->where('target_type', 'department')
-                  ->where('target_id', $this->department_id);
-            })->orWhere(function ($q) {
-                $q->where('target_type', 'college')
-                  ->where('target_id', $this->college_id);
-            });
-        });
-    }
-
-    public function files()
-    {
-        return $this->hasMany(File::class, 'uploaded_by');
-    }
 }

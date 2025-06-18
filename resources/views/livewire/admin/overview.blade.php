@@ -1,4 +1,4 @@
-<div wire:poll.2s class="w-full bg-white stats stats-vertical sm:stats-horizontal shadow">
+<div class="w-full bg-white stats stats-vertical sm:stats-horizontal shadow">
     @foreach ($stats as $stat)
         <div class="stat">
             <div class="stat-figure text-2xl">

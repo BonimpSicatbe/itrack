@@ -9,15 +9,11 @@
 
     <input
         type="{{ $type }}"
-        wire:model="{{ $name }}"
-        id="{{ $name }}"
-        class="input w-full lowercase"
+        {{ $attributes->merge(['class' => 'input w-full']) }}
         placeholder="Enter {{ $label }}"
-        value="{{ old($name) }}"
         @if($type === 'date') min="{{ \Carbon\Carbon::today()->format('Y-m-d') }}" @endif
         required
         autofocus
-        autocomplete="{{ $name }}"
     />
 
     @error($name)
