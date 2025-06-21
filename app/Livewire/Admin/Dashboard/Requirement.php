@@ -8,30 +8,36 @@ use App\Models\Requirement as ModelsRequirement;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Livewire\Attributes\Computed;
+use Livewire\Attributes\Validate;
 use Livewire\Component;
 use Livewire\Features\SupportFileUploads\WithFileUploads;
+use Livewire\WithPagination;
 
 class Requirement extends Component
 {
-    use WithFileUploads;
+    use WithFileUploads, WithPagination;
 
+    #[Validate('required|string|max:255')]
     public $name = '';
-    public $description = '';
-    public $due = '';
-    public $required_files = '';
-    public $search = '';
 
+    #[Validate('required|string')]
+    public $description = '';
+
+    #[Validate('required|date|after_or_equal:today')]
+    public $due = '';
+
+    #[Validate('required|file|max:15360|mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,jpg,jpeg,png,gif,txt,zip,rar,7z,mp4,avi,mkv,mp3,wav')]
+    public $required_files = '';
+
+    #[Validate('required|in:college,department')]
     public $target = ""; // college or department
+
+    #[Validate('required|integer')]
     public $target_id = ""; // college_id or department_id
 
-    protected $rules = [
-        'name' => 'required|string|max:255',
-        'description' => 'required|string',
-        'due' => 'required|date|after_or_equal:today',
-        'required_files' => 'required|file|max:15360|mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,jpg,jpeg,png,gif,txt,zip,rar,7z,mp4,avi,mkv,mp3,wav',
-        'target' => 'required|in:college,department',
-        'target_id' => 'required|integer',
-    ];
+    public $search = '';
+    public $sortField = 'created_at';
+    public $sortDirection = 'desc';
 
     #[Computed()]
     public function targets()
@@ -130,6 +136,7 @@ class Requirement extends Component
             'due' => $validated['due'],
             'target' => $validated['target'],
             'target_id' => $validated['target_id'],
+            'updated_by' => Auth::id(),
         ]);
 
         // If a new file is uploaded, replace the media
@@ -140,7 +147,6 @@ class Requirement extends Component
         }
 
         $this->dispatchBrowserEvent('toast-success', ['message' => 'Requirement created successfully.']);
-
     }
 
     public function deleteRequirement($requirementId)
@@ -156,9 +162,6 @@ class Requirement extends Component
         session()->flash('success', 'Requirement deleted successfully.');
     }
 
-    public $sortField = 'created_at';
-    public $sortDirection = 'desc';
-
     public function sortBy($field)
     {
         if ($this->sortField === $field) {
@@ -171,7 +174,7 @@ class Requirement extends Component
 
     public function render()
     {
-        $query = ModelsRequirement::query();
+        $query = ModelsRequirement::with('createdBy');
 
         if (!empty($this->search)) {
             $query->where(function ($q) {

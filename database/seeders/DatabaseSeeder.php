@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Requirement;
 use App\Models\User;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
@@ -19,6 +20,10 @@ class DatabaseSeeder extends Seeder
         Role::firstOrCreate(['name' => 'super-admin']);
 
         $this->call(CollegesAndDepartmentsSeeder::class);
+
+        // random users
+        User::factory(150)->create();
+        Requirement::factory(100)->create();
 
         $user = User::create([
             'firstname' => 'Doming',

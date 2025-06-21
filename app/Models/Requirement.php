@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
@@ -10,7 +11,7 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 class Requirement extends Model implements HasMedia
 {
-    use InteractsWithMedia;
+    use InteractsWithMedia, HasFactory;
 
     protected $fillable = [
         'name',
@@ -26,10 +27,6 @@ class Requirement extends Model implements HasMedia
         'archived_by',
     ];
 
-    protected $casts = [
-        'due' => 'datetime',
-    ];
-
     public function registerMediaConversions(?Media $media = null): void
     {
         $this
@@ -38,8 +35,21 @@ class Requirement extends Model implements HasMedia
             ->nonQueued();
     }
 
+    // get the user who created the requirement
     public function createdBy()
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    // get assigned users to the requirement
+    public function targetUsers()
+    {
+        if ($this->target === 'college') {
+            return User::where('college_id', $this->target_id)->with('users');
+        } elseif ($this->target === 'department') {
+            return User::where('department_id', $this->target_id)->with('users');
+        } else {
+            return collect(); // Return an empty collection if target is not recognized
+        }
     }
 }
