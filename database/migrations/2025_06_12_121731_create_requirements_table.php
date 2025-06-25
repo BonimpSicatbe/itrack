@@ -20,9 +20,9 @@ return new class extends Migration
             $table->integer('target_id'); // id of the college or department
             $table->string('status')->default('pending'); // pending, completed
             $table->string('priority')->default('normal'); // low, normal, high
-            $table->string('created_by'); // user id or name who created the requirement
-            $table->string('updated_by')->nullable(); // user id or name who updated the requirement
-            $table->string('archived_by')->nullable(); // user id or name who archived the requirement
+            $table->foreignId('created_by')->constrained('users'); // user id or name who created the requirement
+            $table->foreignId('updated_by')->nullable()->constrained('users'); // user id or name who updated the requirement
+            $table->foreignId('archived_by')->nullable()->constrained('users'); // user id or name who archived the requirement
             $table->timestamps();
         });
     }

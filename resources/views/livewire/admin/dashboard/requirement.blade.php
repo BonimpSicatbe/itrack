@@ -1,3 +1,10 @@
+{{--
+    // TODO add priority option to requirement creation
+    // TODO: Create a reusable table component that accepts headings, rows, and cells as inputs.
+    //       Add support for a SORTABLE attribute to enable column sorting.
+    //       This component should be used for all tables in the project to ensure consistency and reusability.
+--}}
+
 <div class="flex flex-col gap-4 w-full bg-white rounded-lg p-4">
     {{-- header title --}}
     <div class="text-lg font-bold uppercase">Requirements</div>
@@ -12,14 +19,15 @@
         <label for="createRequirement" class="btn btn-sm btn-default">Create Requirement</label>
     </div>
     {{-- content --}}
-    <div class="overflow-x-auto">
+    <div class="overflow-x-auto max-h-[500px]">
         <table class="table table-fixed text-nowrap table-zebra w-full">
             <thead>
-                <tr>
+                <tr class="capitalize">
                     <th class="cursor-pointer" wire:click="sortBy('name')">
                         Name
                         @if ($sortField === 'name')
-                            <i class="fa-solid fa-sort-{{ $sortDirection === 'asc' ? 'up' : 'down' }} min-w-[20px] text-center"></i>
+                            <i
+                                class="fa-solid fa-sort-{{ $sortDirection === 'asc' ? 'up' : 'down' }} min-w-[20px] text-center"></i>
                         @else
                             <i class="fa-solid fa-sort min-w-[20px] text-center"></i>
                         @endif
@@ -28,12 +36,22 @@
                         Target
                     </th>
                     <th>
-                        Created By
+                        due date
+                    </th>
+                    <th class="cursor-pointer" wire:click="sortBy('created_by')">
+                        Created by
+                        @if ($sortField === 'created_by')
+                            <i
+                                class="fa-solid fa-sort-{{ $sortDirection === 'asc' ? 'up' : 'down' }} min-w-[20px] text-center"></i>
+                        @else
+                            <i class="fa-solid fa-sort min-w-[20px] text-center"></i>
+                        @endif
                     </th>
                     <th class="cursor-pointer" wire:click="sortBy('created_at')">
                         Created At
                         @if ($sortField === 'created_at')
-                            <i class="fa-solid fa-sort-{{ $sortDirection === 'asc' ? 'up' : 'down' }} min-w-[20px] text-center"></i>
+                            <i
+                                class="fa-solid fa-sort-{{ $sortDirection === 'asc' ? 'up' : 'down' }} min-w-[20px] text-center"></i>
                         @else
                             <i class="fa-solid fa-sort min-w-[20px] text-center"></i>
                         @endif
@@ -45,18 +63,17 @@
                 @if ($requirements->isNotEmpty())
                     @foreach ($requirements as $requirement)
                         <tr class="items-center cursor-pointer hover:bg-gray-100 transition-colors">
-                            <td class="truncate">
-                                <i class="fa-solid fa-file min-w-[20px] text-center"></i>
-                                <span class="font-semibold">{{ $requirement->name }}</span>
-                            </td>
+                            <td class="truncate">{{ $requirement->name }}</td>
                             <td class=" truncate">
                                 {{ $requirement->target === 'department'
                                     ? optional(\App\Models\Department::where('id', $requirement->target_id)->first())->name
                                     : optional(\App\Models\College::where('id', $requirement->target_id)->first())->name }}
                             </td>
-                            <td>{{ $requirement->createdBy->firstname }} {{ $requirement->createdBy->middlename }} {{ $requirement->createdBy->lastname }}</td>
-                            <td>{{ $requirement->created_at->format('F j, Y - h:i A') }}</td>
-                            <td>
+                            <td class="truncate">{{ \Carbon\Carbon::parse($requirement->due)->format('F j, Y') }}</td>
+                            <td class="truncate">{{ $requirement->createdBy->firstname }}
+                                {{ $requirement->createdBy->middlename }} {{ $requirement->createdBy->lastname }}</td>
+                            <td class="truncate">{{ $requirement->created_at->format('F j, Y - h:i A') }}</td>
+                            <td class="truncate">
                                 <a href="{{ route('admin.requirements.show', ['requirement' => $requirement]) }}"
                                     class="btn btn-sm btn-ghost btn-success btn-square text-success hover:text-white"><i
                                         class="fa-solid fa-eye min-w-[20px] text-center"></i></a>
@@ -80,7 +97,7 @@
     </div>
 
     <div class="w-full text-center">
-        {{ $requirements->links('vendor.pagination.tailwind') }}
+        {{ $requirements->links() }}
     </div>
 
     {{-- createRequirement modal --}}
