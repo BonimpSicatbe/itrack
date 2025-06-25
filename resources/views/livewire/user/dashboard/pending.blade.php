@@ -1,19 +1,36 @@
 <div class="flex flex-col gap-2 p-4 overflow-hidden bg-white rounded-lg">
-    {{-- header --}}
+    {{-- Header --}}
     <div class="flex flex-row items-center justify-between w-full">
-        <div class="text-lg uppercase font-bold">Pendings</div>
-        <a href="" class="text-green-500 hover:text-green-700 text-xs hover:link transition-all">see more <i class="fa-solid fa-chevron-right"></i></a>
+        <div class="text-lg uppercase font-bold">Pending Requirements</div>
+        <a href="{{ route('user.pending-task') }}" class="flex items-center text-green-500 hover:text-green-700 text-xs hover:link transition-all">
+            See More <i class="fa-solid fa-chevron-right ml-1"></i>
+        </a>
     </div>
-    {{-- list --}}
-    <div class="flex flex-row gap-4 overflow-x-auto w-full">
-        @for ($i = 0; $i < 10; $i++)
-            <a href="" class="border rounded-lg p-2 flex flex-col min-w-[300px] hover:bg-gray-200 transition-all">
-                <div class="flex flex-row items-center gap-4 justify-between w-full">
-                    <div class="text-lg font-bold">Lorem, ipsum dolor.</div>
-                    <div class="text-xs text-gray-500">00m</div>
+
+    {{-- Horizontally scrollable container --}}
+    <div class="relative">
+        <div class="flex flex-row gap-4 pb-4 overflow-x-auto w-full scrollbar-hide">
+            @forelse($pendingRequirements as $requirement)
+                <div class="flex-shrink-0 border rounded-lg p-3 flex flex-col w-[300px] hover:bg-gray-50 transition-all">
+                    <div class="text-lg font-bold truncate">{{ $requirement->name }}</div>
+                    <div class="text-sm text-gray-600 mt-1">
+                        Due: {{ $requirement->due->format('M j, Y') }}
+                    </div>
+                    <div class="text-xs mt-2">
+                        Priority: 
+                        <span class="font-medium capitalize {{ 
+                            $requirement->priority === 'high' ? 'text-red-500' :
+                            ($requirement->priority === 'urgent' ? 'text-red-700' : 'text-gray-600')
+                        }}">
+                            {{ $requirement->priority }}
+                        </span>
+                    </div>
                 </div>
-                <div class="text-sm">Lorem, ipsum dolor.</div>
-            </a>
-        @endfor
+            @empty
+                <div class="w-full py-4 text-center text-gray-500">
+                    No pending requirements!
+                </div>
+            @endforelse
+        </div>
     </div>
 </div>
