@@ -35,10 +35,49 @@ class Requirement extends Model implements HasMedia
             ->nonQueued();
     }
 
+    // ========== ========== RELATIONSHIPS | START ========== ==========
     // get the user who created the requirement
     public function createdBy()
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    // ========== ========== RELATIONSHIPS | END ========== ==========
+
+    public function assignedTo()
+    {
+        return Requirement::where('target', $this->target)
+            ->where('target_id', $this->target_id);
+    }
+
+    public function assignedTargets()
+    {
+        if ($this->target === 'college') {
+            return User::where('college_id', $this->target_id)->count();
+        } elseif ($this->target === 'department') {
+            return User::where('department_id', $this->target_id)->count();
+        }
+    }
+
+    public function getPriorityColorAttribute()
+    {
+        return [
+            'low' => 'info',
+            'normal' => 'warning',
+            'high' => 'error',
+        ][$this->priority] ?? 'neutral';
+    }
+
+    // return the assigned college or department based on the target
+    public function assignedToType()
+    {
+        if ($this->target === 'college') {
+            return College::find($this->target_id);
+        } elseif ($this->target === 'department') {
+            return Department::find($this->target_id);
+        } else {
+            return null; // Return null if target is not recognized
+        }
     }
 
     // get assigned users to the requirement

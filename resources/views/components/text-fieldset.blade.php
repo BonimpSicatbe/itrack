@@ -17,6 +17,6 @@
     />
 
     @error($name)
-        <p class="label w-full truncate">{{ $message }}</p>
+        <p class="label w-full truncate text-red-500">{{ $message }}</p>
     @enderror
 </fieldset>

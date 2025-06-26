@@ -26,6 +26,9 @@ class Requirement extends Component
     #[Validate('required|date|after_or_equal:today')]
     public $due = '';
 
+    #[Validate('required|in:low,normal,high')]
+    public $priority;
+
     #[Validate('required|file|max:15360|mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,jpg,jpeg,png,gif,txt,zip,rar,7z,mp4,avi,mkv,mp3,wav')]
     public $required_files = '';
 
@@ -33,11 +36,7 @@ class Requirement extends Component
     public $target = ""; // college or department
 
     #[Validate('required|integer')]
-    public $target_id = ""; // college_id or department_id
-
-    public $search = '';
-    public $sortField = 'created_at';
-    public $sortDirection = 'desc';
+    public $target_id; // college_id or department_id
 
     #[Computed()]
     public function targets()
@@ -72,6 +71,7 @@ class Requirement extends Component
         $this->validateOnly($propertyName);
     }
 
+    // ========== ========== REQUIREMENT CRUD | START ========== ==========
     public function createRequirement()
     {
         Log::info('Starting requirement creation', [
@@ -94,6 +94,7 @@ class Requirement extends Component
             'description' => $validated['description'],
             'due' => $validated['due'],
             'target' => $validated['target'],
+            'priority' => $validated['priority'],
             'target_id' => $validated['target_id'],
             'created_by' => Auth::id(),
         ]);
@@ -111,7 +112,7 @@ class Requirement extends Component
         // dd('success', $requirement->getMedia('requirements'));
 
         session()->flash('success', 'Requirement created successfully.');
-        $this->reset(['name', 'description', 'due', 'required_files', 'target', 'target_id']);
+        $this->reset(['name', 'description', 'due', 'priority', 'required_files', 'target', 'target_id']);
         $this->dispatch('close-modal');
     }
 
@@ -161,35 +162,35 @@ class Requirement extends Component
 
         session()->flash('success', 'Requirement deleted successfully.');
     }
+    // ========== ========== REQUIREMENT CRUD | END ========== ==========
+
+
+
+    // ========== ========== SEARCH AND SORT | START ========== ==========
+    public $search = '';
+    public $sortField = 'created_at';
+    public $sortDirection = 'asc';
+    // protected $queryString = ['sortField', 'sortDirection'];
 
     public function sortBy($field)
     {
-        if ($this->sortField === $field) {
-            $this->sortDirection = $this->sortDirection === 'asc' ? 'desc' : 'asc';
-        } else {
-            $this->sortField = $field;
-            $this->sortDirection = 'asc';
-        }
+        $this->sortDirection = $this->sortField === $field
+            ? $this->sortDirection = $this->sortDirection === 'asc' ? 'desc' : 'asc'
+            : 'asc';
+
+        $this->sortField = $field;
     }
+    // ========== ========== SEARCH AND SORT | END ========== ==========
 
     public function render()
     {
-        $query = ModelsRequirement::with('createdBy');
-
-        if (!empty($this->search)) {
-            $query->where(function ($q) {
-                $q->where('name', 'like', '%' . $this->search . '%')
-                    ->orWhere('description', 'like', '%' . $this->search . '%');
-            });
-        }
-
-        $query->orderBy($this->sortField, $this->sortDirection);
+        // sleep(1); // for testing purposes, simulating a delay
 
         return view('livewire.admin.dashboard.requirement', [
             'target' => $this->target,
             'colleges' => College::all(),
             'departments' => Department::all(),
-            'requirements' => $query->paginate(20),
+            'requirements' => ModelsRequirement::search('name', $this->search)->orderBy($this->sortField, $this->sortDirection)->paginate(20),
         ]);
     }
 }

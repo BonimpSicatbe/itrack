@@ -13,6 +13,6 @@
         autofocus
     />
     @error($name)
-        <label class="label w-full">{{$message}}</label>
+        <label class="label w-full text-red-500">{{$message}}</label>
     @enderror
 </fieldset>
