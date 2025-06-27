@@ -6,7 +6,15 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-    return view('welcome');
+    if (Auth::check()) {
+        if (Auth::user()->hasRole('user')) {
+            return redirect()->route('user.dashboard');
+        } elseif (Auth::user()->hasRole('admin') || Auth::user()->hasRole('super-admin')) {
+            return redirect()->route('admin.dashboard');
+        }
+    } else {
+        return redirect()->route('login');
+    }
 });
 
 Route::middleware(['auth', 'role:user'])
