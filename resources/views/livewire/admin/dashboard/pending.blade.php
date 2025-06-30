@@ -1,4 +1,6 @@
-<div class="flex flex-col gap-4 w-full bg-white rounded-lg px-4">
+<div class="flex flex-col gap-4 w-full bg-white rounded-lg p-4">
+    {{-- header title --}}
+    <div class="text-lg font-bold uppercase">Pendings</div>
     {{-- header actions --}}
     <div class="flex flex-row gap-4 w-full">
         {{-- filters --}}

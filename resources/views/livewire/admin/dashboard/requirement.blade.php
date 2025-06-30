@@ -3,7 +3,9 @@
     // TODO make the due date format to date time
 --}}
 
-<div class="flex flex-col gap-4 w-full bg-white rounded-lg px-4">
+<div class="flex flex-col gap-4 w-full bg-white rounded-lg p-4">
+    {{-- header title --}}
+    <div class="text-lg font-bold uppercase">Requirements</div>
     {{-- header actions --}}
     <div class="flex flex-row gap-4 w-full">
         {{-- filters --}}
