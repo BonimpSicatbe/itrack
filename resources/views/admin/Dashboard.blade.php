@@ -1,10 +1,7 @@
 <x-admin.app-layout>
     {{-- overview --}}
     @livewire('admin.dashboard.overview')
-
-    {{-- pendings --}}
-    @livewire('admin.dashboard.pending')
-
-    {{-- requirements --}}
     @livewire('admin.dashboard.requirement')
+    @livewire('admin.dashboard.pending')
+    @livewire('admin.dashboard.file')
 </x-admin.app-layout>

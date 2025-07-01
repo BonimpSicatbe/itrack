@@ -6,6 +6,6 @@
         {{ $slot }}
     </select>
     @error($name)
-        <span class="label w-full">{{ $message }}</span>
+        <span class="label w-full text-red-500">{{ $message }}</span>
     @enderror
 </fieldset>

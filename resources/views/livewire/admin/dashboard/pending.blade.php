@@ -9,99 +9,47 @@
     </div>
 
     {{-- content --}}
-    <div class="overflow-x-auto max-h-[500px]">
-        <table class="table table-fixed text-nowrap w-full">
-            <thead>
-                <tr class="capitalize">
-                    <th class="cursor-pointer" wire:click="sortBy('name')">
-                        Name
-                        @if ($sortField === 'name')
-                            <i
-                                class="fa-solid fa-sort-{{ $sortDirection === 'asc' ? 'up' : 'down' }} min-w-[20px] text-center"></i>
-                        @else
-                            <i class="fa-solid fa-sort min-w-[20px] text-center"></i>
-                        @endif
-                    </th>
-                    <th class="cursor-pointer" wire:click="sortBy('assigned_to')">
-                        assigned to
-                        @if ($sortField === 'assigned_to')
-                            <i
-                                class="fa-solid fa-sort-{{ $sortDirection === 'asc' ? 'up' : 'down' }} min-w-[20px] text-center"></i>
-                        @else
-                            <i class="fa-solid fa-sort min-w-[20px] text-center"></i>
-                        @endif
-                    </th>
-                    <th class="cursor-pointer" wire:click="sortBy('assigned_targets')">
-                        assigned targets
-                        @if ($sortField === 'assigned_targets')
-                            <i
-                                class="fa-solid fa-sort-{{ $sortDirection === 'asc' ? 'up' : 'down' }} min-w-[20px] text-center"></i>
-                        @else
-                            <i class="fa-solid fa-sort min-w-[20px] text-center"></i>
-                        @endif
-                    </th>
-                    <th class="cursor-pointer" wire:click="sortBy('status')">
-                        status
-                        @if ($sortField === 'status')
-                            <i
-                                class="fa-solid fa-sort-{{ $sortDirection === 'asc' ? 'up' : 'down' }} min-w-[20px] text-center"></i>
-                        @else
-                            <i class="fa-solid fa-sort min-w-[20px] text-center"></i>
-                        @endif
-                    </th>
-                    <td>progress</td>
-                    <th class="cursor-pointer" wire:click="sortBy('priority')">
-                        priority
-                        @if ($sortField === 'priority')
-                            <i
-                                class="fa-solid fa-sort-{{ $sortDirection === 'asc' ? 'up' : 'down' }} min-w-[20px] text-center"></i>
-                        @else
-                            <i class="fa-solid fa-sort min-w-[20px] text-center"></i>
-                        @endif
-                    </th>
-                    <th class="cursor-pointer" wire:click="sortBy('due')">
-                        due date
-                        @if ($sortField === 'due')
-                            <i
-                                class="fa-solid fa-sort-{{ $sortDirection === 'asc' ? 'up' : 'down' }} min-w-[20px] text-center"></i>
-                        @else
-                            <i class="fa-solid fa-sort min-w-[20px] text-center"></i>
-                        @endif
-                    </th>
-                    <th class="cursor-pointer" wire:click="sortBy('created_by')">
-                        created by
-                        @if ($sortField === 'created_by')
-                            <i
-                                class="fa-solid fa-sort-{{ $sortDirection === 'asc' ? 'up' : 'down' }} min-w-[20px] text-center"></i>
-                        @else
-                            <i class="fa-solid fa-sort min-w-[20px] text-center"></i>
-                        @endif
-                    </th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach ($pendings as $pending)
-                    <tr>
-                        <td class="truncate">{{ $pending->name }}</td>
-                        <td class="truncate">
-                            {{ $pending->target === 'department'
-                                ? optional(\App\Models\Department::where('id', $pending->target_id)->first())->name
-                                : optional(\App\Models\College::where('id', $pending->target_id)->first())->name }}
-                        </td>
-                        <td class="truncate">{{ $pending->target === 'department'
-                            ? optional(\App\Models\Department::where('id', $pending->target_id)->first())->users->count()
-                            : optional(\App\Models\College::where('id', $pending->target_id)->first())->users->count() }}
-                        </td>
-                        <td class="truncate">{{ $pending->status }}</td>
-                        <td class="truncate"><progress class="progress progress-primary w-full" value="10" max="100"></progress>
-                        </td>
-                        <td class="truncate">{{ $pending->priority }}</td>
-                        <td class="truncate">{{ \Carbon\Carbon::parse($pending->due)->format('F j, Y') }}</td>
-                        <td class="truncate">{{ $pending->createdBy->firstname }} {{ $pending->createdBy->middlename }}
-                            {{ $pending->createdBy->lastname }}</td>
-                    </tr>
-                @endforeach
-            </tbody>
-        </table>
+    <div class="overflow-x-auto max-h-[500px] rounded-lg shadow-md">
+        <x-table>
+            <x-table.head>
+                <x-table.row>
+                    <x-table.header sortable :direction="$sortField === 'name' ? $sortDirection : null" wire:click="sortBy('name')">name</x-table.header>
+                    <x-table.header sortable :direction="$sortField === 'target' ? $sortDirection : null" wire:click="sortBy('target')">assigned to</x-table.header>
+                    <x-table.header sortable :direction="$sortField === 'target_id' ? $sortDirection : null" wire:click="sortBy('target_id')">assigned targets</x-table.header>
+                    <x-table.header sortable :direction="$sortField === 'status' ? $sortDirection : null" wire:click="sortBy('status')">status</x-table.header>
+                    <x-table.header sortable :direction="$sortField === 'priority' ? $sortDirection : null" wire:click="sortBy('priority')">priority</x-table.header>
+                    <x-table.header sortable :direction="$sortField === 'due' ? $sortDirection : null" wire:click="sortBy('due')">due</x-table.header>
+                    <x-table.header sortable :direction="$sortField === 'created_by' ? $sortDirection : null" wire:click="sortBy('created_by')">created by</x-table.header>
+                </x-table.row>
+            </x-table.head>
+            <x-table.body>
+                @forelse ($pendings as $pending)
+                    <x-table.row wire:loading.class.delay="opacity-50">
+                        <x-table.cell>{{ $pending->name }}</x-table.cell>
+                        <x-table.cell>{{ $pending->assignedToType()->name }}</x-table.cell>
+                        <x-table.cell>{{ $pending->assignedTargets() }}</x-table.cell>
+                        <x-table.cell>{{ $pending->status }}</x-table.cell>
+                        {{-- <x-table.cell>{{ $pending->priority }}</x-table.cell> --}}
+                        <x-table.cell>{{ $pending->priority }}</x-table.cell>
+                        <x-table.cell>{{ \Carbon\Carbon::parse($pending->due)->format('F d, Y') }}</x-table.cell>
+                        <x-table.cell>{{ $pending->createdBy->firstname }}
+                            {{ $pending->createdBy->lastname }}</x-table.cell>
+                    </x-table.row>
+                @empty
+                    <x-table.row>
+                        <x-table.cell colspan="8">
+                            <div
+                                class="flex font-bold h-full items-center justify-center p-4 text-center text-lg truncate w-full text-gray-500">
+                                No Results Found
+                            </div>
+                        </x-table.cell>
+                    </x-table.row>
+                @endforelse
+            </x-table.body>
+        </x-table>
+    </div>
+
+    <div class="w-full text-center">
+        {{ $pendings->links() }}
     </div>
 </div>

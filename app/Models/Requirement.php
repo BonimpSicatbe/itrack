@@ -37,7 +37,7 @@ class Requirement extends Model implements HasMedia
         'updated_at' => 'datetime',
     ];
 
-    // Define media collections
+    // Media Collections
     public function registerMediaCollections(): void
     {
         $this->addMediaCollection('guides')
@@ -48,7 +48,6 @@ class Requirement extends Model implements HasMedia
             ->useDisk(config('media-library.disk_name'));
     }
 
-    // Media conversions for previews (optional)
     public function registerMediaConversions(?Media $media = null): void
     {
         $this
@@ -62,7 +61,7 @@ class Requirement extends Model implements HasMedia
             ->height(100);
     }
 
-    // Relationships
+    // ========== Relationships ==========
     public function createdBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
@@ -91,19 +90,51 @@ class Requirement extends Model implements HasMedia
         return $this->media()->where('collection_name', 'guides');
     }
 
-    // Get assigned users to the requirement
+    // ========== Methods from Incoming ==========
+    public function assignedTo()
+    {
+        return Requirement::where('target', $this->target)
+            ->where('target_id', $this->target_id);
+    }
+
+    public function assignedTargets()
+    {
+        if ($this->target === 'college') {
+            return User::where('college_id', $this->target_id)->count();
+        } elseif ($this->target === 'department') {
+            return User::where('department_id', $this->target_id)->count();
+        }
+    }
+
+    public function getPriorityColorAttribute()
+    {
+        return [
+            'low' => 'info',
+            'normal' => 'warning',
+            'high' => 'error',
+        ][$this->priority] ?? 'neutral';
+    }
+
+    public function assignedToType()
+    {
+        if ($this->target === 'college') {
+            return College::find($this->target_id);
+        } elseif ($this->target === 'department') {
+            return Department::find($this->target_id);
+        }
+        return null;
+    }
+
     public function targetUsers()
     {
         if ($this->target === 'college') {
             return User::where('college_id', $this->target_id)->get();
         } elseif ($this->target === 'department') {
             return User::where('department_id', $this->target_id)->get();
-        } else {
-            return collect();
         }
+        return collect();
     }
 
-    // Helper method to check if due date is passed
     public function isOverdue(): bool
     {
         return Carbon::now()->gt($this->due);

@@ -1,8 +1,6 @@
 {{--
     // TODO add priority option to requirement creation
-    // TODO: Create a reusable table component that accepts headings, rows, and cells as inputs.
-    //       Add support for a SORTABLE attribute to enable column sorting.
-    //       This component should be used for all tables in the project to ensure consistency and reusability.
+    // TODO make the due date format to date time
 --}}
 
 <div class="flex flex-col gap-4 w-full bg-white rounded-lg p-4">
@@ -19,81 +17,42 @@
         <label for="createRequirement" class="btn btn-sm btn-default">Create Requirement</label>
     </div>
     {{-- content --}}
-    <div class="overflow-x-auto max-h-[500px]">
-        <table class="table table-fixed text-nowrap table-zebra w-full">
-            <thead>
-                <tr class="capitalize">
-                    <th class="cursor-pointer" wire:click="sortBy('name')">
-                        Name
-                        @if ($sortField === 'name')
-                            <i
-                                class="fa-solid fa-sort-{{ $sortDirection === 'asc' ? 'up' : 'down' }} min-w-[20px] text-center"></i>
-                        @else
-                            <i class="fa-solid fa-sort min-w-[20px] text-center"></i>
-                        @endif
-                    </th>
-                    <th>
-                        Target
-                    </th>
-                    <th>
-                        due date
-                    </th>
-                    <th class="cursor-pointer" wire:click="sortBy('created_by')">
-                        Created by
-                        @if ($sortField === 'created_by')
-                            <i
-                                class="fa-solid fa-sort-{{ $sortDirection === 'asc' ? 'up' : 'down' }} min-w-[20px] text-center"></i>
-                        @else
-                            <i class="fa-solid fa-sort min-w-[20px] text-center"></i>
-                        @endif
-                    </th>
-                    <th class="cursor-pointer" wire:click="sortBy('created_at')">
-                        Created At
-                        @if ($sortField === 'created_at')
-                            <i
-                                class="fa-solid fa-sort-{{ $sortDirection === 'asc' ? 'up' : 'down' }} min-w-[20px] text-center"></i>
-                        @else
-                            <i class="fa-solid fa-sort min-w-[20px] text-center"></i>
-                        @endif
-                    </th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                @if ($requirements->isNotEmpty())
-                    @foreach ($requirements as $requirement)
-                        <tr class="items-center cursor-pointer hover:bg-gray-100 transition-colors">
-                            <td class="truncate">{{ $requirement->name }}</td>
-                            <td class=" truncate">
-                                {{ $requirement->target === 'department'
-                                    ? optional(\App\Models\Department::where('id', $requirement->target_id)->first())->name
-                                    : optional(\App\Models\College::where('id', $requirement->target_id)->first())->name }}
-                            </td>
-                            <td class="truncate">{{ \Carbon\Carbon::parse($requirement->due)->format('F j, Y') }}</td>
-                            <td class="truncate">{{ $requirement->createdBy->firstname }}
-                                {{ $requirement->createdBy->middlename }} {{ $requirement->createdBy->lastname }}</td>
-                            <td class="truncate">{{ $requirement->created_at->format('F j, Y - h:i A') }}</td>
-                            <td class="truncate">
-                                <a href="{{ route('admin.requirements.show', ['requirement' => $requirement]) }}"
-                                    class="btn btn-sm btn-ghost btn-success btn-square text-success hover:text-white"><i
-                                        class="fa-solid fa-eye min-w-[20px] text-center"></i></a>
-                                <a href="{{ route('admin.requirements.show', ['requirement' => $requirement]) }}"
-                                    class="btn btn-sm btn-ghost btn-info btn-square text-info hover:text-white"><i
-                                        class="fa-solid fa-edit min-w-[20px] text-center"></i></a>
-                                <button type="button" wire:click='deleteRequirement({{ $requirement->id }})'
-                                    class="btn btn-sm btn-ghost btn-error btn-square text-error hover:text-white"><i
-                                        class="fa-solid fa-trash min-w-[20px] text-center"></i></button>
-                            </td>
-                        </tr>
-                    @endforeach
-                @else
-                    <tr>
-                        <td colspan="5" class="text-center text-gray-500 text-sm">No requirements found.</td>
-                    </tr>
-                @endif
-            </tbody>
-        </table>
-
+    <div class="overflow-auto max-h-[500px] rounded-lg shadow-md">
+        <x-table>
+            <x-table.head>
+                <x-table.row>
+                    <x-table.header sortable :direction="$sortField === 'name' ? $sortDirection : null" wire:click="sortBy('name')">name</x-table.header>
+                    <x-table.header>description</x-table.header>
+                    <x-table.header sortable :direction="$sortField === 'due' ? $sortDirection : null" wire:click="sortBy('due')">due</x-table.header>
+                    <x-table.header sortable :direction="$sortField === 'target_id' ? $sortDirection : null" wire:click="sortBy('target_id')">assigned to</x-table.header>
+                    <x-table.header sortable :direction="$sortField === 'status' ? $sortDirection : null" wire:click="sortBy('status')">status</x-table.header>
+                    <x-table.header sortable :direction="$sortField === 'priority' ? $sortDirection : null" wire:click="sortBy('priority')">priority</x-table.header>
+                    <x-table.header sortable :direction="$sortField === 'created_by' ? $sortDirection : null" wire:click="sortBy('created_by')">created by</x-table.header>
+                </x-table.row>
+            </x-table.head>
+            <x-table.body>
+                @forelse ($requirements as $requirement)
+                    <x-table.row wire:loading.class.delay="opacity-50">
+                        <x-table.cell>{{ $requirement->name }}</x-table.cell>
+                        <x-table.cell>{{ $requirement->description }}</x-table.cell>
+                        <x-table.cell>{{ \Carbon\Carbon::parse($requirement->due)->format('F d, Y') }}</x-table.cell>
+                        <x-table.cell>{{ $requirement->assignedToType()->name }}</x-table.cell>
+                        <x-table.cell>{{ $requirement->status }}</x-table.cell>
+                        <x-table.cell>{{ $requirement->priority }}</x-table.cell>
+                        <x-table.cell>{{ $requirement->createdBy->firstname }} {{ $requirement->createdBy->lastname }}</x-table.cell>
+                    </x-table.row>
+                @empty
+                    <x-table.row>
+                        <x-table.cell colspan="7">
+                            <div
+                                class="flex font-bold h-full items-center justify-center p-4 text-center text-lg truncate w-full text-gray-500">
+                                No Results Found
+                            </div>
+                        </x-table.cell>
+                    </x-table.row>
+                @endforelse
+            </x-table.body>
+        </x-table>
     </div>
 
     <div class="w-full text-center">
@@ -103,21 +62,33 @@
     {{-- createRequirement modal --}}
     <input type="checkbox" id="createRequirement" class="modal-toggle" />
     <div class="modal" role="dialog">
-        <div class="modal-box">
+        <div class="modal-box w-full max-w-2xl sm:w-3/4 md:w-2/3 lg:w-1/2 xl:max-w-5xl">
             <h3 class="text-lg font-bold">Create Requirement</h3>
-            <form wire:submit.prevent='createRequirement'>
-                <x-text-fieldset type="text" wire:model="name" label="Requirement Name" />
-                <x-textarea-fieldset wire:model="description" label="Requirement Description" />
-                <x-text-fieldset type="date" wire:model="due" label="Requirement Due" />
-                <x-file-fieldset wire:model="required_files" label="Required Files" />
+            <form wire:submit.prevent='createRequirement' class="grid grid-cols-2 gap-x-4"
+                enctype="multipart/form-data">
+                <div class="col-span-2">
+                    <x-text-fieldset class="col-span-2" type="text" name="name" wire:model="name"
+                        label="Requirement Name" />
+                </div>
+                <div class="col-span-2">
+                    <x-textarea-fieldset class="col-span-2" name="description" wire:model="description"
+                        label="Requirement Description" />
+                </div>
+                <x-text-fieldset type="datetime-local" name="due" wire:model="due" label="Requirement Due" />
 
-                <x-select-fieldset wire:model.live="target" label="Select Target">
+                <x-select-fieldset name="priority" wire:model="priority" label="Select Priority">
+                    <option value="low">Low</option>
+                    <option value="normal" selected>Normal</option>
+                    <option value="high">High</option>
+                </x-select-fieldset>
+
+                <x-select-fieldset name="target" wire:model.live="target" label="Select Target">
                     @foreach ($this->targets as $key => $value)
                         <option value="{{ $key }}">{{ $value }}</option>
                     @endforeach
                 </x-select-fieldset>
 
-                <x-select-fieldset wire:model.live="target_id"
+                <x-select-fieldset name="target_id" wire:model.live="target_id"
                     label="{{ !$this->target ? 'Select Target First' : ($this->target === 'college' ? 'Select College' : 'Select Department') }}"
                     :disabled="!$this->target">
                     @foreach ($this->target_ids as $target)
@@ -125,10 +96,15 @@
                     @endforeach
                 </x-select-fieldset>
 
+                <div class="col-span-2">
+                    <x-file-fieldset class="col-span-2" name="required_files" wire:model="required_files"
+                        label="Required Files" />
+                </div>
 
-                <div class="modal-action">
-                    <label for="createRequirement" class="btn btn-sm btn-default uppercase">cancel</label>
-                    <button type="submit" class="btn btn-sm btn-default uppercase">submit</button>
+                <div class=" col-span-2 modal-action flex flex-col sm:flex-row gap-2 sm:gap-4">
+                    <label for="createRequirement"
+                        class="btn btn-sm btn-default uppercase w-full sm:w-auto">cancel</label>
+                    <button type="submit" class="btn btn-sm btn-default uppercase w-full sm:w-auto">submit</button>
                 </div>
             </form>
         </div>
@@ -136,6 +112,7 @@
     </div>
 
     <script>
+        // close modal after creation of new requirement
         document.addEventListener('livewire:init', () => {
             Livewire.on('close-modal', () => {
                 document.getElementById('createRequirement').checked = false;

@@ -8,6 +8,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Auth;
 use Spatie\Permission\Traits\HasRoles;
+use App\Models\Requirement;
 
 class User extends Authenticatable
 {
@@ -48,6 +49,7 @@ class User extends Authenticatable
         ];
     }
 
+    // ========== ========== RELATIONSHIPS | START ========== ==========
     public function department()
     {
         return $this->belongsTo(Department::class);
@@ -57,4 +59,22 @@ class User extends Authenticatable
     {
         return $this->belongsTo(College::class);
     }
+
+    public function requirements()
+    {
+        return $this->hasMany(Requirement::class, 'id');
+    }
+
+    public function submissions()
+    {
+        return $this->hasMany(Submission::class);
+    }
+    // ========== ========== RELATIONSHIPS | END ========== ==========
+
+
+    // ========== ========== ACCESSORS | START ========== ==========
+
+    // ========== ========== ACCESSORS | END ========== ==========
+
+
 }
