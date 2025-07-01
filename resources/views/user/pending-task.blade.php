@@ -3,8 +3,8 @@
         {{-- Pending Requirements Header --}}
         <div class="flex items-center justify-between">
             <h1 class="text-2xl font-bold">Pending Requirements</h1>
-            <div class="text-sm text-gray-500">
-                {{ now()->format('F j, Y') }}
+            <div>
+                @livewire('user.pending-task.calendar-button')
             </div>
         </div>
 
