@@ -5,7 +5,7 @@
         <span class="badge badge-neutral">{{ $requirements->total() }} items</span>
     </div>
 
-    <!-- Search and Sort -->
+    <!-- Search and Filters -->
     <div class="flex flex-col md:flex-row gap-4 w-full">
         <input 
             type="text" 
@@ -14,27 +14,44 @@
             class="input input-bordered w-full md:w-96"
         >
         
-        <div class="flex items-center gap-2">
-            <span class="text-sm">Sort by:</span>
-            <select 
-                wire:model.live="sortField"
-                class="select select-bordered select-sm"
-            >
-                <option value="due">Due Date</option>
-                <option value="name">Name</option>
-                <option value="priority">Priority</option>
-                <option value="created_at">Created At</option>
-            </select>
-            <button 
-                wire:click="sortBy('{{ $sortField }}')"
-                class="btn btn-sm btn-square"
-            >
-                @if($sortDirection === 'asc')
-                    <i class="fa-solid fa-sort-up"></i>
-                @else
-                    <i class="fa-solid fa-sort-down"></i>
-                @endif
-            </button>
+        <div class="flex flex-col md:flex-row gap-4 w-full md:w-auto">
+            <!-- Status Filter -->
+            <div class="flex items-center gap-2">
+                <span class="text-sm">Status:</span>
+                <select 
+                    wire:model.live="statusFilter"
+                    class="select select-bordered select-sm"
+                >
+                    <option value="">All Statuses</option>
+                    @foreach($statuses as $value => $label)
+                        <option value="{{ $value }}">{{ $label }}</option>
+                    @endforeach
+                </select>
+            </div>
+            
+            <!-- Sort By -->
+            <div class="flex items-center gap-2">
+                <span class="text-sm">Sort by:</span>
+                <select 
+                    wire:model.live="sortField"
+                    class="select select-bordered select-sm"
+                >
+                    <option value="due">Due Date</option>
+                    <option value="name">Name</option>
+                    <option value="priority">Priority</option>
+                    <option value="created_at">Created At</option>
+                </select>
+                <button 
+                    wire:click="sortBy('{{ $sortField }}')"
+                    class="btn btn-sm btn-square"
+                >
+                    @if($sortDirection === 'asc')
+                        <i class="fa-solid fa-sort-up"></i>
+                    @else
+                        <i class="fa-solid fa-sort-down"></i>
+                    @endif
+                </button>
+            </div>
         </div>
     </div>
 
@@ -50,12 +67,19 @@
                         <h3 class="font-semibold">{{ $requirement->name }}</h3>
                         <p class="text-sm text-gray-500 line-clamp-2">{{ $requirement->description }}</p>
                     </div>
-                    <span class="badge {{ 
-                        $requirement->priority === 'high' ? 'badge-error' : 
-                        ($requirement->priority === 'medium' ? 'badge-warning' : 'badge-info') 
-                    }}">
-                        {{ ucfirst($requirement->priority) }}
-                    </span>
+                    <div class="flex flex-col items-end gap-2">
+                        <span class="badge {{ 
+                            $requirement->priority === 'high' ? 'badge-error' : 
+                            ($requirement->priority === 'medium' ? 'badge-warning' : 'badge-info') 
+                        }}">
+                            {{ ucfirst($requirement->priority) }}
+                        </span>
+                        @if($requirement->userSubmissions->count() > 0)
+                            <span class="badge {{ $requirement->userSubmissions->first()->status_badge }}">
+                                {{ $requirement->userSubmissions->first()->status_text }}
+                            </span>
+                        @endif
+                    </div>
                 </div>
                 <div class="flex items-center gap-2 text-sm text-gray-500 mt-2">
                     <i class="fa-regular fa-calendar"></i>
@@ -67,7 +91,7 @@
         @empty
             <div class="flex flex-col items-center justify-center py-12 text-gray-500">
                 <i class="fa-regular fa-face-frown text-4xl mb-2"></i>
-                <p>No pending requirements found</p>
+                <p>No requirements found</p>
             </div>
         @endforelse
     </div>
@@ -113,8 +137,10 @@
                             <span>{{ $selectedRequirement->due->format('M j, Y') }} ({{ $selectedRequirement->due->diffForHumans() }})</span>
                         </div>
                         <div class="flex gap-4">
-                            <span class="text-gray-500 w-24">Created:</span>
-                            <span>{{ $selectedRequirement->created_at->format('M j, Y') }}</span>
+                            <span class="text-gray-500 w-24">Status:</span>
+                            <span class="badge {{ $selectedRequirement->userSubmissions->first()?->status_badge ?? 'badge-neutral' }}">
+                                {{ $selectedRequirement->userSubmissions->first()?->status_text ?? 'Not Submitted' }}
+                            </span>
                         </div>
                         
                         <!-- Guide Files -->
@@ -175,19 +201,19 @@
                                             <div class="flex items-center gap-2">
                                                 <i class="fa-regular fa-file"></i>
                                                 <span>
-                                                    @if($submission->media->first())
-                                                        {{ $submission->media->first()->file_name }}
+                                                    @if($submission->submissionFile)
+                                                        {{ $submission->submissionFile->file_name }}
                                                     @else
                                                         File missing
                                                     @endif
                                                 </span>
                                                 <span class="badge {{ $submission->status_badge }}">
-                                                    {{ SubmittedRequirement::statuses()[$submission->status] }}
+                                                    {{ $submission->status_text }}
                                                 </span>
                                             </div>
                                             <div class="flex gap-2">
-                                                @if($submission->media->first())
-                                                    <a href="{{ $submission->media->first()->getUrl() }}" target="_blank" class="btn btn-xs btn-ghost">
+                                                @if($submission->submissionFile)
+                                                    <a href="{{ $submission->submissionFile->getUrl() }}" target="_blank" class="btn btn-xs btn-ghost">
                                                         <i class="fa-solid fa-eye"></i> View
                                                     </a>
                                                 @endif

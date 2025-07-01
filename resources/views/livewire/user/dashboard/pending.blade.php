@@ -11,10 +11,14 @@
     <div class="relative">
         <div class="flex flex-row gap-4 pb-4 overflow-x-auto w-full scrollbar-hide">
             @forelse($pendingRequirements as $requirement)
+                @php
+                    // Ensure the due date is a Carbon instance
+                    $dueDate = \Carbon\Carbon::parse($requirement->due);
+                @endphp
                 <div class="flex-shrink-0 border rounded-lg p-3 flex flex-col w-[300px] hover:bg-gray-50 transition-all">
                     <div class="text-lg font-bold truncate">{{ $requirement->name }}</div>
                     <div class="text-sm text-gray-600 mt-1">
-                        Due: {{ $requirement->due->format('M j, Y') }}
+                        Due: {{ $dueDate->format('M j, Y') }}
                     </div>
                     <div class="text-xs mt-2">
                         Priority: 

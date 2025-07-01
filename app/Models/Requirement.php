@@ -11,6 +11,7 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Carbon\Carbon;
 
 class Requirement extends Model implements HasMedia
 {
@@ -30,12 +31,18 @@ class Requirement extends Model implements HasMedia
         'archived_by',
     ];
 
+    protected $casts = [
+        'due' => 'datetime',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+    ];
+
     // Define media collections
     public function registerMediaCollections(): void
     {
         $this->addMediaCollection('guides')
             ->useDisk(config('media-library.disk_name'))
-            ->singleFile(); // If you want only one guide file per requirement
+            ->singleFile();
 
         $this->addMediaCollection('submissions')
             ->useDisk(config('media-library.disk_name'));
@@ -55,8 +62,50 @@ class Requirement extends Model implements HasMedia
             ->height(100);
     }
 
-    public function createdBy()
+    // Relationships
+    public function createdBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function submissions(): HasMany
+    {
+        return $this->hasMany(SubmittedRequirement::class);
+    }
+
+    public function userSubmissions(): HasMany
+    {
+        return $this->hasMany(SubmittedRequirement::class)
+            ->where('user_id', auth()->id())
+            ->with(['media', 'reviewer'])
+            ->latest();
+    }
+
+    public function media(): MorphMany
+    {
+        return $this->morphMany(Media::class, 'model');
+    }
+
+    public function guides(): MorphMany
+    {
+        return $this->media()->where('collection_name', 'guides');
+    }
+
+    // Get assigned users to the requirement
+    public function targetUsers()
+    {
+        if ($this->target === 'college') {
+            return User::where('college_id', $this->target_id)->get();
+        } elseif ($this->target === 'department') {
+            return User::where('department_id', $this->target_id)->get();
+        } else {
+            return collect();
+        }
+    }
+
+    // Helper method to check if due date is passed
+    public function isOverdue(): bool
+    {
+        return Carbon::now()->gt($this->due);
     }
 }

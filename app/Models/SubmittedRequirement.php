@@ -2,11 +2,11 @@
 
 namespace App\Models;
 
-use Spatie\MediaLibrary\HasMedia;
 use Illuminate\Database\Eloquent\Model;
+use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 class SubmittedRequirement extends Model implements HasMedia
@@ -16,46 +16,56 @@ class SubmittedRequirement extends Model implements HasMedia
     protected $fillable = [
         'requirement_id',
         'user_id',
-        'media_id', // Add this
         'status',
-        'notes',
-        'admin_feedback',
+        'admin_notes',
         'reviewed_by',
-        'reviewed_at'
+        'reviewed_at',
+        'submitted_at'
     ];
 
     protected $casts = [
         'reviewed_at' => 'datetime',
+        'submitted_at' => 'datetime',
     ];
 
+    // Status Constants
     const STATUS_PENDING = 'pending';
     const STATUS_UNDER_REVIEW = 'under_review';
-    const STATUS_APPROVED = 'approved';
+    const STATUS_REVISION_NEEDED = 'revision_needed';
     const STATUS_REJECTED = 'rejected';
-    const STATUS_NEEDS_REVISION = 'needs_revision';
+    const STATUS_APPROVED = 'approved';
 
     public static function statuses()
     {
         return [
             self::STATUS_PENDING => 'Pending',
             self::STATUS_UNDER_REVIEW => 'Under Review',
-            self::STATUS_APPROVED => 'Approved',
+            self::STATUS_REVISION_NEEDED => 'Revision Needed',
             self::STATUS_REJECTED => 'Rejected',
-            self::STATUS_NEEDS_REVISION => 'Needs Revision',
+            self::STATUS_APPROVED => 'Approved',
         ];
     }
 
-    // Required by HasMedia interface
-    public function media(): MorphMany
+    public function registerMediaCollections(): void
     {
-        return $this->morphMany(Media::class, 'model');
+        $this->addMediaCollection('submission_files')
+            ->singleFile();
     }
 
-    // Additional relationship to track the main submission file
-    public function submissionFile()
+    public function submissionFile(): MorphOne
     {
         return $this->morphOne(Media::class, 'model')
-            ->where('collection_name', 'submission');
+            ->where('collection_name', 'submission_files');
+    }
+
+    public function getSubmissionFileAttribute()
+    {
+        return $this->submissionFile()->first();
+    }
+
+    public function addSubmissionFile($file)
+    {
+        return $this->addMedia($file)->toMediaCollection('submission_files');
     }
 
     public function requirement(): BelongsTo
@@ -73,19 +83,30 @@ class SubmittedRequirement extends Model implements HasMedia
         return $this->belongsTo(User::class, 'reviewed_by');
     }
 
+    public function getStatusTextAttribute()
+    {
+        return self::statuses()[$this->status] ?? $this->status;
+    }
+
     public function getStatusBadgeAttribute()
     {
         return match($this->status) {
             self::STATUS_APPROVED => 'badge-success',
             self::STATUS_REJECTED => 'badge-error',
-            self::STATUS_NEEDS_REVISION => 'badge-warning',
-            default => 'badge-info',
+            self::STATUS_REVISION_NEEDED => 'badge-warning',
+            self::STATUS_UNDER_REVIEW => 'badge-info',
+            default => 'badge-neutral', // For Pending status
         };
     }
 
-    public function registerMediaCollections(): void
+    // Automatically set submitted_at when creating a new submission
+    protected static function booted()
     {
-        $this->addMediaCollection('submission') // Changed from 'submission_files' to 'submission'
-            ->singleFile();
+        static::creating(function ($model) {
+            $model->submitted_at = now();
+            if (empty($model->status)) {
+                $model->status = self::STATUS_PENDING;
+            }
+        });
     }
 }

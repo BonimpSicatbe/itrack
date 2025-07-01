@@ -16,6 +16,7 @@ class RequirementsList extends Component
 
     public $perPage = 10;
     public $search = '';
+    public $statusFilter = '';
     public $sortField = 'due';
     public $sortDirection = 'asc';
     public $selectedRequirement = null;
@@ -26,9 +27,15 @@ class RequirementsList extends Component
 
     protected $queryString = [
         'search' => ['except' => ''],
+        'statusFilter' => ['except' => ''],
         'sortField' => ['except' => 'due'],
         'sortDirection' => ['except' => 'asc'],
     ];
+
+    public function mount()
+    {
+        $this->statuses = SubmittedRequirement::statuses();
+    }
 
     public function rules()
     {
@@ -79,33 +86,35 @@ class RequirementsList extends Component
     public function submitRequirement()
     {
         $this->validate([
-            'file' => 'required|file|max:10240', // 10MB max
+            'file' => 'required|file|max:10240',
             'submissionNotes' => 'nullable|string|max:500',
         ]);
 
         $this->uploading = true;
         
         try {
-            // Create the submission record
-            $submission = SubmittedRequirement::create([
-                'requirement_id' => $this->selectedRequirement->id,
-                'user_id' => auth()->id(),
-                'status' => SubmittedRequirement::STATUS_PENDING,
-                'notes' => $this->submissionNotes,
-            ]);
+            DB::transaction(function () {
+                $submission = SubmittedRequirement::create([
+                    'requirement_id' => $this->selectedRequirement->id,
+                    'user_id' => auth()->id(),
+                    'status' => SubmittedRequirement::STATUS_UNDER_REVIEW,
+                    'admin_notes' => $this->submissionNotes,
+                ]);
 
-            // Attach the file to the submission
-            $media = $submission->addMedia($this->file->getRealPath())
-                ->usingName($this->file->getClientOriginalName())
-                ->usingFileName($this->file->getClientOriginalName())
-                ->toMediaCollection('submission_files');
+                $submission->addMedia($this->file->getRealPath())
+                    ->usingName($this->file->getClientOriginalName())
+                    ->usingFileName($this->file->getClientOriginalName())
+                    ->toMediaCollection('submission_files');
 
-            // Update the submission with the media ID
-            $submission->update(['media_id' => $media->id]);
+                // Update requirement status if this is the first submission
+                if ($this->selectedRequirement->status === SubmittedRequirement::STATUS_PENDING) {
+                    $this->selectedRequirement->update(['status' => SubmittedRequirement::STATUS_UNDER_REVIEW]);
+                }
+            });
 
             $this->dispatch('notify', 
                 type: 'success', 
-                message: 'Requirement submitted successfully! Status: Pending Review'
+                message: 'Requirement submitted successfully! Status: Under Review'
             );
             
             $this->reset(['file', 'submissionNotes']);
@@ -115,11 +124,6 @@ class RequirementsList extends Component
                 type: 'error', 
                 message: 'Submission failed: '.$e->getMessage()
             );
-            
-            // Clean up if anything failed
-            if (isset($submission)) {
-                $submission->delete();
-            }
         } finally {
             $this->uploading = false;
         }
@@ -129,13 +133,23 @@ class RequirementsList extends Component
     {
         $requirements = Requirement::query()
             ->where('target_id', auth()->id())
-            ->where('status', 'pending')
             ->when($this->search, function ($query) {
                 $query->where(function ($q) {
                     $q->where('name', 'like', '%'.$this->search.'%')
                       ->orWhere('description', 'like', '%'.$this->search.'%');
                 });
             })
+            ->when($this->statusFilter, function ($query) {
+                $query->whereHas('userSubmissions', function($q) {
+                    $q->where('status', $this->statusFilter);
+                });
+            })
+            ->withCount(['userSubmissions as pending_count' => function($q) {
+                $q->where('status', SubmittedRequirement::STATUS_PENDING);
+            }])
+            ->withCount(['userSubmissions as under_review_count' => function($q) {
+                $q->where('status', SubmittedRequirement::STATUS_UNDER_REVIEW);
+            }])
             ->orderBy($this->sortField, $this->sortDirection)
             ->paginate($this->perPage);
 
