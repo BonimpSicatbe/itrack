@@ -29,7 +29,6 @@ class SubmittedRequirement extends Model implements HasMedia
     ];
 
     // Status Constants
-    const STATUS_PENDING = 'pending';
     const STATUS_UNDER_REVIEW = 'under_review';
     const STATUS_REVISION_NEEDED = 'revision_needed';
     const STATUS_REJECTED = 'rejected';
@@ -38,7 +37,6 @@ class SubmittedRequirement extends Model implements HasMedia
     public static function statuses()
     {
         return [
-            self::STATUS_PENDING => 'Pending',
             self::STATUS_UNDER_REVIEW => 'Under Review',
             self::STATUS_REVISION_NEEDED => 'Revision Needed',
             self::STATUS_REJECTED => 'Rejected',
@@ -94,7 +92,7 @@ class SubmittedRequirement extends Model implements HasMedia
             self::STATUS_APPROVED => 'badge-success',
             self::STATUS_REJECTED => 'badge-error',
             self::STATUS_REVISION_NEEDED => 'badge-warning',
-            self::STATUS_UNDER_REVIEW => 'badge-info',
+            self::STATUS_UNDER_REVIEW => 'badge-accent',
             default => 'badge-neutral', // For Pending status
         };
     }
@@ -105,7 +103,7 @@ class SubmittedRequirement extends Model implements HasMedia
         static::creating(function ($model) {
             $model->submitted_at = now();
             if (empty($model->status)) {
-                $model->status = self::STATUS_PENDING;
+                $model->status = self::STATUS_UNDER_REVIEW;
             }
         });
     }

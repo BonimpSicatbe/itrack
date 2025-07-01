@@ -105,11 +105,6 @@ class RequirementsList extends Component
                     ->usingName($this->file->getClientOriginalName())
                     ->usingFileName($this->file->getClientOriginalName())
                     ->toMediaCollection('submission_files');
-
-                // Update requirement status if this is the first submission
-                if ($this->selectedRequirement->status === SubmittedRequirement::STATUS_PENDING) {
-                    $this->selectedRequirement->update(['status' => SubmittedRequirement::STATUS_UNDER_REVIEW]);
-                }
             });
 
             $this->dispatch('notify', 
@@ -136,7 +131,7 @@ class RequirementsList extends Component
             ->when($this->search, function ($query) {
                 $query->where(function ($q) {
                     $q->where('name', 'like', '%'.$this->search.'%')
-                      ->orWhere('description', 'like', '%'.$this->search.'%');
+                    ->orWhere('description', 'like', '%'.$this->search.'%');
                 });
             })
             ->when($this->statusFilter, function ($query) {
@@ -144,9 +139,6 @@ class RequirementsList extends Component
                     $q->where('status', $this->statusFilter);
                 });
             })
-            ->withCount(['userSubmissions as pending_count' => function($q) {
-                $q->where('status', SubmittedRequirement::STATUS_PENDING);
-            }])
             ->withCount(['userSubmissions as under_review_count' => function($q) {
                 $q->where('status', SubmittedRequirement::STATUS_UNDER_REVIEW);
             }])
