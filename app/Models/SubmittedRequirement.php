@@ -44,6 +44,31 @@ class SubmittedRequirement extends Model implements HasMedia
         ];
     }
 
+    public static function getStatusColor($status)
+    {
+        $colors = [
+            self::STATUS_APPROVED => '#a7c957', // Green (success)
+            self::STATUS_REJECTED => '#ba181b', // Red (error) 
+            self::STATUS_REVISION_NEEDED => '#ffba08', // Amber (warning)
+            self::STATUS_UNDER_REVIEW => '#84dcc6', // Blue (info)
+            'default' => '#6b7280',                // Gray (neutral)
+        ];
+
+        return $colors[$status] ?? $colors['default'];
+    }
+
+    public static function getPriorityColor($priority)
+    {
+        $colors = [
+            'high' => '#ef4444',    // Red
+            'medium' => '#f59e0b',  // Amber
+            'low' => '#3b82f6',     // Blue
+            'default' => '#023e8a', // Gray
+        ];
+
+        return $colors[$priority] ?? $colors['default'];
+    }
+
     public function registerMediaCollections(): void
     {
         $this->addMediaCollection('submission_files')
@@ -86,18 +111,6 @@ class SubmittedRequirement extends Model implements HasMedia
         return self::statuses()[$this->status] ?? $this->status;
     }
 
-    public function getStatusBadgeAttribute()
-    {
-        return match($this->status) {
-            self::STATUS_APPROVED => 'badge-success',
-            self::STATUS_REJECTED => 'badge-error',
-            self::STATUS_REVISION_NEEDED => 'badge-warning',
-            self::STATUS_UNDER_REVIEW => 'badge-accent',
-            default => 'badge-neutral', // For Pending status
-        };
-    }
-
-    // Automatically set submitted_at when creating a new submission
     protected static function booted()
     {
         static::creating(function ($model) {

@@ -2,7 +2,7 @@
     <!-- Header -->
     <div class="flex justify-between items-center">
         <h2 class="text-lg font-bold uppercase">Your Pending Items</h2>
-        <span class="badge badge-neutral">{{ $requirements->total() }} items</span>
+        <span class="badge" style="background-color: {{ \App\Models\SubmittedRequirement::getPriorityColor('default') }}; color: white">{{ $requirements->total() }} items</span>
     </div>
 
     <!-- Search and Filters -->
@@ -68,14 +68,11 @@
                         <p class="text-sm text-gray-500 line-clamp-2">{{ $requirement->description }}</p>
                     </div>
                     <div class="flex flex-col items-end gap-2">
-                        <span class="badge {{ 
-                            $requirement->priority === 'high' ? 'badge-error' : 
-                            ($requirement->priority === 'medium' ? 'badge-warning' : 'badge-info') 
-                        }}">
+                        <span class="badge" style="background-color: {{ \App\Models\SubmittedRequirement::getPriorityColor($requirement->priority) }}; color: white">
                             {{ ucfirst($requirement->priority) }}
                         </span>
                         @if($requirement->userSubmissions->count() > 0)
-                            <span class="badge {{ $requirement->userSubmissions->first()->status_badge }}">
+                            <span class="badge" style="background-color: {{ \App\Models\SubmittedRequirement::getStatusColor($requirement->userSubmissions->first()->status) }}; color: white">
                                 {{ $requirement->userSubmissions->first()->status_text }}
                             </span>
                         @endif
@@ -105,7 +102,7 @@
         </div>
     @endif
 
-    <!-- Requirement Detail Modal -->
+     <!-- Requirement Detail Modal -->
     @if($selectedRequirement)
         <div class="modal modal-open">
             <div class="modal-box max-w-4xl">
@@ -125,10 +122,7 @@
                         <h4 class="font-semibold">Details</h4>
                         <div class="flex gap-4">
                             <span class="text-gray-500 w-24">Priority:</span>
-                            <span class="{{ 
-                                $selectedRequirement->priority === 'high' ? 'text-error' : 
-                                ($selectedRequirement->priority === 'medium' ? 'text-warning' : 'text-info') 
-                            }}">
+                            <span style="color: {{ \App\Models\SubmittedRequirement::getPriorityColor($selectedRequirement->priority) }}">
                                 {{ ucfirst($selectedRequirement->priority) }}
                             </span>
                         </div>
@@ -138,7 +132,7 @@
                         </div>
                         <div class="flex gap-4">
                             <span class="text-gray-500 w-24">Status:</span>
-                            <span class="badge {{ $selectedRequirement->userSubmissions->first()?->status_badge ?? 'badge-neutral' }}">
+                            <span class="badge" style="background-color: {{ $selectedRequirement->userSubmissions->first() ? \App\Models\SubmittedRequirement::getStatusColor($selectedRequirement->userSubmissions->first()->status) : \App\Models\SubmittedRequirement::getStatusColor('default') }}; color: white">
                                 {{ $selectedRequirement->userSubmissions->first()?->status_text ?? 'Not Submitted' }}
                             </span>
                         </div>
