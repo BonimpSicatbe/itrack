@@ -26,6 +26,7 @@ class CalendarButton extends Component
                 'title' => $req->name,
                 'start' => $req->due->format('Y-m-d'),
                 'color' => $req->isOverdue() ? '#ef4444' : '#3b82f6',
+                'allDay' => true,  // Important for dayGrid view
                 'extendedProps' => [
                     'description' => $req->description,
                     'priority' => $req->priority,
