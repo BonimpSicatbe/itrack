@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\admin\RequirementController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\FileController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
@@ -54,9 +55,16 @@ Route::middleware(['auth', 'role:admin|super-admin'])
         Route::resource('requirements', RequirementController::class);
     });
 
-//Route::get('/dashboard', function () {
-//    return view('dashboard');
-//})->middleware(['auth', 'verified'])->name('dashboard');
+// File download and preview routes
+Route::middleware('auth')->group(function () {
+    // File download route
+    Route::get('/download/file/{submission}', [FileController::class, 'download'])
+         ->name('file.download');
+         
+    // File preview route
+    Route::get('/preview/file/{submission}', [FileController::class, 'preview'])
+         ->name('file.preview');
+});
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

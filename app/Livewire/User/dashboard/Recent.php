@@ -10,6 +10,7 @@ class Recent extends Component
 {
     public $recentSubmissions;
     public $selectedSubmission = null;
+    public $showPreview = false;
 
     public function mount()
     {
@@ -33,11 +34,23 @@ class Recent extends Component
             'submissionFile',
             'reviewer'
         ])->find($submissionId);
+        $this->showPreview = false;
+    }
+
+    public function getFileUrl($submission)
+    {
+        return $submission->getFileUrl();
+    }
+
+    public function togglePreview()
+    {
+        $this->showPreview = !$this->showPreview;
     }
 
     public function closeModal()
     {
         $this->selectedSubmission = null;
+        $this->showPreview = false;
     }
 
     public function render()

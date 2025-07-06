@@ -8,6 +8,7 @@ use Spatie\MediaLibrary\InteractsWithMedia;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
+use Illuminate\Support\Facades\Storage;
 
 class SubmittedRequirement extends Model implements HasMedia
 {
@@ -47,11 +48,11 @@ class SubmittedRequirement extends Model implements HasMedia
     public static function getStatusColor($status)
     {
         $colors = [
-            self::STATUS_APPROVED => '#a7c957', // Green (success)
-            self::STATUS_REJECTED => '#ba181b', // Red (error) 
-            self::STATUS_REVISION_NEEDED => '#ffba08', // Amber (warning)
-            self::STATUS_UNDER_REVIEW => '#84dcc6', // Blue (info)
-            'default' => '#6b7280',                // Gray (neutral)
+            self::STATUS_APPROVED => '#a7c957',
+            self::STATUS_REJECTED => '#ba181b', 
+            self::STATUS_REVISION_NEEDED => '#ffba08',
+            self::STATUS_UNDER_REVIEW => '#84dcc6',
+            'default' => '#6b7280',
         ];
 
         return $colors[$status] ?? $colors['default'];
@@ -60,10 +61,10 @@ class SubmittedRequirement extends Model implements HasMedia
     public static function getPriorityColor($priority)
     {
         $colors = [
-            'high' => '#ef4444',    // Red
-            'medium' => '#f59e0b',  // Amber
-            'low' => '#3b82f6',     // Blue
-            'default' => '#023e8a', // Gray
+            'high' => '#ef4444',
+            'medium' => '#f59e0b',
+            'low' => '#3b82f6',
+            'default' => '#023e8a',
         ];
 
         return $colors[$priority] ?? $colors['default'];
@@ -72,7 +73,8 @@ class SubmittedRequirement extends Model implements HasMedia
     public function registerMediaCollections(): void
     {
         $this->addMediaCollection('submission_files')
-            ->singleFile();
+            ->singleFile()
+            ->useDisk('public');
     }
 
     public function submissionFile(): MorphOne
@@ -90,6 +92,24 @@ class SubmittedRequirement extends Model implements HasMedia
     {
         return $this->addMedia($file)->toMediaCollection('submission_files');
     }
+
+    // NEW METHODS FOR FILE HANDLING
+    public function getFileUrl()
+    {
+        if (!$this->submissionFile) {
+            return null;
+        }
+        return Storage::disk('public')->url($this->submissionFile->getPathRelativeToRoot());
+    }
+
+    public function getFilePath()
+    {
+        if (!$this->submissionFile) {
+            return null;
+        }
+        return Storage::disk('public')->path($this->submissionFile->getPathRelativeToRoot());
+    }
+    // END NEW METHODS
 
     public function requirement(): BelongsTo
     {

@@ -89,19 +89,52 @@
 
                     <!-- File Preview -->
                     <div class="flex flex-col gap-4">
-                        <h4 class="font-semibold">Submitted File</h4>
+                        <div class="flex justify-between items-center">
+                            <h4 class="font-semibold">Submitted File</h4>
+                            @if($selectedSubmission->submissionFile)
+                                <button wire:click="togglePreview" class="btn btn-sm">
+                                    @if($showPreview)
+                                        <i class="fas fa-times mr-1"></i> Hide Preview
+                                    @else
+                                        <i class="fas fa-eye mr-1"></i> Preview
+                                    @endif
+                                </button>
+                            @endif
+                        </div>
+                        
                         @if($selectedSubmission->submissionFile)
+                            @php
+                                $fileUrl = $this->getFileUrl($selectedSubmission);
+                                $extension = strtolower($selectedSubmission->submissionFile->extension);
+                                $isImage = in_array($extension, ['jpg', 'jpeg', 'png', 'gif']);
+                                $isPdf = $extension === 'pdf';
+                            @endphp
+
+                            @if($showPreview && ($isImage || $isPdf))
+                                <div class="border rounded-lg p-4 bg-gray-50 mb-4">
+                                    @if($isImage)
+                                        <!-- Image Preview -->
+                                        <img src="{{ $fileUrl }}" 
+                                            alt="File preview" 
+                                            class="max-w-full max-h-64 mx-auto">
+                                    @elseif($isPdf)
+                                        <!-- PDF Preview -->
+                                        <iframe src="{{ route('file.preview', $selectedSubmission->id) }}" 
+                                                class="w-full h-64 border rounded">
+                                            Your browser does not support PDF preview.
+                                        </iframe>
+                                    @endif
+                                </div>
+                            @endif
+
                             <div class="flex flex-col items-center border rounded-lg p-4">
                                 <i class="fa-regular fa-file text-5xl text-gray-400 mb-2"></i>
                                 <span class="text-sm font-medium">{{ $selectedSubmission->submissionFile->file_name }}</span>
                                 <span class="text-xs text-gray-500 mt-1">
                                     {{ number_format($selectedSubmission->submissionFile->size / 1024, 2) }} KB
                                 </span>
-                                <a 
-                                    href="{{ $selectedSubmission->submissionFile->getUrl() }}" 
-                                    target="_blank"
-                                    class="btn btn-sm btn-primary mt-4"
-                                >
+                                <a href="{{ route('file.download', $selectedSubmission->id) }}" 
+                                   class="btn btn-sm btn-primary mt-4">
                                     <i class="fa-solid fa-download mr-1"></i> Download
                                 </a>
                             </div>
