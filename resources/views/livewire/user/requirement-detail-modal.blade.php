@@ -120,8 +120,8 @@
                                                 </div>
                                             </td>
                                             <td>
-                                                <span class="badge {{ $submission->status_badge }}">
-                                                    {{ $submission->status_text }}
+                                                <span class="badge" style="background-color: {{ $requirement->userSubmissions->first() ? \App\Models\SubmittedRequirement::getStatusColor($requirement->userSubmissions->first()->status) : \App\Models\SubmittedRequirement::getStatusColor('default') }}; color: white">
+                                                    {{ $requirement->userSubmissions->first()?->status_text ?? 'Not Submitted' }}
                                                 </span>
                                             </td>
                                             <td>

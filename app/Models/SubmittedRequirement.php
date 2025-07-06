@@ -49,7 +49,6 @@ class SubmittedRequirement extends Model implements HasMedia
     {
         $colors = [
             self::STATUS_APPROVED => '#a7c957',
-            self::STATUS_REJECTED => '#ba181b', 
             self::STATUS_REVISION_NEEDED => '#ffba08',
             self::STATUS_UNDER_REVIEW => '#84dcc6',
             'default' => '#6b7280',
