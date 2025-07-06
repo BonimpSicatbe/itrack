@@ -75,6 +75,11 @@ class User extends Authenticatable
     {
         return $this->hasMany(Submission::class);
     }
+
+    public function submittedRequirements()
+    {
+        return $this->hasMany(SubmittedRequirement::class);
+    }
     // ========== ========== RELATIONSHIPS | END ========== ==========
 
 
