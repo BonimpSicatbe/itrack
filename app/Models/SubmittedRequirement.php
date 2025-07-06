@@ -93,7 +93,6 @@ class SubmittedRequirement extends Model implements HasMedia
         return $this->addMedia($file)->toMediaCollection('submission_files');
     }
 
-    // NEW METHODS FOR FILE HANDLING
     public function getFileUrl()
     {
         if (!$this->submissionFile) {
@@ -109,7 +108,27 @@ class SubmittedRequirement extends Model implements HasMedia
         }
         return Storage::disk('public')->path($this->submissionFile->getPathRelativeToRoot());
     }
-    // END NEW METHODS
+
+    /**
+     * Delete the associated file and its record
+     */
+    public function deleteFile()
+    {
+        if ($this->submissionFile) {
+            $this->submissionFile->delete();
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Check if the submission can be deleted by the current user
+     */
+    public function canBeDeletedBy($user)
+    {
+        return $user->id === $this->user_id && 
+               $this->status !== self::STATUS_APPROVED;
+    }
 
     public function requirement(): BelongsTo
     {
@@ -131,8 +150,23 @@ class SubmittedRequirement extends Model implements HasMedia
         return self::statuses()[$this->status] ?? $this->status;
     }
 
+    public function getStatusBadgeAttribute()
+    {
+        return match($this->status) {
+            self::STATUS_APPROVED => 'badge-success',
+            self::STATUS_REJECTED => 'badge-error',
+            self::STATUS_REVISION_NEEDED => 'badge-warning',
+            default => 'badge-info',
+        };
+    }
+
     protected static function booted()
     {
+        static::deleting(function ($model) {
+            // Delete associated file when the submission is deleted
+            $model->deleteFile();
+        });
+
         static::creating(function ($model) {
             $model->submitted_at = now();
             if (empty($model->status)) {

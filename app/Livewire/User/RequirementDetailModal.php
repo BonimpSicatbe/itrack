@@ -7,6 +7,7 @@ use App\Models\Requirement;
 use Livewire\WithFileUploads;
 use Illuminate\Support\Facades\DB;
 use App\Models\SubmittedRequirement;
+use Illuminate\Support\Facades\Storage;
 
 class RequirementDetailModal extends Component
 {
@@ -16,6 +17,7 @@ class RequirementDetailModal extends Component
     public $file;
     public $uploading = false;
     public $submissionNotes = '';
+    public $confirmingDeletion = null;
 
     protected $listeners = ['showRequirementDetail' => 'loadRequirement'];
 
@@ -80,6 +82,44 @@ class RequirementDetailModal extends Component
             );
         } finally {
             $this->uploading = false;
+        }
+    }
+
+    public function confirmDelete($submissionId)
+    {
+        $this->confirmingDeletion = $submissionId;
+    }
+
+    public function cancelDelete()
+    {
+        $this->confirmingDeletion = null;
+    }
+
+    public function deleteSubmission(SubmittedRequirement $submission)
+    {
+        try {
+            DB::transaction(function () use ($submission) {
+                // Delete associated file
+                if ($submission->submissionFile) {
+                    $submission->submissionFile->delete();
+                }
+                
+                // Delete the submission record
+                $submission->delete();
+            });
+
+            $this->dispatch('notify', 
+                type: 'success', 
+                message: 'Submission deleted successfully!'
+            );
+            
+            $this->requirement->refresh();
+            $this->confirmingDeletion = null;
+        } catch (\Exception $e) {
+            $this->dispatch('notify', 
+                type: 'error', 
+                message: 'Deletion failed: '.$e->getMessage()
+            );
         }
     }
 
