@@ -16,8 +16,7 @@ return new class extends Migration
             $table->string('name')->unique();
             $table->string('description')->nullable();
             $table->date('due'); // date when the requirement is due
-            $table->string('target'); // college or department
-            $table->integer('target_id'); // id of the college or department
+            $table->string('assigned_to'); // id of the college or department
             $table->string('status')->default('pending'); // pending, completed
             $table->string('priority')->default('normal'); // low, normal, high
             $table->foreignId('created_by')->constrained('users'); // user id or name who created the requirement

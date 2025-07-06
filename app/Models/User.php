@@ -21,8 +21,14 @@ class User extends Authenticatable
      * @var list<string>
      */
     protected $fillable = [
-        'name',
+        'firstname',
+        'middlename',
+        'lastname',
+        'extensionname',
         'email',
+        'email_verified_at',
+        'department_id',
+        'college_id',
         'password',
     ];
 
@@ -73,7 +79,10 @@ class User extends Authenticatable
 
 
     // ========== ========== ACCESSORS | START ========== ==========
-
+    public function getFullNameAttribute(): string
+    {
+        return trim("{$this->firstname} {$this->middlename} {$this->lastname} {$this->extensionname}");
+    }
     // ========== ========== ACCESSORS | END ========== ==========
 
 

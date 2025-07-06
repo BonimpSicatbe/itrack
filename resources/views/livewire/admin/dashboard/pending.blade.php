@@ -26,8 +26,8 @@
                 @forelse ($pendings as $pending)
                     <x-table.row wire:loading.class.delay="opacity-50">
                         <x-table.cell>{{ $pending->name }}</x-table.cell>
-                        <x-table.cell>{{ $pending->assignedToType()->name }}</x-table.cell>
-                        <x-table.cell>{{ $pending->assignedTargets() }}</x-table.cell>
+                        <x-table.cell>{{ $pending->assigned_to }}</x-table.cell>
+                        <x-table.cell>{{ $pending->assignedTargets()->count() }}</x-table.cell>
                         <x-table.cell>{{ $pending->status }}</x-table.cell>
                         {{-- <x-table.cell>{{ $pending->priority }}</x-table.cell> --}}
                         <x-table.cell>{{ $pending->priority }}</x-table.cell>
@@ -37,7 +37,7 @@
                     </x-table.row>
                 @empty
                     <x-table.row>
-                        <x-table.cell colspan="8">
+                        <x-table.cell colspan="7">
                             <div
                                 class="flex font-bold h-full items-center justify-center p-4 text-center text-lg truncate w-full text-gray-500">
                                 No Results Found

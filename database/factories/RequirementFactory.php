@@ -16,14 +16,15 @@ class RequirementFactory extends Factory
      */
     public function definition(): array
     {
+        $target = $this->faker->randomElement(['college', 'department']);
+
         return [
             'name' => $this->faker->unique()->words(3, true),
             'description' => $this->faker->sentence(),
             'due' => $this->faker->dateTimeBetween('now', '+1 year')->format('Y-m-d'),
-            'target' => $target = $this->faker->randomElement(['college', 'department']),
-            'target_id' => $target === 'college'
-                ? \App\Models\College::inRandomOrder()->value('id')
-                : \App\Models\Department::inRandomOrder()->value('id'),
+            'assigned_to' => $target === 'college'
+                ? \App\Models\College::inRandomOrder()->value('name')
+                : \App\Models\Department::inRandomOrder()->value('name'),
             'status' => $this->faker->randomElement(['pending', 'completed']),
             'priority' => $this->faker->randomElement(['low', 'normal', 'high']),
             'created_by' => \App\Models\User::inRandomOrder()->value('id'),

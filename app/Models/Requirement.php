@@ -17,8 +17,6 @@ class Requirement extends Model implements HasMedia
         'name',
         'description',
         'due',
-        'target',
-        'target_id',
         'status',
         'priority',
         'assigned_to',
@@ -46,17 +44,23 @@ class Requirement extends Model implements HasMedia
 
     public function assignedTo()
     {
-        return Requirement::where('target', $this->target)
-            ->where('target_id', $this->target_id);
+        return Requirement::where('assigned_to', $this->assigned_to);
     }
 
     public function assignedTargets()
     {
-        if ($this->target === 'college') {
-            return User::where('college_id', $this->target_id)->count();
-        } elseif ($this->target === 'department') {
-            return User::where('department_id', $this->target_id)->count();
+        if (College::where('name', $this->assigned_to)->exists()) {
+            $college = College::where('name', $this->assigned_to)->first();
+            return User::where('college_id', $college->id)->get();
+        } elseif (Department::where('name', $this->assigned_to)->exists()) {
+            $department = Department::where('name', $this->assigned_to)->first();
+            return User::where('department_id', $department->id)->get();
         }
+
+        $collect = collect();
+
+        // Always return a collection to avoid errors
+        return collect();
     }
 
     public function getPriorityColorAttribute()

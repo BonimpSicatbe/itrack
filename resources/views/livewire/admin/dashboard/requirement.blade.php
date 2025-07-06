@@ -10,7 +10,7 @@
     <div class="flex flex-row gap-4 w-full">
         {{-- filters --}}
         <input type="text" wire:model.live="search" id="search" class="input input-sm input-bordered w-128"
-            placeholder="Search requirements">
+            placeholder="Search requirement name">
 
         <div class="grow"></div>
 
@@ -24,7 +24,7 @@
                     <x-table.header sortable :direction="$sortField === 'name' ? $sortDirection : null" wire:click="sortBy('name')">name</x-table.header>
                     <x-table.header>description</x-table.header>
                     <x-table.header sortable :direction="$sortField === 'due' ? $sortDirection : null" wire:click="sortBy('due')">due</x-table.header>
-                    <x-table.header sortable :direction="$sortField === 'target_id' ? $sortDirection : null" wire:click="sortBy('target_id')">assigned to</x-table.header>
+                    <x-table.header sortable :direction="$sortField === 'assigned_to' ? $sortDirection : null" wire:click="sortBy('assigned_to')">assigned to</x-table.header>
                     <x-table.header sortable :direction="$sortField === 'status' ? $sortDirection : null" wire:click="sortBy('status')">status</x-table.header>
                     <x-table.header sortable :direction="$sortField === 'priority' ? $sortDirection : null" wire:click="sortBy('priority')">priority</x-table.header>
                     <x-table.header sortable :direction="$sortField === 'created_by' ? $sortDirection : null" wire:click="sortBy('created_by')">created by</x-table.header>
@@ -32,14 +32,16 @@
             </x-table.head>
             <x-table.body>
                 @forelse ($requirements as $requirement)
-                    <x-table.row wire:loading.class.delay="opacity-50">
+                    <x-table.row wire:click='showRequirement({{ $requirement->id }})'
+                        wire:loading.class.delay="opacity-50" class="hover:bg-base-200 cursor-pointer">
                         <x-table.cell>{{ $requirement->name }}</x-table.cell>
                         <x-table.cell>{{ $requirement->description }}</x-table.cell>
                         <x-table.cell>{{ \Carbon\Carbon::parse($requirement->due)->format('F d, Y') }}</x-table.cell>
-                        <x-table.cell>{{ $requirement->assignedToType()->name }}</x-table.cell>
+                        <x-table.cell>{{ $requirement->assigned_to }}</x-table.cell>
                         <x-table.cell>{{ $requirement->status }}</x-table.cell>
                         <x-table.cell>{{ $requirement->priority }}</x-table.cell>
-                        <x-table.cell>{{ $requirement->createdBy->firstname }} {{ $requirement->createdBy->lastname }}</x-table.cell>
+                        <x-table.cell>{{ $requirement->createdBy->firstname }}
+                            {{ $requirement->createdBy->lastname }}</x-table.cell>
                     </x-table.row>
                 @empty
                     <x-table.row>
@@ -67,14 +69,12 @@
             <form wire:submit.prevent='createRequirement' class="grid grid-cols-2 gap-x-4"
                 enctype="multipart/form-data">
                 <div class="col-span-2">
-                    <x-text-fieldset class="col-span-2" type="text" name="name" wire:model="name"
-                        label="Requirement Name" />
+                    <x-text-fieldset type="text" name="name" wire:model="name" label="Requirement Name" />
                 </div>
                 <div class="col-span-2">
-                    <x-textarea-fieldset class="col-span-2" name="description" wire:model="description"
-                        label="Requirement Description" />
+                    <x-textarea-fieldset name="description" wire:model="description" label="Requirement Description" />
                 </div>
-                <x-text-fieldset type="datetime-local" name="due" wire:model="due" label="Requirement Due" />
+                <x-text-fieldset type="datetime-local" name="due" wire:model="due" label="due date" />
 
                 <x-select-fieldset name="priority" wire:model="priority" label="Select Priority">
                     <option value="low">Low</option>
@@ -82,23 +82,22 @@
                     <option value="high">High</option>
                 </x-select-fieldset>
 
-                <x-select-fieldset name="target" wire:model.live="target" label="Select Target">
-                    @foreach ($this->targets as $key => $value)
+                <x-select-fieldset name="sector" wire:model.live="sector" label="Select Sector">
+                    @foreach ($this->sectors as $key => $value)
                         <option value="{{ $key }}">{{ $value }}</option>
                     @endforeach
                 </x-select-fieldset>
 
-                <x-select-fieldset name="target_id" wire:model.live="target_id"
-                    label="{{ !$this->target ? 'Select Target First' : ($this->target === 'college' ? 'Select College' : 'Select Department') }}"
-                    :disabled="!$this->target">
-                    @foreach ($this->target_ids as $target)
-                        <option value="{{ $target->id }}">{{ $target->name }}</option>
+                <x-select-fieldset name="assigned_to" wire:model.live="assigned_to"
+                    label="{{ !$this->sector ? 'Select Sector First' : ($this->sector === 'college' ? 'Select College' : 'Select Department') }}"
+                    :disabled="!$this->sector">
+                    @foreach ($this->sector_ids as $sector)
+                        <option value="{{ $sector->name }}">{{ $sector->name }}</option>
                     @endforeach
                 </x-select-fieldset>
 
                 <div class="col-span-2">
-                    <x-file-fieldset class="col-span-2" name="required_files" wire:model="required_files"
-                        label="Required Files" />
+                    <x-file-fieldset name="required_files" wire:model="required_files" label="Required Files" />
                 </div>
 
                 <div class=" col-span-2 modal-action flex flex-col sm:flex-row gap-2 sm:gap-4">

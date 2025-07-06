@@ -2,14 +2,17 @@
 
 use App\Http\Controllers\admin\RequirementController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     if (Auth::check()) {
-        if (Auth::user()->hasRole('user')) {
+        $user = Auth::user(); // initiate user
+
+        if ($user->hasRole('user')) {
             return redirect()->route('user.dashboard');
-        } elseif (Auth::user()->hasRole('admin') || Auth::user()->hasRole('super-admin')) {
+        } elseif ($user->hasRole('admin') || $user->hasRole('super-admin')) {
             return redirect()->route('admin.dashboard');
         }
     } else {
@@ -20,6 +23,7 @@ Route::get('/', function () {
 Route::middleware(['auth', 'role:user'])
     ->prefix('user')
     ->group(function () {
+
         Route::get('/dashboard', function () {
             return view('user.dashboard');
         })->name('user.dashboard');
@@ -46,12 +50,20 @@ Route::middleware(['auth', 'role:admin|super-admin'])
     ->prefix('/admin')
     ->as('admin.')
     ->group(function () {
+        /**
+         *
+         * //TODO add route for users (view, edit, delete, show, etc)
+         *
+         **/
+
         Route::get('/dashboard', function () {
             return view('admin.dashboard');
         })->name('dashboard');
 
         // ========== ========== REQUIREMENT ROUTES ========== ==========
-        Route::resource('requirements', RequirementController::class);
+        Route::resource('requirements', RequirementController::class); // admin.requirements.show / index / etc
+
+        Route::resource('users', UserController::class);
     });
 
 //Route::get('/dashboard', function () {

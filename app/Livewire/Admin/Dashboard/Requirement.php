@@ -5,6 +5,7 @@ namespace App\Livewire\Admin\Dashboard;
 use App\Models\College;
 use App\Models\Department;
 use App\Models\Requirement as ModelsRequirement;
+use App\Models\RequirementMedia;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Livewire\Attributes\Computed;
@@ -27,19 +28,19 @@ class Requirement extends Component
     public $due = '';
 
     #[Validate('required|in:low,normal,high')]
-    public $priority;
-
-    #[Validate('required|file|max:15360|mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,jpg,jpeg,png,gif,txt,zip,rar,7z,mp4,avi,mkv,mp3,wav')]
-    public $required_files = '';
+    public $priority = '';
 
     #[Validate('required|in:college,department')]
-    public $target = ""; // college or department
+    public $sector = ""; // college or department
 
-    #[Validate('required|integer')]
-    public $target_id; // college_id or department_id
+    #[Validate('required|string|max:255')]
+    public $assigned_to = ''; // name of the college or department
+
+    #[Validate('required|file|max:15360|mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,jpg,jpeg,png,gif,txt,zip,rar,7z,mp4,avi,mkv,mp3,wav')]
+    public $required_files = null;
 
     #[Computed()]
-    public function targets()
+    public function sectors()
     {
         return collect([
             'college' => 'College',
@@ -48,22 +49,22 @@ class Requirement extends Component
     }
 
     #[Computed()]
-    public function target_ids()
+    public function sector_ids()
     {
-        return $this->target === 'college' ?
+        return $this->sector === 'college' ?
             College::all() :
             Department::all();
     }
 
-    public function updatedTarget()
+    public function updatedSector()
     {
-        $this->target_id = null;
+        $this->assigned_to = null;
     }
 
     public function mount()
     {
-        $this->target = $this->target; // Default target
-        $this->target_id = $this->target_id; // Default target ID
+        $this->sector = $this->sector; // Default sector
+        $this->assigned_to = $this->assigned_to; // Default sector ID
     }
 
     public function updated($propertyName)
@@ -74,93 +75,48 @@ class Requirement extends Component
     // ========== ========== REQUIREMENT CRUD | START ========== ==========
     public function createRequirement()
     {
-        Log::info('Starting requirement creation', [
-            'user_id' => Auth::id(),
-            'input' => [
-                'name' => $this->name,
-                'description' => $this->description,
-                'due' => $this->due,
-                'target' => $this->target,
-                'target_id' => $this->target_id,
-            ]
-        ]);
-
         $validated = $this->validate();
 
         Log::info('Validation passed', $validated);
 
-        $requirement = ModelsRequirement::create([
-            'name' => $validated['name'],
-            'description' => $validated['description'],
-            'due' => $validated['due'],
-            'target' => $validated['target'],
-            'priority' => $validated['priority'],
-            'target_id' => $validated['target_id'],
-            'created_by' => Auth::id(),
-        ]);
+        $requirement = ModelsRequirement::create(array_merge($validated, ['created_by' => Auth::id()]));
 
         Log::info('Requirement created', ['requirement_id' => $requirement->id]);
 
         $media = $requirement->addMedia($validated['required_files'])
             ->toMediaCollection('requirements');
 
-        Log::info('Media added to requirement', [
+        $requirement_media = RequirementMedia::create([
             'requirement_id' => $requirement->id,
-            'media_id' => $media->id ?? null
+            'media_id' => $media->id,
         ]);
+
+
+        // Notify all users assigned to the requirement
+        $assignedUsers = $requirement->assignedTargets(); // Make sure this method returns a collection of User models
+
+        foreach ($assignedUsers as $user) {
+            $user->notify(new \App\Notifications\RequirementNotification(Auth::user(), $requirement));
+        }
+
+        Log::info('Media added to requirement');
+        Log::info('Requirement ID: ' . $requirement->id);
+        Log::info('Media ID: ' . ($media->id ?? 'null'));
+        Log::info('Media Record: ' . json_encode($requirement_media->toArray()));
+        Log::info('File Name: ' . ($media->file_name ?? 'null'));
+        Log::info('File Size (bytes): ' . ($media->size ?? 'null'));
+        Log::info('Uploaded At: ' . ($media->created_at ?? 'null'));
 
         // dd('success', $requirement->getMedia('requirements'));
 
         session()->flash('success', 'Requirement created successfully.');
-        $this->reset(['name', 'description', 'due', 'priority', 'required_files', 'target', 'target_id']);
+        $this->reset(['name', 'description', 'due', 'priority', 'required_files', 'sector', 'assigned_to']);
         $this->dispatch('close-modal');
     }
 
-    public function updateRequirement($requirementId, $data)
+    public function showRequirement($requirementId)
     {
-        $requirement = ModelsRequirement::findOrFail($requirementId);
-
-        // Validate the data
-        $validated = validator($data, [
-            'name' => 'required|string|max:255',
-            'description' => 'required|string',
-            'due' => 'required|date|after_or_equal:today',
-            'target' => 'required|in:college,department',
-            'target_id' => 'required|integer',
-            'required_files' => 'nullable|file|max:15360|mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,jpg,jpeg,png,gif,txt,zip,rar,7z,mp4,avi,mkv,mp3,wav',
-        ])->validate();
-
-        // Update requirement fields
-        $requirement->update([
-            'name' => $validated['name'],
-            'description' => $validated['description'],
-            'due' => $validated['due'],
-            'target' => $validated['target'],
-            'target_id' => $validated['target_id'],
-            'updated_by' => Auth::id(),
-        ]);
-
-        // If a new file is uploaded, replace the media
-        if (!empty($validated['required_files'])) {
-            $requirement->clearMediaCollection('requirements');
-            $requirement->addMedia($validated['required_files'])
-                ->toMediaCollection('requirements');
-        }
-
-        $this->dispatchBrowserEvent('toast-success', ['message' => 'Requirement created successfully.']);
-    }
-
-    public function deleteRequirement($requirementId)
-    {
-        $requirement = ModelsRequirement::findOrFail($requirementId);
-
-        // Delete associated media
-        $requirement->clearMediaCollection('requirements');
-
-        // Delete the requirement
-        $requirement->delete();
-
-        session()->flash('success', 'Requirement deleted successfully.');
+        return redirect()->route('admin.requirements.show', ['requirement' => $requirementId]);
     }
     // ========== ========== REQUIREMENT CRUD | END ========== ==========
 
@@ -187,7 +143,7 @@ class Requirement extends Component
         // sleep(1); // for testing purposes, simulating a delay
 
         return view('livewire.admin.dashboard.requirement', [
-            'target' => $this->target,
+            'sector' => $this->sector,
             'colleges' => College::all(),
             'departments' => Department::all(),
             'requirements' => ModelsRequirement::search('name', $this->search)->orderBy($this->sortField, $this->sortDirection)->paginate(20),
