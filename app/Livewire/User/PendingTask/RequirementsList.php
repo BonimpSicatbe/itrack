@@ -6,6 +6,7 @@ use Livewire\Component;
 use App\Models\Requirement;
 use Livewire\WithPagination;
 use App\Models\SubmittedRequirement;
+use App\Models\User;
 
 class RequirementsList extends Component
 {
@@ -46,8 +47,19 @@ class RequirementsList extends Component
 
     public function render()
     {
+        $user = User::find(auth()->id());
+
         $requirements = Requirement::query()
-            ->where('target_id', auth()->id())
+            ->where(function($query) use ($user) {
+                $query->where(function($q) use ($user) {
+                    $q->where('target', 'college')
+                      ->where('target_id', $user->college_id);
+                })
+                ->orWhere(function($q) use ($user) {
+                    $q->where('target', 'department')
+                      ->where('target_id', $user->department_id);
+                });
+            })
             ->when($this->search, function ($query) {
                 $query->where(function ($q) {
                     $q->where('name', 'like', '%'.$this->search.'%')
