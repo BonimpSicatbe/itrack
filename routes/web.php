@@ -29,9 +29,9 @@ Route::middleware(['auth', 'role:user'])
             return view('user.file-manager');
         })->name('user.file-manager');
 
-        Route::get('/pending-task', function () {
-            return view('user.pending-task');
-        })->name('user.pending-task');
+        Route::get('/requirements', function () {
+            return view('user.requirements');
+        })->name('user.requirements');
 
         Route::get('/recents', function () {
             return view('user.recents');

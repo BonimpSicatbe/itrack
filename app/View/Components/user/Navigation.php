@@ -20,8 +20,7 @@ class Navigation extends Component
     {
         $this->navLink = [
             ['label' => 'Dashboard', 'route' => 'user.dashboard', 'icon' => 'home'],
-            ['label' => 'Pending Requirements', 'route' => 'user.pending-task', 'icon' => 'spinner'],
-            ['label' => 'Requirements', 'route' => 'user.archive', 'icon' => 'clipboard-list'],
+            ['label' => 'Requirements', 'route' => 'user.requirements', 'icon' => 'spinner'],
             ['label' => 'Recents', 'route' => 'user.recents', 'icon' => 'clock'],
             ['label' => 'Archive', 'route' => 'user.archive', 'icon' => 'archive'],
             ['label' => 'File Manager', 'icon' => 'folder', 'route' => 'user.file-manager'],

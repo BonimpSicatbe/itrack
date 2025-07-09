@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Livewire\user\PendingTask;
+namespace App\Livewire\user\Requirements;
 
 use Livewire\Component;
 use App\Models\Requirement;
@@ -77,7 +77,7 @@ class RequirementsList extends Component
             ->orderBy($this->sortField, $this->sortDirection)
             ->paginate($this->perPage);
 
-        return view('livewire.user.pending-task.requirements-list', [
+        return view('livewire.user.requirements.requirements-list', [
             'requirements' => $requirements,
             'statuses' => SubmittedRequirement::statuses(),
         ]);
