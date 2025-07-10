@@ -78,7 +78,7 @@ class User extends Authenticatable
 
     public function submittedRequirements()
     {
-        return $this->hasMany(SubmittedRequirement::class);
+        return $this->hasMany(SubmittedRequirement::class, 'user_id', 'id');
     }
     // ========== ========== RELATIONSHIPS | END ========== ==========
 

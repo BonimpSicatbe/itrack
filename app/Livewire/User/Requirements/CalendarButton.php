@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Livewire\user\PendingTask;
+namespace App\Livewire\user\Requirements;
 
 use Livewire\Component;
 use App\Models\Requirement;
@@ -54,6 +54,6 @@ class CalendarButton extends Component
 
     public function render()
     {
-        return view('livewire.user.pending-task.calendar-button');
+        return view('livewire.user.requirements.calendar-button');
     }
 }

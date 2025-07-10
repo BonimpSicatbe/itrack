@@ -5,11 +5,15 @@ namespace App\Livewire\User\Dashboard;
 use Livewire\Component;
 use Illuminate\Support\Facades\Auth;
 use App\Models\SubmittedRequirement;
+use App\Models\Requirement;
 
 class Recent extends Component
 {
     public $recentSubmissions;
-    public $selectedSubmission = null;
+    public $selectedRequirementId = null;
+
+    public $showAll = false;   //
+    public $listView = false;  //
 
     // public function mount()
     // {
@@ -26,22 +30,28 @@ class Recent extends Component
     //         ->get();
     // }
 
-    // public function selectSubmission($submissionId)
-    // {
-    //     $this->selectedSubmission = SubmittedRequirement::with([
-    //         'requirement',
-    //         'submissionFile',
-    //         'reviewer'
-    //     ])->find($submissionId);
-    // }
-
-    // public function closeModal()
-    // {
-    //     $this->selectedSubmission = null;
-    // }
+    public function showRequirementDetail($submissionId)
+    {
+        $submission = SubmittedRequirement::find($submissionId);
+        $this->selectedRequirementId = $submission->requirement_id;
+        $this->dispatch('showRequirementDetail', requirementId: $this->selectedRequirementId);
+    }
 
     public function render()
     {
         return view('livewire.user.dashboard.recent');
     }
+
+    public function recentSubmissions()
+    {
+        $recentSubmissions = SubmittedRequirement::with(['requirement', 'submissionFile'])
+            ->where('user_id', auth()->id())
+            ->latest('submitted_at')
+            ->take(10) // or paginate() if needed
+            ->get();
+
+        return view('user.recent-submissions', compact('recentSubmissions'));
+    }
+
 }
+

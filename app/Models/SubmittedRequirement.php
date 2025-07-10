@@ -8,6 +8,7 @@ use Spatie\MediaLibrary\InteractsWithMedia;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
+use Illuminate\Support\Facades\Storage;
 
 class SubmittedRequirement extends Model implements HasMedia
 {
@@ -47,11 +48,10 @@ class SubmittedRequirement extends Model implements HasMedia
     public static function getStatusColor($status)
     {
         $colors = [
-            self::STATUS_APPROVED => '#a7c957', // Green (success)
-            self::STATUS_REJECTED => '#ba181b', // Red (error) 
-            self::STATUS_REVISION_NEEDED => '#ffba08', // Amber (warning)
-            self::STATUS_UNDER_REVIEW => '#84dcc6', // Blue (info)
-            'default' => '#6b7280',                // Gray (neutral)
+            self::STATUS_APPROVED => '#a7c957',
+            self::STATUS_REVISION_NEEDED => '#ffba08',
+            self::STATUS_UNDER_REVIEW => '#84dcc6',
+            'default' => '#6b7280',
         ];
 
         return $colors[$status] ?? $colors['default'];
@@ -60,10 +60,10 @@ class SubmittedRequirement extends Model implements HasMedia
     public static function getPriorityColor($priority)
     {
         $colors = [
-            'high' => '#ef4444',    // Red
-            'medium' => '#f59e0b',  // Amber
-            'low' => '#3b82f6',     // Blue
-            'default' => '#023e8a', // Gray
+            'high' => '#ef4444',
+            'medium' => '#f59e0b',
+            'low' => '#3b82f6',
+            'default' => '#023e8a',
         ];
 
         return $colors[$priority] ?? $colors['default'];
@@ -72,7 +72,8 @@ class SubmittedRequirement extends Model implements HasMedia
     public function registerMediaCollections(): void
     {
         $this->addMediaCollection('submission_files')
-            ->singleFile();
+            ->singleFile()
+            ->useDisk('public');
     }
 
     public function submissionFile(): MorphOne
@@ -89,6 +90,43 @@ class SubmittedRequirement extends Model implements HasMedia
     public function addSubmissionFile($file)
     {
         return $this->addMedia($file)->toMediaCollection('submission_files');
+    }
+
+    public function getFileUrl()
+    {
+        if (!$this->submissionFile) {
+            return null;
+        }
+        return Storage::disk('public')->url($this->submissionFile->getPathRelativeToRoot());
+    }
+
+    public function getFilePath()
+    {
+        if (!$this->submissionFile) {
+            return null;
+        }
+        return Storage::disk('public')->path($this->submissionFile->getPathRelativeToRoot());
+    }
+
+    /**
+     * Delete the associated file and its record
+     */
+    public function deleteFile()
+    {
+        if ($this->submissionFile) {
+            $this->submissionFile->delete();
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Check if the submission can be deleted by the current user
+     */
+    public function canBeDeletedBy($user)
+    {
+        return $user->id === $this->user_id && 
+               $this->status !== self::STATUS_APPROVED;
     }
 
     public function requirement(): BelongsTo
@@ -111,8 +149,23 @@ class SubmittedRequirement extends Model implements HasMedia
         return self::statuses()[$this->status] ?? $this->status;
     }
 
+    public function getStatusBadgeAttribute()
+    {
+        return match($this->status) {
+            self::STATUS_APPROVED => 'badge-success',
+            self::STATUS_REJECTED => 'badge-error',
+            self::STATUS_REVISION_NEEDED => 'badge-warning',
+            default => 'badge-info',
+        };
+    }
+
     protected static function booted()
     {
+        static::deleting(function ($model) {
+            // Delete associated file when the submission is deleted
+            $model->deleteFile();
+        });
+
         static::creating(function ($model) {
             $model->submitted_at = now();
             if (empty($model->status)) {

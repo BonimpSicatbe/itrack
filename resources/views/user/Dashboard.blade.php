@@ -7,7 +7,7 @@
         @livewire('user.dashboard.pending')
 
         {{-- recents --}}
-        @livewire('user.dashboard.recent')
+        {{-- @livewire('user.dashboard.recent') --}}
 
         {{-- progresss --}}
         @livewire('user.dashboard.progress')
