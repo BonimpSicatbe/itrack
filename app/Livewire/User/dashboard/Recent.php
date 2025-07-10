@@ -12,6 +12,9 @@ class Recent extends Component
     public $recentSubmissions;
     public $selectedRequirementId = null;
 
+    public $showAll = false;   // 
+    public $listView = false;  // 
+
     public function mount()
     {
         $this->loadRecentSubmissions();
@@ -38,4 +41,17 @@ class Recent extends Component
     {
         return view('livewire.user.dashboard.recent');
     }
+
+    public function recentSubmissions()
+    {
+        $recentSubmissions = SubmittedRequirement::with(['requirement', 'submissionFile'])
+            ->where('user_id', auth()->id())
+            ->latest('submitted_at')
+            ->take(10) // or paginate() if needed
+            ->get();
+
+        return view('user.recent-submissions', compact('recentSubmissions'));
+    }
+
 }
+

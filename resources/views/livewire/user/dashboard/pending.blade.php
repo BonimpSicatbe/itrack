@@ -3,7 +3,7 @@
     <div class="flex flex-row items-center justify-between w-full">
         <div class="text-lg uppercase font-bold">Pending Requirements</div>
         <a href="{{ route('user.requirements') }}" class="flex items-center text-green-500 hover:text-green-700 text-xs hover:link transition-all">
-            See More <i class="fa-solid fa-chevron-right ml-1"></i>
+            see more <i class="fa-solid fa-chevron-right ml-1"></i>
         </a>
     </div>
 
