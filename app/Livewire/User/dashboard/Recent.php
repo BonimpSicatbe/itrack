@@ -11,34 +11,34 @@ class Recent extends Component
     public $recentSubmissions;
     public $selectedSubmission = null;
 
-    public function mount()
-    {
-        $this->loadRecentSubmissions();
-    }
+    // public function mount()
+    // {
+    //     $this->loadRecentSubmissions();
+    // }
 
-    public function loadRecentSubmissions()
-    {
-        $this->recentSubmissions = SubmittedRequirement::where('user_id', Auth::id())
-            ->with(['requirement', 'submissionFile', 'reviewer'])
-            ->whereNotNull('submitted_at')
-            ->orderBy('submitted_at', 'desc')
-            ->limit(10)
-            ->get();
-    }
+    // public function loadRecentSubmissions()
+    // {
+    //     $this->recentSubmissions = SubmittedRequirement::where('user_id', Auth::id())
+    //         ->with(['requirement', 'submissionFile', 'reviewer'])
+    //         ->whereNotNull('submitted_at')
+    //         ->orderBy('submitted_at', 'desc')
+    //         ->limit(10)
+    //         ->get();
+    // }
 
-    public function selectSubmission($submissionId)
-    {
-        $this->selectedSubmission = SubmittedRequirement::with([
-            'requirement',
-            'submissionFile',
-            'reviewer'
-        ])->find($submissionId);
-    }
+    // public function selectSubmission($submissionId)
+    // {
+    //     $this->selectedSubmission = SubmittedRequirement::with([
+    //         'requirement',
+    //         'submissionFile',
+    //         'reviewer'
+    //     ])->find($submissionId);
+    // }
 
-    public function closeModal()
-    {
-        $this->selectedSubmission = null;
-    }
+    // public function closeModal()
+    // {
+    //     $this->selectedSubmission = null;
+    // }
 
     public function render()
     {

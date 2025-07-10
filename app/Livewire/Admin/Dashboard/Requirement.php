@@ -18,7 +18,7 @@ class Requirement extends Component
 {
     use WithFileUploads, WithPagination;
 
-    #[Validate('required|string|max:255')]
+    #[Validate('required|string|max:255|unique:requirements,name')]
     public $name = '';
 
     #[Validate('required|string')]
@@ -75,43 +75,62 @@ class Requirement extends Component
     // ========== ========== REQUIREMENT CRUD | START ========== ==========
     public function createRequirement()
     {
-        $validated = $this->validate();
+        try {
+            $validated = $this->validate();
 
-        Log::info('Validation passed', $validated);
+            Log::info('Validation passed', $validated);
 
-        $requirement = ModelsRequirement::create(array_merge($validated, ['created_by' => Auth::id()]));
+            $requirement = ModelsRequirement::create(array_merge($validated, ['created_by' => Auth::id()]));
 
-        Log::info('Requirement created', ['requirement_id' => $requirement->id]);
+            Log::info('Requirement created', ['requirement_id' => $requirement->id]);
 
-        $media = $requirement->addMedia($validated['required_files'])
-            ->toMediaCollection('requirements');
+            $media = $requirement->addMedia($validated['required_files'])
+                ->toMediaCollection('requirements');
 
-        $requirement_media = RequirementMedia::create([
-            'requirement_id' => $requirement->id,
-            'media_id' => $media->id,
-        ]);
+            $requirement_media = RequirementMedia::create([
+                'requirement_id' => $requirement->id,
+                'media_id' => $media->id,
+            ]);
 
 
-        // Notify all users assigned to the requirement
-        $assignedUsers = $requirement->assignedTargets(); // Make sure this method returns a collection of User models
+            /**
+             *
+             * notifies the users assigned to the requirement
+             * that a new requirement has been created
+             *
+             **/
+            $assignedUsers = $requirement->assignedTargets(); // Make sure this method returns a collection of User models
 
-        foreach ($assignedUsers as $user) {
-            $user->notify(new \App\Notifications\RequirementNotification(Auth::user(), $requirement));
+            foreach ($assignedUsers as $user) {
+                Log::info('Notifying user', ['user_id' => $user->id, 'requirement_id' => $requirement->id]);
+                $user->notify(new \App\Notifications\RequirementNotification(Auth::user(), $requirement));
+            }
+
+            // Log the details of the media added to the requirement
+            Log::info('Media added to requirement');
+            Log::info('Requirement ID: ' . $requirement->id);
+            Log::info('Media ID: ' . ($media->id ?? 'null'));
+            Log::info('Media Record: ' . json_encode($requirement_media->toArray()));
+            Log::info('File Name: ' . ($media->file_name ?? 'null'));
+            Log::info('File Size (bytes): ' . ($media->size ?? 'null'));
+            Log::info('Uploaded At: ' . ($media->created_at ?? 'null'));
+
+            session()->flash('success', 'Requirement created successfully.');
+            $this->reset(['name', 'description', 'due', 'priority', 'required_files', 'sector', 'assigned_to']);
+            $this->dispatch('close-modal');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            throw $e;
+        } catch (\Illuminate\Database\QueryException $e) {
+            if ($e->getCode() == 23000) { // Integrity constraint violation: duplicate entry
+                session()->flash('error', 'A requirement with this name already exists.');
+            } else {
+                session()->flash('error', 'An error occurred while creating the requirement.');
+            }
+            Log::error('Requirement creation failed', ['error' => $e->getMessage()]);
+        } catch (\Exception $e) {
+            session()->flash('error', 'An unexpected error occurred.');
+            Log::error('Requirement creation failed', ['error' => $e->getMessage()]);
         }
-
-        Log::info('Media added to requirement');
-        Log::info('Requirement ID: ' . $requirement->id);
-        Log::info('Media ID: ' . ($media->id ?? 'null'));
-        Log::info('Media Record: ' . json_encode($requirement_media->toArray()));
-        Log::info('File Name: ' . ($media->file_name ?? 'null'));
-        Log::info('File Size (bytes): ' . ($media->size ?? 'null'));
-        Log::info('Uploaded At: ' . ($media->created_at ?? 'null'));
-
-        // dd('success', $requirement->getMedia('requirements'));
-
-        session()->flash('success', 'Requirement created successfully.');
-        $this->reset(['name', 'description', 'due', 'priority', 'required_files', 'sector', 'assigned_to']);
-        $this->dispatch('close-modal');
     }
 
     public function showRequirement($requirementId)
@@ -119,8 +138,6 @@ class Requirement extends Component
         return redirect()->route('admin.requirements.show', ['requirement' => $requirementId]);
     }
     // ========== ========== REQUIREMENT CRUD | END ========== ==========
-
-
 
     // ========== ========== SEARCH AND SORT | START ========== ==========
     public $search = '';

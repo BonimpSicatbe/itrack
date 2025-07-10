@@ -1,11 +1,11 @@
 {{--
-    folder:     admin/pages/user/show
-    name:       admin.user.show
-    route:      admin/requirements/{requirementId}
+    folder:     user/pages/user/show
+    name:       user.user.show
+    route:      user/requirements/{requirementId}
     - show specific details of a user
 --}}
 
-<x-admin.app-layout>
+<x-user.app-layout>
     {{-- user requirement --}}
     <div class="flex flex-col gap-4 w-full bg-white rounded-lg p-4">
         <div class="text-lg font-bold uppercase">User Details</div>
@@ -56,5 +56,5 @@
     </div>
 
     {{-- user requirement/s --}}
-    @livewire('admin.requirement.show.requirement-list', ['requirements' => $user->requirements])
-</x-admin.app-layout>
+    {{-- @livewire('admin.requirement.show.requirement-list', ['requirements' => $user->requirements]) --}}
+</x-user.app-layout>

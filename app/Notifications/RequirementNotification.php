@@ -6,6 +6,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
+use Illuminate\Support\Facades\Auth;
 
 class RequirementNotification extends Notification
 {
@@ -19,7 +20,6 @@ class RequirementNotification extends Notification
      */
     public function __construct($user, $requirement)
     {
-        $this->user = $user;
         $this->requirement = $requirement;
     }
 
@@ -30,7 +30,7 @@ class RequirementNotification extends Notification
      */
     public function via(object $notifiable): array
     {
-        return ['database', 'mail'];
+        return ['database'];
     }
 
     /**
@@ -40,11 +40,21 @@ class RequirementNotification extends Notification
     {
         return (new MailMessage)
             ->markdown('mail.requirement-notification', [
-                'user' => $this->user,
+                'user' => Auth::user(),
                 'requirement' => $this->requirement,
             ]);
     }
-
+    /**
+     * Get the type casted representation of the notification.
+     *
+     * @return array<string, string>
+     */
+    public function casts(): array
+    {
+        return [
+            'data' => 'array',
+        ];
+    }
     /**
      * Get the array representation of the notification.
      *
@@ -53,7 +63,8 @@ class RequirementNotification extends Notification
     public function toArray(object $notifiable): array
     {
         return [
-            //
+            'requirement' => $this->requirement ?? null,
+            'message' => 'A new requirement has been assigned to you.',
         ];
     }
 }

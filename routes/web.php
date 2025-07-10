@@ -3,6 +3,7 @@
 use App\Http\Controllers\admin\RequirementController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\UserRequirementController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
@@ -23,6 +24,15 @@ Route::get('/', function () {
 Route::middleware(['auth', 'role:user'])
     ->prefix('user')
     ->group(function () {
+        /**
+         *
+         * show user requirement list
+         * show user requirement details
+         *
+         **/
+        Route::resource('requirements', UserRequirementController::class)
+            ->only(['index', 'show'])
+            ->names('user.requirements');
 
         Route::get('/dashboard', function () {
             return view('user.dashboard');
@@ -43,6 +53,10 @@ Route::middleware(['auth', 'role:user'])
         Route::get('/archive', function () {
             return view('user.archive');
         })->name('user.archive');
+
+        Route::get('/notifications', function () {
+            return view('user.notifications');
+        })->name('user.notifications');
     });
 
 // admin and super-admin routes

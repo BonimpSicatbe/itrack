@@ -3,18 +3,18 @@
     <div class="flex flex-row items-center justify-between w-full">
         <div class="text-lg uppercase font-bold">Recent Submissions</div>
     </div>
-    
+
     {{-- list --}}
-    @if($recentSubmissions->count() > 0)
+    {{-- @if($recentSubmissions->count() > 0)
         <div class="flex flex-row gap-4 overflow-x-auto w-full py-2">
             @foreach($recentSubmissions as $submission)
-                <div 
+                <div
                     wire:click="selectSubmission({{ $submission->id }})"
                     class="border rounded-lg p-3 min-w-[300px] hover:bg-gray-50 transition-all flex flex-col gap-1 cursor-pointer"
                 >
                     <div class="flex justify-between items-start">
                         <div class="text-sm font-bold truncate">{{ $submission->requirement->name }}</div>
-                        <span class="badge px-2 py-1 text-xs rounded" 
+                        <span class="badge px-2 py-1 text-xs rounded"
                               style="background-color: {{ \App\Models\SubmittedRequirement::getStatusColor($submission->status) }}; color: white">
                             {{ $submission->status_text }}
                         </span>
@@ -37,10 +37,10 @@
             <i class="fa-regular fa-folder-open text-3xl mb-2"></i>
             <p class="text-sm">No recent submissions found</p>
         </div>
-    @endif
+    @endif --}}
 
     <!-- Submission Detail Modal -->
-    @if($selectedSubmission)
+    {{-- @if($selectedSubmission)
         <div class="modal modal-open">
             <div class="modal-box max-w-4xl">
                 <div class="flex justify-between items-start">
@@ -97,8 +97,8 @@
                                 <span class="text-xs text-gray-500 mt-1">
                                     {{ number_format($selectedSubmission->submissionFile->size / 1024, 2) }} KB
                                 </span>
-                                <a 
-                                    href="{{ $selectedSubmission->submissionFile->getUrl() }}" 
+                                <a
+                                    href="{{ $selectedSubmission->submissionFile->getUrl() }}"
                                     target="_blank"
                                     class="btn btn-sm btn-primary mt-4"
                                 >
@@ -119,5 +119,5 @@
                 </div>
             </div>
         </div>
-    @endif
+    @endif --}}
 </div>

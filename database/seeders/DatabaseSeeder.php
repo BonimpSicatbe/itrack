@@ -23,7 +23,7 @@ class DatabaseSeeder extends Seeder
 
         // random users
         User::factory(150)->create();
-        Requirement::factory(100)->create();
+        Requirement::factory(250)->create();
 
         $user = User::create([
             'firstname' => 'Doming',

@@ -21,10 +21,11 @@ class Navigation extends Component
         $this->navLink = [
             ['label' => 'Dashboard', 'route' => 'user.dashboard', 'icon' => 'home'],
             ['label' => 'Pending Requirements', 'route' => 'user.pending-task', 'icon' => 'spinner'],
-            ['label' => 'Requirements', 'route' => 'user.archive', 'icon' => 'clipboard-list'],
+            ['label' => 'Requirements', 'route' => 'user.requirements.index', 'icon' => 'clipboard-list'],
             ['label' => 'Recents', 'route' => 'user.recents', 'icon' => 'clock'],
             ['label' => 'Archive', 'route' => 'user.archive', 'icon' => 'archive'],
             ['label' => 'File Manager', 'icon' => 'folder', 'route' => 'user.file-manager'],
+            ['label' => 'Notifications', 'icon' => 'bell', 'route' => 'user.notifications'],
 
             ['label' => Auth::user()->firstname . ' ' . Auth::user()->lastname, 'route' => 'profile.edit', 'icon' => 'user'],
             ['label' => 'Logout', 'route' => 'logout', 'icon' => 'right-from-bracket'],
