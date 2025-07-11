@@ -2,23 +2,23 @@
     <!-- Header -->
     <div class="flex justify-between items-center">
         <h2 class="text-lg font-bold uppercase">Your Pending Items</h2>
-        <span class="badge" style="background-color: {{ \App\Models\SubmittedRequirement::getPriorityColor('default') }}; color: white">{{ $requirements->total() }} items</span>
+        <span class="badge" style="background-color: {{ \App\Models\SubmittedRequirement::getPriorityColor('default') }}; color: white">{{ $requirements->count() }} items</span>
     </div>
 
     <!-- Search and Filters -->
     <div class="flex flex-col md:flex-row gap-4 w-full">
-        <input 
-            type="text" 
+        <input
+            type="text"
             wire:model.live.debounce.300ms="search"
-            placeholder="Search requirements..." 
+            placeholder="Search requirements..."
             class="input input-bordered w-full md:w-96"
         >
-        
+
         <div class="flex flex-col md:flex-row gap-4 w-full md:w-auto">
             <!-- Status Filter -->
             <div class="flex items-center gap-2">
                 <span class="text-sm">Status:</span>
-                <select 
+                <select
                     wire:model.live="statusFilter"
                     class="select select-bordered select-sm"
                 >
@@ -28,11 +28,11 @@
                     @endforeach
                 </select>
             </div>
-            
+
             <!-- Sort By -->
             <div class="flex items-center gap-2">
                 <span class="text-sm">Sort by:</span>
-                <select 
+                <select
                     wire:model.live="sortField"
                     class="select select-bordered select-sm"
                 >
@@ -41,7 +41,7 @@
                     <option value="priority">Priority</option>
                     <option value="created_at">Created At</option>
                 </select>
-                <button 
+                <button
                     wire:click="sortBy('{{ $sortField }}')"
                     class="btn btn-sm btn-square"
                 >
@@ -58,7 +58,7 @@
     <!-- Requirements List -->
     <div class="flex flex-col gap-3">
         @forelse($requirements as $requirement)
-            <div 
+            <div
                 wire:click="$dispatch('showRequirementDetail', { requirementId: {{ $requirement->id }} })"
                 class="flex flex-col p-4 border rounded-lg hover:bg-gray-50 cursor-pointer"
             >
@@ -94,13 +94,13 @@
     </div>
 
     <!-- Load More -->
-    @if($requirements->hasMorePages())
+    {{-- @if($requirements->hasMorePages())
         <div class="flex justify-center">
             <button wire:click="loadMore" class="btn btn-primary">
                 Load More
             </button>
         </div>
-    @endif
+    @endif --}}
 
     <!-- Include the reusable modal component -->
     @livewire('user.requirement-detail-modal')

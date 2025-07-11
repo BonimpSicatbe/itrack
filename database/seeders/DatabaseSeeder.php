@@ -2,6 +2,8 @@
 
 namespace Database\Seeders;
 
+use App\Models\College;
+use App\Models\Department;
 use App\Models\Requirement;
 use App\Models\User;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
@@ -22,7 +24,9 @@ class DatabaseSeeder extends Seeder
         $this->call(CollegesAndDepartmentsSeeder::class);
 
         // random users
-        User::factory(150)->create();
+        User::factory(150)->create()->each(function ($user) {
+            $user->assignRole('user');
+        });
         Requirement::factory(250)->create();
 
         $user = User::create([
@@ -63,5 +67,21 @@ class DatabaseSeeder extends Seeder
             'password' => bcrypt('password'),
         ]);
         $superAdmin->assignRole('super-admin');
+
+        $colleges = College::all();
+        $departments = Department::all();
+
+        foreach ($colleges as $college) {
+            Requirement::factory(rand(5, 10))->create([
+                'assigned_to' => $college->name,
+                'created_by' => User::factory()->create()->assignRole('user'),
+            ]);
+        }
+        foreach ($departments as $department) {
+            Requirement::factory(rand(5, 10))->create([
+                'assigned_to' => $department->name,
+                'created_by' => User::factory()->create()->assignRole('user'),
+            ]);
+        }
     }
 }

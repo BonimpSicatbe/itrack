@@ -2,18 +2,16 @@
 
 namespace Database\Factories;
 
+use App\Models\Requirement;
+use App\Models\User;
+use App\Notifications\RequirementNotification;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Support\Facades\Auth;
 
-/**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Requirement>
- */
 class RequirementFactory extends Factory
 {
-    /**
-     * Define the model's default state.
-     *
-     * @return array<string, mixed>
-     */
+    protected $model = Requirement::class;
+
     public function definition(): array
     {
         $target = $this->faker->randomElement(['college', 'department']);
@@ -27,9 +25,22 @@ class RequirementFactory extends Factory
                 : \App\Models\Department::inRandomOrder()->value('name'),
             'status' => $this->faker->randomElement(['pending', 'completed']),
             'priority' => $this->faker->randomElement(['low', 'normal', 'high']),
-            'created_by' => \App\Models\User::inRandomOrder()->value('id'),
+            'created_by' => User::inRandomOrder()->value('id'),
             'updated_by' => null,
             'archived_by' => null,
         ];
+    }
+
+    public function configure()
+    {
+        return $this->afterCreating(function (Requirement $requirement) {
+            $users = User::where('college_id', $requirement->id)
+            ->orWhere('department_id', $requirement->id)
+            ->get();
+
+            foreach ($users as $index => $user) {
+                $user->notify(new RequirementNotification(Auth::user(), $requirement));
+            }
+        });
     }
 }

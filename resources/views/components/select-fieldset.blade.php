@@ -1,5 +1,7 @@
 <fieldset class="fieldset w-full">
-    <legend class="fieldset-legend w-full">{{ $label }}</legend>
+    @if(isset($label) && $label)
+        <legend class="fieldset-legend w-full">{{ $label }}</legend>
+    @endif
     <select
         {{ $attributes->merge(['class' => 'select w-full']) }}>
         <option value="" disabled selected>{{ $label }}</option>

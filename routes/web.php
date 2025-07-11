@@ -31,9 +31,9 @@ Route::middleware(['auth', 'role:user'])
          * show user requirement details
          *
          **/
-        Route::resource('requirements', UserRequirementController::class)
-            ->only(['index', 'show'])
-            ->names('user.requirements');
+        // Route::resource('requirements', UserRequirementController::class)
+        //     ->only(['index', 'show'])
+        //     ->names('user.requirements');
 
         Route::get('/dashboard', function () {
             return view('user.dashboard');

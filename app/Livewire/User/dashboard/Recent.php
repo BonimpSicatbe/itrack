@@ -30,16 +30,22 @@ class Recent extends Component
     //         ->get();
     // }
 
-    public function showRequirementDetail($submissionId)
-    {
-        $submission = SubmittedRequirement::find($submissionId);
-        $this->selectedRequirementId = $submission->requirement_id;
-        $this->dispatch('showRequirementDetail', requirementId: $this->selectedRequirementId);
-    }
+    // public function showRequirementDetail($submissionId)
+    // {
+    //     $submission = SubmittedRequirement::find($submissionId);
+    //     $this->selectedRequirementId = $submission->requirement_id;
+    //     $this->dispatch('showRequirementDetail', requirementId: $this->selectedRequirementId);
+    // }
 
     public function render()
     {
-        return view('livewire.user.dashboard.recent');
+        $user = Auth::user();
+
+        $recentSubmissions = $user->submittedRequirements;
+
+        return view('livewire.user.dashboard.recent', [
+            'recentSubmissions' => $recentSubmissions,
+        ]);
     }
 
     public function recentSubmissions()

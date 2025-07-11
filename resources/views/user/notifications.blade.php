@@ -4,6 +4,8 @@
             {{-- header --}}
             <div class="text-lg uppercase font-bold">Notifications</div>
 
+            {{-- @dd(App\Models\Requirement::where('assigned_to', auth()->user()->college->name)->get(), Auth::user()->notifications) --}}
+
             @livewire('user.notification.notification')
         </div>
     </div>
