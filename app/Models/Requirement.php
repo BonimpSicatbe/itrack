@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 
 class Requirement extends Model implements HasMedia
 {
@@ -52,7 +53,7 @@ class Requirement extends Model implements HasMedia
             ->addMediaConversion('preview')
             ->fit(Fit::Contain, 300, 300)
             ->nonQueued();
-            
+
         $this
             ->addMediaConversion('thumb')
             ->width(100)
@@ -60,6 +61,13 @@ class Requirement extends Model implements HasMedia
     }
 
     // ========== Relationships ==========
+    public function users(): BelongsTo
+    {
+        return $this->belongsTo(
+            User::class, 'college_id', 'department_id',
+            $this->assigned_to, 'name');
+    }
+
     public function createdBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
@@ -73,7 +81,7 @@ class Requirement extends Model implements HasMedia
     public function userSubmissions(): HasMany
     {
         return $this->hasMany(SubmittedRequirement::class)
-            ->where('user_id', auth()->id())
+            ->where('user_id', Auth::id())
             ->with(['media', 'reviewer'])
             ->latest();
     }

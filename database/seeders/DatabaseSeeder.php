@@ -24,10 +24,10 @@ class DatabaseSeeder extends Seeder
         $this->call(CollegesAndDepartmentsSeeder::class);
 
         // random users
-        User::factory(150)->create()->each(function ($user) {
-            $user->assignRole('user');
-        });
-        Requirement::factory(250)->create();
+        // User::factory(150)->create()->each(function ($user) {
+        //     $user->assignRole('user');
+        // });
+        // Requirement::factory(250)->create();
 
         $user = User::create([
             'firstname' => 'Doming',
@@ -68,19 +68,24 @@ class DatabaseSeeder extends Seeder
         ]);
         $superAdmin->assignRole('super-admin');
 
+        $users = User::role('user')->get();
         $colleges = College::all();
         $departments = Department::all();
+        $assignedToRandom = rand(0, 1) ? 'college' : 'department';
 
-        foreach ($colleges as $college) {
-            Requirement::factory(rand(5, 10))->create([
-                'assigned_to' => $college->name,
-                'created_by' => User::factory()->create()->assignRole('user'),
-            ]);
-        }
         foreach ($departments as $department) {
+            $user = User::factory(rand(5, 10))->create([
+                'department_id' => $department->id,
+                'college_id' => $department->college_id,
+            ]);
+
+            $user->each(function ($u) {
+                $u->assignRole('user');
+            });
+
             Requirement::factory(rand(5, 10))->create([
-                'assigned_to' => $department->name,
-                'created_by' => User::factory()->create()->assignRole('user'),
+                'assigned_to' => $assignedToRandom === 'college' ? $department->college->name : $department->name,
+                'created_by' => User::factory()->create()->assignRole('admin'),
             ]);
         }
     }

@@ -2,6 +2,7 @@
 
 namespace App\Notifications;
 
+use App\Models\User;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
@@ -18,7 +19,7 @@ class RequirementNotification extends Notification
     /**
      * Create a new notification instance.
      */
-    public function __construct($user, $requirement)
+    public function __construct(User $user, $requirement)
     {
         $this->requirement = $requirement;
     }
@@ -40,7 +41,7 @@ class RequirementNotification extends Notification
     {
         return (new MailMessage)
             ->markdown('mail.requirement-notification', [
-                'user' => Auth::user(),
+                'user' => $this->user,
                 'requirement' => $this->requirement,
             ]);
     }

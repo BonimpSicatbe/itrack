@@ -13,6 +13,11 @@ class College extends Model
         return $this->hasMany(User::class);
     }
 
+    public function requirements()
+    {
+        return $this->hasMany(Requirement::class, 'assigned_to', 'name');
+    }
+
     public function departments()
     {
         return $this->hasMany(Department::class);

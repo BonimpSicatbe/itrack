@@ -2,6 +2,8 @@
 
 namespace Database\Factories;
 
+use App\Models\College;
+use App\Models\Department;
 use App\Models\Requirement;
 use App\Models\User;
 use App\Notifications\RequirementNotification;
@@ -34,12 +36,10 @@ class RequirementFactory extends Factory
     public function configure()
     {
         return $this->afterCreating(function (Requirement $requirement) {
-            $users = User::where('college_id', $requirement->id)
-            ->orWhere('department_id', $requirement->id)
-            ->get();
+            $users = $requirement->assignedTargets();
 
-            foreach ($users as $index => $user) {
-                $user->notify(new RequirementNotification(Auth::user(), $requirement));
+            foreach ($users as $user) {
+                $user->notify(new RequirementNotification(User::where('id', $requirement->created_by)->first(), $requirement));
             }
         });
     }

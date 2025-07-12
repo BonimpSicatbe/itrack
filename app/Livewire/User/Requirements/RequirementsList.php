@@ -51,11 +51,8 @@ class RequirementsList extends Component
     {
         $user = Auth::user();
 
-        $requirements = Requirement::query()
-            ->where(function ($query) use ($user) {
-                $query->where('assigned_to', $user->college->name)
-                      ->orWhere('assigned_to', $user->department->name);
-            })
+
+        $requirements = $user->requirements()
             ->when($this->search, function ($query) {
                 $query->where(function ($q) {
                     $q->where('name', 'like', '%' . $this->search . '%')
@@ -70,8 +67,8 @@ class RequirementsList extends Component
             ->withCount(['userSubmissions as under_review_count' => function ($q) {
                 $q->where('status', SubmittedRequirement::STATUS_UNDER_REVIEW);
             }])
-            ->orderBy($this->sortField, $this->sortDirection)
-            ->paginate($this->perPage);
+            ->orderBy($this->sortField, $this->sortDirection)->get();
+        // ->paginate($this->perPage);
 
         // $requirements = Requirement::query()
         //     ->where(function($query) use ($user) {
