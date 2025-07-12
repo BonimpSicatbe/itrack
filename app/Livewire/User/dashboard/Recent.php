@@ -15,37 +15,31 @@ class Recent extends Component
     public $showAll = false;   //
     public $listView = false;  //
 
-    // public function mount()
-    // {
-    //     $this->loadRecentSubmissions();
-    // }
+    public function mount()
+    {
+        $this->loadRecentSubmissions();
+    }
 
-    // public function loadRecentSubmissions()
-    // {
-    //     $this->recentSubmissions = SubmittedRequirement::where('user_id', Auth::id())
-    //         ->with(['requirement', 'submissionFile', 'reviewer'])
-    //         ->whereNotNull('submitted_at')
-    //         ->orderBy('submitted_at', 'desc')
-    //         ->limit(10)
-    //         ->get();
-    // }
+    public function loadRecentSubmissions()
+    {
+        $this->recentSubmissions = SubmittedRequirement::where('user_id', Auth::id())
+            ->with(['requirement', 'submissionFile', 'reviewer'])
+            ->whereNotNull('submitted_at')
+            ->orderBy('submitted_at', 'desc')
+            ->limit(10)
+            ->get();
+    }
 
-    // public function showRequirementDetail($submissionId)
-    // {
-    //     $submission = SubmittedRequirement::find($submissionId);
-    //     $this->selectedRequirementId = $submission->requirement_id;
-    //     $this->dispatch('showRequirementDetail', requirementId: $this->selectedRequirementId);
-    // }
+    public function showRequirementDetail($submissionId)
+    {
+        $submission = SubmittedRequirement::find($submissionId);
+        $this->selectedRequirementId = $submission->requirement_id;
+        $this->dispatch('showRequirementDetail', requirementId: $this->selectedRequirementId);
+    }
 
     public function render()
     {
-        $user = Auth::user();
-
-        $recentSubmissions = $user->submittedRequirements;
-
-        return view('livewire.user.dashboard.recent', [
-            'recentSubmissions' => $recentSubmissions,
-        ]);
+        return view('livewire.user.dashboard.recent');
     }
 
     public function recentSubmissions()
@@ -60,4 +54,3 @@ class Recent extends Component
     }
 
 }
-

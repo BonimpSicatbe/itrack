@@ -51,7 +51,6 @@ class RequirementsList extends Component
     {
         $user = Auth::user();
 
-
         $requirements = $user->requirements()
             ->when($this->search, function ($query) {
                 $query->where(function ($q) {
