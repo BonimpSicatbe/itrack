@@ -12,7 +12,7 @@ class Pending extends Component
     public function render()
     {
         $user = Auth::user();
-        $pendingRequirements = $user->requirements->where('status', 'pending');
+        $pendingRequirements = $user->requirements()->where('status', 'pending')->get();
 
 
         // $pendingRequirements = Requirement::where(function($query) use ($user) {
