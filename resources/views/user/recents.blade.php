@@ -1,7 +1,11 @@
 <x-user.app-layout>
-    <div class="p-4 space-y-4">
-        <div class="text-xl font-bold uppercase">All Recent Submissions</div>
+    <div class="flex flex-col gap-4 h-fit w-full">
+        {{-- Recent Submissions Header --}}
+        <div class="flex items-center justify-between">
+            <h1 class="text-2xl font-bold">Recent Submissions</h1>
+        </div>
 
-        <livewire:user.dashboard.recent :showAll="true" :listView="true" />
+        {{-- Main Recent Submissions Section --}}
+        @livewire('user.recents.recent-submissions-list')
     </div>
 </x-user.app-layout>
