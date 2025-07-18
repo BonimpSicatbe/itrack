@@ -118,6 +118,15 @@ class Requirement extends Model implements HasMedia
         return collect();
     }
 
+    public function getStatusColorAttribute()
+    {
+        return [
+            'pending' => 'warning',
+            'completed' => 'success',
+            'archived' => 'neutral',
+        ][$this->status] ?? 'neutral';
+    }
+
     public function getPriorityColorAttribute()
     {
         return [

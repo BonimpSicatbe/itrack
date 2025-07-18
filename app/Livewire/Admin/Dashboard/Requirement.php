@@ -82,10 +82,10 @@ class Requirement extends Component
 
             $requirement = ModelsRequirement::create(array_merge($validated, ['created_by' => Auth::id()]));
 
-            Log::info('Requirement created', ['requirement_id' => $requirement->id]);
+            Log::info('Requiremenst created', ['requirement_id' => $requirement->id]);
 
             $media = $requirement->addMedia($validated['required_files'])
-                ->toMediaCollection('requirements');
+                ->toMediaCollection('requirementRequiredFiles');
 
             $requirement_media = RequirementMedia::create([
                 'requirement_id' => $requirement->id,
@@ -99,7 +99,8 @@ class Requirement extends Component
              * that a new requirement has been created
              *
              **/
-            $assignedUsers = $requirement->assignedTargets(); // Make sure this method returns a collection of User models
+            $assignedUsers = $requirement->assignedTargets()
+                ->whereNotIn('role', ['admin', 'super-admin']);
 
             foreach ($assignedUsers as $user) {
                 Log::info('Notifying user', ['user_id' => $user->id, 'requirement_id' => $requirement->id]);

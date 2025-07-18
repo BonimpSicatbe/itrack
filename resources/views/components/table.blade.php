@@ -1,3 +1,3 @@
-<table {{ $attributes->merge(['class' => 'table table-fixed table-md table-pin-rows w-full']) }}>
+<table {{ $attributes->merge(['class' => 'table table-fixed table-pin-rows w-full']) }}>
     {{ $slot }}
 </table>

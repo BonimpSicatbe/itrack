@@ -68,25 +68,23 @@ class DatabaseSeeder extends Seeder
         ]);
         $superAdmin->assignRole('super-admin');
 
-        $users = User::role('user')->get();
-        $colleges = College::all();
-        $departments = Department::all();
-        $assignedToRandom = rand(0, 1) ? 'college' : 'department';
+        // $departments = Department::all();
+        // $assignedToRandom = rand(0, 1) ? 'college' : 'department';
 
-        foreach ($departments as $department) {
-            $user = User::factory(rand(5, 10))->create([
-                'department_id' => $department->id,
-                'college_id' => $department->college_id,
-            ]);
+        // foreach ($departments as $department) {
+        //     $user = User::factory(rand(5, 10))->create([
+        //         'department_id' => $department->id,
+        //         'college_id' => $department->college_id,
+        //     ]);
 
-            $user->each(function ($u) {
-                $u->assignRole('user');
-            });
+        //     $user->each(function ($u) {
+        //         $u->assignRole('user');
+        //     });
 
-            Requirement::factory(rand(5, 10))->create([
-                'assigned_to' => $assignedToRandom === 'college' ? $department->college->name : $department->name,
-                'created_by' => User::factory()->create()->assignRole('admin'),
-            ]);
-        }
+        //     Requirement::factory(rand(5, 10))->create([
+        //         'assigned_to' => $assignedToRandom === 'college' ? $department->college->name : $department->name,
+        //         'created_by' => User::factory()->create()->assignRole('admin'),
+        //     ]);
+        // }
     }
 }

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\admin\RequirementController;
+use App\Http\Controllers\admin\SubmittedRequirementController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\UserRequirementController;
@@ -75,8 +76,23 @@ Route::middleware(['auth', 'role:admin|super-admin'])
             return view('admin.dashboard');
         })->name('dashboard');
 
-        // ========== ========== REQUIREMENT ROUTES ========== ==========
-        Route::resource('requirements', RequirementController::class); // admin.requirements.show / index / etc
+        // ========== ========== NOTIFICATIONS ROUTES | START ========== ==========
+        Route::get('/notifications', function () {
+            return view('admin.pages.notification.notifications');
+        })->name('notifications');
+        // ========== ========== NOTIFICATIONS ROUTES | END ========== ==========
+
+        // ========== ========== REQUIREMENT ROUTES | START ========== ==========
+        // Route::resource('requirements', RequirementController::class); // admin.requirements.show / index / etc
+        Route::get('/requirements', [RequirementController::class, 'index'])->name('requirements.index');
+        Route::get('/requirements/{requirement_id}', [RequirementController::class, 'show'])->name('requirements.show');
+        Route::get('/requirements/{requirement_id}/edit', [RequirementController::class, 'edit'])->name('requirements.edit');
+        // ========== ========== REQUIREMENT ROUTES | END ========== ==========
+
+        // ========== ========== SUBMISSION ROUTES | START ========== ==========
+        Route::get('/submitted-requirements-list', [SubmittedRequirementController::class, 'index'])->name('submitted-requirements.index');
+        Route::get('/submitted-requirements-list/{submission}', [SubmittedRequirementController::class, 'show'])->name('submitted-requirements.show');
+        // ========== ========== SUBMISSION ROUTES | END ========== ==========
 
         Route::resource('users', UserController::class);
     });

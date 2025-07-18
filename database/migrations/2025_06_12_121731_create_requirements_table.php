@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('name')->unique();
             $table->string('description')->nullable();
-            $table->date('due'); // date when the requirement is due
+            $table->dateTime('due'); // date and time when the requirement is due
             $table->string('assigned_to'); // id of the college or department
             $table->string('status')->default('pending'); // pending, completed
             $table->string('priority')->default('normal'); // low, normal, high

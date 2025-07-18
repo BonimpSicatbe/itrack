@@ -13,16 +13,13 @@ class RequirementController extends Controller
      */
     public function index()
     {
-        return dd('success');
+        return view('admin.pages.requirement.requirement_index');
     }
 
     /**
      * Show the form for creating a new resource.
      */
-    public function create()
-    {
-        //
-    }
+    public function create() {}
 
     /**
      * Store a newly created resource in storage.
@@ -34,9 +31,7 @@ class RequirementController extends Controller
      */
     public function show(Requirement $requirement)
     {
-        return view('admin.pages.requirement.show', [
-            'requirement' => $requirement,
-        ]);
+        return view('admin.pages.requirement.requirement_show');
     }
 
     /**
@@ -44,7 +39,7 @@ class RequirementController extends Controller
      */
     public function edit(Requirement $requirement)
     {
-        return view('admin.pages.requirement.edit', [
+        return view('admin.pages.requirement.requirement_edit', [
             'requirement' => $requirement,
         ]);
     }
@@ -52,27 +47,10 @@ class RequirementController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Requirement $requirement)
-    {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'description' => 'required|string',
-            'due' => 'required|date|after_or_equal:today',
-            'required_files' => 'required|file|max:15360|mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,jpg,jpeg,png,gif,txt,zip,rar,7z,mp4,avi,mkv,mp3,wav',
-            'target' => 'required|in:college,department',
-            'target_id' => 'required|integer',
-        ]);
-
-        $requirement->update($validated);
-
-        return redirect()->route('admin.dashboard', $requirement)->with('success', 'Requirement updated successfully.');
-    }
+    public function update(Request $request, Requirement $requirement) {}
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Requirement $requirement)
-    {
-        //
-    }
+    public function destroy(Requirement $requirement) {}
 }

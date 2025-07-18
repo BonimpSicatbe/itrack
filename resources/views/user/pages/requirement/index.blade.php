@@ -1,6 +1,4 @@
-{{--
-    show user requirement list
---}}
+{{-- show user requirement list --}}
 
 <x-user.app-layout>
     <div class="flex flex-col gap-4 h-full w-full">

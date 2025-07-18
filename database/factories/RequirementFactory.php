@@ -21,7 +21,7 @@ class RequirementFactory extends Factory
         return [
             'name' => $this->faker->unique()->words(3, true),
             'description' => $this->faker->sentence(),
-            'due' => $this->faker->dateTimeBetween('now', '+1 year')->format('Y-m-d'),
+            'due' => $this->faker->dateTimeBetween('now', '+1 year')->format('Y-m-d H:i:s'),
             'assigned_to' => $target === 'college'
                 ? \App\Models\College::inRandomOrder()->value('name')
                 : \App\Models\Department::inRandomOrder()->value('name'),
@@ -36,7 +36,7 @@ class RequirementFactory extends Factory
     public function configure()
     {
         return $this->afterCreating(function (Requirement $requirement) {
-            $users = $requirement->assignedTargets();
+            $users = $requirement->assignedTargets()->whereNotIn('role', ['admin', 'super-admin']);
 
             foreach ($users as $user) {
                 $user->notify(new RequirementNotification(User::where('id', $requirement->created_by)->first(), $requirement));
