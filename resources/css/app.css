@@ -39,6 +39,8 @@
 }
 
 .logo-style {
+    margin-top: 10px;
+    margin-bottom: 10px;
     width: auto;
-    height: 80px;
+    height: 60px;
 }
