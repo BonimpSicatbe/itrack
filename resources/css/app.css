@@ -37,3 +37,10 @@
     height: 100%;
     min-height: 400px; /* Adjust as needed */
 }
+
+.logo-style {
+    margin-top: 10px;
+    margin-bottom: 10px;
+    width: auto;
+    height: 60px;
+}
