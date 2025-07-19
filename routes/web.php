@@ -10,17 +10,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-    if (Auth::check()) {
-        $user = Auth::user(); // initiate user
-
-        if ($user->hasRole('user')) {
-            return redirect()->route('user.dashboard');
-        } elseif ($user->hasRole('admin') || $user->hasRole('super-admin')) {
-            return redirect()->route('admin.dashboard');
-        }
-    } else {
-        return redirect()->route('login');
-    }
+    return redirect()->route('login');
 });
 
 Route::middleware(['auth', 'role:user'])
