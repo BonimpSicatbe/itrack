@@ -6,7 +6,7 @@
             see more <i class="fa-solid fa-chevron-right ml-1"></i>
         </a>
     </div>
-    
+
     {{-- list --}}
     @if($recentSubmissions->count() > 0)
         <div class="{{ $listView ? 'flex flex-col gap-2 w-full py-2' : 'flex flex-row gap-4 overflow-x-auto w-full py-2' }}">
@@ -15,7 +15,7 @@
                     class="border rounded-lg p-3 {{ $listView ? 'w-full' : 'min-w-[300px]' }} hover:bg-gray-50 transition-all flex flex-col gap-1 cursor-pointer">
                     <div class="flex justify-between items-start">
                         <div class="text-sm font-bold truncate">{{ $submission->requirement->name }}</div>
-                        <span class="badge px-2 py-1 text-xs rounded" 
+                        <span class="badge px-2 py-1 text-xs rounded"
                               style="background-color: {{ \App\Models\SubmittedRequirement::getStatusColor($submission->status) }}; color: white">
                             {{ $submission->status_text }}
                         </span>

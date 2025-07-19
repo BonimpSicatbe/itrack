@@ -19,8 +19,8 @@
         @livewireStyles
     </head>
 
-    <body wire:poll.500ms class="font-sans antialiased min-h-screen bg-gray-100 max-w-screen">
-        <div class="space-y-6 p-6 container mx-auto">
+    <body wire:poll.500ms class="bg-gray-100">
+        <div class="flex flex-col gap-4 p-6 container mx-auto min-h-screen max-h-screen">
             <x-admin.navigation />
 
             <!-- Page Content -->

@@ -5,7 +5,9 @@
 --}}
 
 <fieldset class="fieldset w-full">
-    <legend class="fieldset-legend w-full capitalize">{{ $label }}</legend>
+    @if(!empty($label))
+        <legend class="fieldset-legend w-full capitalize">{{ $label }}</legend>
+    @endif
 
     <input
         type="{{ $type }}"

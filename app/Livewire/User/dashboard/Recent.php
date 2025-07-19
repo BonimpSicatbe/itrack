@@ -12,8 +12,8 @@ class Recent extends Component
     public $recentSubmissions;
     public $selectedRequirementId = null;
 
-    public $showAll = false;   // 
-    public $listView = false;  // 
+    public $showAll = false;   //
+    public $listView = false;  //
 
     public function mount()
     {
@@ -54,4 +54,3 @@ class Recent extends Component
     }
 
 }
-

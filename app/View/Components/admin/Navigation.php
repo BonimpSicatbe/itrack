@@ -12,6 +12,7 @@ class Navigation extends Component
         ['label' => 'Dashboard', 'icon' => 'th-large', 'route' => 'admin.dashboard'],
         ['label' => 'Pendings', 'icon' => 'spinner', 'route' => 'admin.dashboard'],
         ['label' => 'Requirements', 'icon' => 'clipboard-list', 'route' => 'admin.dashboard'],
+        ['label' => 'Notifications', 'icon' => 'bell', 'route' => 'admin.notifications'],
         ['label' => 'Account', 'icon' => 'user-circle', 'route' => 'profile.edit'],
         ['label' => 'Logout', 'icon' => 'right-from-bracket', 'route' => "route('logout')"],
     ];
