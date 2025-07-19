@@ -9,6 +9,8 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Facades\Auth;
 use Spatie\Permission\Traits\HasRoles;
 use App\Models\Requirement;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
 
 class User extends Authenticatable
 {
@@ -21,8 +23,14 @@ class User extends Authenticatable
      * @var list<string>
      */
     protected $fillable = [
-        'name',
+        'firstname',
+        'middlename',
+        'lastname',
+        'extensionname',
         'email',
+        'email_verified_at',
+        'department_id',
+        'college_id',
         'password',
     ];
 
@@ -62,7 +70,15 @@ class User extends Authenticatable
 
     public function requirements()
     {
-        return $this->hasMany(Requirement::class, 'id');
+        return \App\Models\Requirement::where(function ($query) {
+            if ($this->college) {
+                $query->orWhere('assigned_to', $this->college->name);
+            }
+
+            if ($this->department) {
+                $query->orWhere('assigned_to', $this->department->name);
+            }
+        });
     }
 
     public function submissions()
@@ -72,13 +88,16 @@ class User extends Authenticatable
 
     public function submittedRequirements()
     {
-        return $this->hasMany(SubmittedRequirement::class);
+        return $this->hasMany(SubmittedRequirement::class, 'user_id', 'id');
     }
     // ========== ========== RELATIONSHIPS | END ========== ==========
 
 
     // ========== ========== ACCESSORS | START ========== ==========
-
+    public function getFullNameAttribute(): string
+    {
+        return trim("{$this->firstname} {$this->middlename} {$this->lastname} {$this->extensionname}");
+    }
     // ========== ========== ACCESSORS | END ========== ==========
 
 

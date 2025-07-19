@@ -125,7 +125,7 @@ class SubmittedRequirement extends Model implements HasMedia
      */
     public function canBeDeletedBy($user)
     {
-        return $user->id === $this->user_id && 
+        return $user->id === $this->user_id &&
                $this->status !== self::STATUS_APPROVED;
     }
 

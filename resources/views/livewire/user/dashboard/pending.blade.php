@@ -21,8 +21,8 @@
                         Due: {{ $dueDate->format('M j, Y') }}
                     </div>
                     <div class="text-xs mt-2">
-                        Priority: 
-                        <span class="font-medium capitalize {{ 
+                        Priority:
+                        <span class="font-medium capitalize {{
                             $requirement->priority === 'high' ? 'text-red-500' :
                             ($requirement->priority === 'urgent' ? 'text-red-700' : 'text-gray-600')
                         }}">
