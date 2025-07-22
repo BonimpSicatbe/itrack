@@ -6,6 +6,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\UserRequirementController;
 use App\Http\Controllers\FileController;
+use App\Http\Controllers\FileUploadController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
@@ -56,12 +57,6 @@ Route::middleware(['auth', 'role:admin|super-admin'])
     ->prefix('/admin')
     ->as('admin.')
     ->group(function () {
-        /**
-         *
-         * //TODO add route for users (view, edit, delete, show, etc)
-         *
-         **/
-
         Route::get('/dashboard', function () {
             return view('admin.dashboard');
         })->name('dashboard');
@@ -75,8 +70,8 @@ Route::middleware(['auth', 'role:admin|super-admin'])
         // ========== ========== REQUIREMENT ROUTES | START ========== ==========
         // Route::resource('requirements', RequirementController::class); // admin.requirements.show / index / etc
         Route::get('/requirements', [RequirementController::class, 'index'])->name('requirements.index');
-        Route::get('/requirements/{requirement_id}', [RequirementController::class, 'show'])->name('requirements.show');
-        Route::get('/requirements/{requirement_id}/edit', [RequirementController::class, 'edit'])->name('requirements.edit');
+        Route::get('/requirements/{requirement}', [RequirementController::class, 'show'])->name('requirements.show');
+        Route::get('/requirements/{requirement}/edit', [RequirementController::class, 'edit'])->name('requirements.edit');
         // ========== ========== REQUIREMENT ROUTES | END ========== ==========
 
         // ========== ========== SUBMISSION ROUTES | START ========== ==========

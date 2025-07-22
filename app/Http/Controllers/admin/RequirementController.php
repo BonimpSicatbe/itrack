@@ -31,7 +31,9 @@ class RequirementController extends Controller
      */
     public function show(Requirement $requirement)
     {
-        return view('admin.pages.requirement.requirement_show');
+        return view('admin.pages.requirement.requirement_show', [
+            'requirement' => $requirement,
+        ]);
     }
 
     /**

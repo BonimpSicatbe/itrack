@@ -19,7 +19,7 @@ class RequirementNotification extends Notification
     /**
      * Create a new notification instance.
      */
-    public function __construct(User $user, $requirement)
+    public function __construct($requirement)
     {
         $this->requirement = $requirement;
     }
@@ -41,7 +41,6 @@ class RequirementNotification extends Notification
     {
         return (new MailMessage)
             ->markdown('mail.requirement-notification', [
-                'user' => $this->user,
                 'requirement' => $this->requirement,
             ]);
     }

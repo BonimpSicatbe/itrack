@@ -112,8 +112,6 @@ class Requirement extends Model implements HasMedia
             return User::where('department_id', $department->id)->get();
         }
 
-        $collect = collect();
-
         // Always return a collection to avoid errors
         return collect();
     }

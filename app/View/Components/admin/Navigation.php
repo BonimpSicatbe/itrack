@@ -11,7 +11,7 @@ class Navigation extends Component
     public $navLinks = [
         ['label' => 'Dashboard', 'icon' => 'th-large', 'route' => 'admin.dashboard'],
         ['label' => 'Pendings', 'icon' => 'spinner', 'route' => 'admin.dashboard'],
-        ['label' => 'Requirements', 'icon' => 'clipboard-list', 'route' => 'admin.dashboard'],
+        ['label' => 'Requirements', 'icon' => 'clipboard-list', 'route' => 'admin.requirements.index'],
         ['label' => 'Notifications', 'icon' => 'bell', 'route' => 'admin.notifications'],
         ['label' => 'Account', 'icon' => 'user-circle', 'route' => 'profile.edit'],
         ['label' => 'Logout', 'icon' => 'right-from-bracket', 'route' => "route('logout')"],
