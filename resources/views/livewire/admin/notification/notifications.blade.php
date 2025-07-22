@@ -1,160 +1,93 @@
 <div class="flex flex-row grow bg-white rounded-lg overflow-hidden">
     {{-- Notifications List (Left) --}}
-    <div class="flex flex-col gap-4 grow overflow-auto">
-        @forelse ($notifications as $notification)
-            <a href="#" wire:click.prevent="selectNotification('{{ $notification->id }}')"
-                wire:key="notif-{{ $notification->id }}"
-                class="p-2 shadow rounded-lg cursor-pointer @if ($selectedNotification === $notification->id) bg-blue-100 @endif">
-                <div class="font-semibold text-sm">
-                    {{ $notification->data['requirement']['name'] ?? 'Unknown Project Name' }}</div>
-                <div class="text-xs text-gray-500 font-bold truncate">{{ $notification->data['message'] ?? '' }}
-                </div>
-            </a>
-        @empty
-            <div class="text-gray-500">No new notifications.</div>
-        @endforelse
-    </div>
-
-    <div class="divider divider-horizontal p-0 m-0"></div>
-
-    {{-- Requirement Detail (Right) --}}
-    <div class="min-w-2/3 h-full">
-        @if ($selectedNotification)
-            @php
-                $selected = collect($notifications)->firstWhere('id', $selectedNotification);
-            @endphp
-
-            @if ($selected)
-                <div class="flex flex-col gap-4 px-4 h-full">
-                    {{-- header --}}
-                    <div class="flex flex-col gap-1">
-                        <div class="flex flex-row items-center justify-between">
-                            <div class="text-lg font-bold">
-                                {{ $selected->data['requirement']['name'] ?? 'Unknown Requirement Name' }}
-                            </div>
-                            <div class="text-sm text-gray-500">
-                                {{ \Carbon\Carbon::parse($selected->created_at)->format('F d, Y, g:ia') }}
-                            </div>
-                        </div>
-                        <div class="flex flex-row items-center justify-between">
-                            <div class="text-xs text-gray-500">
-                                <span class="font-bold">To:</span>
-                                {{ $selected->data['requirement']['assigned_to'] ?? 'N/A' }}
-                            </div>
-                            <div class="text-xs text-gray-500">
-                                <span class="font-bold">From:</span>
-                                {{ App\Models\User::where('id', $selected->data['requirement']['created_by'])->first()->full_name ?? 'N/A' }}
-                            </div>
-                        </div>
+    <div class="w-full py-6">
+        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                <div class="p-6 bg-white border-b border-gray-200">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-medium">Your Notifications</h3>
+                        <form method="POST" action="{{ route('notifications.markAllRead') }}">
+                            @csrf
+                            <button type="submit" class="text-sm text-blue-500 hover:text-blue-700">
+                                Mark all as read
+                            </button>
+                        </form>
                     </div>
 
-                    <div class="divider p-0 m-0"></div>
+                    <div class="divide-y">
+                        @forelse(auth()->user()->notifications as $notification)
+                            @php
+                                $link = '#';
+                                $iconClass = 'text-gray-400';
+                                $bgColor = 'bg-gray-50';
+                                
+                                if (isset($notification->data['type'])) {
+                                    switch($notification->data['type']) {
+                                        case 'new_submission':
+                                            $link = isset($notification->data['submission_id']) 
+                                                ? route('admin.submitted-requirements.show', $notification->data['submission_id']) 
+                                                : '#';
+                                            $iconClass = 'text-green-500';
+                                            $bgColor = 'bg-green-50';
+                                            break;
+                                        case 'new_requirement':
+                                            $link = isset($notification->data['requirement_id']) 
+                                                ? route('admin.requirements.show', $notification->data['requirement_id']) 
+                                                : '#';
+                                            $iconClass = 'text-blue-500';
+                                            $bgColor = 'bg-blue-50';
+                                            break;
+                                    }
+                                }
+                            @endphp
 
-                    {{-- body --}}
-                    <div class="flex flex-col gap-8 h-full overflow-y-auto">
-                        {{-- requirement details --}}
-                        <div>
-                            <div class="text-lg font-bold">
-                                {{ $selected->data['requirement']['name'] ?? 'Requirement Name' }}
+                            <a href="{{ $link }}" class="block hover:bg-gray-100 transition-colors duration-200 {{ $bgColor }}">
+                                <div class="p-3 flex items-start">
+                                    <div class="flex-shrink-0 pt-1 mr-3">
+                                        @if(isset($notification->data['type']) && $notification->data['type'] === 'new_submission')
+                                            <svg class="h-5 w-5 {{ $iconClass }}" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                                            </svg>
+                                        @elseif(isset($notification->data['type']) && $notification->data['type'] === 'new_requirement')
+                                            <svg class="h-5 w-5 {{ $iconClass }}" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                            </svg>
+                                        @else
+                                            <svg class="h-5 w-5 {{ $iconClass }}" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                                            </svg>
+                                        @endif
+                                    </div>
+                                    <div class="flex-1">
+                                        <div class="flex justify-between items-start">
+                                            <p class="text-sm font-medium text-gray-900">
+                                                {{ $notification->data['message'] ?? 'New notification' }}
+                                            </p>
+                                            @if($notification->unread())
+                                                <span class="ml-2 inline-block h-2 w-2 rounded-full bg-blue-500"></span>
+                                            @endif
+                                        </div>
+                                        <p class="text-xs text-gray-500 mt-1">
+                                            {{ $notification->created_at->diffForHumans() }}
+                                        </p>
+                                        @if(isset($notification->data['type']) && $notification->data['type'] === 'new_submission')
+                                            <div class="mt-2">
+                                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                                    New Submission
+                                                </span>
+                                            </div>
+                                        @endif
+                                    </div>
+                                </div>
+                            </a>
+                        @empty
+                            <div class="p-4 text-center">
+                                <p class="text-gray-500">No notifications found</p>
                             </div>
-                            <div class="text-sm">
-                                {{ $selected->data['requirement']['description'] ?? 'No description provided.' }}
-                            </div>
-                            <div class="text-xs">
-                                Due:
-                                {{ isset($selected->data['requirement']['due']) ? \Carbon\Carbon::parse($selected->data['requirement']['due'])->format('F d, Y, g:ia') : 'No due date' }}
-                            </div>
-                        </div>
-
-                        {{-- requirement required files --}}
-                        <div>
-                            <div class="mt-4 text-sm font-bold">Required Files:</div>
-                            <table class="table table-sm w-full">
-                                <thead>
-                                    <tr>
-                                        <th>File Name</th>
-                                        <th>Type</th>
-                                        <th>Size</th>
-                                        <th>Action</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @php
-                                        $selectedRequirement = $selected->data['requirement']['id'] ?? [];
-                                        $mediaFiles = [];
-                                        if ($selectedRequirement) {
-                                            $requirementModel = \App\Models\Requirement::find($selectedRequirement);
-                                            if ($requirementModel && method_exists($requirementModel, 'getMedia')) {
-                                                $mediaFiles = $requirementModel->getMedia('requirements');
-                                            }
-                                        }
-                                    @endphp
-                                    @forelse ($mediaFiles as $media)
-                                        <tr>
-                                            <td>
-                                                <a href="{{ $media->getFullUrl() }}" target="_blank"
-                                                    class="text-indigo-500 hover:underline">
-                                                    {{ $media->name }}
-                                                </a>
-                                            </td>
-                                            <td class="text-xs text-gray-400">
-                                                {{ $media->mime_type }}
-                                                ({{ \Illuminate\Support\Str::upper($media->extension) }})
-                                            </td>
-                                            <td class="text-xs text-gray-400">
-                                                {{ (function ($size) {
-                                                    if ($size >= 1073741824) {
-                                                        return number_format($size / 1073741824, 2) . ' GB';
-                                                    } elseif ($size >= 1048576) {
-                                                        return number_format($size / 1048576, 2) . ' MB';
-                                                    } elseif ($size >= 1024) {
-                                                        return number_format($size / 1024, 2) . ' KB';
-                                                    }
-                                                    return $size . ' bytes';
-                                                })($media->size) }}
-                                            </td>
-                                            <td>
-                                                <a href="{{ $media->getFullUrl() }}" download
-                                                    class="text-blue-500 hover:underline">Download</a>
-                                            </td>
-                                        </tr>
-                                    @empty
-                                        <tr>
-                                            <td colspan="4" class="text-sm text-gray-400 text-center">No required
-                                                files listed.</td>
-                                        </tr>
-                                    @endforelse
-                                </tbody>
-                            </table>
-                        </div>
-
-                        {{-- requirement submission field --}}
-                        <div>
-                            <div class="mt-4 text-sm font-bold">Submit Files:</div>
-                            @forelse ($selected->data['requirement']['files'] ?? [] as $idx => $file)
-                                <fieldset class="fieldset mb-2">
-                                    <legend class="fieldset-legend font-normal">
-                                        <span class="font-bold">{{ $file['label'] ?? 'File' }}:</span>
-                                        {{ $file['description'] ?? 'File Name' }}
-                                    </legend>
-                                    <input type="file" name="submitted_files[{{ $idx }}]"
-                                        id="submitted_file_{{ $idx }}" class="file-input file-input-sm w-full"
-                                        wire:model="submitted_files.{{ $idx }}" />
-                                    @error('submitted_files.' . $idx)
-                                        <label class="label text-red-500">{{ $message }}</label>
-                                    @enderror
-                                </fieldset>
-                            @empty
-                                <div class="text-xs text-gray-400">No files to submit.</div>
-                            @endforelse
-                        </div>
+                        @endforelse
                     </div>
                 </div>
-            @else
-                <div class="text-gray-500 font-bold uppercase text-xl">Requirement details not found.</div>
-            @endif
-        @else
-            <div class="text-gray-500 font-bold uppercase text-xl">Select a notification to view details.</div>
-        @endif
+            </div>
+        </div>
     </div>
 </div>

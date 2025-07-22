@@ -64,8 +64,6 @@ class RequirementCreateModal extends Component
         try {
             $validated = $this->validate();
 
-            Log::info('Validation passed', $validated);
-
             $requirement = ModelsRequirement::create(array_merge($validated, ['created_by' => Auth::id()]));
 
             $media = $requirement->addMedia($validated['required_files'])
@@ -76,13 +74,13 @@ class RequirementCreateModal extends Component
                 'media_id' => $media->id,
             ]);
 
-            // Notify assigned users
-            $assignedUsers = $requirement->assignedTargets()
+            // Notify all users in the assigned sector
+            $users = $requirement->assignedTargets()
                 ->whereNotIn('role', ['admin', 'super-admin'])
                 ->get();
 
-            foreach ($assignedUsers as $user) {
-                $user->notify(new \App\Notifications\RequirementNotification(Auth::user(), $requirement));
+            foreach ($users as $user) {
+                $user->notify(new \App\Notifications\NewRequirementNotification($requirement));
             }
 
             session()->flash('success', 'Requirement created successfully.');
@@ -94,6 +92,11 @@ class RequirementCreateModal extends Component
             Log::error('Requirement creation failed', ['error' => $e->getMessage()]);
             session()->flash('error', 'An error occurred: '.$e->getMessage());
         }
+    }
+
+    public function via($notifiable)
+    {
+        return ['database']; // Ensure this is present
     }
 
     public function render()

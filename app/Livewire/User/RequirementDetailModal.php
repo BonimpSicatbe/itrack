@@ -69,22 +69,21 @@ class RequirementDetailModal extends Component
                 ->usingFileName($this->file->getClientOriginalName())
                 ->toMediaCollection('submission_files');
 
+            // Notify all admins (not just the creator)
+            $admins = \App\Models\User::role(['admin', 'super-admin'])->get();
+            
+            foreach ($admins as $admin) {
+                $admin->notify(new \App\Notifications\NewSubmissionNotification(
+                    $this->requirement,
+                    $submittedRequirement
+                ));
+            }
+
             $this->dispatch(
                 'notify',
                 type: 'success',
                 message: 'Requirement submitted successfully! Status: Under Review'
             );
-
-            $user = \App\Models\User::find($this->requirement->created_by);
-
-            if ($user) {
-                $user->notify(new \App\Notifications\SubmittedRequirementNotification(
-                    'New Submission',
-                    $this->requirement->full_name . ' has a new submission.',
-                    $submittedRequirement,
-                    $this->requirement
-                ));
-            }
 
             $this->reset(['file', 'submissionNotes']);
             $this->requirement->refresh();
@@ -141,6 +140,11 @@ class RequirementDetailModal extends Component
                 message: 'Deletion failed: ' . $e->getMessage()
             );
         }
+    }
+
+    public function via($notifiable)
+    {
+        return ['database']; // Ensure this is present
     }
 
     public function render()
