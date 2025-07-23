@@ -1,93 +1,104 @@
-<div class="flex flex-row grow bg-white rounded-lg overflow-hidden">
+<div class="flex h-full bg-white rounded-lg">
     {{-- Notifications List (Left) --}}
-    <div class="w-full py-6">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="p-6 bg-white border-b border-gray-200">
-                    <div class="flex justify-between items-center mb-4">
-                        <h3 class="text-lg font-medium">Your Notifications</h3>
-                        <form method="POST" action="{{ route('notifications.markAllRead') }}">
-                            @csrf
-                            <button type="submit" class="text-sm text-blue-500 hover:text-blue-700">
-                                Mark all as read
-                            </button>
-                        </form>
-                    </div>
+    <div class="w-1/3 border-r overflow-y-auto">
+        <div class="p-4">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-medium">Notifications</h3>
+                <button wire:click="markAllAsRead" class="text-sm text-blue-500 hover:text-blue-700">
+                    Mark all read
+                </button>
+            </div>
 
-                    <div class="divide-y">
-                        @forelse(auth()->user()->notifications as $notification)
-                            @php
-                                $link = '#';
-                                $iconClass = 'text-gray-400';
-                                $bgColor = 'bg-gray-50';
-                                
-                                if (isset($notification->data['type'])) {
-                                    switch($notification->data['type']) {
-                                        case 'new_submission':
-                                            $link = isset($notification->data['submission_id']) 
-                                                ? route('admin.submitted-requirements.show', $notification->data['submission_id']) 
-                                                : '#';
-                                            $iconClass = 'text-green-500';
-                                            $bgColor = 'bg-green-50';
-                                            break;
-                                        case 'new_requirement':
-                                            $link = isset($notification->data['requirement_id']) 
-                                                ? route('admin.requirements.show', $notification->data['requirement_id']) 
-                                                : '#';
-                                            $iconClass = 'text-blue-500';
-                                            $bgColor = 'bg-blue-50';
-                                            break;
-                                    }
-                                }
-                            @endphp
+            <div class="space-y-2">
+                @forelse($notifications as $notification)
+                    @php
+                        $highlight = $notification->unread() ? 'bg-blue-50 border-l-4 border-blue-500' : 'bg-white';
+                        $type = $notification->data['type'] ?? null;
+                    @endphp
 
-                            <a href="{{ $link }}" class="block hover:bg-gray-100 transition-colors duration-200 {{ $bgColor }}">
-                                <div class="p-3 flex items-start">
-                                    <div class="flex-shrink-0 pt-1 mr-3">
-                                        @if(isset($notification->data['type']) && $notification->data['type'] === 'new_submission')
-                                            <svg class="h-5 w-5 {{ $iconClass }}" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                                            </svg>
-                                        @elseif(isset($notification->data['type']) && $notification->data['type'] === 'new_requirement')
-                                            <svg class="h-5 w-5 {{ $iconClass }}" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                            </svg>
-                                        @else
-                                            <svg class="h-5 w-5 {{ $iconClass }}" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                                            </svg>
-                                        @endif
-                                    </div>
-                                    <div class="flex-1">
-                                        <div class="flex justify-between items-start">
-                                            <p class="text-sm font-medium text-gray-900">
-                                                {{ $notification->data['message'] ?? 'New notification' }}
-                                            </p>
-                                            @if($notification->unread())
-                                                <span class="ml-2 inline-block h-2 w-2 rounded-full bg-blue-500"></span>
-                                            @endif
-                                        </div>
-                                        <p class="text-xs text-gray-500 mt-1">
-                                            {{ $notification->created_at->diffForHumans() }}
-                                        </p>
-                                        @if(isset($notification->data['type']) && $notification->data['type'] === 'new_submission')
-                                            <div class="mt-2">
-                                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                                    New Submission
-                                                </span>
-                                            </div>
-                                        @endif
-                                    </div>
-                                </div>
-                            </a>
-                        @empty
-                            <div class="p-4 text-center">
-                                <p class="text-gray-500">No notifications found</p>
-                            </div>
-                        @endforelse
+                    <div wire:click="selectNotification('{{ $notification->id }}')"
+                         class="block p-3 rounded-lg {{ $highlight }} hover:shadow cursor-pointer {{ $selectedNotification === $notification->id ? 'ring-2 ring-blue-500' : '' }}">
+                        <div class="flex justify-between">
+                            <p class="text-sm font-medium truncate">
+                                {{ $notification->data['message'] ?? 'New notification' }}
+                            </p>
+                            @if($notification->unread())
+                                <span class="ml-2 h-2 w-2 rounded-full bg-blue-500"></span>
+                            @endif
+                        </div>
+                        <p class="text-xs text-gray-500 mt-1">
+                            {{ $notification->created_at->diffForHumans() }}
+                        </p>
                     </div>
-                </div>
+                @empty
+                    <p class="text-gray-500 text-center py-4">No notifications</p>
+                @endforelse
             </div>
         </div>
+    </div>
+
+    {{-- Notification Detail (Right) --}}
+    <div class="w-2/3 p-6">
+        @if ($selectedNotification && $selectedNotificationData)
+            <div class="space-y-4">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <h2 class="text-lg font-bold">
+                            {{ $selectedNotificationData['type'] === 'new_submission' ? 'Submission' : 'Requirement' }}
+                        </h2>
+                        <p class="text-sm text-gray-500">
+                            {{ $selectedNotificationData['created_at']->format('M d, Y g:i A') }}
+                        </p>
+                    </div>
+                    <span class="text-xs px-2 py-1 rounded-full {{ $selectedNotificationData['unread'] ? 'bg-blue-100 text-blue-800' : 'bg-gray-100' }}">
+                        {{ $selectedNotificationData['unread'] ? 'New' : 'Viewed' }}
+                    </span>
+                </div>
+
+                <div class="border-t border-gray-200 my-2"></div>
+
+                <div class="space-y-4">
+                    <p class="text-sm">{{ $selectedNotificationData['message'] }}</p>
+
+                    <div class="grid grid-cols-2 gap-4 text-sm">
+                        @foreach(['name', 'description', 'due', 'user_name', 'assigned_to'] as $key)
+                            @if(isset($selectedNotificationData[$key]))
+                                <div>
+                                    <p class="font-medium">{{ str_replace('_', ' ', ucfirst($key)) }}</p>
+                                    <p class="text-gray-600">
+                                        @if($key === 'due')
+                                            {{ $selectedNotificationData[$key]->format('M d, Y g:i A') }}
+                                        @else
+                                            {{ $selectedNotificationData[$key] }}
+                                        @endif
+                                    </p>
+                                </div>
+                            @endif
+                        @endforeach
+                    </div>
+
+                    @if(count($selectedNotificationData['files'] ?? []))
+                        <div>
+                            <h3 class="text-sm font-bold mb-2">Files</h3>
+                            <div class="space-y-2">
+                                @foreach($selectedNotificationData['files'] as $file)
+                                    <div class="flex items-center justify-between p-2 border rounded">
+                                        <div class="flex items-center space-x-2">
+                                            <span class="text-blue-600">{{ $file['name'] }}</span>
+                                            <span class="text-xs text-gray-500">{{ strtoupper($file['extension']) }}</span>
+                                        </div>
+                                        <a href="{{ $file['url'] }}" download class="text-sm text-blue-600 hover:underline">
+                                            Download
+                                        </a>
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+                    @endif
+                </div>
+            </div>
+        @else
+            <p class="text-gray-400">Select a notification</p>
+        @endif
     </div>
 </div>
