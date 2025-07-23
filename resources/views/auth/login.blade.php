@@ -2,9 +2,9 @@
     <div class="w-full h-full bg-cover bg-center min-h-screen min-w-screen"
         style="background-image: url('{{ asset('images/cvsu-bg-image.jpg') }}');">
         {{-- login form --}}
-        <div class="w-full h-full flex flex-col items-end justify-center border border-white min-h-screen p-4 md:p-12">
+        <div class="w-full h-full flex flex-col items-end justify-center min-h-screen p-4 md:p-12">
             <div class="flex items-center justify-center w-full sm:w-2/3 md:w-1/2 lg:w-1/3 bg-white shadow rounded-lg h-full max-w-md mx-auto">
-                <form method="POST" action="{{ route('login') }}" class="w-full p-4 h-full flex flex-col gap-2 items-center justify-center">
+                <form method="POST" action="{{ route('login') }}" class="w-full p-6 h-full flex flex-col gap-2 items-center justify-center">
                     <x-application-logo class="w-20 h-20 fill-current text-gray-500" />
                     @csrf
 

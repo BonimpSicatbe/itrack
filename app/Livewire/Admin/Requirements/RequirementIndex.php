@@ -65,8 +65,6 @@ class RequirementIndex extends Component
 
             $assignedUsers = $requirement->targetUsers()->whereNotIn('role', ['admin', 'super-admin']);
 
-            dd($assignedUsers);
-
             $this->reset();
         } catch (\Illuminate\Validation\ValidationException $e) {
             Log::error('Validation failed', $e->errors());

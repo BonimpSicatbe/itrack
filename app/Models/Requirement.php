@@ -13,7 +13,6 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
-
 class Requirement extends Model implements HasMedia
 {
     use InteractsWithMedia, HasFactory;

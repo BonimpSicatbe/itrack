@@ -51,7 +51,6 @@ class SubmittedRequirementController extends Controller
      */
     public function edit(SubmittedRequirement $submittedRequirement)
     {
-        //
     }
 
     /**

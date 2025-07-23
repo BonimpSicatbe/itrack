@@ -86,11 +86,11 @@ Route::middleware(['auth', 'role:admin|super-admin'])
 Route::middleware('auth')->group(function () {
     // File download route
     Route::get('/download/file/{submission}', [FileController::class, 'download'])
-         ->name('file.download');
+        ->name('file.download');
 
     // File preview route
     Route::get('/preview/file/{submission}', [FileController::class, 'preview'])
-         ->name('file.preview');
+        ->name('file.preview');
 });
 
 Route::middleware('auth')->group(function () {

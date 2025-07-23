@@ -1,53 +1,59 @@
 <div class="flex flex-col gap-6 w-full">
-    {{-- requirement details --}}
+    {{-- edit requirement details --}}
     <div class="w-full bg-white shadow-md rounded-lg p-6 space-y-4">
-        <h2 class="text-xl font-bold">Requirement Details</h2>
-        <dl class="grid grid-cols-3 gap-x-8 divide-gray-500 divide-2">
-            <div class="py-2 flex justify-between col-span-3">
-                <dt class="font-bold uppercase">Name</dt>
-                <dd>{{ $requirement->name }}</dd>
+        <h2 class="text-xl font-bold">Edit Requirement Details</h2>
+        <form wire:submit.prevent='updateRequirement({{ $requirement->id }})' class="grid grid-cols-2 gap-2"
+            enctype="multipart/form-data">
+            {{-- requirement name --}}
+            <div class="col-span-2">
+                <x-text-fieldset label="requirement name" name="name" wire:model="name" type="text" />
             </div>
-            <div class="py-2 flex justify-between col-span-3">
-                <dt class="font-bold uppercase">Description</dt>
-                <dd>{{ $requirement->description ?? '-' }}</dd>
+
+            <div class="col-span-2">
+                <x-textarea-fieldset label="requirement description" name="description" wire:model="description" />
             </div>
-            <div class="py-2 flex justify-between">
-                <dt class="font-bold uppercase">Due Date</dt>
-                <dd>{{ $requirement->due->format('d/m/Y h:i a') }}</dd>
+
+            {{-- requirement due date --}}
+            <x-text-fieldset label="requirement due date & time" name="due" wire:model="due"
+                type="datetime-local" />
+
+            {{-- requirement priority --}}
+            <x-select-fieldset label="requirement priority" name="priority" wire:model="priority">
+                <option value="low">Low</option>
+                <option value="normal">Normal</option>
+                <option value="high">High</option>
+            </x-select-fieldset>
+
+            {{-- requirement sector --}}
+            <x-select-fieldset wire:model.live="sector" label="requirement sector">
+                <option value="college">College</option>
+                <option value="department">Department</option>
+            </x-select-fieldset>
+
+            {{-- requirement assigned to --}}
+            @if ($this->sector === 'college')
+                <x-select-fieldset name="assigned_to" wire:model="assigned_to" label="select college">
+                    @foreach ($colleges as $college)
+                        <option value="{{ $college->id }}">{{ $college->name }}</option>
+                    @endforeach
+                </x-select-fieldset>
+            @elseif ($this->sector === 'department')
+                <x-select-fieldset name="assigned_to" wire:model="assigned_to" label="select department">
+                    @foreach ($departments as $department)
+                        <option value="{{ $department->id }}">{{ $department->name }}</option>
+                    @endforeach
+                </x-select-fieldset>
+            @else
+                <x-select-fieldset label="select sector first" disabled>
+                    <option value="">select sector first</option>
+                </x-select-fieldset>
+            @endif
+
+            <div class="col-span-2 text-end">
+                <button type="button" onclick="history.back()" class="btn btn-sm btn-default">Cancel</button>
+                <button type="submit" class="btn btn-sm btn-success">Update Requirement</button>
             </div>
-            <div class="py-2 flex justify-between">
-                <dt class="font-bold uppercase">Assigned To</dt>
-                <dd>{{ $requirement->assigned_to }}</dd>
-            </div>
-            <div class="py-2 flex justify-between">
-                <dt class="font-bold uppercase">Status</dt>
-                <dd>{{ $requirement->status }}</dd>
-            </div>
-            <div class="py-2 flex justify-between">
-                <dt class="font-bold uppercase">Priority</dt>
-                <dd>{{ $requirement->priority }}</dd>
-            </div>
-            <div class="py-2 flex justify-between">
-                <dt class="font-bold uppercase">Created By</dt>
-                <dd>{{ $requirement->createdBy->full_name }}</dd>
-            </div>
-            <div class="py-2 flex justify-between">
-                <dt class="font-bold uppercase">Updated By</dt>
-                <dd>{{ $requirement->updatedBy->full_name ?? '-' }}</dd>
-            </div>
-            <div class="py-2 flex justify-between">
-                <dt class="font-bold uppercase">Archived By</dt>
-                <dd>{{ $requirement->archived_by ?? '-' }}</dd>
-            </div>
-            <div class="py-2 flex justify-between">
-                <dt class="font-bold uppercase">Created At</dt>
-                <dd>{{ $requirement->created_at->format('d/m/Y h:i a') }}</dd>
-            </div>
-            <div class="py-2 flex justify-between">
-                <dt class="font-bold uppercase">Updated At</dt>
-                <dd>{{ $requirement->updated_at->format('d/m/Y h:i a') }}</dd>
-            </div>
-        </dl>
+        </form>
     </div>
 
     {{-- requirement required files --}}
@@ -82,7 +88,7 @@
                                     class="text-green-500 hover:text-green-700 hover:link">view</button>
                                 <button wire:click='downloadFile({{ $file->id }})' type="button"
                                     class="text-blue-500 hover:text-blue-700 hover:link">download</button>
-                                <button type="button"
+                                <button wire:click='removeFile({{ $file->id }})' type="button"
                                     class="text-red-500 hover:text-red-700 hover:link">remove</button>
                             </td>
                         </tr>
@@ -127,34 +133,6 @@
         </div>
     </div>
 
-    {{-- requirement submissions --}}
-    <div class="w-full bg-white shadow-md rounded-lg p-6 space-y-4">
-        <h2 class="text-xl font-bold">Requirement Submissions</h2>
-        <div class=" max-h-[500px] overflow-y-auto">
-            <table class="table table-fixed table-sm table-striped">
-                <thead>
-                    <tr class="bg-gray-200">
-                        <th>File Name</th>
-                        <th>File Type</th>
-                        <th>File Size</th>
-                        <th>Date Modified</th>
-                        <th>Submitted By</th>
-                        <th>Submitted At</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {{-- @forelse ($collection as $item) --}}
-
-                    {{-- @empty --}}
-                    <tr>
-                        <td colspan="6" class="text-center">No files submitted to this requirement.</td>
-                    </tr>
-                    {{-- @endforelse --}}
-                </tbody>
-            </table>
-        </div>
-    </div>
-
     {{-- upload required files modal --}}
     <input type="checkbox" id="upload_required_files_modal" class="modal-toggle" />
     <div class="modal" role="dialog">
@@ -169,7 +147,4 @@
         </form>
         <label class="modal-backdrop" for="upload_required_files_modal"></label>
     </div>
-
-    {{-- view file modal --}}
-
 </div>
