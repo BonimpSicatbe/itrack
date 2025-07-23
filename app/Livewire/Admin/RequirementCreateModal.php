@@ -75,12 +75,12 @@ class RequirementCreateModal extends Component
             ]);
 
             // Notify all users in the assigned sector
-            $users = $requirement->assignedTargets()
-                ->whereNotIn('role', ['admin', 'super-admin'])
-                ->get();
+            $users = $requirement->assignedTargets(); // This now returns a collection directly
 
             foreach ($users as $user) {
-                $user->notify(new \App\Notifications\NewRequirementNotification($requirement));
+                if (!in_array($user->role, ['admin', 'super-admin'])) {
+                    $user->notify(new \App\Notifications\NewRequirementNotification($requirement));
+                }
             }
 
             session()->flash('success', 'Requirement created successfully.');
