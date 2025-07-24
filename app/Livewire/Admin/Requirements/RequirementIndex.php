@@ -58,7 +58,7 @@ class RequirementIndex extends Component
                     $media = $requirement->addMedia($file->getRealPath())
                         ->usingFileName($file->getClientOriginalName())
                         ->preservingOriginal()
-                        ->toMediaCollection('requirement/requirement_required_files');
+                        ->toMediaCollection('requirement/requirement_required_files', 'public');
                 }
             }
             Log::debug('Media added to requirement', ['media_id' => $media->id ?? null]);

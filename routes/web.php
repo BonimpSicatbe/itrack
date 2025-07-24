@@ -6,9 +6,11 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\UserRequirementController;
 use App\Http\Controllers\FileController;
+use App\Http\Controllers\FileManagerController;
 use App\Http\Controllers\FileUploadController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
+use \App\Http\Controllers\PendingController;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -66,6 +68,14 @@ Route::middleware(['auth', 'role:admin|super-admin'])
             return view('admin.pages.notification.notifications');
         })->name('notifications');
         // ========== ========== NOTIFICATIONS ROUTES | END ========== ==========
+
+        // ========== ========== FILE ROUTES | START ========== ==========
+        Route::get('/file-manager', [FileManagerController::class, 'index'])->name('file-manager.index');
+        // ========== ========== FILE ROUTES | END ========== ==========
+
+        // ========== ========== PENDING ROUTES | START ========== ==========
+        Route::get('/pending-requirements', [PendingController::class, 'index'])->name('pending-requirements.index');
+        // ========== ========== PENDING ROUTES | END ========== ==========
 
         // ========== ========== REQUIREMENT ROUTES | START ========== ==========
         // Route::resource('requirements', RequirementController::class); // admin.requirements.show / index / etc

@@ -1,6 +1,6 @@
 <ul class="w-full flex flex-row gap-2 items-center flex-wrap">
     @foreach ($navLinks as $index => $navlink)
-        @if ($index === count($navLinks) - 2)
+        @if ($index === count($navLinks) - 3)
             {{-- Spacer before the last two items --}}
             <li class="flex-1"></li>
         @endif
