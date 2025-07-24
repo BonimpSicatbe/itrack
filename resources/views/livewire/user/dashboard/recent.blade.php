@@ -14,7 +14,9 @@
                 <div wire:click="showRequirementDetail({{ $submission->id }})"
                     class="border rounded-lg p-3 {{ $listView ? 'w-full' : 'min-w-[300px]' }} hover:bg-gray-50 transition-all flex flex-col gap-1 cursor-pointer">
                     <div class="flex justify-between items-start">
-                        <div class="text-sm font-bold truncate">{{ $submission->requirement->name }}</div>
+                        <div class="text-sm font-bold truncate">
+                            {{ $submission->requirement?->name ?? 'Deleted Requirement' }}
+                        </div>
                         <span class="badge px-2 py-1 text-xs rounded"
                               style="background-color: {{ \App\Models\SubmittedRequirement::getStatusColor($submission->status) }}; color: white">
                             {{ $submission->status_text }}
