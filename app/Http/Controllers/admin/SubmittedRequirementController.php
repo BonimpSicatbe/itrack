@@ -13,11 +13,7 @@ class SubmittedRequirementController extends Controller
      */
     public function index()
     {
-        $submittedRequirements = SubmittedRequirement::with(['requirement', 'user'])->get();
-
-        return view('admin.pages.submitted-requirements.submitted-requirements-list', [
-            'submittedRequirements' => $submittedRequirements,
-        ]);
+        return view('admin.pages.submitted-requirements.submitted-requirements_index');
     }
 
     /**
