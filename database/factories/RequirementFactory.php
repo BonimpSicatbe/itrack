@@ -22,11 +22,10 @@ class RequirementFactory extends Factory
             'description' => $this->faker->sentence(),
             'due' => $this->faker->dateTimeBetween('now', '+1 year')->format('Y-m-d H:i:s'),
             'assigned_to' => $target === 'college'
-                ? College::inRandomOrder()->value('name')
-                : Department::inRandomOrder()->value('name'),
+                ? \App\Models\College::inRandomOrder()->value('name')
+                : \App\Models\Department::inRandomOrder()->value('name'),
             'status' => $this->faker->randomElement(['pending', 'completed']),
             'priority' => $this->faker->randomElement(['low', 'normal', 'high']),
-            'sector' => $target,
             'created_by' => User::inRandomOrder()->value('id'),
             'updated_by' => null,
             'archived_by' => null,
@@ -37,8 +36,7 @@ class RequirementFactory extends Factory
     {
         return $this->afterCreating(function (Requirement $requirement) {
             $users = $requirement->assignedTargets()
-                        ->whereNotIn('role', ['admin', 'super-admin'])
-                        ->get();
+                        ->whereNotIn('role', ['admin', 'super-admin']);
 
             foreach ($users as $user) {
                 $user->notify(new NewRequirementNotification($requirement));
