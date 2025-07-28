@@ -57,46 +57,42 @@ class RequirementDetailModal extends Component
         $this->uploading = true;
 
         try {
+            // Create the submission
             $submittedRequirement = SubmittedRequirement::create([
                 'requirement_id' => $this->requirement->id,
                 'user_id' => Auth::id(),
                 'status' => SubmittedRequirement::STATUS_UNDER_REVIEW,
                 'admin_notes' => $this->submissionNotes,
+                'submitted_at' => now(),
             ]);
 
+            // Store the file with original filename
             $submittedRequirement->addMedia($this->file->getRealPath())
-                ->usingName($this->file->getClientOriginalName())
-                ->usingFileName($this->file->getClientOriginalName())
+                ->usingName($this->file->getClientOriginalName()) // Preserve original name
+                ->usingFileName($this->file->getClientOriginalName()) // Preserve filename with extension
                 ->toMediaCollection('submission_files');
 
-            $submittedRequirement->uploaded_by = Auth::id();
-            $submittedRequirement->save();
-
-            // Notify all admins (not just the creator)
+            // Notify admins (working notification code)
             $admins = \App\Models\User::role(['admin', 'super-admin'])->get();
-
             foreach ($admins as $admin) {
-                $admin->notify(new \App\Notifications\NewSubmissionNotification(
-                    $this->requirement,
-                    $submittedRequirement
-                ));
+                $admin->notifyNow(
+                    new \App\Notifications\NewSubmissionNotification(
+                        $this->requirement,
+                        $submittedRequirement
+                    )
+                );
             }
 
-            $this->dispatch(
-                'notify',
+            $this->dispatch('notify', 
                 type: 'success',
-                message: 'Requirement submitted successfully! Status: Under Review'
+                message: 'Requirement submitted successfully!'
             );
 
             $this->reset(['file', 'submissionNotes']);
             $this->requirement->refresh();
+
         } catch (\Exception $e) {
-            Log::error('Submission failed', [
-                'requirement_id' => $this->requirement->id,
-                'error' => $e->getMessage(),
-            ]);
-            $this->dispatch(
-                'notify',
+            $this->dispatch('notify',
                 type: 'error',
                 message: 'Submission failed: ' . $e->getMessage()
             );
@@ -143,11 +139,6 @@ class RequirementDetailModal extends Component
                 message: 'Deletion failed: ' . $e->getMessage()
             );
         }
-    }
-
-    public function via($notifiable)
-    {
-        return ['database']; // Ensure this is present
     }
 
     public function render()

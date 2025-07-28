@@ -18,7 +18,11 @@ class Notifications extends Component
 
     public function loadNotifications()
     {
-        $this->notifications = Auth::user()->notifications()->latest()->get();
+        $this->notifications = Auth::user()
+            ->notifications()
+            ->where('data->type', 'new_submission') // Add this line to filter
+            ->latest()
+            ->get();
     }
 
     public function selectNotification($id)
