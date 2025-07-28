@@ -75,14 +75,9 @@ class RequirementCreateModal extends Component
 
             if (!empty($this->required_files)) {
                 foreach ($this->required_files as $file) {
-                    $media = $requirement->addMedia($file->getRealPath())
+                    $requirement->addMedia($file->getRealPath())
                         ->usingFileName($file->getClientOriginalName())
                         ->toMediaCollection('requirementRequiredFiles');
-
-                    RequirementMedia::create([
-                        'requirement_id' => $requirement->id,
-                        'media_id' => $media->id,
-                    ]);
                 }
             }
 
