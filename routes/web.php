@@ -6,21 +6,14 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\UserRequirementController;
 use App\Http\Controllers\FileController;
+use App\Http\Controllers\FileManagerController;
+use App\Http\Controllers\FileUploadController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
+use \App\Http\Controllers\PendingController;
 
 Route::get('/', function () {
-    if (Auth::check()) {
-        $user = Auth::user(); // initiate user
-
-        if ($user->hasRole('user')) {
-            return redirect()->route('user.dashboard');
-        } elseif ($user->hasRole('admin') || $user->hasRole('super-admin')) {
-            return redirect()->route('admin.dashboard');
-        }
-    } else {
-        return redirect()->route('login');
-    }
+    return redirect()->route('login');
 });
 
 Route::middleware(['auth', 'role:user'])
@@ -66,12 +59,6 @@ Route::middleware(['auth', 'role:admin|super-admin'])
     ->prefix('/admin')
     ->as('admin.')
     ->group(function () {
-        /**
-         *
-         * //TODO add route for users (view, edit, delete, show, etc)
-         *
-         **/
-
         Route::get('/dashboard', function () {
             return view('admin.dashboard');
         })->name('dashboard');
@@ -82,16 +69,26 @@ Route::middleware(['auth', 'role:admin|super-admin'])
         })->name('notifications');
         // ========== ========== NOTIFICATIONS ROUTES | END ========== ==========
 
+        // ========== ========== FILE ROUTES | START ========== ==========
+        Route::get('/file-manager', [FileManagerController::class, 'index'])->name('file-manager.index');
+        // ========== ========== FILE ROUTES | END ========== ==========
+
+        // ========== ========== PENDING ROUTES | START ========== ==========
+        Route::get('/pending-requirements', [PendingController::class, 'index'])->name('pending-requirements.index');
+        // ========== ========== PENDING ROUTES | END ========== ==========
+
         // ========== ========== REQUIREMENT ROUTES | START ========== ==========
         // Route::resource('requirements', RequirementController::class); // admin.requirements.show / index / etc
         Route::get('/requirements', [RequirementController::class, 'index'])->name('requirements.index');
-        Route::get('/requirements/{requirement_id}', [RequirementController::class, 'show'])->name('requirements.show');
-        Route::get('/requirements/{requirement_id}/edit', [RequirementController::class, 'edit'])->name('requirements.edit');
+        Route::get('/requirements/{requirement}', [RequirementController::class, 'show'])->name('requirements.show');
+        Route::get('/requirements/{requirement}/edit', [RequirementController::class, 'edit'])->name('requirements.edit');
         // ========== ========== REQUIREMENT ROUTES | END ========== ==========
 
         // ========== ========== SUBMISSION ROUTES | START ========== ==========
-        Route::get('/submitted-requirements-list', [SubmittedRequirementController::class, 'index'])->name('submitted-requirements.index');
-        Route::get('/submitted-requirements-list/{submission}', [SubmittedRequirementController::class, 'show'])->name('submitted-requirements.show');
+        Route::get('/submitted-requirements', [SubmittedRequirementController::class, 'index'])->name('submitted-requirements.index');
+        Route::get('/submitted-requirements/{submitted_requirement}', [SubmittedRequirementController::class, 'show'])->name('submitted-requirements.show');
+        // Route::get('/submitted-requirements-list', [SubmittedRequirementController::class, 'index'])->name('submitted-requirements.index');
+        // Route::get('/submitted-requirements-list/{submission}', [SubmittedRequirementController::class, 'show'])->name('submitted-requirements.show');
         // ========== ========== SUBMISSION ROUTES | END ========== ==========
 
         Route::resource('users', UserController::class);
@@ -101,11 +98,11 @@ Route::middleware(['auth', 'role:admin|super-admin'])
 Route::middleware('auth')->group(function () {
     // File download route
     Route::get('/download/file/{submission}', [FileController::class, 'download'])
-         ->name('file.download');
+        ->name('file.download');
 
     // File preview route
     Route::get('/preview/file/{submission}', [FileController::class, 'preview'])
-         ->name('file.preview');
+        ->name('file.preview');
 });
 
 Route::middleware('auth')->group(function () {

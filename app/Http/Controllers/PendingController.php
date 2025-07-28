@@ -1,19 +1,17 @@
 <?php
 
-namespace App\Http\Controllers\admin;
+namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
-use App\Models\SubmittedRequirement;
 use Illuminate\Http\Request;
 
-class SubmittedRequirementController extends Controller
+class PendingController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
     public function index()
     {
-        return view('admin.pages.submitted-requirements.submitted-requirements_index');
+        return view('admin.pages.pending.pending_index');
     }
 
     /**
@@ -35,24 +33,23 @@ class SubmittedRequirementController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(SubmittedRequirement $submittedRequirement)
+    public function show(string $id)
     {
-        return view('admin.pages.submitted-requirements.submitted-requirement_show', [
-            'submittedRequirement' => $submittedRequirement,
-        ]);
+        //
     }
 
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(SubmittedRequirement $submittedRequirement)
+    public function edit(string $id)
     {
+        //
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, SubmittedRequirement $submittedRequirement)
+    public function update(Request $request, string $id)
     {
         //
     }
@@ -60,7 +57,7 @@ class SubmittedRequirementController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(SubmittedRequirement $submittedRequirement)
+    public function destroy(string $id)
     {
         //
     }

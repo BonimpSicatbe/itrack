@@ -29,11 +29,8 @@ class AuthenticatedSessionController extends Controller
         $request->session()->regenerate();
 
         $user = Auth::user();
-        if ($user->role === 'admin' || $user->role === 'super-admin') {
-            $route = 'admin.dashboard';
-        } else {
-            $route = 'user.dashboard';
-        }
+
+        $route = $user->hasRole('admin') || $user->hasRole('super-admin') ? 'admin.dashboard' : 'user.dashboard';
 
         return redirect()->route($route)->with('success', 'Login successful!');
     }
@@ -49,6 +46,6 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerateToken();
 
-        return redirect('/');
+        return redirect('/login');
     }
 }

@@ -13,7 +13,6 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
-
 class Requirement extends Model implements HasMedia
 {
     use InteractsWithMedia, HasFactory;
@@ -111,8 +110,6 @@ class Requirement extends Model implements HasMedia
             $department = Department::where('name', $this->assigned_to)->first();
             return User::where('department_id', $department->id)->get();
         }
-
-        $collect = collect();
 
         // Always return a collection to avoid errors
         return collect();
