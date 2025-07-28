@@ -8,7 +8,7 @@
                 <div class="flex flex-row gap-4 w-full sm:w-auto justify-center sm:justify-end">
                     <input type="text" wire:model.live="search" id="search" class="input input-bordered input-sm w-full sm:w-sm"
                         placeholder="Search requirements...">
-                    <label for="create_requirement_modal" class="btn btn-sm btn-success flex items-center gap-2">
+                    <label for="createRequirement" class="btn btn-sm btn-success flex items-center gap-2">
                         <i class="fa-solid fa-plus"></i>
                         <span class="hidden sm:inline">Create Requirement</span>
                     </label>
@@ -65,79 +65,8 @@
                 </table>
             </div>
         </div>
-
     </div>
 
-    {{-- create requirement modal --}}
-    <input type="checkbox" id="create_requirement_modal" class="modal-toggle" />
-    <div class="modal" role="dialog">
-        {{-- header --}}
-        <div class="modal-box w-full max-w-5xl">
-            <div class="flex flex-row gap-4 justify-between items-center w-full">
-                <h3 class="text-lg font-bold">Create New Requirement</h3>
-                <label for="create_requirement_modal" class="btn btn-sm btn-circle btn-ghost btn-default"><i
-                        class="fa-solid fa-xmark"></i></label>
-            </div>
-
-            {{-- content --}}
-            <form wire:submit.prevent='createRequirement' class="grid grid-cols-1 sm:grid-cols-2 gap-2" enctype="multipart/form-data">
-                {{-- requirement name --}}
-                <div class="col-span-1 sm:col-span-2">
-                    <x-text-fieldset label="requirement name" name="name" wire:model="name" type="text" />
-                </div>
-
-                <div class="col-span-1 sm:col-span-2">
-                    <x-textarea-fieldset label="requirement description" name="description" wire:model="description" />
-                </div>
-
-                {{-- requirement due date --}}
-                <x-text-fieldset label="requirement due date & time" name="due" wire:model="due"
-                    type="datetime-local" />
-
-                {{-- requirement priority --}}
-                <x-select-fieldset label="requirement priority" name="priority" wire:model="priority">
-                    <option value="low">Low</option>
-                    <option value="normal">Normal</option>
-                    <option value="high">High</option>
-                </x-select-fieldset>
-
-                {{-- requirement sector --}}
-                <x-select-fieldset wire:model.live="sector" label="requirement sector">
-                    <option value="college">College</option>
-                    <option value="department">Department</option>
-                </x-select-fieldset>
-
-                {{-- requirement assigned to --}}
-                @if ($this->sector === 'college')
-                    <x-select-fieldset name="assigned_to" wire:model="assigned_to" label="select college">
-                        @foreach ($colleges as $college)
-                            <option value="{{ $college->id }}">{{ $college->name }}</option>
-                        @endforeach
-                    </x-select-fieldset>
-                @elseif ($this->sector === 'department')
-                    <x-select-fieldset name="assigned_to" wire:model="assigned_to" label="select department">
-                        @foreach ($departments as $department)
-                            <option value="{{ $department->id }}">{{ $department->name }}</option>
-                        @endforeach
-                    </x-select-fieldset>
-                @else
-                    <x-select-fieldset label="select sector first" disabled>
-                        <option value="">select sector first</option>
-                    </x-select-fieldset>
-                @endif
-
-                <div class="col-span-1 sm:col-span-2">
-                    <x-file-fieldset label="requirement file" name="required_files" wire:model="required_files"
-                        multiple />
-                </div>
-
-                <div class="col-span-1 sm:col-span-2 text-center">
-                    <button type="submit" class="btn btn-sm btn-wide btn-success">Create Requirement</button>
-                </div>
-            </form>
-        </div>
-
-        {{-- backdrop close function --}}
-        <label class="modal-backdrop" for="create_requirement_modal">Close</label>
-    </div>
+    {{-- Include the create modal component --}}
+    @livewire('admin.requirement-create-modal')
 </div>

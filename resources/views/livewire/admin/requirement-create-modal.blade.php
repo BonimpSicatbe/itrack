@@ -3,7 +3,7 @@
     <div class="modal" role="dialog">
         <div class="modal-box w-full max-w-2xl">
             <h3 class="text-lg font-bold">Create Requirement</h3>
-            <form wire:submit.prevent="createRequirement" class="grid grid-cols-2 gap-x-4 gap-y-2">
+            <form wire:submit.prevent="createRequirement" class="grid grid-cols-2 gap-x-4 gap-y-2" enctype="multipart/form-data">
                 <div class="col-span-2">
                     <x-text-fieldset type="text" name="name" wire:model="name" label="Requirement Name" />
                 </div>
@@ -30,7 +30,7 @@
                     @endforeach
                 </x-select-fieldset>
                 <div class="col-span-2">
-                    <x-file-fieldset name="required_files" wire:model="required_files" label="Required Files" />
+                    <x-file-fieldset name="required_files" wire:model="required_files" label="Required Files" multiple />
                 </div>
                 <div class="col-span-2 modal-action">
                     <label for="createRequirement" class="btn">Cancel</label>
