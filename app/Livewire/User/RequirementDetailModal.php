@@ -69,9 +69,12 @@ class RequirementDetailModal extends Component
                 ->usingFileName($this->file->getClientOriginalName())
                 ->toMediaCollection('submission_files');
 
+            $submittedRequirement->uploaded_by = Auth::id();
+            $submittedRequirement->save();
+
             // Notify all admins (not just the creator)
             $admins = \App\Models\User::role(['admin', 'super-admin'])->get();
-            
+
             foreach ($admins as $admin) {
                 $admin->notify(new \App\Notifications\NewSubmissionNotification(
                     $this->requirement,

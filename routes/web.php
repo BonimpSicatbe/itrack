@@ -86,6 +86,7 @@ Route::middleware(['auth', 'role:admin|super-admin'])
 
         // ========== ========== SUBMISSION ROUTES | START ========== ==========
         Route::get('/submitted-requirements', [SubmittedRequirementController::class, 'index'])->name('submitted-requirements.index');
+        Route::get('/submitted-requirements/{submitted_requirement}', [SubmittedRequirementController::class, 'show'])->name('submitted-requirements.show');
         // Route::get('/submitted-requirements-list', [SubmittedRequirementController::class, 'index'])->name('submitted-requirements.index');
         // Route::get('/submitted-requirements-list/{submission}', [SubmittedRequirementController::class, 'show'])->name('submitted-requirements.show');
         // ========== ========== SUBMISSION ROUTES | END ========== ==========

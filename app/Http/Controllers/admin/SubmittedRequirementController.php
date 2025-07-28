@@ -37,7 +37,7 @@ class SubmittedRequirementController extends Controller
      */
     public function show(SubmittedRequirement $submittedRequirement)
     {
-        return view('admin.pages.submitted-requirements.submitted-requirement-detail', [
+        return view('admin.pages.submitted-requirements.submitted-requirement_show', [
             'submittedRequirement' => $submittedRequirement,
         ]);
     }
