@@ -35,6 +35,77 @@ class SubmittedRequirement extends Model implements HasMedia
     const STATUS_REJECTED = 'rejected';
     const STATUS_APPROVED = 'approved';
 
+    /* ========== RELATIONSHIPS ========== */
+
+    /**
+     * The requirement this submission belongs to
+     */
+    public function requirement(): BelongsTo
+    {
+        return $this->belongsTo(Requirement::class);
+    }
+
+    /**
+     * The user who submitted this requirement
+     */
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    /**
+     * The admin who reviewed this submission
+     */
+    public function reviewer(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'reviewed_by');
+    }
+
+    /**
+     * Media relationship for submission files
+     */
+    public function submissionFile(): MorphOne
+    {
+        return $this->morphOne(Media::class, 'model')
+            ->where('collection_name', 'submission_files');
+    }
+
+    /* ========== SCOPES ========== */
+
+    /**
+     * Scope for approved submissions
+     */
+    public function scopeApproved($query)
+    {
+        return $query->where('status', self::STATUS_APPROVED);
+    }
+
+    /**
+     * Scope for pending review submissions
+     */
+    public function scopePendingReview($query)
+    {
+        return $query->where('status', self::STATUS_UNDER_REVIEW);
+    }
+
+    /**
+     * Scope for submissions needing revision
+     */
+    public function scopeNeedsRevision($query)
+    {
+        return $query->where('status', self::STATUS_REVISION_NEEDED);
+    }
+
+    /**
+     * Scope for rejected submissions
+     */
+    public function scopeRejected($query)
+    {
+        return $query->where('status', self::STATUS_REJECTED);
+    }
+
+    /* ========== METHODS ========== */
+
     public static function statuses()
     {
         return [
@@ -60,13 +131,13 @@ class SubmittedRequirement extends Model implements HasMedia
     public static function getPriorityColor($priority)
     {
         $colors = [
-            'high' => '#ef4444',
-            'medium' => '#f59e0b',
-            'low' => '#3b82f6',
-            'default' => '#023e8a',
+            'high' => '#f87171',    // red
+            'medium' => '#fbbf24',  // amber
+            'low' => '#a3e635',    // lime
+            'default' => '#9ca3af', // gray
         ];
 
-        return $colors[$priority] ?? $colors['default'];
+        return $colors[strtolower($priority)] ?? $colors['default'];
     }
 
     public function registerMediaCollections(): void
@@ -74,12 +145,6 @@ class SubmittedRequirement extends Model implements HasMedia
         $this->addMediaCollection('submission_files')
             ->singleFile()
             ->useDisk('public');
-    }
-
-    public function submissionFile(): MorphOne
-    {
-        return $this->morphOne(Media::class, 'model')
-            ->where('collection_name', 'submission_files');
     }
 
     public function getSubmissionFileAttribute()
@@ -108,9 +173,6 @@ class SubmittedRequirement extends Model implements HasMedia
         return Storage::disk('public')->path($this->submissionFile->getPathRelativeToRoot());
     }
 
-    /**
-     * Delete the associated file and its record
-     */
     public function deleteFile()
     {
         if ($this->submissionFile) {
@@ -120,29 +182,13 @@ class SubmittedRequirement extends Model implements HasMedia
         return false;
     }
 
-    /**
-     * Check if the submission can be deleted by the current user
-     */
     public function canBeDeletedBy($user)
     {
         return $user->id === $this->user_id &&
                $this->status !== self::STATUS_APPROVED;
     }
 
-    public function requirement(): BelongsTo
-    {
-        return $this->belongsTo(Requirement::class);
-    }
-
-    public function user(): BelongsTo
-    {
-        return $this->belongsTo(User::class);
-    }
-
-    public function reviewer(): BelongsTo
-    {
-        return $this->belongsTo(User::class, 'reviewed_by');
-    }
+    /* ========== ACCESSORS ========== */
 
     public function getStatusTextAttribute()
     {
@@ -159,10 +205,26 @@ class SubmittedRequirement extends Model implements HasMedia
         };
     }
 
+    public function getIsApprovedAttribute()
+    {
+        return $this->status === self::STATUS_APPROVED;
+    }
+
+    public function getIsRejectedAttribute()
+    {
+        return $this->status === self::STATUS_REJECTED;
+    }
+
+    public function getNeedsRevisionAttribute()
+    {
+        return $this->status === self::STATUS_REVISION_NEEDED;
+    }
+
+    /* ========== BOOT ========== */
+
     protected static function booted()
     {
         static::deleting(function ($model) {
-            // Delete associated file when the submission is deleted
             $model->deleteFile();
         });
 
