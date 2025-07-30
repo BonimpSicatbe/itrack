@@ -10,7 +10,6 @@
         <input type="text" wire:model.live="search" id="search" class="input input-sm input-bordered w-128"
             placeholder="Search requirement name">
         <div class="grow"></div>
-        <label for="createRequirement" class="btn btn-sm btn-default">Create Requirement</label>
     </div>
 
     {{-- content --}}
@@ -37,8 +36,8 @@
                         <x-table.cell>{{ $requirement->assigned_to }}</x-table.cell>
                         <x-table.cell>{{ $requirement->status }}</x-table.cell>
                         <x-table.cell>{{ $requirement->priority }}</x-table.cell>
-                        <x-table.cell>{{ $requirement->createdBy?->firstname }}
-                            {{ $requirement->createdBy?->lastname }}</x-table.cell>
+                        <x-table.cell>{{ $requirement->creator?->firstname }}
+                            {{ $requirement->creator?->lastname }}</x-table.cell>
                     </x-table.row>
                 @empty
                     <x-table.row>
