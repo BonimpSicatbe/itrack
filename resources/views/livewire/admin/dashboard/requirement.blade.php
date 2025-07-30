@@ -37,8 +37,8 @@
                         <x-table.cell>{{ $requirement->assigned_to }}</x-table.cell>
                         <x-table.cell>{{ $requirement->status }}</x-table.cell>
                         <x-table.cell>{{ $requirement->priority }}</x-table.cell>
-                        <x-table.cell>{{ $requirement->createdBy->firstname }}
-                            {{ $requirement->createdBy->lastname }}</x-table.cell>
+                        <x-table.cell>{{ $requirement->createdBy?->firstname }}
+                            {{ $requirement->createdBy?->lastname }}</x-table.cell>
                     </x-table.row>
                 @empty
                     <x-table.row>

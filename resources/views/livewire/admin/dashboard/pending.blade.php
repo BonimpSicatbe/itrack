@@ -32,8 +32,8 @@
                         {{-- <x-table.cell>{{ $pending->priority }}</x-table.cell> --}}
                         <x-table.cell>{{ $pending->priority }}</x-table.cell>
                         <x-table.cell>{{ \Carbon\Carbon::parse($pending->due)->format('F d, Y') }}</x-table.cell>
-                        <x-table.cell>{{ $pending->createdBy->firstname }}
-                            {{ $pending->createdBy->lastname }}</x-table.cell>
+                        <x-table.cell>{{ $pending->createdBy?->firstname }}
+                            {{ $pending->createdBy?->lastname }}</x-table.cell>
                     </x-table.row>
                 @empty
                     <x-table.row>

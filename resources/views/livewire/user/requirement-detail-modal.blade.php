@@ -28,12 +28,6 @@
                                 <span class="text-gray-500 w-32">Due Date:</span>
                                 <span>{{ $requirement->due->format('M j, Y') }} ({{ $requirement->due->diffForHumans() }})</span>
                             </div>
-                            <div class="flex gap-4">
-                                <span class="text-gray-500 w-32">Status:</span>
-                                <span class="badge" style="background-color: {{ $requirement->userSubmissions->first() ? \App\Models\SubmittedRequirement::getStatusColor($requirement->userSubmissions->first()->status) : \App\Models\SubmittedRequirement::getStatusColor('default') }}; color: white">
-                                    {{ $requirement->userSubmissions->first()?->status_text ?? 'Not Submitted' }}
-                                </span>
-                            </div>
                             
                             <!-- Guide Files -->
                             @if($requirement->guides->count() > 0)
@@ -120,8 +114,8 @@
                                                 </div>
                                             </td>
                                             <td>
-                                                <span class="badge" style="background-color: {{ $requirement->userSubmissions->first() ? \App\Models\SubmittedRequirement::getStatusColor($requirement->userSubmissions->first()->status) : \App\Models\SubmittedRequirement::getStatusColor('default') }}; color: white">
-                                                    {{ $requirement->userSubmissions->first()?->status_text ?? 'Not Submitted' }}
+                                                <span class="badge" style="background-color: {{ \App\Models\SubmittedRequirement::getStatusColor($submission->status) }}; color: white">
+                                                    {{ $submission->status_text }}
                                                 </span>
                                             </td>
                                             <td>

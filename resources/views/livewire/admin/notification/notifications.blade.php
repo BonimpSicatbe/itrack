@@ -1,4 +1,11 @@
-<div class="flex h-full bg-white rounded-lg">
+@if (session()->has('message'))
+    <div class="fixed top-4 right-4 z-50">
+        <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative" role="alert">
+            <span class="block sm:inline">{{ session('message') }}</span>
+        </div>
+    </div>
+@endif
+<div class="flex h-full">
     {{-- Notifications List (Left) --}}
     <div class="w-1/3 border-r overflow-y-auto">
         <div class="p-4">
@@ -37,7 +44,7 @@
     </div>
 
     {{-- Notification Detail (Right) --}}
-    <div class="w-2/3 p-6 overflow-y-auto">
+    <div class="w-2/3 p-6 overflow-y-auto h-[calc(100vh-12rem)]">
         @if ($selectedNotification && $selectedNotificationData)
             <div class="space-y-6">
                 {{-- Header --}}
@@ -47,27 +54,6 @@
                         <p class="text-sm text-gray-500">
                             Notification received: {{ $selectedNotificationData['created_at']->format('M d, Y g:i A') }}
                         </p>
-                    </div>
-                    <div>
-                        @php
-                            // Determine overall status
-                            $anyFilePendingReview = count($selectedNotificationData['files'] ?? []) > 0 && 
-                                collect($selectedNotificationData['files'])->contains('status', 'under_review');
-                            $overallStatus = $anyFilePendingReview ? 'To Be Reviewed' : $selectedNotificationData['submission']['status_label'];
-                            $statusColor = $anyFilePendingReview ? 'bg-yellow-100 text-yellow-800' : (
-                                $selectedNotificationData['submission']['status'] === 'approved' ? 'bg-green-100 text-green-800' :
-                                ($selectedNotificationData['submission']['status'] === 'rejected' ? 'bg-red-100 text-red-800' :
-                                ($selectedNotificationData['submission']['status'] === 'revision_needed' ? 'bg-yellow-100 text-yellow-800' : 'bg-blue-100 text-blue-800'))
-                            );
-                        @endphp
-                        <span class="text-xs px-2 py-1 rounded-full {{ $statusColor }}">
-                            {{ $overallStatus }}
-                        </span>
-                        @if($selectedNotificationData['unread'])
-                            <span class="text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-800 mt-1 block">
-                                New
-                            </span>
-                        @endif
                     </div>
                 </div>
 
@@ -159,10 +145,21 @@
                 </div>
 
                 {{-- Files Section --}}
+                @if(session('message'))
+                    <div class="alert alert-success">
+                        {{ session('message') }}
+                    </div>
+                @endif
+
+                @if(session('success'))
+                    <div class="alert alert-success">
+                        {{ session('success') }}
+                    </div>
+                @endif
                 @if(count($selectedNotificationData['files'] ?? []))
                 <div class="bg-white p-4 rounded-lg border border-gray-200 mt-4">
                     <h3 class="text-lg font-semibold mb-3 text-gray-800">
-                        All Submitted Files ({{ count($selectedNotificationData['files']) }})
+                        Submitted Files ({{ count($selectedNotificationData['files']) }})
                     </h3>
                     
                     <div class="space-y-4">
@@ -170,7 +167,7 @@
                         @php
                             $fileStatus = $file['status'] ?? $selectedNotificationData['submission']['status'];
                             $fileStatusLabel = match($fileStatus) {
-                                'under_review' => 'To Be Reviewed',
+                                'under_review' => 'Under Review',
                                 'revision_needed' => 'Revision Needed',
                                 'rejected' => 'Rejected',
                                 'approved' => 'Approved',
@@ -183,52 +180,78 @@
                                 default => 'bg-blue-100 text-blue-800',
                             };
                         @endphp
-                        <div class="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 transition-colors">
-                            <div class="flex items-center space-x-3 min-w-0">
-                                <div class="flex-shrink-0 p-2 bg-gray-100 rounded-lg">
-                                    {{-- File icon based on extension --}}
-                                    @switch($file['extension'])
-                                        @case('pdf') <i class="fa-regular fa-file-pdf text-red-500"></i> @break
-                                        @case('doc') @case('docx') <i class="fa-regular fa-file-word text-blue-500"></i> @break
-                                        @case('xls') @case('xlsx') <i class="fa-regular fa-file-excel text-green-500"></i> @break
-                                        @case('jpg') @case('jpeg') @case('png') @case('gif') <i class="fa-regular fa-file-image text-purple-500"></i> @break
-                                        @default <i class="fa-regular fa-file text-gray-500"></i>
-                                    @endswitch
-                                </div>
-                                <div class="min-w-0">
-                                    <p class="text-sm font-medium text-gray-800 truncate">{{ $file['name'] }}</p>
-                                    <div class="flex items-center gap-2">
-                                        <span class="text-xs text-gray-500">
-                                            {{ strtoupper($file['extension']) }} • {{ $file['size'] }}
-                                        </span>
-                                        <span class="text-xs px-1.5 py-0.5 rounded-full {{ $statusColor }}">
-                                            {{ $fileStatusLabel }}
-                                        </span>
-                                        @if($file['submission_id'] != $selectedNotificationData['submission']['id'])
-                                            <span class="text-xs px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-800">
-                                                Previous Submission
-                                            </span>
-                                        @endif
+                        
+                        <div class="border rounded-lg overflow-hidden">
+                            <div class="flex items-center justify-between p-3 bg-gray-50 hover:bg-gray-100 transition-colors">
+                                <div class="flex items-center space-x-3 min-w-0">
+                                    <div class="flex-shrink-0 p-2 bg-gray-100 rounded-lg">
+                                        @switch($file['extension'])
+                                            @case('pdf') <i class="fa-regular fa-file-pdf text-red-500"></i> @break
+                                            @case('doc') @case('docx') <i class="fa-regular fa-file-word text-blue-500"></i> @break
+                                            @case('xls') @case('xlsx') <i class="fa-regular fa-file-excel text-green-500"></i> @break
+                                            @case('jpg') @case('jpeg') @case('png') @case('gif') <i class="fa-regular fa-file-image text-purple-500"></i> @break
+                                            @default <i class="fa-regular fa-file text-gray-500"></i>
+                                        @endswitch
                                     </div>
-                                    <p class="text-xs text-gray-500 mt-1">
-                                        Submitted: {{ $file['created_at']->format('M d, Y g:i A') }}
-                                    </p>
+                                    <div class="min-w-0">
+                                        <p class="text-sm font-medium text-gray-800 truncate">{{ $file['name'] }}</p>
+                                        <div class="flex items-center gap-2">
+                                            <span class="text-xs text-gray-500">
+                                                {{ strtoupper($file['extension']) }} • {{ $file['size'] }}
+                                            </span>
+                                            <span class="text-xs px-1.5 py-0.5 rounded-full {{ $statusColor }}">
+                                                {{ $fileStatusLabel }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="flex space-x-2">
+                                    @if($file['is_previewable'])
+                                    <a href="{{ route('file.preview', ['submission' => $file['submission_id'], 'file' => $file['id']]) }}" 
+                                    target="_blank"
+                                    class="p-2 text-blue-600 hover:text-blue-800 rounded hover:bg-blue-50"
+                                    title="Preview">
+                                        <i class="fa-solid fa-eye"></i>
+                                    </a>
+                                    @endif
+                                    <a href="{{ route('file.download', ['submission' => $file['submission_id'], 'file' => $file['id']]) }}" 
+                                    class="p-2 text-blue-600 hover:text-blue-800 rounded hover:bg-blue-50"
+                                    title="Download">
+                                        <i class="fa-solid fa-download"></i>
+                                    </a>
                                 </div>
                             </div>
-                            <div class="flex space-x-2">
-                                @if($file['is_previewable'])
-                                <a href="{{ route('file.preview', ['submission' => $file['submission_id'], 'file' => $file['id']]) }}" 
-                                target="_blank"
-                                class="p-2 text-blue-600 hover:text-blue-800 rounded hover:bg-blue-50"
-                                title="Preview">
-                                    <i class="fa-solid fa-eye"></i>
-                                </a>
-                                @endif
-                                <a href="{{ route('file.download', ['submission' => $file['submission_id'], 'file' => $file['id']]) }}" 
-                                class="p-2 text-blue-600 hover:text-blue-800 rounded hover:bg-blue-50"
-                                title="Download">
-                                    <i class="fa-solid fa-download"></i>
-                                </a>
+                            
+                            {{-- Status update form --}}
+                            <div class="p-4 border-t">
+                                <form wire:submit.prevent="updateFileStatus('{{ $file['submission_id'] }}')">
+                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                        <div>
+                                            <label for="newStatus" class="block text-sm font-medium text-gray-700 mb-1">Update Status</label>
+                                            <select wire:model="newStatus" id="newStatus" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm">
+                                                @foreach(\App\Models\SubmittedRequirement::statuses() as $value => $label)
+                                                    <option value="{{ $value }}" {{ $fileStatus == $value ? 'selected' : '' }}>
+                                                        {{ $label }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                        
+                                        <div class="md:col-span-2">
+                                            <label for="adminNotes" class="block text-sm font-medium text-gray-700 mb-1">Admin Notes</label>
+                                            <textarea wire:model="adminNotes" id="adminNotes" rows="2" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm" placeholder="Add review comments...">{{ $file['admin_notes'] ?? '' }}</textarea>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mt-4 flex justify-end space-x-2">
+                                        <button type="button" wire:click="$set('newStatus', '')" class="px-3 py-1.5 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                            Cancel
+                                        </button>
+                                        <button type="submit" class="px-3 py-1.5 border border-transparent rounded-md text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                            Update Status
+                                        </button>
+                                    </div>
+                                </form>
                             </div>
                         </div>
                         @endforeach

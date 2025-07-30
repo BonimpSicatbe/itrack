@@ -234,5 +234,37 @@ class SubmittedRequirement extends Model implements HasMedia
                 $model->status = self::STATUS_UNDER_REVIEW;
             }
         });
+
+        static::updated(function ($model) {
+            if ($model->isDirty('status')) {
+                $oldStatus = $model->getOriginal('status');
+                $newStatus = $model->status;
+
+                // Log activity
+                if (class_exists('\Spatie\Activitylog\Traits\LogsActivity')) {
+                    activity()
+                        ->performedOn($model)
+                        ->causedBy(auth()->user())
+                        ->withProperties([
+                            'old_status' => $oldStatus,
+                            'new_status' => $newStatus,
+                        ])
+                        ->log('Status updated');
+                }
+
+                // Send notification (remove the auto-approve logic)
+                if ($model->relationLoaded('user') && $model->user) {
+                    $model->user->notify(
+                        new \App\Notifications\SubmissionStatusChanged(
+                            $model->requirement->name,
+                            $oldStatus,
+                            $newStatus,
+                            $model->admin_notes,
+                            $model->requirement_id
+                        )
+                    );
+                }
+            }
+        });
     }
 }

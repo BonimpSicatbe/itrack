@@ -11,6 +11,11 @@ class Notifications extends Component
     public $notifications = [];
     public $selectedNotification = null;
     public $selectedNotificationData = null;
+    
+    // For status update form
+    public $selectedFileId;
+    public $newStatus;
+    public $adminNotes;
 
     public function mount()
     {
@@ -91,7 +96,7 @@ class Notifications extends Component
 
         if ($submission) {
             $statusLabel = match($submission->status) {
-                SubmittedRequirement::STATUS_UNDER_REVIEW => 'To Be Reviewed',
+                SubmittedRequirement::STATUS_UNDER_REVIEW => 'Under Review',
                 SubmittedRequirement::STATUS_REVISION_NEEDED => 'Revision Needed',
                 SubmittedRequirement::STATUS_REJECTED => 'Rejected',
                 SubmittedRequirement::STATUS_APPROVED => 'Approved',
@@ -152,13 +157,46 @@ class Notifications extends Component
                     'created_at' => $media->created_at,
                     'extension' => $extension,
                     'is_previewable' => $isPreviewable,
-                    'status' => $sub->status, // Use the submission status for each file
-                    'submission_id' => $sub->id, // Track which submission this file belongs to
+                    'status' => $sub->status,
+                    'admin_notes' => $sub->admin_notes,
+                    'submission_id' => $sub->id,
                 ];
             }
         }
 
         $this->selectedNotificationData['files'] = $files;
+    }
+
+    public function updateFileStatus($submissionId)
+    {
+        $this->validate([
+            'newStatus' => 'required|in:' . implode(',', array_keys(SubmittedRequirement::statuses())),
+            'adminNotes' => 'nullable|string',
+        ]);
+
+        $submission = SubmittedRequirement::findOrFail($submissionId);
+        
+        $submission->update([
+            'status' => $this->newStatus,
+            'admin_notes' => $this->adminNotes,
+            'reviewed_by' => auth()->id(),
+            'reviewed_at' => now(),
+        ]);
+
+        // Reload data
+        $notification = $this->notifications->firstWhere('id', $this->selectedNotification);
+        if ($notification) {
+            $this->loadDetails($notification->data);
+        }
+
+        // Reset and show success message
+        $this->reset(['newStatus', 'adminNotes']);
+        
+        $this->dispatch('notify', [
+            'type' => 'success',
+            'message' => 'Status updated successfully!',
+            'timeout' => 3000
+        ]);
     }
 
     protected function formatFileSize($bytes)
