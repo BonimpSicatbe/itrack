@@ -104,6 +104,21 @@ class SubmittedRequirement extends Model implements HasMedia
         return $query->where('status', self::STATUS_REJECTED);
     }
 
+    public function scopeForSemester($query, Semester $semester)
+    {
+        return $query->whereBetween('created_at', [
+            $semester->start_date,
+            $semester->end_date
+        ]);
+    }
+
+    public function getSemesterAttribute()
+    {
+        return Semester::where('start_date', '<=', $this->created_at)
+            ->where('end_date', '>=', $this->created_at)
+            ->first();
+    }
+
     /* ========== METHODS ========== */
 
     public static function statuses()

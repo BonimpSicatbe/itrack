@@ -1,26 +1,14 @@
-<div class="w-full bg-white stats stats-vertical sm:stats-horizontal shadow">
+<div class="w-full stats stats-vertical sm:stats-horizontal shadow text-white" style="background: linear-gradient(148deg,rgba(18, 67, 44, 1) 0%, rgba(30, 119, 77, 1) 54%, rgba(55, 120, 64, 1) 100%);">
     @foreach ($stats as $stat)
         <div class="stat">
             <div class="stat-figure text-2xl">
-                <i class="fa-solid {{ $stat['icon'] }} text-{{ $stat['color'] }}"></i>
+                <i class="fa-solid {{ $stat['icon'] }} text-white"></i>
             </div>
-            <div class="stat-title">
-                <span>{{ $stat['title'] }}</span>
-            </div>
-            <div class="stat-value text-{{ $stat['color'] }}">{{ $stat['count'] }}</div>
-            <div class="stat-desc lowercase">
-                @if ($stat['desc'] >= 1024)
-                    {{ number_format($stat['desc'] / 1024, 2) }} GB
-                @else
-                    {{ $stat['desc'] }} MB
-                @endif
-                of
-                @if ($totalFiles >= 1024)
-                    {{ number_format($totalFiles / 1024, 2) }} GB
-                @else
-                    {{ $totalFiles }} MB
-                @endif
-            </div>
+            <div class="stat-title text-white">{{ $stat['title'] }}</div>
+            <div class="stat-value text-white">{{ $stat['count'] }}</div>
+            @isset($stat['description'])
+                <div class="stat-desc text-white/80">{{ $stat['description'] }}</div>
+            @endisset
         </div>
     @endforeach
 </div>
