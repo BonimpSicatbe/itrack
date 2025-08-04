@@ -8,27 +8,19 @@ use App\Http\Controllers\UserRequirementController;
 use App\Http\Controllers\FileController;
 use App\Http\Controllers\FileManagerController;
 use App\Http\Controllers\FileUploadController;
+use App\Http\Controllers\admin\SemesterController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
-use \App\Http\Controllers\PendingController;
+use App\Http\Controllers\PendingController;
 
 Route::get('/', function () {
     return redirect()->route('login');
 });
 
+// User routes
 Route::middleware(['auth', 'role:user'])
     ->prefix('user')
     ->group(function () {
-        /**
-         *
-         * show user requirement list
-         * show user requirement details
-         *
-         **/
-        // Route::resource('requirements', UserRequirementController::class)
-        //     ->only(['index', 'show'])
-        //     ->names('user.requirements');
-
         Route::get('/dashboard', function () {
             return view('user.dashboard');
         })->name('user.dashboard');
@@ -54,57 +46,67 @@ Route::middleware(['auth', 'role:user'])
         })->name('user.notifications');
     });
 
-// admin and super-admin routes
+// Admin routes
 Route::middleware(['auth', 'role:admin|super-admin'])
     ->prefix('/admin')
     ->as('admin.')
     ->group(function () {
+        // Dashboard
         Route::get('/dashboard', function () {
             return view('admin.dashboard');
         })->name('dashboard');
 
-        // ========== ========== NOTIFICATIONS ROUTES | START ========== ==========
+        // Notifications
         Route::get('/notifications', function () {
             return view('admin.pages.notification.notifications');
         })->name('notifications');
-        // ========== ========== NOTIFICATIONS ROUTES | END ========== ==========
 
-        // ========== ========== FILE ROUTES | START ========== ==========
-        Route::get('/file-manager', [FileManagerController::class, 'index'])->name('file-manager.index');
-        // ========== ========== FILE ROUTES | END ========== ==========
+        // File Manager
+        Route::get('/file-manager', [FileManagerController::class, 'index'])
+            ->name('file-manager.index');
 
-        // ========== ========== PENDING ROUTES | START ========== ==========
-        Route::get('/pending-requirements', [PendingController::class, 'index'])->name('pending-requirements.index');
-        // ========== ========== PENDING ROUTES | END ========== ==========
+        // Pending Requirements
+        Route::get('/pending-requirements', [PendingController::class, 'index'])
+            ->name('pending-requirements.index');
 
-        // ========== ========== REQUIREMENT ROUTES | START ========== ==========
-        // Route::resource('requirements', RequirementController::class); // admin.requirements.show / index / etc
-        Route::get('/requirements', [RequirementController::class, 'index'])->name('requirements.index');
-        Route::get('/requirements/{requirement}', [RequirementController::class, 'show'])->name('requirements.show');
-        Route::get('/requirements/{requirement}/edit', [RequirementController::class, 'edit'])->name('requirements.edit');
-        // ========== ========== REQUIREMENT ROUTES | END ========== ==========
+        // Requirements
+        Route::get('/requirements', [RequirementController::class, 'index'])
+            ->name('requirements.index');
+        Route::get('/requirements/{requirement}', [RequirementController::class, 'show'])
+            ->name('requirements.show');
+        Route::get('/requirements/{requirement}/edit', [RequirementController::class, 'edit'])
+            ->name('requirements.edit');
 
-        // ========== ========== SUBMISSION ROUTES | START ========== ==========
-        Route::get('/submitted-requirements', [SubmittedRequirementController::class, 'index'])->name('submitted-requirements.index');
-        Route::get('/submitted-requirements/{submitted_requirement}', [SubmittedRequirementController::class, 'show'])->name('submitted-requirements.show');
-        // Route::get('/submitted-requirements-list', [SubmittedRequirementController::class, 'index'])->name('submitted-requirements.index');
-        // Route::get('/submitted-requirements-list/{submission}', [SubmittedRequirementController::class, 'show'])->name('submitted-requirements.show');
-        // ========== ========== SUBMISSION ROUTES | END ========== ==========
+        // Submitted Requirements
+        Route::get('/submitted-requirements', [SubmittedRequirementController::class, 'index'])
+            ->name('submitted-requirements.index');
+        Route::get('/submitted-requirements/{submitted_requirement}', [SubmittedRequirementController::class, 'show'])
+            ->name('submitted-requirements.show');
 
+        // Users
         Route::resource('users', UserController::class);
+
+        // Semesters
+        Route::prefix('semesters')->group(function () {
+            Route::get('/', [SemesterController::class, 'index'])
+                ->name('semesters.index');
+            Route::post('/', [SemesterController::class, 'store']);
+            Route::put('/{semester}', [SemesterController::class, 'update']);
+            Route::delete('/{semester}', [SemesterController::class, 'destroy']);
+            Route::post('/{semester}/activate', [SemesterController::class, 'setActive'])
+                ->name('semesters.activate');
+        });
     });
 
-// File download and preview routes
+// File download/preview routes
 Route::middleware('auth')->group(function () {
-    // File download route
     Route::get('/download/file/{submission}', [FileController::class, 'download'])
         ->name('file.download');
-
-    // File preview route
     Route::get('/preview/file/{submission}', [FileController::class, 'preview'])
         ->name('file.preview');
 });
 
+// Notification routes
 Route::middleware('auth')->group(function () {
     Route::post('/notifications/mark-all-read', function () {
         auth()->user()->unreadNotifications->markAsRead();
@@ -118,10 +120,18 @@ Route::middleware('auth')->group(function () {
     })->name('notifications.markAsRead');
 });
 
+// Profile routes
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    Route::put('/password', [ProfileController::class, 'updatePassword'])->name('password.update');
+    
+    // Email verification
+    Route::post('/email/verification-notification', function (Request $request) {
+        $request->user()->sendEmailVerificationNotification();
+        return back()->with('status', 'verification-link-sent');
+    })->middleware(['throttle:6,1'])->name('verification.send');
 });
 
 require __DIR__ . '/auth.php';

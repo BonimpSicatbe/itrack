@@ -14,6 +14,7 @@ class Navigation extends Component
         ['label' => 'Requirements', 'icon' => 'clipboard-list', 'route' => 'admin.requirements.index'],
         ['label' => 'Submissions', 'icon' => 'paper-plane', 'route' => 'admin.submitted-requirements.index'],
         ['label' => 'Files', 'icon' => 'file', 'route' => 'admin.file-manager.index'],
+        ['label' => 'Users', 'icon' => 'users', 'route' => 'admin.users.index'],
 
         ['label' => 'Notifications', 'icon' => 'bell', 'route' => 'admin.notifications'],
         ['label' => 'Account', 'icon' => 'user-circle', 'route' => 'profile.edit'],

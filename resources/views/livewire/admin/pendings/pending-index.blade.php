@@ -8,7 +8,7 @@
                     <p class="text-xs sm:text-sm text-gray-600">{{ $pending->description }}</p>
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-y-2 sm:gap-x-8">
                         <p class="text-xs sm:text-sm text-gray-600">
-                            <span class="font-bold">Created by: </span>{{ $pending->createdBy->full_name }}</p>
+                            <span class="font-bold">Created by: </span>{{ $pending->creator->full_name }}</p>
                         <p class="text-xs sm:text-sm text-gray-600">
                             <span class="font-bold">Created at: </span>{{ $pending->created_at->format('d/m/Y H:i a') }}</p>
                         <p class="text-xs sm:text-sm text-gray-600">

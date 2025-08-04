@@ -1,41 +1,70 @@
 <x-admin.app-layout>
-    <div class="flex flex-col gap-4">
+    <div class="flex flex-col gap-6">
         {{-- Overview section (always visible) --}}
         @livewire('admin.dashboard.overview')
 
-        <div class="flex flex-col gap-2">
-            <div class="collapse collapse-arrow bg-base-100 border border-base-300">
-                <input type="checkbox" name="dashboard-accordion" checked /> 
-                <div class="collapse-title font-semibold hover:bg-base-200 cursor-pointer">
-                    Requirements
+        {{-- Semester Analytics --}}
+        @livewire('admin.dashboard.semester-analytics')
+
+        {{-- Accordion Sections --}}
+        <div class="flex flex-col gap-4">
+            {{-- Requirements --}}
+            <div class="card bg-base-100 shadow">
+                <div class="card-body p-0">
+                    <div class="collapse collapse-arrow">
+                        <input type="checkbox" name="dashboard-accordion" checked /> 
+                        <div class="collapse-title font-semibold text-lg px-6 py-4 hover:bg-base-200">
+                            Requirements
+                        </div>
+                        <div class="collapse-content px-6 pb-4">
+                            @livewire('admin.dashboard.requirement')
+                        </div>
+                    </div>
                 </div>
-                <div class="collapse-content text-sm">
-                    @livewire('admin.dashboard.requirement')
+            </div>
+
+            {{-- Pendings --}}
+            <div class="card bg-base-100 shadow">
+                <div class="card-body p-0">
+                    <div class="collapse collapse-arrow">
+                        <input type="checkbox" name="dashboard-accordion" /> 
+                        <div class="collapse-title font-semibold text-lg px-6 py-4 hover:bg-base-200">
+                            Pendings
+                        </div>
+                        <div class="collapse-content px-6 pb-4">
+                            @livewire('admin.dashboard.pending')
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <div class="collapse collapse-arrow bg-base-100 border border-base-300">
-                <input type="checkbox" name="dashboard-accordion" />
-                <div class="collapse-title font-semibold">Pendings</div>
-
-                <div class="collapse-content text-sm">
-                    @livewire('admin.dashboard.pending')
+            {{-- Files --}}
+            <div class="card bg-base-100 shadow">
+                <div class="card-body p-0">
+                    <div class="collapse collapse-arrow">
+                        <input type="checkbox" name="dashboard-accordion" /> 
+                        <div class="collapse-title font-semibold text-lg px-6 py-4 hover:bg-base-200">
+                            Files
+                        </div>
+                        <div class="collapse-content px-6 pb-4">
+                            @livewire('admin.dashboard.file')
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div class="collapse collapse-arrow bg-base-100 border border-base-300">
-                <input type="checkbox" name="dashboard-accordion" />
-                <div class="collapse-title font-semibold">Files</div>
 
-                <div class="collapse-content text-sm">
-                    @livewire('admin.dashboard.file')
-                </div>
-            </div>
-            <div class="collapse collapse-arrow bg-base-100 border border-base-300">
-                <input type="checkbox" name="dashboard-accordion" />
-                <div class="collapse-title font-semibold">Submitted Files</div>
-
-                <div class="collapse-content text-sm">
-                    @livewire('admin.dashboard.file')
+            {{-- Submitted Files --}}
+            <div class="card bg-base-100 shadow">
+                <div class="card-body p-0">
+                    <div class="collapse collapse-arrow">
+                        <input type="checkbox" name="dashboard-accordion" /> 
+                        <div class="collapse-title font-semibold text-lg px-6 py-4 hover:bg-base-200">
+                            Submitted Files
+                        </div>
+                        <div class="collapse-content px-6 pb-4">
+                            @livewire('admin.dashboard.file')
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
