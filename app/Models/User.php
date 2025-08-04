@@ -60,6 +60,7 @@ class User extends Authenticatable implements HasMedia
     protected $appends = [
         'full_name',
         'formatted_name',
+        'name', // Added from incoming
     ];
 
     // ==================== RELATIONSHIPS ====================
@@ -150,6 +151,14 @@ class User extends Authenticatable implements HasMedia
     public function getCollegeNameAttribute(): string
     {
         return $this->college->name ?? 'N/A';
+    }
+
+    /**
+     * Get the name attribute for forms (returns full name)
+     */
+    public function getNameAttribute(): string
+    {
+        return $this->getFullNameAttribute();
     }
 
     // ==================== SCOPES ====================
