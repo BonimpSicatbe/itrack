@@ -183,14 +183,9 @@
                                 class="file-card w-full flex flex-col items-center gap-2 bg-gray-50 hover:bg-gray-200 transition-all rounded-lg p-3 cursor-pointer"
                                 wire:click="selectFile('{{ $media->id }}')"
                                 ondblclick="window.location.href='{{ route('file.preview', ['submission' => $media->model_id]) }}'">
-                                @if (Str::startsWith($media->mime_type, 'image/'))
-                                    <img src="{{ $media->getUrl() }}" alt="Image"
-                                        class="h-32 w-full object-cover rounded-md" />
-                                @else
-                                    <div class="flex items-center justify-center text-center gap-2 h-32 w-full">
-                                        <i class="fa-solid {{ getFileIcon($media->mime_type) }} fa-3x"></i>
-                                    </div>
-                                @endif
+                                <div class="flex items-center justify-center text-center gap-2 h-32 w-full">
+                                    <i class="fa-solid {{ getFileIcon($media->mime_type) }} fa-3x"></i>
+                                </div>
                                 <div class="w-full truncate text-center text-sm font-medium">
                                     {{ $media->file_name }}
                                 </div>
@@ -216,13 +211,9 @@
                             <div wire:click="selectFile('{{ $media->id }}')"
                                 ondblclick="window.location.href='{{ route('file.preview', ['submission' => $media->model_id]) }}'"
                                 class="flex items-center gap-4 p-2 hover:bg-gray-100 transition rounded-md cursor-pointer">
-                                @if (Str::startsWith($media->mime_type, 'image/'))
-                                    <img src="{{ $media->getUrl() }}" alt="Image" class="h-12 w-12 object-cover rounded-md" />
-                                @else
-                                    <span class="h-12 w-12 flex items-center justify-center">
-                                        <i class="fa-solid {{ getFileIcon($media->mime_type) }} fa-2x"></i>
-                                    </span>
-                                @endif
+                                <span class="h-12 w-12 flex items-center justify-center">
+                                    <i class="fa-solid {{ getFileIcon($media->mime_type) }} fa-2x"></i>
+                                </span>
                                 <div class="flex-1 min-w-0">
                                     <div class="flex items-center gap-2">
                                         <span class="font-semibold truncate">{{ $media->file_name }}</span>
@@ -260,39 +251,23 @@
                     @endif
                 </div>
 
-                {{-- File Preview Panel --}}
+                {{-- File Details Panel --}}
                 @if($selectedFile)
                 <div class="w-1/3 bg-white rounded-lg border border-gray-200 p-4">
                     <div class="flex justify-between items-center mb-4">
-                        <h3 class="text-lg font-bold">File Preview</h3>
+                        <h3 class="text-lg font-bold">File Details</h3>
                         <button wire:click="clearSelection" class="text-gray-500 hover:text-gray-700">
                             <i class="fa-solid fa-times"></i>
                         </button>
                     </div>
 
                     <div class="flex flex-col gap-4">
-                        {{-- File Preview --}}
-                        <div class="bg-gray-50 rounded-lg p-4 flex items-center justify-center">
-                            @if(Str::startsWith($selectedFile->mime_type, 'image/'))
-                                <img src="{{ $selectedFile->getUrl() }}" alt="Preview" class="max-h-64 max-w-full object-contain">
-                            @elseif(Str::startsWith($selectedFile->mime_type, 'application/pdf'))
-                                <div class="text-center">
-                                    <i class="fa-solid fa-file-pdf text-red-500 fa-5x mb-2"></i>
-                                    <p class="text-sm text-gray-600">PDF preview not available in this view</p>
-                                </div>
-                            @else
-                                <div class="text-center">
-                                    <i class="fa-solid {{ getFileIcon($selectedFile->mime_type) }} fa-5x mb-2"></i>
-                                    <p class="text-sm text-gray-600">Preview not available for this file type</p>
-                                </div>
-                            @endif
-                        </div>
 
                         {{-- File Details --}}
-                        <div class="space-y-2">
+                        <div class="space-y-3">
                             <div>
                                 <p class="text-sm font-medium text-gray-500">File Name</p>
-                                <p class="text-gray-800">{{ $selectedFile->file_name }}</p>
+                                <p class="text-gray-800 break-all">{{ $selectedFile->file_name }}</p>
                             </div>
                             <div>
                                 <p class="text-sm font-medium text-gray-500">File Type</p>
@@ -316,16 +291,47 @@
                                 <p class="text-sm font-medium text-gray-500">Uploaded At</p>
                                 <p class="text-gray-800">{{ $selectedFile->created_at->format('M d, Y g:i A') }}</p>
                             </div>
+                            
+                            {{-- Requirement Information --}}
+                            @if($selectedFile->model && $selectedFile->model->requirement)
+                            <div class="pt-2 border-t">
+                                <p class="text-sm font-medium text-gray-500">Requirement</p>
+                                <p class="text-gray-800 font-medium">{{ $selectedFile->model->requirement->name }}</p>
+                                @if($selectedFile->model->requirement->description)
+                                    <p class="text-sm text-gray-600 mt-1">{{ $selectedFile->model->requirement->description }}</p>
+                                @endif
+                                <div class="grid grid-cols-2 gap-2 mt-2 text-sm">
+                                    <div>
+                                        <p class="text-gray-500">Due Date</p>
+                                        <p class="text-gray-800">{{ $selectedFile->model->requirement->due->format('M d, Y') }}</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-gray-500">Status</p>
+                                        <p class="text-gray-800 capitalize">{{ $selectedFile->model->status }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            @endif
+                            
+                            {{-- Uploader Information --}}
                             @if($selectedFile->model && $selectedFile->model->user)
-                            <div>
+                            <div class="pt-2 border-t">
                                 <p class="text-sm font-medium text-gray-500">Uploaded By</p>
                                 <p class="text-gray-800">{{ $selectedFile->model->user->full_name }}</p>
-                                @if($selectedFile->model->user->department)
-                                <p class="text-sm text-gray-600">{{ $selectedFile->model->user->department->name }}</p>
-                                @endif
-                                @if($selectedFile->model->user->college)
-                                <p class="text-sm text-gray-600">{{ $selectedFile->model->user->college->name }}</p>
-                                @endif
+                                <div class="grid grid-cols-2 gap-2 mt-2 text-sm">
+                                    @if($selectedFile->model->user->department)
+                                    <div>
+                                        <p class="text-gray-500">Department</p>
+                                        <p class="text-gray-800">{{ $selectedFile->model->user->department->name }}</p>
+                                    </div>
+                                    @endif
+                                    @if($selectedFile->model->user->college)
+                                    <div>
+                                        <p class="text-gray-500">College</p>
+                                        <p class="text-gray-800">{{ $selectedFile->model->user->college->name }}</p>
+                                    </div>
+                                    @endif
+                                </div>
                             </div>
                             @endif
                         </div>
@@ -333,15 +339,15 @@
                         {{-- Actions --}}
                         <div class="flex gap-2 pt-4 border-t">
                             <a href="{{ $selectedFile->getUrl() }}" 
-                               target="_blank"
-                               class="btn btn-sm btn-primary flex-1">
+                            target="_blank"
+                            class="btn btn-sm btn-primary flex-1">
                                 <i class="fa-solid fa-download mr-2"></i>
                                 Download
                             </a>
                             @if(isPreviewable($selectedFile->mime_type))
                             <a href="{{ route('file.preview', ['submission' => $selectedFile->model_id]) }}" 
-                               target="_blank"
-                               class="btn btn-sm btn-secondary flex-1">
+                            target="_blank"
+                            class="btn btn-sm btn-secondary flex-1">
                                 <i class="fa-solid fa-eye mr-2"></i>
                                 Open File
                             </a>

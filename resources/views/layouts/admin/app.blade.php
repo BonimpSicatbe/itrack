@@ -11,6 +11,8 @@
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
@@ -20,10 +22,13 @@
     </head>
 
     <body class="bg-gray-100">
-        <div class="flex flex-col gap-4 p-6 container mx-auto min-h-screen">
+        <!-- Fixed Navigation -->
+        <div class="fixed top-0 left-0 right-0 z-50 bg-gray-100">
             <x-admin.navigation />
+        </div>
 
-            <!-- Page Content -->
+        <!-- Main Content -->
+        <div class="pt-18 px-6 container mx-auto min-h-screen">
             {{ $slot }}
         </div>
 
