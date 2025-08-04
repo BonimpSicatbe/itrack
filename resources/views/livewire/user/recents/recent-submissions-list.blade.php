@@ -1,6 +1,24 @@
 <div class="flex flex-col gap-4">
     {{-- Recent Submissions Header --}}
 
+    {{-- Filter Controls --}}
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+        {{-- Status Filter --}}
+        <div class="space-y-2">
+            <label class="block text-sm font-medium text-gray-700">
+                <i class="fas fa-flag mr-1.5 text-gray-500"></i>Status
+            </label>
+            <select wire:model.live="statusFilter"
+                    class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-white transition-all duration-200">
+                <option value="">All Statuses</option>
+                <option value="under_review">Under Review</option>
+                <option value="revision_needed">Revision Needed</option>
+                <option value="rejected">Rejected</option>
+                <option value="approved">Approved</option>
+            </select>
+        </div>
+    </div>
+
     {{-- Main Recent Submissions Section --}}
     <div class="flex flex-col p-4 overflow-hidden bg-white rounded-lg">
         @if($recentSubmissions->count() > 0)
@@ -10,7 +28,7 @@
                         class="border rounded-lg p-3 w-full hover:bg-gray-50 transition-all flex flex-col gap-1 cursor-pointer">
                         <div class="flex justify-between items-start">
                             <div class="text-sm font-bold truncate">{{ $submission->requirement->name }}</div>
-                            <span class="badge px-2 py-1 text-xs rounded" 
+                            <span class="badge px-2 py-1 text-xs rounded"
                                   style="background-color: {{ \App\Models\SubmittedRequirement::getStatusColor($submission->status) }}; color: white">
                                 {{ $submission->status_text }}
                             </span>

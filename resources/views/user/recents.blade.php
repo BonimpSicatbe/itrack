@@ -18,25 +18,7 @@
                 </span>
             </div>
         </div>
-
-        {{-- Filter Controls --}}
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-            {{-- Status Filter --}}
-            <div class="space-y-2">
-                <label class="block text-sm font-medium text-gray-700">
-                    <i class="fas fa-flag mr-1.5 text-gray-500"></i>Status
-                </label>
-                <select wire:model.live="statusFilter" 
-                        class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-white transition-all duration-200">
-                    <option value="">All Statuses</option>
-                    <option value="under-review">Under Review</option>
-                    <option value="revision-needed">Revision Needed</option>
-                    <option value="rejected">Rejected</option>
-                    <option value="approved">Approved</option>
-                </select>
-            </div>
-        </div>
-
+        
         {{-- Main Submissions List --}}
         <div>
             @livewire('user.recents.recent-submissions-list')
