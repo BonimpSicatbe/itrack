@@ -10,7 +10,6 @@ class Navigation extends Component
 {
     public $navLinks = [
         ['label' => 'Dashboard', 'icon' => 'th-large', 'route' => 'admin.dashboard'],
-        ['label' => 'Pendings', 'icon' => 'spinner', 'route' => 'admin.pending-requirements.index'],
         ['label' => 'Requirements', 'icon' => 'clipboard-list', 'route' => 'admin.requirements.index'],
         ['label' => 'Submissions', 'icon' => 'paper-plane', 'route' => 'admin.submitted-requirements.index'],
         ['label' => 'Files', 'icon' => 'file', 'route' => 'admin.file-manager.index'],

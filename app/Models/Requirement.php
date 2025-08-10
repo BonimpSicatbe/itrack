@@ -28,6 +28,7 @@ class Requirement extends Model implements HasMedia
         'created_by',
         'updated_by',
         'archived_by',
+        'semester_id',
     ];
 
     protected $casts = [
@@ -58,6 +59,11 @@ class Requirement extends Model implements HasMedia
             ->addMediaConversion('thumb')
             ->width(100)
             ->height(100);
+    }
+
+    public function semester(): BelongsTo
+    {
+        return $this->belongsTo(Semester::class);
     }
 
     // ========== Relationships ==========

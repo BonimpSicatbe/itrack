@@ -5,6 +5,7 @@ namespace App\Livewire\Admin;
 use App\Models\College;
 use App\Models\Department;
 use App\Models\Requirement as ModelsRequirement;
+use App\Models\Semester; // Add this import
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Livewire\Attributes\Computed;
@@ -35,6 +36,13 @@ class RequirementCreateModal extends Component
     public $assigned_to = '';
 
     public $required_files = [];
+
+    // Add this computed property to get the active semester
+    #[Computed]
+    public function activeSemester()
+    {
+        return Semester::where('is_active', true)->first();
+    }
 
     public function rules()
     {
@@ -67,11 +75,23 @@ class RequirementCreateModal extends Component
     }
 
     public function createRequirement()
-    {
-        try {
-            $validated = $this->validate();
+{
+    try {
+        $validated = $this->validate();
 
-            $requirement = ModelsRequirement::create(array_merge($validated, ['created_by' => Auth::id()]));
+        // Get the active semester ID
+        $activeSemester = Semester::where('is_active', true)->first();
+
+        if (!$activeSemester) {
+            throw new \Exception('No active semester found. Please set an active semester first.');
+        }
+
+        // Create requirement with semester_id
+        $requirement = ModelsRequirement::create(array_merge($validated, [
+            'created_by' => Auth::id(),
+            'semester_id' => $activeSemester->id,
+            'status' => 'pending' // Ensure status is set
+        ]));
 
             if (!empty($this->required_files)) {
                 foreach ($this->required_files as $file) {

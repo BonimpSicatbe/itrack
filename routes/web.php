@@ -11,7 +11,6 @@ use App\Http\Controllers\FileUploadController;
 use App\Http\Controllers\admin\SemesterController; // Added SemesterController
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\PendingController;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -64,10 +63,6 @@ Route::middleware(['auth', 'role:admin|super-admin'])
         // File Manager
         Route::get('/file-manager', [FileManagerController::class, 'index'])
             ->name('file-manager.index');
-
-        // Pending Requirements
-        Route::get('/pending-requirements', [PendingController::class, 'index'])
-            ->name('pending-requirements.index');
 
         // Requirements
         Route::get('/requirements', [RequirementController::class, 'index'])

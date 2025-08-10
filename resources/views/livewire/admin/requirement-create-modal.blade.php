@@ -3,6 +3,19 @@
     <div class="modal" role="dialog">
         <div class="modal-box w-full max-w-2xl">
             <h3 class="text-lg font-bold">Create Requirement</h3>
+            @if($this->activeSemester)
+                <div class="text-sm mb-4">
+                    <span class="font-semibold">Active Semester:</span> 
+                    {{ $this->activeSemester->name }} 
+                    ({{ $this->activeSemester->start_date->format('M d, Y') }} - {{ $this->activeSemester->end_date->format('M d, Y') }})
+                </div>
+            @else
+                <div class="alert alert-error mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    <span>No active semester found. Please set an active semester first.</span>
+                </div>
+            @endif
+            
             <form wire:submit.prevent="createRequirement" class="grid grid-cols-2 gap-x-4 gap-y-2" enctype="multipart/form-data">
                 <div class="col-span-2">
                     <x-text-fieldset type="text" name="name" wire:model="name" label="Requirement Name" />

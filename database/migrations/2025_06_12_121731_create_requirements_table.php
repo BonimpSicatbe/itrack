@@ -15,13 +15,14 @@ return new class extends Migration
             $table->id();
             $table->string('name')->unique();
             $table->string('description')->nullable();
-            $table->dateTime('due'); // date and time when the requirement is due
-            $table->string('assigned_to'); // id of the college or department
-            $table->string('status')->default('pending'); // pending, completed
-            $table->string('priority')->default('normal'); // low, normal, high
-            $table->foreignId('created_by')->constrained('users'); // user id or name who created the requirement
-            $table->foreignId('updated_by')->nullable()->constrained('users'); // user id or name who updated the requirement
-            $table->foreignId('archived_by')->nullable()->constrained('users'); // user id or name who archived the requirement
+            $table->dateTime('due');
+            $table->string('assigned_to');
+            $table->string('status')->default('pending');
+            $table->string('priority')->default('normal');
+            $table->foreignId('created_by')->constrained('users');
+            $table->foreignId('updated_by')->nullable()->constrained('users');
+            $table->foreignId('archived_by')->nullable()->constrained('users');
+            $table->foreignId('semester_id')->constrained(); // Remove 'semesters' parameter if using conventional name
             $table->timestamps();
         });
     }
