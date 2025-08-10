@@ -8,7 +8,7 @@ use App\Http\Controllers\UserRequirementController;
 use App\Http\Controllers\FileController;
 use App\Http\Controllers\FileManagerController;
 use App\Http\Controllers\FileUploadController;
-use App\Http\Controllers\admin\SemesterController; // Added SemesterController
+use App\Http\Controllers\admin\SemesterController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
@@ -16,7 +16,7 @@ Route::get('/', function () {
     return redirect()->route('login');
 });
 
-// User routes (unchanged)
+// User routes
 Route::middleware(['auth', 'role:user'])
     ->prefix('user')
     ->group(function () {
@@ -81,7 +81,7 @@ Route::middleware(['auth', 'role:admin|super-admin'])
         // Users
         Route::resource('users', UserController::class);
 
-        // Semesters (updated with correct controller path)
+        // Semesters
         Route::prefix('semesters')->group(function () {
             Route::get('/', [SemesterController::class, 'index'])
                 ->name('semesters.index');
@@ -93,7 +93,7 @@ Route::middleware(['auth', 'role:admin|super-admin'])
         });
     });
 
-// File download/preview routes (unchanged)
+// File download/preview routes
 Route::middleware('auth')->group(function () {
     Route::get('/download/file/{submission}', [FileController::class, 'download'])
         ->name('file.download');
@@ -101,7 +101,7 @@ Route::middleware('auth')->group(function () {
         ->name('file.preview');
 });
 
-// Notification routes (unchanged)
+// Notification routes
 Route::middleware('auth')->group(function () {
     Route::post('/notifications/mark-all-read', function () {
         auth()->user()->unreadNotifications->markAsRead();
@@ -115,11 +115,18 @@ Route::middleware('auth')->group(function () {
     })->name('notifications.markAsRead');
 });
 
-// Profile routes (unchanged)
+// Profile routes
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    Route::put('/password', [ProfileController::class, 'updatePassword'])->name('password.update');
+    
+    // Email verification
+    Route::post('/email/verification-notification', function (Request $request) {
+        $request->user()->sendEmailVerificationNotification();
+        return back()->with('status', 'verification-link-sent');
+    })->middleware(['throttle:6,1'])->name('verification.send');
 });
 
 require __DIR__ . '/auth.php';
