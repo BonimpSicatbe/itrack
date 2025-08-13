@@ -1,7 +1,13 @@
 <div class="flex flex-col gap-6 w-full">
     {{-- requirement details --}}
     <div class="w-full bg-white shadow-md rounded-lg p-6 space-y-4">
-        <h2 class="text-xl font-bold">Requirement Details</h2>
+        <div class="flex justify-between items-center">
+            <h2 class="text-xl font-bold">Requirement Details</h2>
+            <a href="{{ route('admin.requirements.edit', ['requirement' => $requirement->id]) }}" 
+            class="btn btn-sm btn-primary">
+                <i class="fa-solid fa-pencil mr-1"></i> Edit
+            </a>
+        </div>
         <div class="grid grid-cols-2 gap-2">
             {{-- requirement name --}}
             <div class="col-span-2">

@@ -16,12 +16,14 @@ class RequirementEdit extends Component
     public $requirement;
     public $assignedUsers;
 
+    // Form fields
     public $assigned_to = '';
     public $name = '';
     public $description = '';
     public $due = '';
     public $priority = '';
     public $required_files = [];
+    public $showUploadModal = false;
 
     #[Validate('required|in:college,department')]
     public $sector = '';
@@ -36,7 +38,6 @@ class RequirementEdit extends Component
         $this->due = $requirement->due->format('Y-m-d\TH:i');
         $this->priority = $requirement->priority;
         $this->sector = College::where('name', $requirement->assigned_to)->exists() ? 'college' : 'department';
-
         $this->assignedUsers = $requirement->assignedTargets();
     }
 
@@ -50,10 +51,9 @@ class RequirementEdit extends Component
             'priority' => 'required|in:low,normal,high',
         ]);
 
-        // Convert due date to Y-m-d H:i:s format
         $due = \DateTime::createFromFormat('Y-m-d\TH:i', $this->due);
         if (!$due) {
-            $this->addError('due', 'Invalid date format.');
+            $this->dispatch('showNotification', type: 'error', content: 'Invalid date format.');
             return;
         }
 
@@ -67,8 +67,10 @@ class RequirementEdit extends Component
         ]);
 
         $this->assignedUsers = $this->requirement->assignedTargets();
-
-        session()->flash('success', 'Requirement updated successfully.');
+        $this->dispatch('showNotification', 
+            type: 'success', 
+            content: 'Requirement updated successfully.'
+        );
     }
 
     public function uploadRequiredFiles()
@@ -78,44 +80,77 @@ class RequirementEdit extends Component
             'required_files.*' => 'file|max:15360|mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,jpg,jpeg,png,gif,txt,zip,rar,7z,mp4,avi,mkv,mp3,wav',
         ]);
 
-        foreach ($this->required_files as $file) {
-            $this->requirement->addMedia($file->getRealPath())
-                ->usingFileName($file->getClientOriginalName())
-                ->preservingOriginal()
-                ->toMediaCollection('requirement/requirement_required_files');
-        }
+        try {
+            foreach ($this->required_files as $file) {
+                $this->requirement->addMedia($file->getRealPath())
+                    ->usingFileName($file->getClientOriginalName())
+                    ->preservingOriginal()
+                    ->toMediaCollection('guides');
+            }
 
-        $this->reset('required_files');
-        session()->flash('success', 'Required files uploaded successfully.');
+            $this->reset(['required_files', 'showUploadModal']);
+            $this->dispatch('showNotification', 
+                type: 'success', 
+                content: 'Files uploaded successfully.'
+            );
+            
+            // Refresh the media collection
+            $this->requirement->refresh();
+            
+        } catch (\Exception $e) {
+            $this->dispatch('showNotification', 
+                type: 'error', 
+                content: 'Upload failed: ' . $e->getMessage()
+            );
+        }
     }
 
     public function removeFile($fileId)
     {
-        $file = $this->requirement->getMedia('requirement/requirement_required_files')->find($fileId);
-        if ($file) {
-            $file->delete();
-            session()->flash('success', 'File removed successfully.');
-        } else {
-            session()->flash('error', 'File not found.');
+        try {
+            $file = $this->requirement->getMedia('guides')->find($fileId);
+            
+            if ($file) {
+                $file->delete();
+                $this->dispatch('showNotification', 
+                    type: 'success', 
+                    content: 'File removed successfully.'
+                );
+                
+                // Refresh the media collection
+                $this->requirement->load('media');
+            } else {
+                $this->dispatch('showNotification', 
+                    type: 'error', 
+                    content: 'File not found.'
+                );
+            }
+        } catch (\Exception $e) {
+            $this->dispatch('showNotification', 
+                type: 'error', 
+                content: 'Error removing file: ' . $e->getMessage()
+            );
         }
     }
 
-    public function downloadFile($fileId)
+    public function isPreviewable($mimeType)
     {
-        $file = $this->requirement->getMedia('requirement/requirement_required_files')->find($fileId);
-        if ($file) {
-            return response()->download($file->getPath(), $file->file_name);
-        } else {
-            session()->flash('error', 'File not found.');
-        }
+        return str_starts_with($mimeType, 'image/') || 
+               str_starts_with($mimeType, 'application/pdf') ||
+               str_starts_with($mimeType, 'text/');
     }
 
     public function render()
     {
+        // Explicitly load the media relationship if not already loaded
+        if (!$this->requirement->relationLoaded('media')) {
+            $this->requirement->load('media');
+        }
+
         return view('livewire.admin.requirements.requirement-edit', [
             'requirement' => $this->requirement,
             'assignedUsers' => $this->assignedUsers,
-            'requiredFiles' => $this->requirement->getMedia('requirement/requirement_required_files'),
+            'requiredFiles' => $this->requirement->getMedia('guides'),
             'colleges' => College::all(),
             'departments' => Department::all(),
         ]);
