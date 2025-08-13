@@ -5,7 +5,7 @@ namespace App\Livewire\Admin;
 use App\Models\College;
 use App\Models\Department;
 use App\Models\Requirement as ModelsRequirement;
-use App\Models\Semester; // Add this import
+use App\Models\Semester;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Livewire\Attributes\Computed;
@@ -37,11 +37,22 @@ class RequirementCreateModal extends Component
 
     public $required_files = [];
 
-    // Add this computed property to get the active semester
     #[Computed]
     public function activeSemester()
     {
         return Semester::where('is_active', true)->first();
+    }
+
+    #[Computed]
+    public function sectorOptions()
+    {
+        if (!$this->sector) {
+            return collect();
+        }
+
+        return $this->sector === 'college' 
+            ? College::all() 
+            : Department::all();
     }
 
     public function rules()
@@ -57,70 +68,87 @@ class RequirementCreateModal extends Component
         $this->validateOnly($propertyName);
     }
 
-    #[Computed]
-    public function sector_ids()
-    {
-        if (!$this->sector) {
-            return collect();
-        }
-
-        return $this->sector === 'college' 
-            ? College::all() 
-            : Department::all();
-    }
-
     public function updatedSector()
     {
-        $this->assigned_to = '';
+        $this->reset('assigned_to');
     }
 
     public function createRequirement()
-{
-    try {
-        $validated = $this->validate();
+    {
+        try {
+            $validated = $this->validate();
 
-        // Get the active semester ID
-        $activeSemester = Semester::where('is_active', true)->first();
+            $activeSemester = Semester::where('is_active', true)->first();
 
-        if (!$activeSemester) {
-            throw new \Exception('No active semester found. Please set an active semester first.');
-        }
+            if (!$activeSemester) {
+                throw new \Exception('No active semester found. Please set an active semester first.');
+            }
 
-        // Create requirement with semester_id
-        $requirement = ModelsRequirement::create(array_merge($validated, [
-            'created_by' => Auth::id(),
-            'semester_id' => $activeSemester->id,
-            'status' => 'pending' // Ensure status is set
-        ]));
+            $requirement = ModelsRequirement::create(array_merge($validated, [
+                'created_by' => Auth::id(),
+                'semester_id' => $activeSemester->id,
+                'status' => 'pending'
+            ]));
 
+            // Handle file uploads to 'guides' collection
             if (!empty($this->required_files)) {
+                Log::info('Starting file upload to guides collection', [
+                    'file_count' => count($this->required_files),
+                    'requirement_id' => $requirement->id
+                ]);
+                
                 foreach ($this->required_files as $file) {
-                    $requirement->addMedia($file->getRealPath())
-                        ->usingFileName($file->getClientOriginalName())
-                        ->toMediaCollection('requirementRequiredFiles');
+                    try {
+                        $media = $requirement->addMedia($file->getRealPath())
+                            ->usingName($file->getClientOriginalName())
+                            ->usingFileName($file->getClientOriginalName())
+                            ->toMediaCollection('guides'); // Changed to 'guides'
+                            
+                        Log::info('File uploaded to guides collection', [
+                            'media_id' => $media->id,
+                            'file_name' => $media->file_name
+                        ]);
+                    } catch (\Exception $e) {
+                        Log::error('File upload to guides failed', [
+                            'error' => $e->getMessage(),
+                            'file' => $file->getClientOriginalName()
+                        ]);
+                        throw $e;
+                    }
                 }
             }
 
-            // Notify all users in the assigned sector
-            $users = $requirement->assignedTargets();
-
-            foreach ($users as $user) {
-                if (!in_array($user->role, ['admin', 'super-admin'])) {
-                    $user->notify(new \App\Notifications\NewRequirementNotification($requirement));
+                $users = $requirement->assignedTargets();
+                foreach ($users as $user) {
+                    if (!in_array($user->role, ['admin', 'super-admin'])) {
+                        $user->notify(new \App\Notifications\NewRequirementNotification($requirement));
+                    }
                 }
-            }
 
-            session()->flash('success', 'Requirement created successfully.');
-            $this->reset();
-            $this->dispatch('close-modal');
-            $this->dispatch('requirementCreated');
-            
-        } catch (\Exception $e) {
+                $this->reset();
+                $this->dispatch('showNotification', 
+                    type: 'success', 
+                    content: 'Requirement created successfully.',
+                    duration: 3000
+                );
+                $this->dispatch('requirement-created');
+                
+                // Fixed auto-close with proper delay (1500ms = 1.5 seconds)
+                $this->js(<<<'JS'
+                    setTimeout(() => {
+                        document.getElementById('createRequirement').checked = false;
+                    }, 1500);
+                JS);
+                
+            } catch (\Exception $e) {
             Log::error('Requirement creation failed', ['error' => $e->getMessage()]);
-            session()->flash('error', 'An error occurred: '.$e->getMessage());
+            $this->dispatch('showNotification', 
+                type: 'error', 
+                content: 'File upload failed: '.$e->getMessage(),
+                duration: 5000
+            );
         }
     }
-
     public function render()
     {
         return view('livewire.admin.requirement-create-modal');

@@ -37,9 +37,9 @@
                 <x-select-fieldset name="assigned_to" wire:model="assigned_to" 
                     label="{{ $sector ? ($sector === 'college' ? 'Select College' : 'Select Department') : 'Select Sector First' }}"
                     :disabled="!$sector">
-                    <option value="">Select {{ $sector === 'college' ? 'College' : 'Department' }}</option>
-                    @foreach ($this->sector_ids() as $item)
-                        <option value="{{ $item->name }}">{{ $item->name }}</option>
+                    <option value="">Select {{ $sector ? ($sector === 'college' ? 'College' : 'Department') : 'Sector First' }}</option>
+                    @foreach($this->sectorOptions as $option)
+                        <option value="{{ $option->name }}">{{ $option->name }}</option>
                     @endforeach
                 </x-select-fieldset>
                 <div class="col-span-2">

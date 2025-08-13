@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 
 class Requirement extends Model implements HasMedia
@@ -170,5 +171,30 @@ class Requirement extends Model implements HasMedia
     public function isOverdue(): bool
     {
         return Carbon::now()->gt($this->due);
+    }
+
+    protected static function booted()
+    {
+        static::deleting(function ($requirement) {
+            // Delete related media (guides)
+            $requirement->media()->delete();
+            
+            // Delete related submissions and their media
+            $requirement->submissions()->each(function ($submission) {
+                $submission->delete();
+            });
+            
+            // Delete both types of related notifications
+            DB::table('notifications')
+                ->where(function ($query) use ($requirement) {
+                    $query->where('type', 'App\Notifications\NewSubmissionNotification')
+                          ->where('data->requirement_id', $requirement->id);
+                })
+                ->orWhere(function ($query) use ($requirement) {
+                    $query->where('type', 'App\Notifications\NewRequirementNotification')
+                          ->where('data->requirement_id', $requirement->id);
+                })
+                ->delete();
+        });
     }
 }

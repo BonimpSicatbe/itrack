@@ -99,6 +99,11 @@ Route::middleware('auth')->group(function () {
         ->name('file.download');
     Route::get('/preview/file/{submission}', [FileController::class, 'preview'])
         ->name('file.preview');
+    // Add this new route for guide files
+     Route::get('/download/guide/{media}', [FileController::class, 'downloadGuide'])
+        ->name('guide.download');
+    Route::get('/preview/guide/{media}', [FileController::class, 'previewGuide'])
+        ->name('guide.preview');
 });
 
 // Notification routes

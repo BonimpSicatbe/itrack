@@ -4,6 +4,10 @@ namespace App\Livewire\Admin\Requirements;
 
 use Livewire\Component;
 use Livewire\WithFileUploads;
+use App\Models\College;
+use App\Models\Department;
+use App\Models\Requirement;
+use Illuminate\Support\Str;
 
 class RequirementShow extends Component
 {
@@ -35,7 +39,7 @@ class RequirementShow extends Component
             $this->requirement->addMedia($file->getRealPath())
                 ->usingFileName($file->getClientOriginalName())
                 ->preservingOriginal()
-                ->toMediaCollection('requirement/requirement_required_files');
+                ->toMediaCollection('guides');
         }
 
         $this->reset('required_files');
@@ -44,22 +48,19 @@ class RequirementShow extends Component
 
     public function downloadFile($fileId)
     {
-        $file = $this->requirement->getMedia('requirement/requirement_required_files')->find($fileId);
+        $file = $this->requirement->getMedia('guides')->find($fileId);
         if ($file) {
-            return response()->download($file->getPath(), $file->file_name);
+            return redirect()->route('guide.download', ['media' => $file->id]);
         }
         session()->flash('error', 'File not found.');
+        return null;
     }
 
-    public function removeFile($fileId)
+    public function isPreviewable($mimeType)
     {
-        $file = $this->requirement->getMedia('requirement/requirement_required_files')->find($fileId);
-        if ($file) {
-            $file->delete();
-            session()->flash('success', 'File removed successfully.');
-        } else {
-            session()->flash('error', 'File not found.');
-        }
+        return Str::startsWith($mimeType, 'image/') || 
+               Str::startsWith($mimeType, 'application/pdf') ||
+               Str::startsWith($mimeType, 'text/');
     }
 
     public function render()
@@ -67,7 +68,10 @@ class RequirementShow extends Component
         return view('livewire.admin.requirements.requirement-show', [
             'requirement' => $this->requirement,
             'assignedUsers' => $this->assignedUsers,
-            'requiredFiles' => $this->requirement->getMedia('requirement/requirement_required_files'),
+            'requiredFiles' => $this->requirement->getMedia('guides'),
+            'colleges' => College::all(),
+            'departments' => Department::all(),
+            'requirements' => Requirement::all(),
         ]);
     }
 }

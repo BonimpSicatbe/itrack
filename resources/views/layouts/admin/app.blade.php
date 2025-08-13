@@ -35,6 +35,7 @@
         <x-session-alert-messages />
 
         @livewireScripts
+        @livewire('notification-toast')
     </body>
 
 </html>
