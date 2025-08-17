@@ -25,9 +25,10 @@ class FileController extends Controller
     {
         abort_unless($submission->submissionFile, 404);
         
-        $filePath = $submission->getFilePath();
-        abort_unless(file_exists($filePath), 404);
-
+        // Get the actual file path
+        $filePath = $submission->submissionFile->getPath();
+        
+        // For local files, use this instead of getUrl()
         return response()->file($filePath);
     }
 

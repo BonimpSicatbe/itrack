@@ -139,7 +139,7 @@
                 <tbody>
                     @forelse ($assignedUsers as $user)
                         <tr class="hover:bg-gray-100 hover:cursor-pointer" wire:click='showUser({{ $user->id }})'>
-                            <td class="truncate">{{ $user->full_name }}</td>
+                            <td class="truncate">{{ $user->first_name }} {{ $user->last_name }}</td>
                             <td class="truncate">{{ $user->email }}</td>
                             <td class="truncate">{{ $user->department->name ?? 'N/A' }}</td>
                             <td class="truncate">{{ $user->college->name ?? 'N/A' }}</td>

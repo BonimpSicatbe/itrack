@@ -14,18 +14,33 @@ class Navigation extends Component
         ['label' => 'Submissions', 'icon' => 'paper-plane', 'route' => 'admin.submitted-requirements.index'],
         ['label' => 'Files', 'icon' => 'file', 'route' => 'admin.file-manager.index'],
         ['label' => 'Users', 'icon' => 'users', 'route' => 'admin.users.index'],
-
         ['label' => 'Notifications', 'icon' => 'bell', 'route' => 'admin.notifications'],
         ['label' => 'Account', 'icon' => 'user-circle', 'route' => 'profile.edit'],
-        ['label' => 'Logout', 'icon' => 'right-from-bracket', 'route' => "route('logout')"],
+        ['label' => 'Logout', 'icon' => 'right-from-bracket', 'route' => 'logout', 'is_logout' => true],
     ];
 
     /**
-     * Create a new component instance.
+     * Check if a nav link should be active
      */
-    public function __construct()
+    public function isActive($route): bool
     {
-        //
+        $currentRoute = request()->route()->getName();
+        
+        // Exact match
+        if ($currentRoute === $route) {
+            return true;
+        }
+        
+        // Handle parent routes (e.g., admin.submitted-requirements.*)
+        $routeBase = str_replace('.index', '', $route);
+        $currentBase = str_replace('.index', '', $currentRoute);
+        
+        if (str_starts_with($currentRoute, $routeBase.'.') || 
+            str_starts_with($currentBase, $routeBase.'.')) {
+            return true;
+        }
+        
+        return false;
     }
 
     /**
@@ -34,7 +49,8 @@ class Navigation extends Component
     public function render(): View|Closure|string
     {
         return view('layouts.admin.navigation', [
-            'navLink' => $this->navLinks
+            'navLinks' => $this->navLinks,
+            'isActive' => \Closure::fromCallable([$this, 'isActive'])
         ]);
     }
 }
