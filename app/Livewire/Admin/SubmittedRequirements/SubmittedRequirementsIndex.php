@@ -4,6 +4,7 @@ namespace App\Livewire\Admin\SubmittedRequirements;
 
 use App\Models\SubmittedRequirement;
 use App\Models\Requirement;
+use App\Models\Semester;
 use App\Models\User;
 use App\Models\College;
 use App\Models\Department;
@@ -78,6 +79,9 @@ class SubmittedRequirementsIndex extends Component
 
     public function render()
     {
+        // Get the active semester
+        $activeSemester = Semester::getActiveSemester();
+        
         if ($this->category === 'file') {
             $query = SubmittedRequirement::query()
                 ->with([
@@ -86,6 +90,11 @@ class SubmittedRequirementsIndex extends Component
                     'user.department', 
                     'media'
                 ])
+                ->when($activeSemester, function ($query) use ($activeSemester) {
+                    $query->whereHas('requirement', function($q) use ($activeSemester) {
+                        $q->where('semester_id', $activeSemester->id);
+                    });
+                })
                 ->orderBy('submitted_at', 'asc');
 
             // Apply search filter
@@ -118,6 +127,7 @@ class SubmittedRequirementsIndex extends Component
                     'file' => 'File',
                     'requirement' => 'Requirement',
                 ],
+                'activeSemester' => $activeSemester, // Pass to view if needed
             ]);
         }
 
@@ -130,6 +140,11 @@ class SubmittedRequirementsIndex extends Component
                 'user.department', 
                 'media'
             ])
+            ->when($activeSemester, function ($query) use ($activeSemester) {
+                $query->whereHas('requirement', function($q) use ($activeSemester) {
+                    $q->where('semester_id', $activeSemester->id);
+                });
+            })
             ->orderBy('submitted_at', 'asc')
             ->get();
 
@@ -164,6 +179,7 @@ class SubmittedRequirementsIndex extends Component
                 'file' => 'File',
                 'requirement' => 'Requirement',
             ],
+            'activeSemester' => $activeSemester, // Pass to view if needed
         ]);
     }
 }

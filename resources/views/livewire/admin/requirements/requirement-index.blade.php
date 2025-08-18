@@ -86,17 +86,25 @@
                                 </td>
                                 <td class="flex justify-center gap-2">
                                     <a href="{{ route('admin.requirements.show', ['requirement' => $requirement]) }}"
-                                        class="btn btn-xs btn-ghost btn-success">
+                                        class="btn btn-xs btn-ghost btn-success tooltip"
+                                        data-tip="View Details">
                                         <i class="fa-solid fa-eye"></i>
                                     </a>
-                                    <button wire:click="confirmDelete({{ $requirement->id }})" 
-                                            class="btn btn-xs btn-ghost btn-error">
-                                        <i class="fa-solid fa-trash"></i>
-                                    </button>
+                                    <a href="{{ route('admin.submitted-requirements.requirement', ['requirement_id' => $requirement->id]) }}"
+                                        class="btn btn-xs btn-ghost btn-primary tooltip"
+                                        data-tip="View Submissions">
+                                        <i class="fa-solid fa-file-lines"></i>
+                                    </a>
                                     <a href="{{ route('admin.requirements.edit', ['requirement' => $requirement]) }}"
-                                        class="btn btn-xs btn-ghost btn-info">
+                                        class="btn btn-xs btn-ghost btn-info tooltip"
+                                        data-tip="Edit">
                                         <i class="fa-solid fa-edit"></i>
                                     </a>
+                                    <button wire:click="confirmDelete({{ $requirement->id }})" 
+                                            class="btn btn-xs btn-ghost btn-error tooltip"
+                                            data-tip="Delete">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </button>
                                 </td>
                             </tr>
                         @empty
@@ -138,4 +146,17 @@
 
     {{-- Include the create modal component --}}
     @livewire('admin.requirement-create-modal')
+
+    @push('scripts')
+    <script>
+        // Initialize tooltips
+        document.addEventListener('DOMContentLoaded', function() {
+            const tooltipElements = document.querySelectorAll('.tooltip');
+            tooltipElements.forEach(el => {
+                new bootstrap.Tooltip(el);
+            });
+        });
+    </script>
+    @endpush
 </div>
+

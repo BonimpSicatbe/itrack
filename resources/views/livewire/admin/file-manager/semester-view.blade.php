@@ -1,4 +1,11 @@
 <div class="bg-white rounded-lg shadow p-4 h-full">
+    <div class="flex justify-end mb-4">
+        <a href="{{ route('admin.semesters.index') }}" 
+           class="btn btn-sm btn-primary">
+            <i class="fa-solid fa-calendar-days mr-2"></i>
+            Manage Semesters
+        </a>
+    </div>
     <h3 class="text-lg font-bold mb-4">Semesters</h3>
     
     <!-- Current Semester -->

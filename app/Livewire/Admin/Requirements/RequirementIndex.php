@@ -5,6 +5,7 @@ namespace App\Livewire\Admin\Requirements;
 use App\Models\College;
 use App\Models\Department;
 use App\Models\Requirement;
+use App\Models\Semester;
 use App\Models\User;
 use Livewire\Component;
 use Illuminate\Support\Facades\Log;
@@ -97,7 +98,13 @@ class RequirementIndex extends Component
         $colleges = College::all();
         $departments = Department::all();
         
+        // Get the active semester
+        $activeSemester = Semester::getActiveSemester();
+        
         $requirements = Requirement::query()
+            ->when($activeSemester, function ($query) use ($activeSemester) {
+                $query->where('semester_id', $activeSemester->id);
+            })
             ->when($this->search, function ($query) {
                 $query->where('name', 'like', '%' . $this->search . '%');
             })
@@ -136,6 +143,7 @@ class RequirementIndex extends Component
             'requirements' => $requirements,
             'colleges' => $colleges,
             'departments' => $departments,
+            'activeSemester' => $activeSemester, // Optional: pass to view if needed
         ]);
     }
 }

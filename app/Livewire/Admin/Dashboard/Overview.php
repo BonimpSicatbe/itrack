@@ -14,11 +14,19 @@ class Overview extends Component
 
     public function mount()
     {
-        $this->totalRequirements = Requirement::count();
         $currentSemester = Semester::getActiveSemester();
         $semesterDescription = $currentSemester 
             ? $currentSemester->start_date->format('M d, Y') . ' - ' . $currentSemester->end_date->format('M d, Y')
             : 'No active semester';
+
+        // Base query that will be used for all requirement counts
+        $requirementsQuery = Requirement::query();
+        
+        if ($currentSemester) {
+            $requirementsQuery->where('semester_id', $currentSemester->id);
+        }
+
+        $this->totalRequirements = $requirementsQuery->count();
 
         $this->stats = [
             [
@@ -36,21 +44,32 @@ class Overview extends Component
             ],
             [
                 'title' => 'Pending Requirements',
-                'count' => Requirement::where('status', 'pending')->count(),
+                'count' => $currentSemester 
+                    ? Requirement::where('semester_id', $currentSemester->id)
+                        ->where('status', 'pending')
+                        ->count()
+                    : 0,
                 'icon' => 'fa-clock',
                 'color' => 'warning',
             ],
             [
                 'title' => 'Completed',
-                'count' => Requirement::where('status', 'completed')->count(),
+                'count' => $currentSemester 
+                    ? Requirement::where('semester_id', $currentSemester->id)
+                        ->where('status', 'completed')
+                        ->count()
+                    : 0,
                 'icon' => 'fa-circle-check',
                 'color' => 'success',
             ],
             [
                 'title' => 'Due This Week',
-                'count' => Requirement::whereBetween('due', [now(), now()->addWeek()])
-                            ->where('status', '!=', 'completed')
-                            ->count(),
+                'count' => $currentSemester 
+                    ? Requirement::where('semester_id', $currentSemester->id)
+                        ->whereBetween('due', [now(), now()->addWeek()])
+                        ->where('status', '!=', 'completed')
+                        ->count()
+                    : 0,
                 'icon' => 'fa-calendar-week',
                 'color' => 'accent',
             ],

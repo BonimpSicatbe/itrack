@@ -38,7 +38,11 @@ class RequirementEdit extends Component
         $this->due = $requirement->due->format('Y-m-d\TH:i');
         $this->priority = $requirement->priority;
         $this->sector = College::where('name', $requirement->assigned_to)->exists() ? 'college' : 'department';
-        $this->assignedUsers = $requirement->assignedTargets();
+        
+        // Load assigned users with their relationships
+        $this->assignedUsers = $requirement->assignedTargets()->map(function($user) {
+        return $user->load(['department', 'college']);
+    });
     }
 
     public function updateRequirement()

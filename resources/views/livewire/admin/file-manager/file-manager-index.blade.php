@@ -57,11 +57,6 @@
                         @endif
                     </div>
                     <div class="flex flex-row gap-4">
-                        <a href="{{ route('admin.semesters.index') }}" 
-                        class="btn btn-sm btn-primary">
-                            <i class="fa-solid fa-calendar-days mr-2"></i>
-                            Manage Semesters
-                        </a>
                         <button type="button" class="btn btn-sm btn-default btn-square" 
                             wire:click="setViewMode('list')"
                             @class([
