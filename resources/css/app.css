@@ -44,3 +44,88 @@
     width: auto;
     height: 60px;
 }
+
+/* File Manager Styles */
+.file-manager .overflow-y-auto::-webkit-scrollbar {
+    width: 6px;
+}
+
+.file-manager .overflow-y-auto::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 3px;
+}
+
+.file-manager .overflow-y-auto::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 3px;
+}
+
+.file-manager .overflow-y-auto::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+.file-manager .card {
+    transition: all 0.2s ease-in-out;
+}
+
+.file-manager .grid .card:hover {
+    transform: translateY(-2px);
+}
+
+.file-manager .space-y-2 > * + * {
+    margin-top: 0.5rem;
+}
+
+@keyframes slide-in-right {
+    0% {
+        opacity: 0;
+        transform: translateX(100%);
+    }
+    100% {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.file-manager .animate-slide-in-right {
+    animation: slide-in-right 0.3s ease-out;
+}
+
+.file-manager .ring-2 {
+    border-color: rgb(59 130 246);
+    box-shadow: 0 0 0 2px rgb(59 130 246 / 0.5);
+}
+
+@media (max-width: 1280px) {
+    .file-manager .w-96 {
+        width: 20rem;
+    }
+}
+
+@media (max-width: 1024px) {
+    .file-manager .w-96 {
+        width: 18rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .file-manager .w-96 {
+        width: 100%;
+        position: fixed;
+        top: 0;
+        right: 0;
+        height: 100vh;
+        z-index: 50;
+        border-radius: 0;
+    }
+
+    .file-manager .mobile-backdrop {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 40;
+    }
+}
