@@ -12,49 +12,73 @@ class Users extends Component
 {
     use WithPagination;
 
-    public $confirmingDeletion = false;
-    public $userIdToDelete = null;
     public $search = '';
     public $departmentFilter = '';
     public $collegeFilter = '';
+    public $perPage = 10;
 
-    protected $paginationTheme = 'tailwind';
+    protected $queryString = [
+        'search' => ['except' => ''],
+        'departmentFilter' => ['except' => ''],
+        'collegeFilter' => ['except' => ''],
+        'perPage' => ['except' => 10],
+    ];
+
+    public function updatingSearch()
+    {
+        $this->resetPage();
+    }
+
+    public function updatingDepartmentFilter()
+    {
+        $this->resetPage();
+    }
+
+    public function updatingCollegeFilter()
+    {
+        $this->resetPage();
+    }
+
+    public function updatingPerPage()
+    {
+        $this->resetPage();
+    }
 
     public function render()
     {
-        $users = User::with(['department', 'college', 'roles'])
-            ->when($this->search, function ($query) {
-                $query->where(function ($q) {
-                    $q->where('firstname', 'like', '%'.$this->search.'%')
-                      ->orWhere('lastname', 'like', '%'.$this->search.'%')
-                      ->orWhere('email', 'like', '%'.$this->search.'%');
-                });
-            })
-            ->when($this->departmentFilter, function ($query) {
-                $query->where('department_id', $this->departmentFilter);
-            })
-            ->when($this->collegeFilter, function ($query) {
-                $query->where('college_id', $this->collegeFilter);
-            })
-            ->paginate(10);
+        $query = User::with(['department', 'college', 'roles']);
+
+        // Apply search filter
+        if (!empty($this->search)) {
+            $query->where(function($q) {
+                $q->where('firstname', 'like', "%{$this->search}%")
+                  ->orWhere('middlename', 'like', "%{$this->search}%")
+                  ->orWhere('lastname', 'like', "%{$this->search}%")
+                  ->orWhere('email', 'like', "%{$this->search}%");
+            });
+        }
+
+        // Apply department filter
+        if (!empty($this->departmentFilter)) {
+            $query->where('department_id', $this->departmentFilter);
+        }
+
+        // Apply college filter
+        if (!empty($this->collegeFilter)) {
+            $query->where('college_id', $this->collegeFilter);
+        }
+
+        $users = $query->orderBy('lastname')
+            ->orderBy('firstname')
+            ->paginate($this->perPage);
+
+        $departments = Department::orderBy('name')->get();
+        $colleges = College::orderBy('name')->get();
 
         return view('livewire.admin.users.users-index', [
             'users' => $users,
-            'departments' => Department::all(),
-            'colleges' => College::all(),
+            'departments' => $departments,
+            'colleges' => $colleges,
         ]);
-    }
-
-    public function confirmDelete($userId)
-    {
-        $this->confirmingDeletion = true;
-        $this->userIdToDelete = $userId;
-    }
-
-    public function deleteUser()
-    {
-        User::find($this->userIdToDelete)->delete();
-        $this->confirmingDeletion = false;
-        session()->flash('message', 'User deleted successfully.');
     }
 }

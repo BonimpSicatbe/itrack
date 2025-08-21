@@ -51,7 +51,9 @@
         <!-- Pie Chart -->
         <div class="card bg-base-100 shadow">
             <div class="card-body">
-                <h4 class="card-title">Storage Usage</h4>
+                <div class="flex justify-between items-center mb-4">
+                    <h4 class="card-title">Storage Usage</h4>
+                </div>
                 @if(count($storageStats) > 0)
                     <div class="h-64" wire:ignore>
                         <canvas 

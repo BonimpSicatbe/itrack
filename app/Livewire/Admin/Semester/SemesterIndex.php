@@ -17,8 +17,10 @@ class SemesterIndex extends Component
     // Modal control properties
     public $showEditModal = false;
     public $showDeleteModal = false;
+    public $showArchiveModal = false;
     public $isDeleting = false;
     public $isSaving = false;
+    public $semesterToArchive;
 
     protected $rules = [
         'name' => 'required|string|max:255',
@@ -98,6 +100,12 @@ class SemesterIndex extends Component
         $this->showDeleteModal = true;
     }
 
+    public function confirmArchive($id)
+    {
+        $this->semesterToArchive = $id;
+        $this->showArchiveModal = true;
+    }
+
     public function deleteSemester()
     {
         $this->isDeleting = true;
@@ -118,6 +126,27 @@ class SemesterIndex extends Component
             );
         } finally {
             $this->isDeleting = false;
+        }
+    }
+
+    public function archiveSemester()
+    {
+        try {
+            $semester = Semester::findOrFail($this->semesterToArchive);
+            $semester->update(['is_active' => false]);
+            
+            $this->dispatch('showNotification', 
+                type: 'success', 
+                content: 'Semester archived successfully',
+                duration: 3000
+            );
+            $this->closeModal();
+        } catch (\Exception $e) {
+            $this->dispatch('showNotification', 
+                type: 'error', 
+                content: 'Failed to archive semester: ' . $e->getMessage(),
+                duration: 5000
+            );
         }
     }
 
@@ -143,6 +172,10 @@ class SemesterIndex extends Component
 
     public function closeModal()
     {
-        $this->reset(['name', 'start_date', 'end_date', 'is_active', 'editMode', 'semesterId', 'showEditModal', 'showDeleteModal']);
+        $this->reset([
+            'name', 'start_date', 'end_date', 'is_active', 
+            'editMode', 'semesterId', 'showEditModal', 
+            'showDeleteModal', 'showArchiveModal', 'semesterToArchive'
+        ]);
     }
 }

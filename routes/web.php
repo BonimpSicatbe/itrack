@@ -83,6 +83,7 @@ Route::middleware(['auth', 'role:admin|super-admin'])
 
         // Users
         Route::resource('users', UserController::class);
+        
 
         // Semesters
         Route::prefix('semesters')->group(function () {

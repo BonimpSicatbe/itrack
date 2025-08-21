@@ -82,104 +82,98 @@ class SubmittedRequirementsIndex extends Component
         // Get the active semester
         $activeSemester = Semester::getActiveSemester();
         
-        if ($this->category === 'file') {
-            $query = SubmittedRequirement::query()
-                ->with([
-                    'requirement', 
-                    'user.college', 
-                    'user.department', 
-                    'media'
-                ])
-                ->when($activeSemester, function ($query) use ($activeSemester) {
-                    $query->whereHas('requirement', function($q) use ($activeSemester) {
-                        $q->where('semester_id', $activeSemester->id);
-                    });
-                })
-                ->orderBy('submitted_at', 'asc');
-
-            // Apply search filter
-            if ($this->search) {
-                $query->where(function($q) {
-                    $q->whereHas('requirement', function($q) {
-                        $q->where('name', 'like', '%'.$this->search.'%');
-                    })
-                    ->orWhereHas('user', function($q) {
-                        $q->where('firstname', 'like', '%'.$this->search.'%')
-                        ->orWhere('middlename', 'like', '%'.$this->search.'%')
-                        ->orWhere('lastname', 'like', '%'.$this->search.'%')
-                        ->orWhere('email', 'like', '%'.$this->search.'%');
-                    })
-                    ->orWhereHas('media', function($q) {
-                        $q->where('file_name', 'like', '%'.$this->search.'%');
-                    });
-                });
-            }
-
-            // Apply status filter
-            if ($this->statusFilter) {
-                $query->where('status', $this->statusFilter);
-            }
-
-            return view('livewire.admin.submitted-requirements.submitted-requirements-index', [
-                'submittedRequirements' => $query->paginate(10),
-                'groupedItems' => null,
-                'categories' => [
-                    'file' => 'File',
-                    'requirement' => 'Requirement',
-                ],
-                'activeSemester' => $activeSemester, // Pass to view if needed
-            ]);
-        }
-
-        // For other categories, group the results
+        // Initialize empty collections
+        $submittedRequirements = null;
         $groupedItems = [];
-        $items = SubmittedRequirement::query()
-            ->with([
-                'requirement', 
-                'user.college', 
-                'user.department', 
-                'media'
-            ])
-            ->when($activeSemester, function ($query) use ($activeSemester) {
-                $query->whereHas('requirement', function($q) use ($activeSemester) {
-                    $q->where('semester_id', $activeSemester->id);
-                });
-            })
-            ->orderBy('submitted_at', 'asc')
-            ->get();
+        
+        // Only query submitted requirements if there's an active semester
+        if ($activeSemester) {
+            if ($this->category === 'file') {
+                $query = SubmittedRequirement::query()
+                    ->with([
+                        'requirement', 
+                        'user.college', 
+                        'user.department', 
+                        'media'
+                    ])
+                    ->whereHas('requirement', function($q) use ($activeSemester) {
+                        $q->where('semester_id', $activeSemester->id);
+                    })
+                    ->orderBy('submitted_at', 'asc');
 
-        foreach ($items as $item) {
-            $groupKey = null;
-            $groupName = null;
-
-            switch ($this->category) {
-                case 'requirement':
-                    $groupKey = $item->requirement_id;
-                    $groupName = $item->requirement->name;
-                    break;
-            }
-
-            if ($groupKey) {
-                if (!isset($groupedItems[$groupKey])) {
-                    $groupedItems[$groupKey] = [
-                        'name' => $groupName,
-                        'count' => 0,
-                        'items' => []
-                    ];
+                // Apply search filter
+                if ($this->search) {
+                    $query->where(function($q) {
+                        $q->whereHas('requirement', function($q) {
+                            $q->where('name', 'like', '%'.$this->search.'%');
+                        })
+                        ->orWhereHas('user', function($q) {
+                            $q->where('firstname', 'like', '%'.$this->search.'%')
+                            ->orWhere('middlename', 'like', '%'.$this->search.'%')
+                            ->orWhere('lastname', 'like', '%'.$this->search.'%')
+                            ->orWhere('email', 'like', '%'.$this->search.'%');
+                        })
+                        ->orWhereHas('media', function($q) {
+                            $q->where('file_name', 'like', '%'.$this->search.'%');
+                        });
+                    });
                 }
-                $groupedItems[$groupKey]['items'][] = $item;
-                $groupedItems[$groupKey]['count']++;
+
+                // Apply status filter
+                if ($this->statusFilter) {
+                    $query->where('status', $this->statusFilter);
+                }
+
+                $submittedRequirements = $query->paginate(10);
+            } else {
+                // For other categories, group the results
+                $items = SubmittedRequirement::query()
+                    ->with([
+                        'requirement', 
+                        'user.college', 
+                        'user.department', 
+                        'media'
+                    ])
+                    ->whereHas('requirement', function($q) use ($activeSemester) {
+                        $q->where('semester_id', $activeSemester->id);
+                    })
+                    ->orderBy('submitted_at', 'asc')
+                    ->get();
+
+                foreach ($items as $item) {
+                    $groupKey = null;
+                    $groupName = null;
+
+                    switch ($this->category) {
+                        case 'requirement':
+                            $groupKey = $item->requirement_id;
+                            $groupName = $item->requirement->name;
+                            break;
+                    }
+
+                    if ($groupKey) {
+                        if (!isset($groupedItems[$groupKey])) {
+                            $groupedItems[$groupKey] = [
+                                'name' => $groupName,
+                                'count' => 0,
+                                'items' => []
+                            ];
+                        }
+                        $groupedItems[$groupKey]['items'][] = $item;
+                        $groupedItems[$groupKey]['count']++;
+                    }
+                }
             }
         }
 
         return view('livewire.admin.submitted-requirements.submitted-requirements-index', [
-            'submittedRequirements' => null,
+            'submittedRequirements' => $submittedRequirements,
             'groupedItems' => $groupedItems,
             'categories' => [
                 'file' => 'File',
                 'requirement' => 'Requirement',
             ],
-            'activeSemester' => $activeSemester, // Pass to view if needed
+            'activeSemester' => $activeSemester,
         ]);
     }
 }

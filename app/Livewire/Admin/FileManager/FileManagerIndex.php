@@ -19,9 +19,11 @@ class FileManagerIndex extends Component
 
     public $selectedFile = null;
     public $viewMode = 'grid';
-    public $groupBy = null; // 'user', 'college', 'department'
+    public $groupBy = null;
     public $search = '';
     public $selectedGroup = null;
+    public $selectedSemester = null;
+    public $showSemesterPanel = true;
     
     protected $queryString = [
         'search' => ['except' => ''],
@@ -30,7 +32,30 @@ class FileManagerIndex extends Component
         'viewMode' => ['except' => 'grid']
     ];
 
-    protected $listeners = ['semesterActivated' => '$refresh'];
+    protected $listeners = [
+        'semesterActivated' => '$refresh',
+        'semesterSelected' => 'loadSemesterFiles',
+        'semesterArchived' => 'handleSemesterArchived',
+        'clearSelectedSemester' => 'clearSelectedSemester'
+    ];
+
+    public function handleSemesterArchived()
+    {
+        $this->selectedSemester = null;
+        $this->resetPage();
+    }
+
+    public function clearSelectedSemester()
+    {
+        $this->selectedSemester = null;
+        $this->resetPage();
+    }
+
+    public function loadSemesterFiles($semesterId)
+    {
+        $this->selectedSemester = Semester::find($semesterId);
+        $this->resetPage();
+    }
 
     public function mount()
     {
@@ -74,16 +99,23 @@ class FileManagerIndex extends Component
 
     public function getGroupedFiles()
     {
-        $activeSemester = Semester::getActiveSemester();
-    
+        $semester = $this->selectedSemester ?? Semester::getActiveSemester();
+        
+        // If no semester is selected and no active semester exists, return empty paginator
+        if (!$semester) {
+            return new \Illuminate\Pagination\LengthAwarePaginator([], 0, 24);
+        }
+
         $query = Media::query()
             ->with(['model.user', 'model.user.college', 'model.user.department'])
-            ->whereHasMorph('model', [SubmittedRequirement::class], function($q) use ($activeSemester) {
-                if ($activeSemester) {
+            ->whereHasMorph('model', [SubmittedRequirement::class], function($q) use ($semester) {
+                if ($semester) {
                     $q->whereBetween('created_at', [
-                        $activeSemester->start_date,
-                        $activeSemester->end_date
+                        $semester->start_date,
+                        $semester->end_date
                     ]);
+                } else {
+                    $q->whereNull('id'); // Force no results if no semester
                 }
             })
             ->orderBy('created_at', 'desc');
@@ -121,7 +153,7 @@ class FileManagerIndex extends Component
     {
         if (!$this->groupBy) return collect();
 
-        $activeSemester = Semester::getActiveSemester();
+        $activeSemester = $this->selectedSemester ?? Semester::getActiveSemester();
         if (!$activeSemester) return collect();
 
         switch ($this->groupBy) {
@@ -184,7 +216,7 @@ class FileManagerIndex extends Component
     {
         $files = $this->getGroupedFiles();
         $groups = $this->getGroups();
-        $activeSemester = Semester::getActiveSemester();
+        $activeSemester = $this->selectedSemester ?? Semester::getActiveSemester();
         
         return view('livewire.admin.file-manager.file-manager-index', [
             'files' => $files,

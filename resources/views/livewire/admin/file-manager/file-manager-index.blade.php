@@ -50,9 +50,13 @@
                 <div class="flex flex-row gap-4 items-center justify-between w-full">
                     <div class="flex items-center gap-4">
                         <h2 class="text-2xl font-bold">File Manager</h2>
-                        @if($activeSemester = \App\Models\Semester::getActiveSemester())
+                        @if($activeSemester)
                             <span class="px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
-                                Current Semester: {{ $activeSemester->name }}
+                                {{ $selectedSemester ? 'Viewing: ' : 'Current Semester: ' }}{{ $activeSemester->name }}
+                            </span>
+                        @else
+                            <span class="px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-800">
+                                No Active Semester Selected
                             </span>
                         @endif
                     </div>

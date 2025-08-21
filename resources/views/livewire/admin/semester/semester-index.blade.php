@@ -79,6 +79,32 @@
         </div>
     @endif
 
+    <!-- Archive Confirmation Modal -->
+    @if($showArchiveModal)
+        <div class="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
+            <div class="bg-white rounded-lg p-6 max-w-md w-full shadow-xl">
+                <h3 class="text-lg font-bold mb-4">Confirm Archive</h3>
+                <p class="mb-6">Are you sure you want to archive this semester? This will deactivate it and move it to archived semesters.</p>
+                
+                <div class="flex justify-end gap-3">
+                    <button wire:click="closeModal" 
+                            class="btn btn-ghost hover:bg-gray-100">
+                        Cancel
+                    </button>
+                    <button wire:click="archiveSemester" 
+                            class="btn btn-warning"
+                            wire:loading.attr="disabled"
+                            wire:target="archiveSemester">
+                        <span wire:loading.remove wire:target="archiveSemester">Archive Semester</span>
+                        <span wire:loading wire:target="archiveSemester">
+                            <i class="fa-solid fa-spinner fa-spin"></i> Archiving...
+                        </span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    @endif
+
     <!-- Main Content -->
     <div class="flex flex-col gap-4 w-full bg-white shadow-md rounded-lg p-6">
         <h2 class="text-2xl font-bold text-gray-800">Academic Semester Management</h2>
@@ -120,7 +146,6 @@
             </form>
         </div>
 
-        <!-- Semesters List -->
         <div class="overflow-x-auto rounded-lg border border-gray-200">
             <table class="table table-auto w-full">
                 <thead class="bg-gray-50">
@@ -149,6 +174,12 @@
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                 <div class="flex space-x-2">
+                                    @if($semester->is_active)
+                                        <button wire:click="confirmArchive({{ $semester->id }})" 
+                                                class="btn btn-xs btn-ghost btn-warning tooltip" data-tip="Archive">
+                                            <i class="fa-solid fa-box-archive"></i>
+                                        </button>
+                                    @endif
                                     <button wire:click="edit({{ $semester->id }})" 
                                             class="btn btn-xs btn-ghost btn-info tooltip" data-tip="Edit">
                                         <i class="fa-solid fa-edit"></i>

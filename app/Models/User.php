@@ -133,16 +133,16 @@ class User extends Authenticatable implements HasMedia
 
     public function getFormattedNameAttribute(): string
     {
-        $name = $this->lastname;
-
-        if ($this->extensionname) {
-            $name .= ', ' . $this->extensionname;
-        }
-
-        $name .= ', ' . $this->firstname;
+        $name = $this->firstname;
 
         if ($this->middlename) {
-            $name .= ' ' . $this->middlename[0] . '.';
+            $name .= ' ' . substr($this->middlename, 0, 1) . '.';
+        }
+
+        $name .= ' ' . $this->lastname;
+
+        if ($this->extensionname) {
+            $name .= ' ' . $this->extensionname;
         }
 
         return $name;
