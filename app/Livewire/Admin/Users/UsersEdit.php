@@ -51,51 +51,64 @@ class UsersEdit extends Component
 
     public function save()
     {
-        $this->validate([
-            'firstname' => 'required|string|max:255',
-            'middlename' => 'nullable|string|max:255',
-            'lastname' => 'required|string|max:255',
-            'extensionname' => 'nullable|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users,email,' . $this->user->id,
-            'department_id' => 'nullable|exists:departments,id',
-            'college_id' => 'nullable|exists:colleges,id',
-            'password' => ['nullable', 'confirmed', Rules\Password::defaults()],
-            'profile_picture' => 'nullable|image|max:2048',
-            'roles' => 'required|array',
-            'roles.*' => 'exists:roles,id',
-        ]);
-
-        // Update user data
-        $this->user->update([
-            'firstname' => $this->firstname,
-            'middlename' => $this->middlename,
-            'lastname' => $this->lastname,
-            'extensionname' => $this->extensionname,
-            'email' => $this->email,
-            'department_id' => $this->department_id,
-            'college_id' => $this->college_id,
-        ]);
-
-        // Update password if provided
-        if (!empty($this->password)) {
-            $this->user->update([
-                'password' => Hash::make($this->password),
+        try {
+            $this->validate([
+                'firstname' => 'required|string|max:255',
+                'middlename' => 'nullable|string|max:255',
+                'lastname' => 'required|string|max:255',
+                'extensionname' => 'nullable|string|max:255',
+                'email' => 'required|string|email|max:255|unique:users,email,' . $this->user->id,
+                'department_id' => 'nullable|exists:departments,id',
+                'college_id' => 'nullable|exists:colleges,id',
+                'password' => ['nullable', 'confirmed', Rules\Password::defaults()],
+                'profile_picture' => 'nullable|image|max:2048',
+                'roles' => 'required|array',
+                'roles.*' => 'exists:roles,id',
             ]);
+
+            // Update user data
+            $this->user->update([
+                'firstname' => $this->firstname,
+                'middlename' => $this->middlename,
+                'lastname' => $this->lastname,
+                'extensionname' => $this->extensionname,
+                'email' => $this->email,
+                'department_id' => $this->department_id,
+                'college_id' => $this->college_id,
+            ]);
+
+            // Update password if provided
+            if (!empty($this->password)) {
+                $this->user->update([
+                    'password' => Hash::make($this->password),
+                ]);
+            }
+
+            // Update profile picture if provided
+            if ($this->profile_picture) {
+                $this->user->clearMediaCollection('profile_picture');
+                $this->user->addMedia($this->profile_picture->getRealPath())
+                    ->toMediaCollection('profile_picture');
+            }
+
+            // Sync roles
+            $this->user->syncRoles($this->roles);
+
+            // Emit success notification
+            $this->dispatch('showNotification', 
+                type: 'success', 
+                content: 'User updated successfully.'
+            );
+
+            return redirect()->route('admin.users.index');
+            
+        } catch (\Exception $e) {
+            // Emit error notification
+            $this->dispatch('showNotification', 
+                type: 'error', 
+                content: 'Error updating user: ' . $e->getMessage()
+            );
         }
-
-        // Update profile picture if provided
-        if ($this->profile_picture) {
-            $this->user->clearMediaCollection('profile_picture');
-            $this->user->addMedia($this->profile_picture->getRealPath())
-                ->toMediaCollection('profile_picture');
-        }
-
-        // Sync roles
-        $this->user->syncRoles($this->roles);
-
-        session()->flash('message', 'User updated successfully.');
-        
-        return redirect()->route('admin.users.index');
     }
 
     public function render()

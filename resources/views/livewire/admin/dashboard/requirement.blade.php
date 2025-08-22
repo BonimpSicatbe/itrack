@@ -1,7 +1,4 @@
-<div class="flex flex-col gap-4 w-full bg-white rounded-lg p-4">
-    {{-- Header and table content remains the same --}}
-    <div class="text-lg font-bold uppercase">Requirements</div>
-    
+<div class="flex flex-col gap-4 w-full bg-white rounded-lg p-4">    
     @if($activeSemester)
         <div class="flex flex-row gap-4 w-full">
             <input type="text" wire:model.live="search" id="search" class="input input-sm input-bordered w-128"

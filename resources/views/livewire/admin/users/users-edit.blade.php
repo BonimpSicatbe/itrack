@@ -1,4 +1,7 @@
 <div class="flex flex-col gap-4">
+    <!-- Notification Toast Component -->
+    <livewire:notification-toast />
+    
     <div class="bg-white p-6 rounded-lg shadow-md">
         <div class="flex justify-between items-center mb-4">
             <h1 class="text-2xl font-bold text-gray-800">Edit User</h1>
@@ -12,6 +15,24 @@
                 <!-- Personal Information -->
                 <div class="col-span-1">
                     <h3 class="text-lg font-medium text-gray-900 mb-4">Personal Information</h3>
+                    
+                    <!-- Profile Picture - Moved to top -->
+                    <div class="mb-4">
+                        <label for="profile_picture" class="block text-sm font-medium text-gray-700">Profile Picture</label>
+                        <input type="file" wire:model="profile_picture" id="profile_picture" 
+                            class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
+                        @error('profile_picture') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
+                        
+                        @if ($profile_picture)
+                            <div class="mt-2">
+                                <img src="{{ $profile_picture->temporaryUrl() }}" class="h-20 w-20 rounded-full object-cover">
+                            </div>
+                        @elseif($user->hasMedia('profile_picture'))
+                            <div class="mt-2">
+                                <img src="{{ $user->getFirstMediaUrl('profile_picture') }}" class="h-20 w-20 rounded-full object-cover">
+                            </div>
+                        @endif
+                    </div>
                     
                     <!-- First Name -->
                     <div class="mb-4">
@@ -43,24 +64,6 @@
                         <input type="text" wire:model="extensionname" id="extensionname" 
                             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                         @error('extensionname') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
-                    </div>
-                    
-                    <!-- Profile Picture -->
-                    <div class="mb-4">
-                        <label for="profile_picture" class="block text-sm font-medium text-gray-700">Profile Picture</label>
-                        <input type="file" wire:model="profile_picture" id="profile_picture" 
-                            class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
-                        @error('profile_picture') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
-                        
-                        @if ($profile_picture)
-                            <div class="mt-2">
-                                <img src="{{ $profile_picture->temporaryUrl() }}" class="h-20 w-20 rounded-full object-cover">
-                            </div>
-                        @elseif($user->hasMedia('profile_picture'))
-                            <div class="mt-2">
-                                <img src="{{ $user->getFirstMediaUrl('profile_picture') }}" class="h-20 w-20 rounded-full object-cover">
-                            </div>
-                        @endif
                     </div>
                 </div>
                 
@@ -118,18 +121,15 @@
                             class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                     </div>
                     
-                    <!-- Roles -->
+                    <!-- Roles - Changed to dropdown -->
                     <div class="mb-4">
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Roles</label>
-                        <div class="space-y-2">
+                        <label for="roles" class="block text-sm font-medium text-gray-700">Roles</label>
+                        <select wire:model="roles" id="roles" multiple
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                             @foreach($availableRoles as $role)
-                                <div class="flex items-center">
-                                    <input wire:model="roles" id="role-{{ $role->id }}" type="checkbox" value="{{ $role->id }}" 
-                                        class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                                    <label for="role-{{ $role->id }}" class="ml-2 text-sm text-gray-700">{{ $role->name }}</label>
-                                </div>
+                                <option value="{{ $role->id }}">{{ $role->name }}</option>
                             @endforeach
-                        </div>
+                        </select>
                         @error('roles') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                     </div>
                 </div>

@@ -1,49 +1,26 @@
-@if (Auth::user()->hasRole('role:admin|super-admin'))
-    <x-admin.app-layout>
-        <div class="py-12">
-            <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
-                <div class="p-4 sm:p-8 bg-white shadow-sm sm:rounded-lg">
-                    <div class="max-w-xl">
-                        @include('profile.partials.update-profile-information-form')
-                    </div>
+@php
+    $layout = 'user.app-layout';
+    if (auth()->user()->hasRole('admin') || auth()->user()->hasRole('super-admin')) {
+        $layout = 'admin.app-layout';
+    }
+@endphp
+
+<x-dynamic-component :component="$layout">
+    <div class="h-full overflow-auto w-full">
+        <div class="p-4 sm:p-8">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Profile Information Form -->
+                <div class="bg-white sm:rounded-lg p-6">
+                    <h2 class="text-lg font-medium text-gray-900 mb-4">Profile Information</h2>
+                    @include('profile.partials.update-profile-information-form')
                 </div>
 
-                <div class="p-4 sm:p-8 bg-white shadow-sm sm:rounded-lg">
-                    <div class="max-w-xl">
-                        @include('profile.partials.update-password-form')
-                    </div>
-                </div>
-
-                <div class="p-4 sm:p-8 bg-white shadow-sm sm:rounded-lg">
-                    <div class="max-w-xl">
-                        @include('profile.partials.delete-user-form')
-                    </div>
+                <!-- Update Password Form -->
+                <div class="bg-white sm:rounded-lg p-6">
+                    <h2 class="text-lg font-medium text-gray-900 mb-4">Update Password</h2>
+                    @include('profile.partials.update-password-form')
                 </div>
             </div>
         </div>
-    </x-admin.app-layout>
-@else
-    <x-user.app-layout>
-        <div class="h-full overflow-auto w-full">
-            <div class="space-y-6">
-                <div class="p-4 sm:p-8 bg-white sm:rounded-lg">
-                    <div class="max-w-xl">
-                        @include('profile.partials.update-profile-information-form')
-                    </div>
-                </div>
-
-                <div class="p-4 sm:p-8 bg-white sm:rounded-lg">
-                    <div class="max-w-xl">
-                        @include('profile.partials.update-password-form')
-                    </div>
-                </div>
-
-                <div class="p-4 sm:p-8 bg-white sm:rounded-lg">
-                    <div class="max-w-xl">
-                        @include('profile.partials.delete-user-form')
-                    </div>
-                </div>
-            </div>
-        </div>
-    </x-user.app-layout>
-@endif
+    </div>
+</x-dynamic-component>
