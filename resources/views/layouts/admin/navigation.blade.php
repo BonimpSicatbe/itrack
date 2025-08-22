@@ -1,42 +1,192 @@
-<nav class="bg-gray" x-data="{ unreadCount: {{ $unreadCount }} }" 
+{{-- Enhanced Navigation with improved UX/UI --}}
+<nav class="shadow-sm sticky top-0 z-50" 
+     x-data="{ 
+        unreadCount: {{ $unreadCount }}, 
+        mobileMenuOpen: false,
+        showUserMenu: false,
+        activeTooltip: null
+     }" 
      @notification-read.window="if (unreadCount > 0) unreadCount--"
-     @notifications-marked-read.window="unreadCount = 0">
-    <div class="container mx-auto px-6 pt-6 pb-3">
-        <ul class="w-full flex flex-row gap-2 items-center flex-wrap">
-            @foreach ($navLinks as $index => $navlink)
-                @if ($index === count($navLinks) - 3)
-                    {{-- Spacer before the last two items --}}
-                    <li class="flex-1"></li>
-                @endif
+     @notifications-marked-read.window="unreadCount = 0"
+     @click.away="showUserMenu = false">
 
-                <li>
-                    @if ($index === count($navLinks) - 1)
-                        <form method="POST" action="{{ route('logout') }}">
+    <div class="px-4 sm:px-6">
+        {{-- Desktop Navigation --}}
+        <div class="hidden lg:flex items-center justify-between py-4">
+            {{-- Logo/Brand --}}
+            <div class="flex items-center space-x-4">
+                <div class="flex items-center space-x-3 pr-6">
+                    <img src="{{ asset('images/logo-1.png') }}" alt="iTrack Logo" class="w-10 h-10 object-contain">
+                    <span class="font-bold text-gray-900 text-xl">iTrack</span>
+                </div>
+
+                {{-- Main Navigation --}}
+                <div class="flex items-center space-x-1">
+                    @foreach ($navLinks['main'] as $navlink)
+                        <div class="relative group">
+                            <a href="{{ route($navlink['route']) }}"
+                            class="px-4 py-2 rounded-lg text-xs font-medium transition-all duration-200 flex items-center space-x-2 relative
+                                    {{ request()->routeIs($navlink['route']) 
+                                        ? 'bg-blue-50 text-blue-700 shadow-sm' 
+                                        : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900' }}"
+                            @mouseenter="activeTooltip = '{{ $navlink['route'] }}'"
+                            @mouseleave="activeTooltip = null">
+                                <i class="fa-solid fa-{{ $navlink['icon'] }} text-sm"></i>
+                                <span>{{ $navlink['label'] }}</span>
+                            </a>
+                            
+                            {{-- Tooltip --}}
+                            <div x-show="activeTooltip === '{{ $navlink['route'] }}'"
+                                x-transition:enter="transition ease-out duration-200"
+                                x-transition:enter-start="opacity-0 transform scale-95"
+                                x-transition:enter-end="opacity-100 transform scale-100"
+                                class="absolute z-50 px-3 py-2 text-sm text-white bg-gray-900 rounded-lg shadow-lg -bottom-12 left-1/2 transform -translate-x-1/2 whitespace-nowrap">
+                                {{ $navlink['description'] }}
+                                <div class="absolute -top-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-gray-900 rotate-45"></div>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+
+            {{-- Right side: Notifications, Admin Panel, User Menu --}}
+            <div class="flex items-center space-x-5">
+                {{-- Notifications --}}
+                <a href="{{ route('admin.notifications') }}" 
+                   class="relative p-2 rounded-lg hover:bg-gray-50 transition-colors duration-200">
+                    <i class="fa-solid fa-bell text-gray-600 hover:text-gray-900 transition-colors"></i>
+                    <span x-show="unreadCount > 0" 
+                          x-transition
+                          class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium shadow-sm"
+                          x-text="unreadCount > 99 ? '99+' : unreadCount">
+                    </span>
+                </a>
+
+                {{-- User Menu --}}
+                <div class="relative" x-data>
+                    <button @click="showUserMenu = !showUserMenu"
+                            class="flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors duration-200">
+                        <div class="w-8 h-8 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center">
+                            <i class="fa-solid fa-user text-white text-xs"></i>
+                        </div>
+                        <span class="text-gray-700 font-medium">{{ Auth::user()->name ?? 'Admin' }}</span>
+                        <i class="fa-solid fa-chevron-down text-gray-400 text-xs transition-transform duration-200"
+                           :class="{ 'rotate-180': showUserMenu }"></i>
+                    </button>
+
+                    {{-- Dropdown Menu --}}
+                    <div x-show="showUserMenu"
+                         x-transition:enter="transition ease-out duration-200"
+                         x-transition:enter-start="opacity-0 transform scale-95"
+                         x-transition:enter-end="opacity-100 transform scale-100"
+                         x-transition:leave="transition ease-in duration-150"
+                         x-transition:leave-start="opacity-100 transform scale-100"
+                         x-transition:leave-end="opacity-0 transform scale-95"
+                         class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
+                         
+                        <a href="{{ route('profile.edit') }}"
+                           class="flex items-center space-x-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors duration-200">
+                            <i class="fa-solid fa-user-circle text-gray-400"></i>
+                            <span>Your Profile</span>
+                        </a>
+                        
+                        <form method="POST" action="{{ route('logout') }}" class="px-1">
                             @csrf
-                            <button type="submit" class="btn btn-sm btn-ghost capitalize flex items-center gap-2">
-                                <i class="fa-solid fa-{{ $navlink['icon'] }}"></i>
-                                <span class="hidden sm:inline">{{ $navlink['label'] }}</span>
+                            <button type="submit" 
+                                    class="w-full flex items-center space-x-3 px-3 py-2 text-sm text-gray-700 hover:bg-red-50 hover:text-red-700 rounded-md transition-colors duration-200 group">
+                                <i class="fa-solid fa-right-from-bracket text-gray-400 group-hover:text-red-500"></i>
+                                <span>Logout</span>
                             </button>
                         </form>
-                    @else
-                        <a
-                            href="{{ route($navlink['route']) }}"
-                            class="btn btn-sm btn-ghost capitalize flex items-center gap-2 {{ request()->routeIs($navlink['route']) ? 'btn-active' : '' }} relative"
-                        >
-                            <i class="fa-solid fa-{{ $navlink['icon'] }}"></i>
-                            <span class="hidden sm:inline">{{ $navlink['label'] }}</span>
-                            
-                            {{-- Notification badge --}}
-                            @if (isset($navlink['badge']) && $navlink['badge'] > 0)
-                                <span x-show="unreadCount > 0" 
-                                      class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center"
-                                      x-text="unreadCount > 99 ? '99+' : unreadCount">
-                                </span>
-                            @endif
-                        </a>
-                    @endif
-                </li>
-            @endforeach
-        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {{-- Mobile Navigation --}}
+        <div class="lg:hidden">
+            {{-- Mobile Header --}}
+            <div class="flex items-center justify-between py-4">
+                <div class="flex items-center space-x-3">
+                    <img src="{{ asset('images/logo.png') }}" alt="iTrack Logo" class="w-8 h-8 object-contain">
+                    <span class="font-bold text-gray-900">iTrack</span>
+                </div>
+
+                <div class="flex items-center space-x-4">
+                    {{-- Mobile Notification Button --}}
+                    <a href="{{ route('admin.notifications') }}" 
+                       class="relative p-2 rounded-lg hover:bg-gray-50 transition-colors">
+                        <i class="fa-solid fa-bell text-gray-600"></i>
+                        <span x-show="unreadCount > 0" 
+                              class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium"
+                              x-text="unreadCount > 99 ? '99+' : unreadCount">
+                        </span>
+                    </a>
+
+                    {{-- Admin Panel Label --}}
+                    <span class="text-gray-600 font-medium text-sm">Admin Panel</span>
+
+                    {{-- Mobile Menu Button --}}
+                    <button @click="mobileMenuOpen = !mobileMenuOpen"
+                            class="p-2 rounded-lg hover:bg-gray-50 transition-colors">
+                        <i class="fa-solid text-gray-600 transition-transform duration-200"
+                           :class="mobileMenuOpen ? 'fa-xmark' : 'fa-bars'"></i>
+                    </button>
+                </div>
+            </div>
+
+            {{-- Mobile Menu --}}
+            <div x-show="mobileMenuOpen"
+                 x-transition:enter="transition ease-out duration-200"
+                 x-transition:enter-start="opacity-0 transform -translate-y-2"
+                 x-transition:enter-end="opacity-100 transform translate-y-0"
+                 class="border-t border-gray-200 py-4 space-y-2">
+                
+                @foreach ($navLinks['main'] as $navlink)
+                    <a href="{{ route($navlink['route']) }}"
+                       class="flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors duration-200 relative
+                              {{ request()->routeIs($navlink['route']) 
+                                 ? 'bg-blue-50 text-blue-700' 
+                                 : 'text-gray-700 hover:bg-gray-50' }}"
+                       @click="mobileMenuOpen = false">
+                        <i class="fa-solid fa-{{ $navlink['icon'] }} text-sm w-5"></i>
+                        <span class="flex-1">{{ $navlink['label'] }}</span>
+                        
+                        @if (request()->routeIs($navlink['route']))
+                            <i class="fa-solid fa-chevron-right text-blue-600 text-sm"></i>
+                        @endif
+                    </a>
+                @endforeach
+
+                {{-- Mobile Profile Link --}}
+                <a href="{{ route('profile.edit') }}"
+                   class="flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors duration-200 text-gray-700 hover:bg-gray-50"
+                   @click="mobileMenuOpen = false">
+                    <i class="fa-solid fa-user-circle text-sm w-5"></i>
+                    <span class="flex-1">Your Profile</span>
+                </a>
+
+                {{-- Mobile Logout --}}
+                <form method="POST" action="{{ route('logout') }}" class="mt-4 pt-4 border-t border-gray-200">
+                    @csrf
+                    <button type="submit" 
+                            class="w-full flex items-center space-x-3 px-4 py-3 text-red-700 hover:bg-red-50 rounded-lg transition-colors duration-200">
+                        <i class="fa-solid fa-right-from-bracket text-sm w-5"></i>
+                        <span>Logout</span>
+                    </button>
+                </form>
+            </div>
+        </div>
     </div>
 </nav>
+
+{{-- Loading overlay for better perceived performance --}}
+<div x-data="{ loading: false }" 
+     @beforeunload.window="loading = true"
+     x-show="loading"
+     class="fixed inset-0 bg-white/80 backdrop-blur-sm z-[60] flex items-center justify-center">
+    <div class="flex items-center space-x-3">
+        <div class="animate-spin rounded-full h-6 w-6 border-2 border-blue-600 border-t-transparent"></div>
+        <span class="text-gray-700 font-medium">Loading...</span>
+    </div>
+</div>

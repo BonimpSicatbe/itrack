@@ -19,16 +19,22 @@ class Navigation extends Component
     {
         $this->unreadCount = Auth::check() ? Auth::user()->unreadNotifications()->count() : 0;
         
+        // Organized navigation with sections
         $this->navLinks = [
-            ['label' => 'Dashboard', 'icon' => 'th-large', 'route' => 'admin.dashboard'],
-            ['label' => 'Requirements', 'icon' => 'clipboard-list', 'route' => 'admin.requirements.index'],
-            ['label' => 'Submissions', 'icon' => 'paper-plane', 'route' => 'admin.submitted-requirements.index'],
-            ['label' => 'Files', 'icon' => 'file', 'route' => 'admin.file-manager.index'],
-            ['label' => 'Users', 'icon' => 'users', 'route' => 'admin.users.index'],
-
-            ['label' => 'Notifications', 'icon' => 'bell', 'route' => 'admin.notifications', 'badge' => $this->unreadCount],
-            ['label' => 'Account', 'icon' => 'user-circle', 'route' => 'profile.edit'],
-            ['label' => 'Logout', 'icon' => 'right-from-bracket', 'route' => "route('logout')"],
+            // Main navigation
+            'main' => [
+                ['label' => 'Dashboard', 'icon' => 'th-large', 'route' => 'admin.dashboard', 'description' => 'Overview and analytics'],
+                ['label' => 'Requirements', 'icon' => 'clipboard-list', 'route' => 'admin.requirements.index', 'description' => 'Manage requirements'],
+                ['label' => 'Submissions', 'icon' => 'paper-plane', 'route' => 'admin.submitted-requirements.index', 'description' => 'Review submissions'],
+                ['label' => 'Files', 'icon' => 'file', 'route' => 'admin.file-manager.index', 'description' => 'File management'],
+                ['label' => 'Users', 'icon' => 'users', 'route' => 'admin.users.index', 'description' => 'User management'],
+            ],
+            // Secondary navigation
+            'secondary' => [
+                ['label' => 'Notifications', 'icon' => 'bell', 'route' => 'admin.notifications', 'badge' => $this->unreadCount, 'description' => 'View notifications'],
+                ['label' => 'Account', 'icon' => 'user-circle', 'route' => 'profile.edit', 'description' => 'Profile settings'],
+                ['label' => 'Logout', 'icon' => 'right-from-bracket', 'route' => 'logout', 'description' => 'Sign out', 'type' => 'form'],
+            ]
         ];
     }
 

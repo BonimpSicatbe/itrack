@@ -19,12 +19,14 @@ class RequirementsList extends Component
     public $sortField = 'due';
     public $sortDirection = 'asc';
     public $statuses = [];
+    public $viewMode = 'list';
 
     protected $queryString = [
         'search' => ['except' => ''],
         'statusFilter' => ['except' => ''],
         'sortField' => ['except' => 'due'],
         'sortDirection' => ['except' => 'asc'],
+        'viewMode' => ['except' => 'list'],
     ];
 
     public function mount()
