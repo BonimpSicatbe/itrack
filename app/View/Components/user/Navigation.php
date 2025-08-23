@@ -12,12 +12,14 @@ use Illuminate\View\Component;
 class Navigation extends Component
 {
     public $navLink;
+    public $bottomNavLink;
 
     /**
      * Create a new component instance.
      */
     public function __construct()
     {
+        // Main navigation links
         $this->navLink = [
             ['label' => 'Dashboard', 'route' => 'user.dashboard', 'icon' => 'home'],
             ['label' => 'Requirements', 'route' => 'user.requirements', 'icon' => 'spinner'],
@@ -25,8 +27,11 @@ class Navigation extends Component
             ['label' => 'Archive', 'route' => 'user.archive', 'icon' => 'archive'],
             ['label' => 'File Manager', 'icon' => 'folder', 'route' => 'user.file-manager'],
             ['label' => 'Notifications', 'icon' => 'bell', 'route' => 'user.notifications'],
+        ];
 
-            ['label' => Auth::user()->firstname . ' ' . Auth::user()->lastname, 'route' => 'profile.edit', 'icon' => 'user'],
+        // Bottom navigation links (profile and logout)
+        $this->bottomNavLink = [
+            ['label' => Auth::user()->firstname . ' ' . Auth::user()->lastname, 'route' => 'profile.edit', 'icon' => 'user', 'is_profile' => true],
             ['label' => 'Logout', 'route' => 'logout', 'icon' => 'right-from-bracket'],
         ];
     }
@@ -35,6 +40,7 @@ class Navigation extends Component
     {
         return view('layouts.user.navigation', [
             'navLinks' => $this->navLink,
+            'bottomNavLinks' => $this->bottomNavLink,
         ]);
     }
 }

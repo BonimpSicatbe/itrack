@@ -4,6 +4,7 @@ namespace App\Livewire\User\FileManager;
 
 use Livewire\Component;
 use App\Models\SubmittedRequirement;
+use App\Models\Semester;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Livewire\WithPagination;
@@ -18,6 +19,7 @@ class ShowFileManager extends Component
     public $sortDirection = 'desc';
     public $perPage = 12;
     public $viewMode = 'grid';
+    public $activeSemester = null;
 
     protected $queryString = [
         'search' => ['except' => ''],
@@ -25,6 +27,27 @@ class ShowFileManager extends Component
         'sortBy' => ['except' => 'created_at'],
         'sortDirection' => ['except' => 'desc'],
     ];
+
+    protected $listeners = [
+        'refreshFiles' => '$refresh',
+        'semesterChanged' => 'handleSemesterChange'
+    ];
+
+    public function mount()
+    {
+        $this->loadActiveSemester();
+    }
+
+    public function loadActiveSemester()
+    {
+        $this->activeSemester = Semester::getActiveSemester();
+    }
+
+    public function handleSemesterChange()
+    {
+        $this->loadActiveSemester();
+        $this->resetPage();
+    }
 
     public function updatingSearch()
     {
@@ -78,10 +101,10 @@ class ShowFileManager extends Component
         }
     }
 
-    public function render()
+    public function getFilesProperty()
     {
-        $query = SubmittedRequirement::where('user_id', Auth::id())
-            ->with(['requirement', 'submissionFile'])
+        $query = SubmittedRequirement::with(['requirement', 'submissionFile'])
+            ->where('user_id', Auth::id())
             ->whereHas('submissionFile');
 
         // Apply search filter - now searches by filename instead of requirement name
@@ -99,7 +122,12 @@ class ShowFileManager extends Component
         // Apply sorting
         $query->orderBy($this->sortBy, $this->sortDirection);
 
-        $files = $query->paginate($this->perPage);
+        return $query->paginate($this->perPage);
+    }
+
+    public function render()
+    {
+        $files = $this->files;
 
         return view('livewire.user.file-manager.show-file-manager', [
             'files' => $files,
