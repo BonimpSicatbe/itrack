@@ -3,8 +3,8 @@
     <div class="bg-white border-b border-gray-200 px-8 py-4 shadow-sm">
         <div class="flex items-center justify-between">
             <!-- Search and Filters -->
-            <div class="flex items-center gap-4 flex-1">
-                <div class="relative w-96">
+            <div class="flex items-center gap-4 flex-1 flex-wrap">
+                <div class="relative flex-1 min-w-[300px] max-w-md">
                     <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                         <i class="fa-solid fa-magnifying-glass text-gray-400 text-sm"></i>
                     </div>
@@ -19,18 +19,17 @@
                     </div>
                 </div>
                 
-                <!-- Enhanced Status Filter -->
+                <!-- Enhanced Completion Filter -->
                 <div class="relative">
                     <select
-                        wire:model.live="statusFilter"
+                        wire:model.live="completionFilter"
                         class="appearance-none px-4 py-3 pr-10 text-sm bg-gray-50 border border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:bg-white focus:outline-none transition-all duration-200 cursor-pointer"
                     >
-                        <option value="">All Status</option>
-                        @foreach($statuses as $value => $label)
+                        <option value="">All Requirements</option>
+                        @foreach($completionStatuses as $value => $label)
                             <option value="{{ $value }}">{{ $label }}</option>
                         @endforeach
                     </select>
-                    
                 </div>
             </div>
 
@@ -46,42 +45,44 @@
                 </div>
                 
                 <!-- Enhanced Sort Dropdown -->
-                <div class="flex items-center gap-3">
-                    
-                    <!-- Sort Dropdown with Direction Toggle -->
-                    <div class="flex items-center bg-gray-50 rounded-lg border border-gray-300 overflow-hidden">
-                        <!-- Sort Field Selector -->
-                        <div class="relative">
-                            <select
-                                wire:model.live="sortField"
-                                class="appearance-none px-4 py-3 pl-4 pr-8 text-sm bg-transparent border-none focus:ring-0 focus:outline-none cursor-pointer"
-                            >
-                                <option value="due">Sort by Due Date</option>
-                                <option value="name">Sort by Name</option>
-                                <option value="priority">Sort by Priority</option>
-                                <option value="created_at">Sort by Created</option>
-                            </select>
-                        </div>
-                        
-                        <!-- Sort Direction Toggle -->
-                        <button
-                            wire:click="sortBy('{{ $sortField }}')"
-                            class="px-3 py-3 border-l border-gray-300 text-gray-400 hover:text-blue-600 transition-colors"
-                            title="Toggle sort direction"
+                <div class="flex items-center bg-gray-50 rounded-lg border border-gray-300 overflow-hidden">
+                    <!-- Sort Field Selector -->
+                    <div class="relative">
+                        <select
+                            wire:model.live="sortField"
+                            class="appearance-none px-4 py-3 pl-4 pr-8 text-sm bg-transparent border-none focus:ring-0 focus:outline-none cursor-pointer"
                         >
-                            @if($sortDirection === 'asc')
-                                <i class="fa-solid fa-arrow-up-wide-short text-sm"></i>
-                            @else
-                                <i class="fa-solid fa-arrow-down-wide-short text-sm"></i>
-                            @endif
-                        </button>
+                            <option value="due">Sort by Due Date</option>
+                            <option value="name">Sort by Name</option>
+                            <option value="priority">Sort by Priority</option>
+                        </select>
                     </div>
+                    
+                    <!-- Sort Direction Toggle -->
+                    <button
+                        wire:click="sortBy('{{ $sortField }}')"
+                        class="px-3 py-3 border-l border-gray-300 text-gray-400 hover:text-blue-600 transition-colors"
+                        title="Toggle sort direction"
+                    >
+                        @if($sortDirection === 'asc')
+                            <i class="fa-solid fa-arrow-up-wide-short text-sm"></i>
+                        @else
+                            <i class="fa-solid fa-arrow-down-wide-short text-sm"></i>
+                        @endif
+                    </button>
                 </div>
             </div>
         </div>
 
+        <!-- Flash message -->
+        @if (session()->has('message'))
+            <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mt-4" role="alert">
+                <p>{{ session('message') }}</p>
+            </div>
+        @endif
+
         <!-- Enhanced Active Filters -->
-        @if($search || $statusFilter)
+        @if($search || $completionFilter)
             <div class="flex items-center gap-3 mt-4 pt-4 border-t border-gray-100">
                 <div class="flex items-center gap-2">
                     <i class="fa-solid fa-filter text-blue-600"></i>
@@ -97,17 +98,17 @@
                             </button>
                         </div>
                     @endif
-                    @if($statusFilter)
+                    @if($completionFilter)
                         <div class="flex items-center gap-2 px-3 py-2 bg-green-50 border border-green-200 rounded-lg">
                             <i class="fa-solid fa-check-circle text-green-600 text-xs"></i>
-                            <span class="text-sm text-green-800 font-medium">{{ $statuses[$statusFilter] ?? $statusFilter }}</span>
-                            <button wire:click="$set('statusFilter', '')" class="ml-1 w-5 h-5 bg-green-100 hover:bg-green-200 rounded-full flex items-center justify-center transition-colors duration-200">
+                            <span class="text-sm text-green-800 font-medium">{{ $completionStatuses[$completionFilter] ?? $completionFilter }}</span>
+                            <button wire:click="$set('completionFilter', '')" class="ml-1 w-5 h-5 bg-green-100 hover:bg-green-200 rounded-full flex items-center justify-center transition-colors duration-200">
                                 <i class="fa-solid fa-xmark text-green-600 text-xs"></i>
                             </button>
                         </div>
                     @endif
                 </div>
-                <button wire:click="$set('search', ''); $set('statusFilter', '')" class="text-sm text-gray-500 hover:text-gray-700 underline ml-auto">
+                <button wire:click="$set('search', ''); $set('completionFilter', '')" class="text-sm text-gray-500 hover:text-gray-700 underline ml-auto">
                     Clear all filters
                 </button>
             </div>
@@ -118,8 +119,8 @@
     @if($viewMode === 'list')
         <!-- Enhanced File List Header -->
         <div class="bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200 px-8 py-3">
-            <div class="grid grid-cols-11 gap-6 text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                <div class="col-span-5 flex items-center gap-2">
+            <div class="grid grid-cols-10 gap-6 text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                <div class="col-span-4 flex items-center gap-2">
                     <i class="fa-solid fa-file-lines text-gray-400"></i>
                     Name
                 </div>
@@ -131,11 +132,8 @@
                     <i class="fa-solid fa-exclamation-triangle text-gray-400"></i>
                     Priority
                 </div>
-                <div class="col-span-2 flex items-center gap-2">
-                    <i class="fa-solid fa-check-circle text-gray-400"></i>
-                    Status
+                <div class="col-span-2 flex items-center gap-2 justify-end">
                 </div>
-                <!-- Removed Actions Column -->
             </div>
         </div>
     @endif
@@ -171,7 +169,7 @@
                         <div class="flex items-center justify-between mb-3">
                             <div>
                                 <div class="text-sm font-medium text-gray-900">{{ $requirement->due->format('M j, Y') }}</div>
-                                <div class="text-xs {{ $requirement->due->isPast() ? 'text-red-600' : 'text-gray-500' }}">
+                                <div class="text-xs {{ $requirement->due->isPast() ? 'text-red-600 font-medium' : 'text-gray-500' }}">
                                     {{ $requirement->due->diffForHumans() }}
                                 </div>
                             </div>
@@ -189,31 +187,41 @@
                             </span>
                         </div>
                         
-                        <div class="pt-3 border-t border-gray-100">
-                            @if($requirement->userSubmissions->count() > 0)
-                                @php
-                                    $status = $requirement->userSubmissions->first()->status;
-                                    $statusConfig = match($status) {
-                                        'approved' => ['color' => 'green', 'icon' => 'fa-check-circle'],
-                                        'pending' => ['color' => 'yellow', 'icon' => 'fa-clock'],
-                                        'rejected' => ['color' => 'red', 'icon' => 'fa-times-circle'],
-                                        default => ['color' => 'gray', 'icon' => 'fa-circle']
-                                    };
-                                @endphp
-                                <span class="inline-flex items-center text-xs font-semibold text-{{ $statusConfig['color'] }}-800">
-                                    <i class="fa-solid {{ $statusConfig['icon'] }} mr-1 text-{{ $statusConfig['color'] }}-600"></i>
-                                    {{ $requirement->userSubmissions->first()->status_text }}
-                                </span>
+                        <!-- Mark as Done Button for Grid View -->
+                        <div class="mt-4">
+                            @if($this->isRequirementSubmitted($requirement->id))
+                                <div class="mt-4 flex flex-col gap-2">
+                                    <span class="px-3 py-2 bg-green-100 text-green-800 text-xs font-medium rounded-full flex items-center justify-center">
+                                        <i class="fa-solid fa-check mr-1"></i> Submitted
+                                    </span>
+                                    <button 
+                                        wire:click="markAsUndone({{ $requirement->id }})" 
+                                        class="w-full px-3 py-2 bg-gray-100 text-gray-800 text-xs font-medium rounded-full hover:bg-gray-200 transition-colors flex items-center justify-center"
+                                        wire:loading.attr="disabled"
+                                        wire:click.stop
+                                    >
+                                        <i class="fa-solid fa-rotate-left mr-1"></i>
+                                        <span wire:loading.remove>Mark as Undone</span>
+                                        <span wire:loading>Processing...</span>
+                                    </button>
+                                </div>
                             @else
-                                <span class="inline-flex items-center text-xs font-semibold text-gray-600">
-                                    <i class="fa-solid fa-circle-pause text-gray-500 mr-1"></i>
-                                    Not Started
-                                </span>
+                                <!-- Keep the existing "Mark as Done" button -->
+                                <button 
+                                    wire:click="markAsDone({{ $requirement->id }})" 
+                                    class="w-full px-3 py-2 bg-blue-100 text-blue-800 text-xs font-medium rounded-full hover:bg-blue-200 transition-colors flex items-center justify-center"
+                                    wire:loading.attr="disabled"
+                                    wire:click.stop
+                                >
+                                    <i class="fa-solid fa-check mr-1"></i>
+                                    <span wire:loading.remove>Mark as Done</span>
+                                    <span wire:loading>Processing...</span>
+                                </button>
                             @endif
                         </div>
                     </div>
                 @empty
-                    <!-- Empty state remains the same -->
+                    <!-- Empty state -->
                     <div class="col-span-full flex flex-col items-center justify-center py-24 px-8">
                         <div class="relative mb-8">
                             <div class="w-24 h-24 bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl flex items-center justify-center shadow-lg">
@@ -225,14 +233,14 @@
                         </div>
                         <h3 class="text-xl font-bold text-gray-800 mb-3">No requirements found</h3>
                         <p class="text-gray-600 text-center mb-8 max-w-md leading-relaxed">
-                            @if($search || $statusFilter)
+                            @if($search || $completionFilter)
                                 We couldn't find any requirements matching your current search criteria. Try adjusting your filters or search terms.
                             @else
-                                You don't have any requirements assigned yet. New requirements will appear here when they're created.
+                                You don't have any requirements assigned yet for the current semester. New requirements will appear here when they're created.
                             @endif
                         </p>
-                        @if($search || $statusFilter)
-                            <button wire:click="$set('search', ''); $set('statusFilter', '')" class="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white text-sm font-semibold rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-200 shadow-lg hover:shadow-xl">
+                        @if($search || $completionFilter)
+                            <button wire:click="$set('search', ''); $set('completionFilter', '')" class="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white text-sm font-semibold rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-200 shadow-lg hover:shadow-xl">
                                 <i class="fa-solid fa-refresh mr-2"></i>
                                 Clear All Filters
                             </button>
@@ -245,10 +253,10 @@
             @forelse($requirements as $index => $requirement)
                 <div
                     wire:click="$dispatch('showRequirementDetail', { requirementId: {{ $requirement->id }} })"
-                    class="grid grid-cols-11 gap-6 items-center px-8 py-5 border-b border-gray-100 hover:bg-blue-50/50 cursor-pointer group transition-all duration-200 {{ $index % 2 === 1 ? 'bg-gray-50/30' : 'bg-white' }}"
+                    class="grid grid-cols-10 gap-6 items-center px-8 py-5 border-b border-gray-100 hover:bg-blue-50/50 cursor-pointer group transition-all duration-200 {{ $index % 2 === 1 ? 'bg-gray-50/30' : 'bg-white' }}"
                 >
                     <!-- Name Column -->
-                    <div class="col-span-5 flex items-center gap-4 min-w-0">
+                    <div class="col-span-4 flex items-center gap-4 min-w-0">
                         <div class="flex-shrink-0 relative">
                             @php
                                 $extension = pathinfo($requirement->name, PATHINFO_EXTENSION);
@@ -308,34 +316,41 @@
                         </span>
                     </div>
 
-                    <!-- Status Column -->
-                    <div class="col-span-2">
-                        @if($requirement->userSubmissions->count() > 0)
-                            @php
-                                $status = $requirement->userSubmissions->first()->status;
-                                $statusConfig = match($status) {
-                                    'approved' => ['color' => 'green', 'icon' => 'fa-check-circle'],
-                                    'pending' => ['color' => 'yellow', 'icon' => 'fa-clock'],
-                                    'rejected' => ['color' => 'red', 'icon' => 'fa-times-circle'],
-                                    default => ['color' => 'gray', 'icon' => 'fa-circle']
-                                };
-                            @endphp
-                            <span class="inline-flex items-center px-3 py-2 rounded-lg text-xs font-semibold border border-{{ $statusConfig['color'] }}-200 bg-{{ $statusConfig['color'] }}-50 text-{{ $statusConfig['color'] }}-800 group-hover:shadow-sm transition-shadow">
-                                <i class="fa-solid {{ $statusConfig['icon'] }} mr-2 text-{{ $statusConfig['color'] }}-600"></i>
-                                {{ $requirement->userSubmissions->first()->status_text }}
-                            </span>
+                    <!-- Mark as Done Button for List View -->
+                    <div class="col-span-2 flex justify-end">
+                        @if($this->isRequirementSubmitted($requirement->id))
+                            <div class="col-span-2 flex justify-end gap-2">
+                                <span class="px-3 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full flex items-center">
+                                    <i class="fa-solid fa-check mr-1"></i> Submitted
+                                </span>
+                                <button 
+                                    wire:click="markAsUndone({{ $requirement->id }})" 
+                                    class="px-3 py-1 bg-gray-100 text-gray-800 text-xs font-medium rounded-full hover:bg-gray-200 transition-colors flex items-center"
+                                    wire:loading.attr="disabled"
+                                    wire:click.stop
+                                >
+                                    <i class="fa-solid fa-rotate-left mr-1"></i>
+                                    <span wire:loading.remove>Undo</span>
+                                    <span wire:loading>Processing...</span>
+                                </button>
+                            </div>
                         @else
-                            <span class="inline-flex items-center px-3 py-2 rounded-lg text-xs font-semibold text-gray-600 bg-gray-50 border border-gray-200 group-hover:shadow-sm transition-shadow">
-                                <i class="fa-solid fa-circle-pause text-gray-500 mr-2"></i>
-                                Not Started
-                            </span>
+                            <!-- Keep the existing "Mark as Done" button -->
+                            <button 
+                                wire:click="markAsDone({{ $requirement->id }})" 
+                                class="px-3 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full hover:bg-blue-200 transition-colors flex items-center"
+                                wire:loading.attr="disabled"
+                                wire:click.stop
+                            >
+                                <i class="fa-solid fa-check mr-1"></i>
+                                <span wire:loading.remove>Mark as Done</span>
+                                <span wire:loading>Processing...</span>
+                            </button>
                         @endif
                     </div>
-
-                    <!-- Removed Actions Column -->
                 </div>
             @empty
-                <!-- Empty state remains the same -->
+                <!-- Empty state -->
                 <div class="flex flex-col items-center justify-center py-24 px-8">
                     <div class="relative mb-8">
                         <div class="w-24 h-24 bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl flex items-center justify-center shadow-lg">
@@ -347,14 +362,14 @@
                     </div>
                     <h3 class="text-xl font-bold text-gray-800 mb-3">No requirements found</h3>
                     <p class="text-gray-600 text-center mb-8 max-w-md leading-relaxed">
-                        @if($search || $statusFilter)
+                        @if($search || $completionFilter)
                             We couldn't find any requirements matching your current search criteria. Try adjusting your filters or search terms.
                         @else
-                            You don't have any requirements assigned yet. New requirements will appear here when they're created.
+                            You don't have any requirements assigned yet for the current semester. New requirements will appear here when they're created.
                         @endif
                     </p>
-                    @if($search || $statusFilter)
-                        <button wire:click="$set('search', ''); $set('statusFilter', '')" class="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white text-sm font-semibold rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-200 shadow-lg hover:shadow-xl">
+                    @if($search || $completionFilter)
+                        <button wire:click="$set('search', ''); $set('completionFilter', '')" class="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white text-sm font-semibold rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-200 shadow-lg hover:shadow-xl">
                             <i class="fa-solid fa-refresh mr-2"></i>
                             Clear All Filters
                         </button>

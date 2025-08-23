@@ -87,11 +87,6 @@
                                                         </svg>
                                                     </div>
                                                 @endif
-                                                <div class="avatar placeholder">
-                                                    <div class="bg-gradient-to-r from-green-400 to-blue-500 text-white rounded-full w-8 h-8 text-sm">
-                                                        <span>{{ substr($user['name'], 0, 2) }}</span>
-                                                    </div>
-                                                </div>
                                                 <span>{{ $user['name'] }}</span>
                                             </div>
                                         </td>

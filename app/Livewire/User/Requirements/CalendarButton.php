@@ -4,6 +4,7 @@ namespace App\Livewire\user\Requirements;
 
 use Livewire\Component;
 use App\Models\Requirement;
+use App\Models\Semester;
 use Illuminate\Support\Facades\Auth;
 
 class CalendarButton extends Component
@@ -19,9 +20,20 @@ class CalendarButton extends Component
 
     public function loadRequirements()
     {
+        $activeSemester = Semester::getActiveSemester();
+        
+        if (!$activeSemester) {
+            $this->requirements = [];
+            $this->dispatch('requirementsUpdated');
+            return;
+        }
+
         $this->requirements = Requirement::query()
-            ->where('assigned_to', Auth::user()->college->name)
-            ->orWhere('assigned_to', Auth::user()->department->name)
+            ->where('semester_id', $activeSemester->id)
+            ->where(function ($query) {
+                $query->where('assigned_to', Auth::user()->college->name)
+                      ->orWhere('assigned_to', Auth::user()->department->name);
+            })
             ->get()
             ->map(function ($req) {
                 $submissionStatus = $req->userSubmissions->first()?->status ?? 'pending';

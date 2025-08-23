@@ -1,22 +1,17 @@
 <div>
+    @livewire('notification-toast')
     @if($requirement)
-        <div class="modal modal-open">
-            <div class="modal-box max-w-5xl"> <!-- Increased max-width for better spacing -->
-                <div class="flex justify-between items-start">
-                    <div>
-                        <h3 class="font-bold text-lg">{{ $requirement->name }}</h3>
-                        <p class="text-gray-500">{{ $requirement->description }}</p>
-                    </div>
-                    <button wire:click="closeModal" class="btn btn-sm btn-circle">
-                        <i class="fa-solid fa-xmark"></i>
-                    </button>
-                </div>
-
+        <!-- Backdrop that covers the entire screen -->
+        <div class="modal modal-open" wire:click="closeModal">
+            <div class="modal-box max-w-5xl max-h-[90vh]" wire:click.stop>
                 <!-- Section 1 & 2 - Side by Side -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
                     <!-- Section 1: Requirement Details -->
                     <div class="border rounded-lg p-4 bg-gray-50">
-                        <h4 class="font-semibold mb-4">Requirement Details</h4>
+                    <h3 class="font-bold text-lg">Requirement Details</h3>
+                        <h5 class="mb-2">{{ $requirement->name }}</h5>
+                        <p class="text-gray-600 mb-4">{{ $requirement->description }}</p>
+                        
                         <div class="space-y-3">
                             <div class="flex gap-4">
                                 <span class="text-gray-500 w-32">Priority:</span>
@@ -35,10 +30,27 @@
                                     <h4 class="font-semibold mb-2">Guide Files</h4>
                                     <div class="space-y-2">
                                         @foreach($requirement->guides as $guide)
-                                            <a href="{{ $guide->getUrl() }}" target="_blank" class="flex items-center gap-2 text-blue-500 hover:text-blue-700">
-                                                <i class="fa-regular fa-file"></i>
-                                                <span>{{ $guide->file_name }}</span>
-                                            </a>
+                                            <div class="flex items-center justify-between gap-2">
+                                                <div class="flex items-center gap-2">
+                                                    <i class="fa-regular fa-file"></i>
+                                                    <span class="truncate max-w-xs">{{ $guide->file_name }}</span>
+                                                </div>
+                                                <div class="flex gap-2">
+                                                    <a href="{{ route('guide.download', ['media' => $guide->id]) }}" 
+                                                    class="text-blue-500 hover:text-blue-700 inline-flex items-center" 
+                                                    title="Download">
+                                                        <i class="fa-solid fa-download text-sm"></i>
+                                                    </a>
+                                                    @if($this->isPreviewable($guide->mime_type))
+                                                    <a href="{{ route('guide.preview', ['media' => $guide->id]) }}" 
+                                                    target="_blank"
+                                                    class="text-green-500 hover:text-green-700 inline-flex items-center" 
+                                                    title="View">
+                                                        <i class="fa-solid fa-eye text-sm"></i>
+                                                    </a>
+                                                    @endif
+                                                </div>
+                                            </div>
                                         @endforeach
                                     </div>
                                 </div>
@@ -62,17 +74,36 @@
                                 @enderror
                             </div>
                             
-                            <textarea 
-                                wire:model="submissionNotes"
-                                placeholder="Add any notes for the admin..."
-                                class="textarea textarea-bordered w-full"
-                                rows="3"
-                            ></textarea>
+                            <!-- Display selected file name -->
+                            @if($file)
+                                <div class="p-3 bg-blue-50 rounded-lg border border-blue-200">
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center gap-2">
+                                            <i class="fa-regular fa-file text-blue-500"></i>
+                                            <span class="text-sm font-medium truncate max-w-xs">
+                                                {{ $file->getClientOriginalName() }}
+                                            </span>
+                                        </div>
+                                        <button 
+                                            type="button" 
+                                            class="btn btn-xs btn-ghost text-error"
+                                            wire:click="$set('file', null)"
+                                            title="Remove file"
+                                        >
+                                            <i class="fa-solid fa-times"></i>
+                                        </button>
+                                    </div>
+                                    <div class="mt-1 text-xs text-gray-500">
+                                        Size: {{ round($file->getSize() / 1024, 1) }} KB
+                                    </div>
+                                </div>
+                            @endif
                             
                             <button 
                                 type="submit" 
                                 class="btn btn-primary w-full"
                                 wire:loading.attr="disabled"
+                                :disabled="!$file"
                             >
                                 <span wire:loading.remove>Submit Requirement</span>
                                 <span wire:loading>
@@ -88,7 +119,7 @@
                     <h4 class="font-semibold mb-4">Your Previous Submissions</h4>
                     
                     @if($requirement->userSubmissions->count() > 0)
-                        <div class="overflow-x-auto">
+                        <div class="overflow-x-auto max-h-96 overflow-y-auto"> <!-- Added max-h-96 and overflow-y-auto for scrollable content -->
                             <table class="table w-full">
                                 <thead>
                                     <tr>
@@ -101,10 +132,10 @@
                                 <tbody>
                                     @foreach($requirement->userSubmissions as $submission)
                                         <tr>
-                                            <td>
+                                            <td class="max-w-xs truncate">
                                                 <div class="flex items-center gap-2">
                                                     <i class="fa-regular fa-file"></i>
-                                                    <span>
+                                                    <span class="truncate">
                                                         @if($submission->submissionFile)
                                                             {{ $submission->submissionFile->file_name }}
                                                         @else
@@ -113,15 +144,15 @@
                                                     </span>
                                                 </div>
                                             </td>
-                                            <td>
-                                                <span class="badge" style="background-color: {{ \App\Models\SubmittedRequirement::getStatusColor($submission->status) }}; color: white">
+                                            <td class="whitespace-nowrap">
+                                                <span class="badge whitespace-nowrap px-2 py-1 text-xs" style="background-color: {{ \App\Models\SubmittedRequirement::getStatusColor($submission->status) }}; color: white">
                                                     {{ $submission->status_text }}
                                                 </span>
                                             </td>
-                                            <td>
+                                            <td class="whitespace-nowrap">
                                                 {{ $submission->submitted_at->format('M j, Y h:i A') }}
                                             </td>
-                                            <td>
+                                            <td class="whitespace-nowrap">
                                                 <div class="flex gap-2">
                                                     @if($submission->submissionFile)
                                                         @php
@@ -133,12 +164,12 @@
                                                             <a href="{{ route('file.preview', $submission->id) }}" 
                                                                target="_blank" 
                                                                class="btn btn-xs btn-ghost">
-                                                                <i class="fa-solid fa-eye"></i> Preview
+                                                                <i class="fa-solid fa-eye"></i>
                                                             </a>
                                                         @endif
                                                         <a href="{{ route('file.download', $submission->id) }}" 
                                                            class="btn btn-xs btn-ghost">
-                                                            <i class="fa-solid fa-download"></i> Download
+                                                            <i class="fa-solid fa-download"></i>
                                                         </a>
                                                         @if($submission->canBeDeletedBy(auth()->user()))
                                                             @if($confirmingDeletion == $submission->id)
