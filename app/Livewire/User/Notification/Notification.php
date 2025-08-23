@@ -8,17 +8,21 @@ use App\Models\Requirement;
 use App\Models\SubmittedRequirement;
 use Carbon\Carbon;
 use Illuminate\Support\Str;
+use Livewire\WithFileUploads;
+use Livewire\Features\SupportRedirects\Redirector;
 
 class Notification extends Component
 {
-    /** @var \Illuminate\Support\Collection */
+    use WithFileUploads;
+    
     public $notifications;
-
-    /** @var string|null */
     public $selectedNotification = null;
-
-    /** @var array|null */
     public $selectedNotificationData = null;
+    public $showSubmissionModal = false;
+    public $uploadedFiles = [];
+    public $submissionNotes = '';
+    public $currentRequirementId = null;
+    public $currentRequirementName = '';
 
     public function mount(): void
     {
@@ -70,10 +74,20 @@ class Notification extends Component
 
         $submissionId  = data_get($notification->data, 'submission_id');
 
+        // Store the current requirement ID for modal
+        $this->currentRequirementId = $requirementId;
+        
+        // Get requirement name for modal
+        if ($requirementId) {
+            $requirement = Requirement::find($requirementId);
+            $this->currentRequirementName = $requirement->name ?? 'Requirement';
+        }
+
         // ---------------- REQUIREMENT (details + FILES FROM REQUIREMENT) ----------------
         $requirement = null;
         if ($requirementId) {
-            $requirement = Requirement::find($requirementId);
+            // Eager load media relationship to get files
+            $requirement = Requirement::with('media')->find($requirementId);
         }
 
         if ($requirement) {
@@ -91,33 +105,36 @@ class Notification extends Component
                 'updated_at'  => $requirement->updated_at,
             ];
 
-            // ⬇️ Pull ADMIN/REQUIREMENT files (NOT submission_files)
-            // We’ll grab ALL media on Requirement so it works for either 'guides' or 'requirements' collection.
-            $reqMedia = $requirement->media; // requires InteractsWithMedia on Requirement
-            if ($reqMedia->isEmpty()) {
-                // Fallbacks if you want to be explicit about collections
-                $reqMedia = $requirement->getMedia('guides');
-                if ($reqMedia->isEmpty()) {
-                    $reqMedia = $requirement->getMedia('requirements');
-                }
+            // Get ALL media files associated with the requirement (from admin)
+            // This is the key part - fetching files from the requirement itself
+            $requirementFiles = $requirement->getMedia('requirements');
+            
+            // If no files in 'requirements' collection, try other collections
+            if ($requirementFiles->isEmpty()) {
+                $requirementFiles = $requirement->getMedia('guides');
+            }
+            if ($requirementFiles->isEmpty()) {
+                $requirementFiles = $requirement->getMedia('files');
+            }
+            if ($requirementFiles->isEmpty()) {
+                // Fallback to all media if specific collections are empty
+                $requirementFiles = $requirement->media;
             }
 
-            $data['files'] = $reqMedia->map(function ($m) {
-                $ext = Str::lower(pathinfo($m->file_name, PATHINFO_EXTENSION));
+            $data['files'] = $requirementFiles->map(function ($media) {
+                $ext = Str::lower(pathinfo($media->file_name, PATHINFO_EXTENSION));
                 return [
-                    'id'             => $m->id,
-                    'submission_id'  => null, // not from submission
-                    'name'           => $m->file_name,
+                    'id'             => $media->id,
+                    'name'           => $media->file_name,
                     'extension'      => $ext,
-                    'size'           => $this->formatFileSize($m->size),
+                    'size'           => $this->formatFileSize($media->size),
                     'is_previewable' => $this->isPreviewable($ext),
-                    'status'         => null, // requirement files have no review status
+                    'uploaded_at'    => $media->created_at,
                 ];
             })->toArray();
         }
 
-        // ---------------- USER'S OWN SUBMISSION (info only; no files pulled) -----------
-        // We still show "Submission Information" if present, but do NOT show submission_files.
+        // ---------------- ADMIN REVIEW DETAILS ----------------
         $submission = null;
 
         if ($submissionId) {
@@ -136,24 +153,102 @@ class Notification extends Component
         }
 
         if ($submission) {
-            $data['submitter'] = [
-                'id'    => Auth::id(),
-                'name'  => Auth::user()->name,
-                'email' => Auth::user()->email,
-            ];
-
-            $data['submission'] = [
-                'id'           => $submission->id,
+            $data['admin_review'] = [
                 'status'       => $submission->status,
                 'status_label' => $this->statusLabel($submission->status),
                 'admin_notes'  => $submission->admin_notes,
-                'submitted_at' => $submission->submitted_at ?? $submission->created_at,
                 'reviewed_at'  => $submission->reviewed_at,
+                'submitted_at' => $submission->submitted_at ?? $submission->created_at,
             ];
+
+            // Get admin review files if any (these are different from requirement files)
+            $adminReviewFiles = $submission->getMedia('admin_review_files');
+            if ($adminReviewFiles->isNotEmpty()) {
+                $data['admin_files'] = $adminReviewFiles->map(function ($media) {
+                    $ext = Str::lower(pathinfo($media->file_name, PATHINFO_EXTENSION));
+                    return [
+                        'id'             => $media->id,
+                        'name'           => $media->file_name,
+                        'extension'      => $ext,
+                        'size'           => $this->formatFileSize($media->size),
+                        'is_previewable' => $this->isPreviewable($ext),
+                    ];
+                })->toArray();
+            }
         }
 
         $this->selectedNotificationData = $data;
-        $this->loadNotifications(); // refresh dots
+        $this->loadNotifications();
+    }
+    
+    public function openSubmissionModal(): void
+    {
+        $this->showSubmissionModal = true;
+    }
+    
+    public function closeSubmissionModal(): void
+    {
+        $this->showSubmissionModal = false;
+        $this->uploadedFiles = [];
+        $this->submissionNotes = '';
+    }
+    
+    public function submitRequirement(): Redirector
+{
+    $this->validate([
+        'uploadedFiles.*' => 'file|max:10240',
+        'submissionNotes' => 'nullable|string|max:1000',
+    ]);
+    
+    if (!$this->currentRequirementId) {
+        session()->flash('error', 'No requirement selected for submission.');
+        return redirect()->to('/user/requirements');
+    }
+    
+    $submission = SubmittedRequirement::create([
+        'user_id' => Auth::id(),
+        'requirement_id' => $this->currentRequirementId,
+        'admin_notes' => $this->submissionNotes,
+        'status' => 'under_review',
+        'submitted_at' => now(),
+    ]);
+    
+    foreach ($this->uploadedFiles as $file) {
+        try {
+            // Use the Livewire uploaded file directly with media library
+            $submission->addMedia($file->getRealPath())
+                ->usingName($file->getClientOriginalName())
+                ->usingFileName($file->getClientOriginalName())
+                ->toMediaCollection('submission_files');
+        } catch (\Exception $e) {
+            // Fallback: store temporarily and then add
+            $tempPath = $file->store('temp', 'local');
+            $fullPath = storage_path('app/' . $tempPath);
+            
+            $submission->addMedia($fullPath)
+                ->usingName($file->getClientOriginalName())
+                ->usingFileName($file->getClientOriginalName())
+                ->toMediaCollection('submission_files');
+            
+            // Clean up the temporary file after media is processed
+            if (file_exists($fullPath)) {
+                unlink($fullPath);
+            }
+        }
+    }
+    
+    $this->closeSubmissionModal();
+    
+    // Redirect to requirements page with success message
+    return redirect()->to('/user/requirements')->with('success', 'Requirement submitted successfully!');
+}
+    
+    public function removeUploadedFile($index)
+    {
+        if (isset($this->uploadedFiles[$index])) {
+            unset($this->uploadedFiles[$index]);
+            $this->uploadedFiles = array_values($this->uploadedFiles);
+        }
     }
 
     protected function statusLabel(?string $status): string
@@ -173,7 +268,6 @@ class Notification extends Component
         return in_array($ext, ['jpg','jpeg','png','gif','pdf'], true);
     }
 
-    /** Intl-free file size formatter */
     protected function formatFileSize($bytes): string
     {
         if ($bytes >= 1073741824) return number_format($bytes / 1073741824, 2) . ' GB';
