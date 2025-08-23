@@ -10,44 +10,33 @@
             <div class="space-y-4">
                 <div>
                     <h3 class="text-sm font-medium text-gray-500">Requirement Name</h3>
-                    <p class="mt-1 text-gray-900 font-medium">{{ $submittedRequirement->requirement->name }}</p>
+                    <p class="mt-1 text-gray-900 font-medium">{{ $requirement->name }}</p>
                 </div>
                 
-                @if($submittedRequirement->requirement->description)
+                @if($requirement->description)
                 <div>
                     <h3 class="text-sm font-medium text-gray-500">Description</h3>
-                    <p class="mt-1 text-gray-700 whitespace-pre-line">{{ $submittedRequirement->requirement->description }}</p>
+                    <p class="mt-1 text-gray-700 whitespace-pre-line">{{ $requirement->description }}</p>
                 </div>
                 @endif
                 
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <h3 class="text-sm font-medium text-gray-500">Due Date</h3>
-                        <p class="mt-1 text-gray-700">{{ $submittedRequirement->requirement->due->format('M j, Y \a\t g:i A') }}</p>
+                        <p class="mt-1 text-gray-700">{{ $requirement->due->format('M j, Y \a\t g:i A') }}</p>
                     </div>
                     <div>
                         <h3 class="text-sm font-medium text-gray-500">Created By</h3>
-                        <p class="mt-1 text-gray-700">{{ $submittedRequirement->requirement->creator->full_name }}</p>
+                        <p class="mt-1 text-gray-700">{{ $requirement->creator->full_name }}</p>
                     </div>
                 </div>
-                
-                @if($submittedRequirement->reviewed_at)
-                <div class="pt-2 border-t border-gray-100">
-                    <p class="mt-2 text-xs text-gray-500">
-                        Reviewed on {{ $submittedRequirement->reviewed_at->format('M j, Y') }}
-                        @if($submittedRequirement->reviewer)
-                        by {{ $submittedRequirement->reviewer->full_name }}
-                        @endif
-                    </p>
-                </div>
-                @endif
             </div>
         </div>
 
         <!-- Submitted Files Card -->
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex-1">
             <div class="flex items-center justify-between mb-4">
-                <h2 class="text-xl font-semibold text-gray-800">Submitted Files</h2>
+                <h2 class="text-xl font-semibold text-gray-800">All Submissions</h2>
                 <span class="text-sm text-gray-500">{{ count($allFiles) }} file(s)</span>
             </div>
             
@@ -56,7 +45,7 @@
                     @foreach($allFiles as $file)
                         <button wire:click="selectFile('{{ $file['id'] }}')"
                         class="w-full text-left p-3 rounded-lg transition-all duration-200
-                                {{ $selectedFile['id'] === $file['id'] ? 
+                                {{ $selectedFile && $selectedFile['id'] === $file['id'] ? 
                                     'bg-blue-50 border border-blue-200 shadow-sm' : 
                                     'border border-gray-100 hover:border-gray-200 hover:bg-gray-50' }}">
                             <div class="flex items-center gap-3">
@@ -71,7 +60,10 @@
                                     <div class="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-gray-500 mt-1">
                                         <span class="inline-flex items-center gap-1">
                                             <i class="fa-solid fa-user text-gray-400"></i>
-                                            {{ $submittedRequirement->user->full_name }}
+                                            {{ $file['user']->full_name }}
+                                            @if($file['user']->college)
+                                                ({{ $file['user']->college->name }})
+                                            @endif
                                         </span>
                                         <span class="inline-flex items-center gap-1">
                                             <i class="fa-solid fa-calendar text-gray-400"></i>
@@ -111,19 +103,21 @@
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex-1 flex flex-col h-full">
             <div class="flex items-center justify-between mb-4">
                 <h2 class="text-xl font-semibold text-gray-800">File Preview</h2>
-                <div class="flex items-center gap-3">
-                    <select wire:model="selectedStatus" class="border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm">
-                        @foreach($statusOptions as $value => $label)
-                            <option value="{{ $value }}" {{ $selectedFile['status'] === $value ? 'selected' : '' }}>
-                                {{ $label }}
-                            </option>
-                        @endforeach
-                    </select>
-                    <button wire:click="updateStatus" 
-                            class="inline-flex items-center px-3 py-1.5 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                        Update Status
-                    </button>
-                </div>
+                @if($selectedFile)
+                    <div class="flex items-center gap-3">
+                        <select wire:model="selectedStatus" class="border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm">
+                            @foreach($statusOptions as $value => $label)
+                                <option value="{{ $value }}" {{ $selectedFile['status'] === $value ? 'selected' : '' }}>
+                                    {{ $label }}
+                                </option>
+                            @endforeach
+                        </select>
+                        <button wire:click="updateStatus" 
+                                class="inline-flex items-center px-3 py-1.5 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                            Update Status
+                        </button>
+                    </div>
+                @endif
             </div>
             
             <div class="flex-1 rounded-lg bg-gray-50 border border-gray-200 flex flex-col items-center justify-center overflow-hidden">

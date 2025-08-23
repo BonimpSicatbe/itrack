@@ -114,6 +114,11 @@ class User extends Authenticatable implements HasMedia
 
     // ==================== ACCESSORS ====================
 
+    public function getNameAttribute(): string
+    {
+        return $this->full_name; // or any other logic you prefer
+    }
+    
     public function getFullNameAttribute(): string
     {
         $nameParts = [
@@ -128,16 +133,16 @@ class User extends Authenticatable implements HasMedia
 
     public function getFormattedNameAttribute(): string
     {
-        $name = $this->lastname;
-
-        if ($this->extensionname) {
-            $name .= ', ' . $this->extensionname;
-        }
-
-        $name .= ', ' . $this->firstname;
+        $name = $this->firstname;
 
         if ($this->middlename) {
-            $name .= ' ' . $this->middlename[0] . '.';
+            $name .= ' ' . substr($this->middlename, 0, 1) . '.';
+        }
+
+        $name .= ' ' . $this->lastname;
+
+        if ($this->extensionname) {
+            $name .= ' ' . $this->extensionname;
         }
 
         return $name;
@@ -151,14 +156,6 @@ class User extends Authenticatable implements HasMedia
     public function getCollegeNameAttribute(): string
     {
         return $this->college->name ?? 'N/A';
-    }
-
-    /**
-     * Get the name attribute for forms (returns full name)
-     */
-    public function getNameAttribute(): string
-    {
-        return $this->getFullNameAttribute();
     }
 
     // ==================== SCOPES ====================

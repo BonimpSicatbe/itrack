@@ -6,107 +6,125 @@
             {{-- header / actions --}}
             <div class="flex flex-col sm:flex-row flex-wrap items-center justify-between gap-4 w-full">
                 <h2 class="text-lg font-semibold w-full sm:w-auto sm:text-left">Requirements List</h2>
-                <div class="flex flex-row gap-4 w-full sm:w-auto justify-center sm:justify-end">
-                    <input type="text" wire:model.live="search" id="search" class="input input-bordered input-sm w-full sm:w-sm"
-                        placeholder="Search requirements...">
-                    
-                    {{-- Completion Filter Buttons --}}
-                    <div class="join">
-                        <button 
-                            class="btn btn-sm join-item {{ $completionFilter === 'all' ? 'btn-active' : '' }}"
-                            wire:click="$set('completionFilter', 'all')">
-                            All
-                        </button>
-                        <button 
-                            class="btn btn-sm join-item {{ $completionFilter === 'pending' ? 'btn-active' : '' }}"
-                            wire:click="$set('completionFilter', 'pending')">
-                            Pending
-                        </button>
-                        <button 
-                            class="btn btn-sm join-item {{ $completionFilter === 'completed' ? 'btn-active' : '' }}"
-                            wire:click="$set('completionFilter', 'completed')">
-                            Completed
-                        </button>
+                
+                @if($activeSemester)
+                    <div class="flex flex-row gap-4 w-full sm:w-auto justify-center sm:justify-end">
+                        <input type="text" wire:model.live="search" id="search" class="input input-bordered input-sm w-full sm:w-sm"
+                            placeholder="Search requirements...">
+                        
+                        {{-- Completion Filter Buttons --}}
+                        <div class="join">
+                            <button 
+                                class="btn btn-sm join-item {{ $completionFilter === 'all' ? 'btn-active' : '' }}"
+                                wire:click="$set('completionFilter', 'all')">
+                                All
+                            </button>
+                            <button 
+                                class="btn btn-sm join-item {{ $completionFilter === 'pending' ? 'btn-active' : '' }}"
+                                wire:click="$set('completionFilter', 'pending')">
+                                Pending
+                            </button>
+                            <button 
+                                class="btn btn-sm join-item {{ $completionFilter === 'completed' ? 'btn-active' : '' }}"
+                                wire:click="$set('completionFilter', 'completed')">
+                                Completed
+                            </button>
+                        </div>
+                        
+                        <label for="createRequirement" class="btn btn-sm btn-success flex items-center gap-2">
+                            <i class="fa-solid fa-plus"></i>
+                            <span class="hidden sm:inline">Create Requirement</span>
+                        </label>
                     </div>
-                    
-                    <label for="createRequirement" class="btn btn-sm btn-success flex items-center gap-2">
-                        <i class="fa-solid fa-plus"></i>
-                        <span class="hidden sm:inline">Create Requirement</span>
-                    </label>
-                </div>
+                @endif
             </div>
 
             {{-- body / table --}}
-            <div class="max-h-[500px] overflow-x-auto">
-                <table class="table table-auto table-striped table-pin-rows table-sm min-w-[600px]">
-                    <thead>
-                        <tr class="bg-base-300 font-bold uppercase">
-                            <th>Name</th>
-                            <th class="cursor-pointer hover:bg-gray-100" wire:click="setSort('due')">
-                                <div class="flex items-center">
-                                    Due Date
-                                    <div class="ml-1">
-                                        @if($sortBy === 'due')
-                                            <i class="fas fa-sort-{{ $sortDir === 'asc' ? 'up' : 'down' }}"></i>
-                                        @else
-                                            <i class="fas fa-sort opacity-30"></i>
-                                        @endif
+            @if($activeSemester)
+                <div class="max-h-[500px] overflow-x-auto">
+                    <table class="table table-auto table-striped table-pin-rows table-sm min-w-[600px]">
+                        <thead>
+                            <tr class="bg-base-300 font-bold uppercase">
+                                <th>Name</th>
+                                <th class="cursor-pointer hover:bg-gray-100" wire:click="setSort('due')">
+                                    <div class="flex items-center">
+                                        Due Date
+                                        <div class="ml-1">
+                                            @if($sortBy === 'due')
+                                                <i class="fas fa-sort-{{ $sortDir === 'asc' ? 'up' : 'down' }}"></i>
+                                            @else
+                                                <i class="fas fa-sort opacity-30"></i>
+                                            @endif
+                                        </div>
                                     </div>
-                                </div>
-                            </th>
-                            <th>Assigned To</th>
-                            <th>Users Assigned</th>
-                            <th>Status</th>
-                            <th class="cursor-pointer hover:bg-gray-100" wire:click="setSort('created_at')">
-                                <div class="flex items-center">
-                                    Created At
-                                    <div class="ml-1">
-                                        @if($sortBy === 'created_at')
-                                            <i class="fas fa-sort-{{ $sortDir === 'asc' ? 'up' : 'down' }}"></i>
-                                        @else
-                                            <i class="fas fa-sort opacity-30"></i>
-                                        @endif
+                                </th>
+                                <th>Assigned To</th>
+                                <th>Users Assigned</th>
+                                <th>Status</th>
+                                <th class="cursor-pointer hover:bg-gray-100" wire:click="setSort('created_at')">
+                                    <div class="flex items-center">
+                                        Created At
+                                        <div class="ml-1">
+                                            @if($sortBy === 'created_at')
+                                                <i class="fas fa-sort-{{ $sortDir === 'asc' ? 'up' : 'down' }}"></i>
+                                            @else
+                                                <i class="fas fa-sort opacity-30"></i>
+                                            @endif
+                                        </div>
                                     </div>
-                                </div>
-                            </th>
-                            <th class="text-center">Action</th>
-                        </tr>
-                    </thead>
+                                </th>
+                                <th class="text-center">Action</th>
+                            </tr>
+                        </thead>
 
-                    <tbody>
-                        @forelse ($requirements as $requirement)
-                            <tr>
-                                <td class="truncate max-w-[250px]">{{ $requirement->name }}</td>
-                                <td class="truncate">{{ \Carbon\Carbon::parse($requirement->due)->format('m/d/Y h:i a') }}</td>
-                                <td class="truncate">{{ $requirement->assigned_to }}</td>
-                                <td class="truncate">{{ $requirement->assigned_users_count }}</td>
-                                <td class="truncate">{{ $requirement->status }}</td>
-                                <td class="truncate">
-                                    {{ \Carbon\Carbon::parse($requirement->created_at)->format('m/d/Y h:i a') }}
-                                </td>
-                                <td class="flex justify-center gap-2">
-                                    <a href="{{ route('admin.requirements.show', ['requirement' => $requirement]) }}"
-                                        class="btn btn-xs btn-ghost btn-success">
-                                        <i class="fa-solid fa-eye"></i>
-                                    </a>
-                                    <button wire:click="confirmDelete({{ $requirement->id }})" 
-                                            class="btn btn-xs btn-ghost btn-error">
-                                        <i class="fa-solid fa-trash"></i>
-                                    </button>
-                                    <a href="{{ route('admin.requirements.edit', ['requirement' => $requirement]) }}"
-                                        class="btn btn-xs btn-ghost btn-info">
-                                        <i class="fa-solid fa-edit"></i>
-                                    </a>
-                                </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="7" class="text-center">No requirements found.</td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
+                        <tbody>
+                            @forelse ($requirements as $requirement)
+                                <tr>
+                                    <td class="truncate max-w-[250px]">{{ $requirement->name }}</td>
+                                    <td class="truncate">{{ \Carbon\Carbon::parse($requirement->due)->format('m/d/Y h:i a') }}</td>
+                                    <td class="truncate">{{ $requirement->assigned_to }}</td>
+                                    <td class="truncate">{{ $requirement->assigned_users_count }}</td>
+                                    <td class="truncate">{{ $requirement->status }}</td>
+                                    <td class="truncate">
+                                        {{ \Carbon\Carbon::parse($requirement->created_at)->format('m/d/Y h:i a') }}
+                                    </td>
+                                    <td class="flex justify-center gap-2">
+                                        <a href="{{ route('admin.requirements.show', ['requirement' => $requirement]) }}"
+                                            class="btn btn-xs btn-ghost btn-success tooltip"
+                                            data-tip="View Details">
+                                            <i class="fa-solid fa-eye"></i>
+                                        </a>
+                                        <a href="{{ route('admin.submitted-requirements.requirement', ['requirement_id' => $requirement->id]) }}"
+                                            class="btn btn-xs btn-ghost btn-primary tooltip"
+                                            data-tip="View Submissions">
+                                            <i class="fa-solid fa-file-lines"></i>
+                                        </a>
+                                        <a href="{{ route('admin.requirements.edit', ['requirement' => $requirement]) }}"
+                                            class="btn btn-xs btn-ghost btn-info tooltip"
+                                            data-tip="Edit">
+                                            <i class="fa-solid fa-edit"></i>
+                                        </a>
+                                        <button wire:click="confirmDelete({{ $requirement->id }})" 
+                                                class="btn btn-xs btn-ghost btn-error tooltip"
+                                                data-tip="Delete">
+                                            <i class="fa-solid fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="7" class="text-center">No requirements found.</td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            @else
+                <div class="alert alert-warning">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                    <span>No active semester. Please activate a semester to view and manage requirements.</span>
+                </div>
+            @endif
         </div>
     </div>
 
@@ -137,5 +155,19 @@
     @endif
 
     {{-- Include the create modal component --}}
-    @livewire('admin.requirement-create-modal')
+    @if($activeSemester)
+        @livewire('admin.requirement-create-modal')
+    @endif
+
+    @push('scripts')
+    <script>
+        // Initialize tooltips
+        document.addEventListener('DOMContentLoaded', function() {
+            const tooltipElements = document.querySelectorAll('.tooltip');
+            tooltipElements.forEach(el => {
+                new bootstrap.Tooltip(el);
+            });
+        });
+    </script>
+    @endpush
 </div>

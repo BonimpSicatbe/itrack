@@ -3,13 +3,17 @@
 namespace App\Livewire\Admin\SubmittedRequirements;
 
 use Livewire\Component;
-use Spatie\MediaLibrary\MediaCollections\Models\Media;
-use Illuminate\Support\Facades\Storage;
+use App\Models\Requirement;
 use App\Models\SubmittedRequirement;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
+use Livewire\WithPagination;
 
-class SubmittedRequirementsShow extends Component
+class RequirementView extends Component
 {
-    public $submittedRequirement;
+    use WithPagination;
+
+    public $requirement_id;
+    public $requirement;
     public $allSubmissions = [];
     public $allFiles = [];
     public $selectedFile = null;
@@ -22,9 +26,10 @@ class SubmittedRequirementsShow extends Component
     public $adminNotes = '';
     public $initialFileId;
 
-    public function mount($submittedRequirement, $initialFileId = null)
+    public function mount($requirement_id, $initialFileId = null)
     {
-        $this->submittedRequirement = $submittedRequirement;
+        $this->requirement_id = $requirement_id;
+        $this->requirement = Requirement::findOrFail($requirement_id);
         $this->initialFileId = $initialFileId;
         $this->loadFiles();
     }
@@ -42,10 +47,9 @@ class SubmittedRequirementsShow extends Component
 
     protected function loadFiles()
     {
-        // Load all submissions for this requirement by this user
-        $this->allSubmissions = SubmittedRequirement::where('requirement_id', $this->submittedRequirement->requirement_id)
-            ->where('user_id', $this->submittedRequirement->user_id)
-            ->with(['media', 'reviewer'])
+        // Load all submissions for this requirement
+        $this->allSubmissions = SubmittedRequirement::where('requirement_id', $this->requirement_id)
+            ->with(['media', 'reviewer', 'user.college', 'user.department'])
             ->latest()
             ->get();
 
@@ -70,6 +74,8 @@ class SubmittedRequirementsShow extends Component
                     'admin_notes' => $submission->admin_notes,
                     'reviewed_at' => $submission->reviewed_at,
                     'reviewer' => $submission->reviewer,
+                    'user' => $submission->user,
+                    'submitted_at' => $submission->submitted_at,
                 ];
             });
         })->toArray();
@@ -137,7 +143,6 @@ class SubmittedRequirementsShow extends Component
             // Reselect the current file
             $this->selectFile($this->selectedFile['id']);
             
-            // Dispatch notification event
             $this->dispatch('showNotification', 
                 type: 'success', 
                 content: 'Status updated successfully'
@@ -159,7 +164,7 @@ class SubmittedRequirementsShow extends Component
 
     public function render()
     {
-        return view('livewire.admin.submitted-requirements.submitted-requirements-show', [
+        return view('livewire.admin.submitted-requirements.requirement-view', [
             'statusOptions' => SubmittedRequirement::statuses()
         ]);
     }

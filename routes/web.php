@@ -77,9 +77,13 @@ Route::middleware(['auth', 'role:admin|super-admin'])
             ->name('submitted-requirements.index');
         Route::get('/submitted-requirements/{submitted_requirement}', [SubmittedRequirementController::class, 'show'])
             ->name('submitted-requirements.show');
+        Route::get('/submitted-requirements/requirement/{requirement_id}', function ($requirement_id) {
+            return view('admin.pages.submitted-requirements.requirement', ['requirement_id' => $requirement_id]);
+        })->name('submitted-requirements.requirement');
 
         // Users
         Route::resource('users', UserController::class);
+        
 
         // Semesters
         Route::prefix('semesters')->group(function () {

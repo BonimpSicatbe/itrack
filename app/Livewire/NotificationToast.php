@@ -10,7 +10,7 @@ class NotificationToast extends Component
     public $show = false;
     public $type = '';
     public $content = '';
-    public $duration = 5000; // Default duration in milliseconds (5 seconds)
+    public $duration = 10000;
 
     protected $listeners = [
         'showNotification' => 'show',

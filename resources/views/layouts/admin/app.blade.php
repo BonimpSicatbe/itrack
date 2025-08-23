@@ -28,7 +28,7 @@
         </div>
 
         <!-- Main Content -->
-        <div class="pt-18 px-6 container mx-auto min-h-screen">
+        <div class="pt-22 px-6 container mx-auto min-h-screen">
             {{ $slot }}
         </div>
 

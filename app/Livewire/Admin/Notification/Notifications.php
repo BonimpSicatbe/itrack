@@ -40,6 +40,7 @@ class Notifications extends Component
             // Mark as read when selected
             if ($notification->unread()) {
                 $notification->markAsRead();
+                $this->dispatch('notificationRead'); // Dispatch event for navbar update
             }
 
             // Prepare basic notification data
@@ -217,6 +218,9 @@ class Notifications extends Component
         $this->loadNotifications();
         $this->selectedNotification = null;
         $this->selectedNotificationData = null;
+        
+        // Dispatch event for navbar update
+        $this->dispatch('notificationsMarkedRead');
     }
 
     public function render()

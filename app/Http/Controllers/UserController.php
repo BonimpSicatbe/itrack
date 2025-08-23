@@ -41,17 +41,25 @@ class UserController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(User $user)
+    public function show(Request $request, User $user)
     {
-        return view('admin.pages.user.show', ['user' => $user]);
+        // If it's an AJAX request, return JSON with the rendered HTML
+        if ($request->ajax()) {
+            $html = view('livewire.admin.users.user-show', compact('user'))->render();
+            return response()->json(['html' => $html]);
+        }
+        
+        // For regular requests, return the full view
+        return view('admin.pages.users.show', compact('user'));
     }
+    
 
     /**
      * Show the form for editing the specified resource.
      */
     public function edit(User $user)
     {
-        //
+        return view('admin.pages.users.users_edit', compact('user'));
     }
 
     /**

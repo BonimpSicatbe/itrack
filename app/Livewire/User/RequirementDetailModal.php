@@ -11,6 +11,7 @@ use App\Models\SubmittedRequirement;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str; // Add this import
 
 class RequirementDetailModal extends Component
 {
@@ -23,6 +24,14 @@ class RequirementDetailModal extends Component
     public $confirmingDeletion = null;
 
     protected $listeners = ['showRequirementDetail' => 'loadRequirement'];
+
+    // Add this method for preview checking
+    public function isPreviewable($mimeType)
+    {
+        return Str::startsWith($mimeType, 'image/') || 
+               Str::startsWith($mimeType, 'application/pdf') ||
+               Str::startsWith($mimeType, 'text/');
+    }
 
     public function loadRequirement($requirementId)
     {
@@ -83,18 +92,20 @@ class RequirementDetailModal extends Component
                 );
             }
 
-            $this->dispatch('notify', 
+            // Show success notification
+            $this->dispatch('showNotification', 
                 type: 'success',
-                message: 'Requirement submitted successfully!'
+                content: 'Requirement submitted successfully!'
             );
 
             $this->reset(['file', 'submissionNotes']);
             $this->requirement->refresh();
 
         } catch (\Exception $e) {
-            $this->dispatch('notify',
+            // Show error notification
+            $this->dispatch('showNotification',
                 type: 'error',
-                message: 'Submission failed: ' . $e->getMessage()
+                content: 'Submission failed: ' . $e->getMessage()
             );
         } finally {
             $this->uploading = false;
@@ -124,19 +135,19 @@ class RequirementDetailModal extends Component
                 $submission->delete();
             });
 
-            $this->dispatch(
-                'notify',
+            // Show success notification
+            $this->dispatch('showNotification',
                 type: 'success',
-                message: 'Submission deleted successfully!'
+                content: 'Submission deleted successfully!'
             );
 
             $this->requirement->refresh();
             $this->confirmingDeletion = null;
         } catch (\Exception $e) {
-            $this->dispatch(
-                'notify',
+            // Show error notification
+            $this->dispatch('showNotification',
                 type: 'error',
-                message: 'Deletion failed: ' . $e->getMessage()
+                content: 'Deletion failed: ' . $e->getMessage()
             );
         }
     }

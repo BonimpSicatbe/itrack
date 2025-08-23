@@ -37,8 +37,12 @@ class SubmittedRequirementController extends Controller
      */
     public function show(SubmittedRequirement $submittedRequirement)
     {
+        // Get the first media file if exists
+        $firstFile = $submittedRequirement->media->first();
+        
         return view('admin.pages.submitted-requirements.submitted-requirement_show', [
             'submittedRequirement' => $submittedRequirement,
+            'initialFileId' => $firstFile ? $firstFile->id : null,
         ]);
     }
 

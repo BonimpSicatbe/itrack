@@ -13,6 +13,14 @@ class SemesterIndex extends Component
     public $is_active = false;
     public $editMode = false;
     public $semesterId;
+    
+    // Modal control properties
+    public $showEditModal = false;
+    public $showDeleteModal = false;
+    public $showArchiveModal = false;
+    public $isDeleting = false;
+    public $isSaving = false;
+    public $semesterToArchive;
 
     protected $rules = [
         'name' => 'required|string|max:255',
@@ -30,6 +38,8 @@ class SemesterIndex extends Component
     {
         $this->validate();
 
+        $this->isSaving = true;
+
         $data = [
             'name' => $this->name,
             'start_date' => $this->start_date,
@@ -41,17 +51,36 @@ class SemesterIndex extends Component
             $data['is_active'] = true;
         }
 
-        if ($this->editMode) {
-            $semester = Semester::findOrFail($this->semesterId);
-            $semester->update($data);
-            session()->flash('success', 'Semester updated successfully');
-        } else {
-            Semester::create($data);
-            session()->flash('success', 'Semester created successfully');
-        }
+        try {
+            if ($this->editMode) {
+                $semester = Semester::findOrFail($this->semesterId);
+                $semester->update($data);
+                $this->dispatch('showNotification', 
+                    type: 'success', 
+                    content: 'Semester updated successfully',
+                    duration: 3000
+                );
+            } else {
+                Semester::create($data);
+                $this->dispatch('showNotification', 
+                    type: 'success', 
+                    content: 'Semester created successfully',
+                    duration: 3000
+                );
+            }
 
-        $this->resetForm();
+            $this->closeModal();
+        } catch (\Exception $e) {
+            $this->dispatch('showNotification', 
+                type: 'error', 
+                content: 'Error saving semester: ' . $e->getMessage(),
+                duration: 5000
+            );
+        } finally {
+            $this->isSaving = false;
+        }
     }
+
 
     public function edit($id)
     {
@@ -62,24 +91,91 @@ class SemesterIndex extends Component
         $this->end_date = $semester->end_date;
         $this->is_active = $semester->is_active;
         $this->editMode = true;
+        $this->showEditModal = true;
     }
 
-    public function delete($id)
+    public function confirmDelete($id)
     {
-        Semester::findOrFail($id)->delete();
-        session()->flash('success', 'Semester deleted successfully');
+        $this->semesterId = $id;
+        $this->showDeleteModal = true;
+    }
+
+    public function confirmArchive($id)
+    {
+        $this->semesterToArchive = $id;
+        $this->showArchiveModal = true;
+    }
+
+    public function deleteSemester()
+    {
+        $this->isDeleting = true;
+        
+        try {
+            Semester::findOrFail($this->semesterId)->delete();
+            $this->dispatch('showNotification', 
+                type: 'success', 
+                content: 'Semester deleted successfully',
+                duration: 3000
+            );
+            $this->closeModal();
+        } catch (\Exception $e) {
+            $this->dispatch('showNotification', 
+                type: 'error', 
+                content: 'Failed to delete semester: ' . $e->getMessage(),
+                duration: 5000
+            );
+        } finally {
+            $this->isDeleting = false;
+        }
+    }
+
+    public function archiveSemester()
+    {
+        try {
+            $semester = Semester::findOrFail($this->semesterToArchive);
+            $semester->update(['is_active' => false]);
+            
+            $this->dispatch('showNotification', 
+                type: 'success', 
+                content: 'Semester archived successfully',
+                duration: 3000
+            );
+            $this->closeModal();
+        } catch (\Exception $e) {
+            $this->dispatch('showNotification', 
+                type: 'error', 
+                content: 'Failed to archive semester: ' . $e->getMessage(),
+                duration: 5000
+            );
+        }
     }
 
     public function setActive($id)
     {
-        Semester::query()->update(['is_active' => false]);
-        $semester = Semester::findOrFail($id);
-        $semester->update(['is_active' => true]);
-        session()->flash('success', 'Semester activated successfully');
+        try {
+            Semester::query()->update(['is_active' => false]);
+            $semester = Semester::findOrFail($id);
+            $semester->update(['is_active' => true]);
+            $this->dispatch('showNotification', 
+                type: 'success', 
+                content: 'Semester activated successfully',
+                duration: 3000
+            );
+        } catch (\Exception $e) {
+            $this->dispatch('showNotification', 
+                type: 'error', 
+                content: 'Failed to activate semester: ' . $e->getMessage(),
+                duration: 5000
+            );
+        }
     }
 
-    private function resetForm()
+    public function closeModal()
     {
-        $this->reset(['name', 'start_date', 'end_date', 'is_active', 'editMode', 'semesterId']);
+        $this->reset([
+            'name', 'start_date', 'end_date', 'is_active', 
+            'editMode', 'semesterId', 'showEditModal', 
+            'showDeleteModal', 'showArchiveModal', 'semesterToArchive'
+        ]);
     }
 }

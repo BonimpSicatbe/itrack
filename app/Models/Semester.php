@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Log;
 
 class Semester extends Model
 {
@@ -27,6 +28,20 @@ class Semester extends Model
         return self::where('is_active', true)->first();
     }
 
+    public static function getArchivedSemester()
+    {
+        return self::where('is_active', false)
+            ->orderBy('end_date', 'desc')
+            ->first();
+    }
+
+    public static function getAllArchivedSemesters()
+    {
+        return self::where('is_active', false)
+            ->orderBy('end_date', 'desc')
+            ->get();
+    }
+
     public static function getPreviousSemester()
     {
         return self::where('is_active', false)
@@ -37,6 +52,11 @@ class Semester extends Model
     public function scopeActive($query)
     {
         return $query->where('is_active', true);
+    }
+
+    public function scopeArchived($query)
+    {
+        return $query->where('is_active', false);
     }
 
     public function scopeDuring($query, $date)
@@ -54,5 +74,22 @@ class Semester extends Model
         $this->update(['is_active' => true]);
         
         return $this;
+    }
+
+    // NEW: Check if semester should be auto-archived
+    public function shouldAutoArchive()
+    {
+        return $this->is_active && now()->greaterThan($this->end_date);
+    }
+
+    // NEW: Auto-archive this semester
+    public function autoArchive()
+    {
+        if ($this->shouldAutoArchive()) {
+            $this->update(['is_active' => false]);
+            Log::info("Semester auto-archived: {$this->name}");
+            return true;
+        }
+        return false;
     }
 }

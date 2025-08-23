@@ -173,26 +173,37 @@ class SubmittedRequirement extends Model implements HasMedia
         return $this->addMedia($file)->toMediaCollection('submission_files');
     }
 
+    // FIXED: Updated getFileUrl method
     public function getFileUrl()
     {
-        if (!$this->submissionFile) {
+        $media = $this->getFirstMedia('submission_files');
+        
+        if (!$media) {
             return null;
         }
-        return Storage::disk('public')->url($this->submissionFile->getPathRelativeToRoot());
+        
+        // Use the media's getUrl() method which handles the URL generation correctly
+        return $media->getUrl();
     }
 
+    // FIXED: Updated getFilePath method
     public function getFilePath()
     {
-        if (!$this->submissionFile) {
+        $media = $this->getFirstMedia('submission_files');
+        
+        if (!$media) {
             return null;
         }
-        return Storage::disk('public')->path($this->submissionFile->getPathRelativeToRoot());
+        
+        // Use the media's getPath() method
+        return $media->getPath();
     }
 
     public function deleteFile()
     {
-        if ($this->submissionFile) {
-            $this->submissionFile->delete();
+        $media = $this->getFirstMedia('submission_files');
+        if ($media) {
+            $media->delete();
             return true;
         }
         return false;
