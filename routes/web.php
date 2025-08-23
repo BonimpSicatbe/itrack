@@ -119,6 +119,13 @@ Route::middleware('auth')->group(function () {
         return response()->json(['success' => true]);
     })->name('notifications.markAsRead');
 });
+Route::get('/user/files/{media}/preview', [UserController::class, 'preview'])
+        ->whereNumber('media')
+        ->name('user.file.preview');
+
+    Route::get('/user/files/{media}/download', [UserController::class, 'download'])
+        ->whereNumber('media')
+        ->name('user.file.download');
 
 // Profile routes
 Route::middleware('auth')->group(function () {

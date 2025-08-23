@@ -1,7 +1,7 @@
 <x-user.app-layout>
-    <div class="flex flex-col gap-4 h-fit w-full">
+    <div class="grow flex flex-col gap-4 bg-white p-4 rounded-lg shadow-lg h-[calc(100vh-8rem)]">
+        <div class="text-lg font-black uppercase">Notifications</div>
 
-        {{-- progresss --}}
         @livewire('user.notification.notification')
     </div>
 </x-user.app-layout>
