@@ -1,5 +1,5 @@
 <div class="flex flex-col gap-4 h-full">
-    {{-- Header --}}
+    {{-- Header with Semester Info --}}
     <div class="flex items-center justify-between">
         <div class="text-lg uppercase font-bold">File Manager</div>
         <div class="flex items-center gap-4 text-sm text-gray-600">
@@ -14,6 +14,86 @@
         </div>
     </div>
 
+    {{-- Active Semester Display --}}
+    @if($activeSemester)
+        <div class="bg-gradient-to-r from-primary/10 to-secondary/10 border border-primary/20 rounded-lg p-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="flex-shrink-0">
+                        <i class="fa-solid fa-calendar-alt text-2xl text-primary"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-lg text-gray-800">{{ $activeSemester->name }}</h3>
+                        <div class="flex items-center gap-4 text-sm text-gray-600 mt-1">
+                            <span class="flex items-center gap-1">
+                                <i class="fa-solid fa-play text-green-500 text-xs"></i>
+                                {{ $activeSemester->start_date->format('M d, Y') }}
+                            </span>
+                            <span class="flex items-center gap-1">
+                                <i class="fa-solid fa-stop text-red-500 text-xs"></i>
+                                {{ $activeSemester->end_date->format('M d, Y') }}
+                            </span>
+                            <span class="badge badge-primary badge-sm">
+                                <i class="fa-solid fa-check mr-1"></i>
+                                Active
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                
+                {{-- Semester Progress Bar --}}
+                <div class="hidden md:block w-48">
+                    @php
+                        $totalDays = $activeSemester->start_date->diffInDays($activeSemester->end_date);
+                        $passedDays = $activeSemester->start_date->diffInDays(now());
+                        $progress = min(100, max(0, ($passedDays / $totalDays) * 100));
+                        $remainingDays = max(0, now()->diffInDays($activeSemester->end_date, false));
+                    @endphp
+                    
+                    <div class="text-right mb-2">
+                        <span class="text-xs text-gray-500">
+                            {{ $remainingDays }} days remaining
+                        </span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2">
+                        <div class="bg-gradient-to-r from-primary to-secondary h-2 rounded-full transition-all duration-500" 
+                             style="width: {{ $progress }}%"></div>
+                    </div>
+                    <div class="text-right mt-1">
+                        <span class="text-xs text-gray-500">
+                            {{ round($progress) }}% completed
+                        </span>
+                    </div>
+                </div>
+            </div>
+            
+            {{-- Semester Message/Warning --}}
+            @if($semesterMessage)
+                <div class="mt-3 p-2 bg-white/50 border border-warning/30 rounded-lg">
+                    <div class="flex items-center gap-2 text-sm">
+                        <i class="fa-solid fa-info-circle text-warning"></i>
+                        <span class="text-gray-700">{{ $semesterMessage }}</span>
+                    </div>
+                </div>
+            @endif
+        </div>
+    @else
+        {{-- No Active Semester Warning --}}
+        <div class="bg-gradient-to-r from-error/10 to-warning/10 border border-error/20 rounded-lg p-4">
+            <div class="flex items-center gap-3">
+                <div class="flex-shrink-0">
+                    <i class="fa-solid fa-exclamation-triangle text-2xl text-error"></i>
+                </div>
+                <div>
+                    <h3 class="font-bold text-lg text-error">No Active Semester</h3>
+                    <p class="text-sm text-gray-600 mt-1">
+                        {{ $semesterMessage ?? 'There is no active semester currently set. Please contact your administrator.' }}
+                    </p>
+                </div>
+            </div>
+        </div>
+    @endif
+
     {{-- Breadcrumbs --}}
     <div class="breadcrumbs text-sm">
         <ul>
@@ -26,7 +106,11 @@
             <li>
                 <span class="flex items-center gap-2">
                     <i class="fa-solid fa-file"></i>
-                    Submitted Files
+                    @if($activeSemester)
+                        {{ $activeSemester->name }} Files
+                    @else
+                        Submitted Files
+                    @endif
                 </span>
             </li>
         </ul>
@@ -92,6 +176,26 @@
                                 </div>
                             </div>
 
+                            {{-- Semester Information --}}
+                            @if($activeSemester)
+                                <div>
+                                    <h4 class="font-semibold text-sm mb-2 flex items-center gap-2">
+                                        <i class="fa-solid fa-calendar-alt text-purple-500 text-xs"></i>
+                                        Semester Information
+                                    </h4>
+                                    <div class="space-y-2 text-sm">
+                                        <div class="flex justify-between items-start gap-2">
+                                            <span class="text-gray-600">Semester:</span>
+                                            <span class="font-medium text-right">{{ $activeSemester->name }}</span>
+                                        </div>
+                                        <div class="flex justify-between gap-2">
+                                            <span class="text-gray-600">Period:</span>
+                                            <span class="font-medium">{{ $activeSemester->start_date->format('M Y') }} - {{ $activeSemester->end_date->format('M Y') }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            @endif
+
                             {{-- Requirement Information --}}
                             <div>
                                 <h4 class="font-semibold text-sm mb-2 flex items-center gap-2">
@@ -105,8 +209,8 @@
                                     </div>
                                     <div class="flex justify-between items-center gap-2">
                                         <span class="text-gray-600">Status:</span>
-                                        <span class="badge {{ $selectedFile->status_badge }} badge-sm">
-                                            {{ $selectedFile->status_text }}
+                                        <span class="badge {{ $selectedFile->getStatusBadgeClass() }} badge-sm">
+                                            {{ $selectedFile->getStatusText() }}
                                         </span>
                                     </div>
                                     @if($selectedFile->requirement->description ?? null)
@@ -140,8 +244,8 @@
                                     Actions
                                 </h4>
                                 <div class="space-y-2">
-                                    {{-- Download File Button - Always show if file exists --}}
-                                    @if($selectedFile->submissionFile)
+                                    {{-- Download File Button --}}
+                                    @if($this->canDownloadFile($selectedFile))
                                         <button 
                                             wire:click="downloadFile({{ $selectedFile->id }})"
                                             class="btn btn-primary btn-sm w-full"
@@ -181,4 +285,19 @@
             @endif
         </div>
     </div>
+    
+    {{-- Flash Messages --}}
+    @if (session()->has('success'))
+        <div class="alert alert-success">
+            <i class="fa-solid fa-check-circle"></i>
+            <span>{{ session('success') }}</span>
+        </div>
+    @endif
+
+    @if (session()->has('error'))
+        <div class="alert alert-error">
+            <i class="fa-solid fa-exclamation-circle"></i>
+            <span>{{ session('error') }}</span>
+        </div>
+    @endif
 </div>

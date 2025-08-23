@@ -4,6 +4,7 @@ namespace App\Livewire\User\FileManager;
 
 use Livewire\Component;
 use App\Models\SubmittedRequirement;
+use App\Models\Semester;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -14,7 +15,37 @@ class FileManager extends Component
     public $showFileDetails = false;
     public $selectedFile = null;
     
-    protected $listeners = ['refreshFiles' => '$refresh', 'fileSelected' => 'handleFileSelected'];
+    // Add semester properties
+    public $activeSemester = null;
+    public $semesterMessage = null;
+    
+    protected $listeners = [
+        'refreshFiles' => '$refresh', 
+        'fileSelected' => 'handleFileSelected'
+    ];
+
+    public function mount()
+    {
+        $this->loadActiveSemester();
+    }
+
+    public function loadActiveSemester()
+    {
+        $this->activeSemester = Semester::getActiveSemester();
+        
+        if (!$this->activeSemester) {
+            $this->semesterMessage = 'No active semester found. Please contact administrator.';
+        } else {
+            // Check if semester is near end (within 30 days)
+            $daysUntilEnd = now()->diffInDays($this->activeSemester->end_date, false);
+            
+            if ($daysUntilEnd < 0) {
+                $this->semesterMessage = 'Current semester has ended. Submissions may be restricted.';
+            } elseif ($daysUntilEnd <= 30) {
+                $this->semesterMessage = "Semester ends in {$daysUntilEnd} days ({$this->activeSemester->end_date->format('M d, Y')}).";
+            }
+        }
+    }
 
     public function updatedSearch()
     {

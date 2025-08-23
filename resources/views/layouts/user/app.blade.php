@@ -15,16 +15,25 @@
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
         <script src="https://kit.fontawesome.com/a10f8182c0.js" crossorigin="anonymous"></script>
+        
+        <!-- Alpine.js Core and Persist Plugin -->
+        <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+        <script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/persist@3.x.x/dist/cdn.min.js"></script>
 
         @livewireStyles
     </head>
 
-    <body wire:poll.500ms class="flex font-sans antialiased w-screen h-screen bg-gray-100">
-        <div class="flex flex-row gap-4 space-y-6 p-6 w-full h-full">
-            <x-user.navigation />
+    <body wire:poll.500ms 
+          class="flex font-sans antialiased w-screen h-screen bg-gray-100">
+        
+        <div class="flex flex-row gap-3 p-6 w-full h-full">
+            <!-- Sidebar Navigation -->
+            <div class="flex-shrink-0">
+                <x-user.navigation />
+            </div>
 
             <!-- Page Content -->
-            <div class="w-full h-full overflow-auto">
+            <div class="flex-1 h-full overflow-auto transition-all duration-300 ease-in-out">
                 {{ $slot }}
             </div>
         </div>
@@ -32,6 +41,37 @@
         <x-session-alert-messages />
 
         @livewireScripts
+        
+        <!-- Custom Scripts for Enhanced Functionality -->
+        <script>
+            document.addEventListener('alpine:init', () => {
+                // Handle responsive behavior
+                function handleResize() {
+                    if (window.innerWidth < 768) {
+                        // On mobile, auto-collapse sidebar
+                        const sidebarElement = document.querySelector('[x-data*="collapsed"]');
+                        if (sidebarElement && sidebarElement._x_dataStack) {
+                            sidebarElement._x_dataStack[0].collapsed = true;
+                        }
+                    }
+                }
+                
+                window.addEventListener('resize', handleResize);
+                handleResize(); // Check on load
+                
+                // Keyboard shortcut to toggle sidebar (Ctrl+B or Cmd+B)
+                document.addEventListener('keydown', function(e) {
+                    if ((e.ctrlKey || e.metaKey) && e.key === 'b') {
+                        e.preventDefault();
+                        const sidebarElement = document.querySelector('[x-data*="collapsed"]');
+                        if (sidebarElement && sidebarElement._x_dataStack) {
+                            const data = sidebarElement._x_dataStack[0];
+                            data.collapsed = !data.collapsed;
+                        }
+                    }
+                });
+            });
+        </script>
     </body>
 
 </html>
