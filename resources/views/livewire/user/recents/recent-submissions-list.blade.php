@@ -18,7 +18,7 @@
                     type="text" 
                     wire:model.live.debounce.300ms="search"
                     placeholder="Search by name or file..."
-                    class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm transition duration-150"
+                    class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-sm transition duration-150"
                     aria-label="Search submissions">
             </div>
         </div>
@@ -32,7 +32,7 @@
                 <label class="block text-sm font-medium text-gray-700 mb-1">Filter by Status</label>
                 <select 
                     wire:model.live="statusFilter"
-                    class="mt-1 block w-full pl-3 pr-10 py-2 text-base border border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md shadow-sm"
+                    class="mt-1 block w-full pl-3 pr-10 py-2 text-base border border-gray-300 focus:outline-none focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm rounded-md shadow-sm"
                 >
                     <option value="">All Statuses</option>
                     <option value="under_review">Under Review</option>
@@ -51,14 +51,14 @@
                 @foreach($recentSubmissions as $submission)
                     <li 
                         wire:click="showRequirementDetail({{ $submission->id }})"
-                        class="px-6 py-4 hover:bg-gray-50 transition-colors duration-150 cursor-pointer"
+                        class="px-6 py-4 hover:bg-emerald-50 transition-colors duration-150 cursor-pointer"
                     >
                         <div class="flex items-center justify-between">
                             <div class="flex items-center space-x-4">
                                 <div class="flex-shrink-0">
                                     @if($submission->submissionFile)
-                                        <div class="h-10 w-10 rounded-md bg-indigo-100 flex items-center justify-center">
-                                            <svg class="h-6 w-6 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <div class="h-10 w-10 rounded-md bg-emerald-100 flex items-center justify-center">
+                                            <svg class="h-6 w-6 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                             </svg>
                                         </div>
