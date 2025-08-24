@@ -4,7 +4,7 @@
             <div class="relative w-full sm:w-96">
                 <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
                 <input type="text" wire:model.live="search" id="search" 
-                    class="input input-sm input-bordered pl-9 w-full" 
+                    class="input input-sm input-bordered pl-9 w-full rounded-xl" 
                     placeholder="Search requirements by name...">
             </div>
             
@@ -12,18 +12,18 @@
             
             <!-- Redirect Button -->
             <a href="{{ route('admin.requirements.index') }}" 
-               class="btn bg-success btn-sm flex items-center gap-2">
-                <i class="fa-solid fa-arrow-right"></i>
+               class="btn bg-[#1C7C54] hover:bg-[#1B512D] text-xs text-white rounded-full flex items-center gap-2">
                 Go to Requirements Page
+                <i class="fa-solid fa-arrow-right"></i>
             </a>
         </div>
 
         {{-- content --}}
-        <div class="max-h-[500px] overflow-x-auto rounded-lg border border-gray-200 shadow-sm">
+        <div class="max-h-[500px] overflow-x-auto rounded-xl border border-gray-200 shadow-sm">
             <table class="table table-auto table-striped table-pin-rows table-sm min-w-[800px] rounded-lg"> 
                 <thead>
                     <tr class="bg-base-300 font-bold uppercase">
-                        <th class="cursor-pointer hover:bg-gray-100 p-4" wire:click="sortBy('name')" style="background-color: #6a994e; color: white;">
+                        <th class="cursor-pointer hover:bg-blue-50 p-4" wire:click="sortBy('name')" style="background-color: #1C7C54; color: white;">
                             <div class="flex items-center pt-2 pb-2">
                                 Name
                                 <div class="ml-1">
@@ -35,8 +35,8 @@
                                 </div>
                             </div>
                         </th>
-                        <th class="p-4" style="background-color: #6a994e; color: white;">Description</th>
-                        <th class="cursor-pointer hover:bg-gray-100 p-4" wire:click="sortBy('due')" style="background-color: #6a994e; color: white;">
+                        <th class="p-4" style="background-color: #1C7C54; color: white;">Description</th>
+                        <th class="cursor-pointer hover:bg-blue-50 p-4" wire:click="sortBy('due')" style="background-color: #1C7C54; color: white;">
                             <div class="flex items-center">
                                 Due Date
                                 <div class="ml-1">
@@ -48,7 +48,7 @@
                                 </div>
                             </div>
                         </th>
-                        <th class="cursor-pointer hover:bg-gray-100 p-4" wire:click="sortBy('assigned_to')" style="background-color: #6a994e; color: white;">
+                        <th class="cursor-pointer hover:bg-blue-50 p-4" wire:click="sortBy('assigned_to')" style="background-color: #1C7C54; color: white;">
                             <div class="flex items-center">
                                 Assigned To
                                 <div class="ml-1">
@@ -60,7 +60,7 @@
                                 </div>
                             </div>
                         </th>
-                        <th class="cursor-pointer hover:bg-gray-100 p-4" wire:click="sortBy('created_at')" style="background-color: #6a994e; color: white;">
+                        <th class="cursor-pointer hover:bg-blue-50 p-4" wire:click="sortBy('created_at')" style="background-color: #1C7C54; color: white;">
                             <div class="flex items-center">
                                 Created At
                                 <div class="ml-1">
@@ -72,7 +72,7 @@
                                 </div>
                             </div>
                         </th>
-                        <th class="cursor-pointer hover:bg-gray-100 p-4" wire:click="sortBy('created_by')" style="background-color: #6a994e; color: white;">
+                        <th class="cursor-pointer hover:bg-blue-50 p-4" wire:click="sortBy('created_by')" style="background-color: #1C7C54; color: white;">
                             <div class="flex items-center">
                                 Created By
                                 <div class="ml-1">
@@ -89,7 +89,8 @@
 
                 <tbody>
                     @forelse ($requirements as $requirement)
-                        <tr class="hover:bg-blue-50 transition-colors duration-150">
+                        <tr class="hover:bg-blue-50 transition-colors duration-150 cursor-pointer" 
+                            wire:click="showRequirement({{ $requirement->id }})">
                             <td class="font-medium">{{ $requirement->name }}</td>
                             <td class="whitespace-normal max-w-[300px]">
                                 {{ Str::limit($requirement->description, 50) }}
@@ -127,7 +128,7 @@
             {{ $requirements->links() }}
         </div>
     @else
-        <div class="alert alert-warning shadow-lg">
+        <div class="alert bg-[#DEF4C6] text-[#1B512D] rounded-lg shadow-lg">
             <i class="fa-solid fa-triangle-exclamation text-lg"></i>
             <div>
                 <h3 class="font-bold">No Active Semester</h3>

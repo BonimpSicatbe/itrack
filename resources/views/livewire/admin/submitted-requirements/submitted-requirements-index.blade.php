@@ -1,4 +1,4 @@
-<div class="flex flex-col gap-4">
+<div class="flex flex-col gap-4 w-[92%] mx-auto">
     <div class="flex flex-col gap-4 bg-white p-6 w-full rounded-lg shadow-md">
         <!-- Header and View Toggle -->
         <div class="flex justify-between items-center">

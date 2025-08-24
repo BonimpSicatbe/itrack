@@ -45,6 +45,110 @@
     height: 60px;
 }
 
+/* Custom color classes */
+    .bg-1C7C54 { background-color: #1C7C54; }
+    .bg-73E2A7 { background-color: #73E2A7; }
+    .bg-DEF4C6 { background-color: #DEF4C6; }
+    .bg-1B512D { background-color: #1B512D; }
+    .bg-B1CF5F { background-color: #B1CF5F; }
+    
+    .text-1C7C54 { color: #1C7C54; }
+    .text-73E2A7 { color: #73E2A7; }
+    .text-DEF4C6 { color: #DEF4C6; }
+    .text-1B512D { color: #1B512D; }
+    .text-B1CF5F { color: #B1CF5F; }
+    
+    .border-1C7C54 { border-color: #1C7C54; }
+    .border-73E2A7 { border-color: #73E2A7; }
+    .border-DEF4C6 { border-color: #DEF4C6; }
+    .border-1B512D { border-color: #1B512D; }
+    .border-B1CF5F { border-color: #B1CF5F; }
+    
+    .focus\:ring-1B512D:focus { --tw-ring-color: #1B512D; }
+    .focus\:border-1B512D:focus { border-color: #1B512D; }
+    
+    /* Pagination styling */
+    .pagination {
+        display: flex;
+        list-style: none;
+        padding: 0;
+        gap: 0.5rem;
+        justify-content: center;
+    }
+    
+    .pagination li a {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 2.25rem;
+        min-width: 2.25rem;
+        padding: 0 0.75rem;
+        border-radius: 9999px;
+        border: 1px solid #DEF4C6;
+        background-color: white;
+        color: #1C7C54;
+        font-weight: 500;
+        transition: all 0.2s;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+    
+    .pagination li a:hover {
+        background-color: #DEF4C6;
+        border-color: #1C7C54;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    .pagination li.active a {
+        background: linear-gradient(to right, #1C7C54, #1B512D);
+        color: white;
+        border-color: #1C7C54;
+        box-shadow: 0 2px 5px rgba(28, 124, 84, 0.3);
+    }
+    
+    .pagination li.disabled a {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+    }
+    
+    /* Table styling */
+    table {
+        border-collapse: separate;
+        border-spacing: 0;
+        width: 100%;
+    }
+    
+    thead tr th:first-child {
+        border-top-left-radius: 12px;
+    }
+    
+    thead tr th:last-child {
+        border-top-right-radius: 12px;
+    }
+    
+    tbody tr:last-child td:first-child {
+        border-bottom-left-radius: 12px;
+    }
+    
+    tbody tr:last-child td:last-child {
+        border-bottom-right-radius: 12px;
+    }
+    
+    /* Custom utility classes */
+    .first\:pl-6:first-child {
+        padding-left: 1.5rem;
+    }
+    
+    .last\:pr-6:last-child {
+        padding-right: 1.5rem;
+    }
+
+
+
+
+    
 /* File Manager Styles */
 .file-manager .overflow-y-auto::-webkit-scrollbar {
     width: 6px;

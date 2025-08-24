@@ -3,12 +3,11 @@
      x-data="{ 
         unreadCount: {{ $unreadCount }}, 
         mobileMenuOpen: false,
-        showUserMenu: false,
-        activeTooltip: null
+        showUserMenu: false
      }" 
      @notification-read.window="if (unreadCount > 0) unreadCount--"
      @notifications-marked-read.window="unreadCount = 0"
-     @click.away="showUserMenu = false; activeTooltip = null"
+     @click.away="showUserMenu = false"
      @keydown.escape="showUserMenu = false; mobileMenuOpen = false">
 
     <div class="px-4 sm:px-6">
@@ -27,25 +26,12 @@
                             <a href="{{ route($navlink['route']) }}"
                             class="px-4 py-2 rounded-lg text-xs font-medium transition-all duration-200 flex items-center space-x-2 relative
                                     {{ request()->routeIs($navlink['route']) 
-                                        ? 'bg-blue-50 text-blue-700 shadow-sm' 
+                                        ? 'bg-green-50 text-green-700 shadow-sm' 
                                         : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900' }}"
-                            @mouseenter="activeTooltip = '{{ $navlink['route'] }}'"
-                            @mouseleave="activeTooltip = null"
                             :aria-current="isActive ? 'page' : 'false'">
                                 <i class="fa-solid fa-{{ $navlink['icon'] }} text-sm" aria-hidden="true"></i>
                                 <span>{{ $navlink['label'] }}</span>
                             </a>
-                            
-                            {{-- Tooltip --}}
-                            <div x-show="activeTooltip === '{{ $navlink['route'] }}'"
-                                x-transition:enter="transition ease-out duration-200"
-                                x-transition:enter-start="opacity-0 transform scale-95"
-                                x-transition:enter-end="opacity-100 transform scale-100"
-                                class="absolute z-50 px-3 py-2 text-sm text-white bg-gray-900 rounded-lg shadow-lg -bottom-12 left-1/2 transform -translate-x-1/2 whitespace-nowrap"
-                                role="tooltip">
-                                {{ $navlink['description'] }}
-                                <div class="absolute -top-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-gray-900 rotate-45"></div>
-                            </div>
                         </div>
                     @endforeach
                 </div>
@@ -159,7 +145,7 @@
                     <a href="{{ route($navlink['route']) }}"
                        class="flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors duration-200 relative
                               {{ request()->routeIs($navlink['route']) 
-                                 ? 'bg-blue-50 text-blue-700' 
+                                 ? 'bg-green-50 text-green-700' 
                                  : 'text-gray-700 hover:bg-gray-50' }}"
                        @click="mobileMenuOpen = false"
                        :aria-current="{{ request()->routeIs($navlink['route']) ? "'page'" : 'false' }}">
@@ -167,7 +153,7 @@
                         <span class="flex-1">{{ $navlink['label'] }}</span>
                         
                         @if (request()->routeIs($navlink['route']))
-                            <i class="fa-solid fa-chevron-right text-blue-600 text-sm" aria-hidden="true"></i>
+                            <i class="fa-solid fa-chevron-right text-green-600 text-sm" aria-hidden="true"></i>
                         @endif
                     </a>
                 @endforeach
@@ -202,7 +188,7 @@
      class="fixed inset-0 bg-white/80 backdrop-blur-sm z-[60] flex items-center justify-center"
      x-cloak>
     <div class="flex items-center space-x-3">
-        <div class="animate-spin rounded-full h-6 w-6 border-2 border-blue-600 border-t-transparent"></div>
+        <div class="animate-spin rounded-full h-6 w-6 border-2 border-green-600 border-t-transparent"></div>
         <span class="text-gray-700 font-medium">Loading...</span>
     </div>
 </div>
