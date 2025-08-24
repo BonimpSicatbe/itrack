@@ -13,7 +13,7 @@
                 <div class="card-body p-0">
                     <div class="collapse collapse-arrow">
                         <input type="checkbox" name="dashboard-accordion" checked /> 
-                        <div class="collapse-title font-semibold text-lg px-6 py-4 hover:bg-base-200">
+                        <div class="collapse-title font-semibold text-xl px-6 py-4 hover:bg-base-200">
                             Requirements
                         </div>
                         <div class="collapse-content px-6 pb-4">

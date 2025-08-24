@@ -44,6 +44,7 @@ class Overview extends Component
                     'title' => 'Pending Requirements',
                     'count' => Requirement::where('semester_id', $currentSemester->id)
                         ->where('status', 'pending')
+                        ->where('due', '>=', now()) // Exclude due/overdue requirements
                         ->count(),
                     'icon' => 'fa-clock',
                     'color' => 'warning',
@@ -51,7 +52,8 @@ class Overview extends Component
                 [
                     'title' => 'Completed',
                     'count' => Requirement::where('semester_id', $currentSemester->id)
-                        ->where('status', 'completed')
+                        ->where('due', '<', now()) // Requirements that are due (overdue)
+                        ->where('status', '!=', 'completed') // Exclude already completed ones if needed
                         ->count(),
                     'icon' => 'fa-circle-check',
                     'color' => 'success',

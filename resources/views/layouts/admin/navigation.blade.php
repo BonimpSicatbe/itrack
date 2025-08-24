@@ -1,5 +1,5 @@
 {{-- Enhanced Navigation with improved UX/UI --}}
-<nav class="shadow-sm sticky top-0 z-50" 
+<nav class="shadow-sm sticky top-0 z-50 bg-white" 
      x-data="{ 
         unreadCount: {{ $unreadCount }}, 
         mobileMenuOpen: false,
@@ -8,7 +8,8 @@
      }" 
      @notification-read.window="if (unreadCount > 0) unreadCount--"
      @notifications-marked-read.window="unreadCount = 0"
-     @click.away="showUserMenu = false">
+     @click.away="showUserMenu = false; activeTooltip = null"
+     @keydown.escape="showUserMenu = false; mobileMenuOpen = false">
 
     <div class="px-4 sm:px-6">
         {{-- Desktop Navigation --}}
@@ -16,22 +17,22 @@
             {{-- Logo/Brand --}}
             <div class="flex items-center space-x-4">
                 <div class="flex items-center space-x-3 pr-6">
-                    <img src="{{ asset('images/logo-1.png') }}" alt="iTrack Logo" class="w-10 h-10 object-contain">
-                    <span class="font-bold text-gray-900 text-xl">iTrack</span>
+                    <img src="{{ asset('images/logo-title.png') }}" alt="iTrack Logo" class="w-auto h-8 object-contain" loading="lazy">
                 </div>
 
                 {{-- Main Navigation --}}
                 <div class="flex items-center space-x-1">
                     @foreach ($navLinks['main'] as $navlink)
-                        <div class="relative group">
+                        <div class="relative group" x-data="{ isActive: {{ request()->routeIs($navlink['route']) ? 'true' : 'false' }} }">
                             <a href="{{ route($navlink['route']) }}"
                             class="px-4 py-2 rounded-lg text-xs font-medium transition-all duration-200 flex items-center space-x-2 relative
                                     {{ request()->routeIs($navlink['route']) 
                                         ? 'bg-blue-50 text-blue-700 shadow-sm' 
                                         : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900' }}"
                             @mouseenter="activeTooltip = '{{ $navlink['route'] }}'"
-                            @mouseleave="activeTooltip = null">
-                                <i class="fa-solid fa-{{ $navlink['icon'] }} text-sm"></i>
+                            @mouseleave="activeTooltip = null"
+                            :aria-current="isActive ? 'page' : 'false'">
+                                <i class="fa-solid fa-{{ $navlink['icon'] }} text-sm" aria-hidden="true"></i>
                                 <span>{{ $navlink['label'] }}</span>
                             </a>
                             
@@ -40,7 +41,8 @@
                                 x-transition:enter="transition ease-out duration-200"
                                 x-transition:enter-start="opacity-0 transform scale-95"
                                 x-transition:enter-end="opacity-100 transform scale-100"
-                                class="absolute z-50 px-3 py-2 text-sm text-white bg-gray-900 rounded-lg shadow-lg -bottom-12 left-1/2 transform -translate-x-1/2 whitespace-nowrap">
+                                class="absolute z-50 px-3 py-2 text-sm text-white bg-gray-900 rounded-lg shadow-lg -bottom-12 left-1/2 transform -translate-x-1/2 whitespace-nowrap"
+                                role="tooltip">
                                 {{ $navlink['description'] }}
                                 <div class="absolute -top-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-gray-900 rotate-45"></div>
                             </div>
@@ -53,25 +55,29 @@
             <div class="flex items-center space-x-5">
                 {{-- Notifications --}}
                 <a href="{{ route('admin.notifications') }}" 
-                   class="relative p-2 rounded-lg hover:bg-gray-50 transition-colors duration-200">
-                    <i class="fa-solid fa-bell text-gray-600 hover:text-gray-900 transition-colors"></i>
+                   class="relative p-2 rounded-lg hover:bg-gray-50 transition-colors duration-200"
+                   aria-label="Notifications">
+                    <i class="fa-solid fa-bell text-gray-600 hover:text-gray-900 transition-colors" aria-hidden="true"></i>
                     <span x-show="unreadCount > 0" 
                           x-transition
                           class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium shadow-sm"
-                          x-text="unreadCount > 99 ? '99+' : unreadCount">
+                          x-text="unreadCount > 99 ? '99+' : unreadCount"
+                          aria-live="polite">
                     </span>
                 </a>
 
                 {{-- User Menu --}}
-                <div class="relative" x-data>
+                <div class="relative">
                     <button @click="showUserMenu = !showUserMenu"
-                            class="flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors duration-200">
+                            class="flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors duration-200"
+                            :aria-expanded="showUserMenu"
+                            aria-label="User menu">
                         <div class="w-8 h-8 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center">
-                            <i class="fa-solid fa-user text-white text-xs"></i>
+                            <i class="fa-solid fa-user text-white text-xs" aria-hidden="true"></i>
                         </div>
                         <span class="text-gray-700 font-medium">{{ Auth::user()->name ?? 'Admin' }}</span>
                         <i class="fa-solid fa-chevron-down text-gray-400 text-xs transition-transform duration-200"
-                           :class="{ 'rotate-180': showUserMenu }"></i>
+                           :class="{ 'rotate-180': showUserMenu }" aria-hidden="true"></i>
                     </button>
 
                     {{-- Dropdown Menu --}}
@@ -82,11 +88,13 @@
                          x-transition:leave="transition ease-in duration-150"
                          x-transition:leave-start="opacity-100 transform scale-100"
                          x-transition:leave-end="opacity-0 transform scale-95"
-                         class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
+                         class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50"
+                         @keydown.tab="if ($event.shiftKey) showUserMenu = false"
+                         x-cloak>
                          
                         <a href="{{ route('profile.edit') }}"
                            class="flex items-center space-x-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors duration-200">
-                            <i class="fa-solid fa-user-circle text-gray-400"></i>
+                            <i class="fa-solid fa-user-circle text-gray-400" aria-hidden="true"></i>
                             <span>Your Profile</span>
                         </a>
                         
@@ -94,7 +102,7 @@
                             @csrf
                             <button type="submit" 
                                     class="w-full flex items-center space-x-3 px-3 py-2 text-sm text-gray-700 hover:bg-red-50 hover:text-red-700 rounded-md transition-colors duration-200 group">
-                                <i class="fa-solid fa-right-from-bracket text-gray-400 group-hover:text-red-500"></i>
+                                <i class="fa-solid fa-right-from-bracket text-gray-400 group-hover:text-red-500" aria-hidden="true"></i>
                                 <span>Logout</span>
                             </button>
                         </form>
@@ -108,18 +116,20 @@
             {{-- Mobile Header --}}
             <div class="flex items-center justify-between py-4">
                 <div class="flex items-center space-x-3">
-                    <img src="{{ asset('images/logo.png') }}" alt="iTrack Logo" class="w-8 h-8 object-contain">
+                    <img src="{{ asset('images/logo.png') }}" alt="iTrack Logo" class="w-8 h-8 object-contain" loading="lazy">
                     <span class="font-bold text-gray-900">iTrack</span>
                 </div>
 
                 <div class="flex items-center space-x-4">
                     {{-- Mobile Notification Button --}}
                     <a href="{{ route('admin.notifications') }}" 
-                       class="relative p-2 rounded-lg hover:bg-gray-50 transition-colors">
-                        <i class="fa-solid fa-bell text-gray-600"></i>
+                       class="relative p-2 rounded-lg hover:bg-gray-50 transition-colors"
+                       aria-label="Notifications">
+                        <i class="fa-solid fa-bell text-gray-600" aria-hidden="true"></i>
                         <span x-show="unreadCount > 0" 
                               class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium"
-                              x-text="unreadCount > 99 ? '99+' : unreadCount">
+                              x-text="unreadCount > 99 ? '99+' : unreadCount"
+                              aria-live="polite">
                         </span>
                     </a>
 
@@ -128,9 +138,11 @@
 
                     {{-- Mobile Menu Button --}}
                     <button @click="mobileMenuOpen = !mobileMenuOpen"
-                            class="p-2 rounded-lg hover:bg-gray-50 transition-colors">
+                            class="p-2 rounded-lg hover:bg-gray-50 transition-colors"
+                            :aria-expanded="mobileMenuOpen"
+                            aria-label="Toggle menu">
                         <i class="fa-solid text-gray-600 transition-transform duration-200"
-                           :class="mobileMenuOpen ? 'fa-xmark' : 'fa-bars'"></i>
+                           :class="mobileMenuOpen ? 'fa-xmark' : 'fa-bars'" aria-hidden="true"></i>
                     </button>
                 </div>
             </div>
@@ -140,7 +152,8 @@
                  x-transition:enter="transition ease-out duration-200"
                  x-transition:enter-start="opacity-0 transform -translate-y-2"
                  x-transition:enter-end="opacity-100 transform translate-y-0"
-                 class="border-t border-gray-200 py-4 space-y-2">
+                 class="border-t border-gray-200 py-4 space-y-2"
+                 x-cloak>
                 
                 @foreach ($navLinks['main'] as $navlink)
                     <a href="{{ route($navlink['route']) }}"
@@ -148,12 +161,13 @@
                               {{ request()->routeIs($navlink['route']) 
                                  ? 'bg-blue-50 text-blue-700' 
                                  : 'text-gray-700 hover:bg-gray-50' }}"
-                       @click="mobileMenuOpen = false">
-                        <i class="fa-solid fa-{{ $navlink['icon'] }} text-sm w-5"></i>
+                       @click="mobileMenuOpen = false"
+                       :aria-current="{{ request()->routeIs($navlink['route']) ? "'page'" : 'false' }}">
+                        <i class="fa-solid fa-{{ $navlink['icon'] }} text-sm w-5" aria-hidden="true"></i>
                         <span class="flex-1">{{ $navlink['label'] }}</span>
                         
                         @if (request()->routeIs($navlink['route']))
-                            <i class="fa-solid fa-chevron-right text-blue-600 text-sm"></i>
+                            <i class="fa-solid fa-chevron-right text-blue-600 text-sm" aria-hidden="true"></i>
                         @endif
                     </a>
                 @endforeach
@@ -162,7 +176,7 @@
                 <a href="{{ route('profile.edit') }}"
                    class="flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors duration-200 text-gray-700 hover:bg-gray-50"
                    @click="mobileMenuOpen = false">
-                    <i class="fa-solid fa-user-circle text-sm w-5"></i>
+                    <i class="fa-solid fa-user-circle text-sm w-5" aria-hidden="true"></i>
                     <span class="flex-1">Your Profile</span>
                 </a>
 
@@ -171,7 +185,7 @@
                     @csrf
                     <button type="submit" 
                             class="w-full flex items-center space-x-3 px-4 py-3 text-red-700 hover:bg-red-50 rounded-lg transition-colors duration-200">
-                        <i class="fa-solid fa-right-from-bracket text-sm w-5"></i>
+                        <i class="fa-solid fa-right-from-bracket text-sm w-5" aria-hidden="true"></i>
                         <span>Logout</span>
                     </button>
                 </form>
@@ -182,9 +196,11 @@
 
 {{-- Loading overlay for better perceived performance --}}
 <div x-data="{ loading: false }" 
-     @beforeunload.window="loading = true"
+     @navigation:loading.window="loading = true"
+     @navigation:loaded.window="loading = false"
      x-show="loading"
-     class="fixed inset-0 bg-white/80 backdrop-blur-sm z-[60] flex items-center justify-center">
+     class="fixed inset-0 bg-white/80 backdrop-blur-sm z-[60] flex items-center justify-center"
+     x-cloak>
     <div class="flex items-center space-x-3">
         <div class="animate-spin rounded-full h-6 w-6 border-2 border-blue-600 border-t-transparent"></div>
         <span class="text-gray-700 font-medium">Loading...</span>

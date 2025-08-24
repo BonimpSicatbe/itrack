@@ -3,11 +3,11 @@
     <div class="w-full lg:w-2/3 space-y-6">
         {{-- Requirement Details Card --}}
         <div class="w-full bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
-            <div class="border-b border-gray-100 px-6 py-4 flex justify-between items-center bg-gray-50">
-                <h2 class="text-lg font-semibold text-gray-800">Requirement Details</h2>
+            <div class="border-b border-gray-100 px-6 py-4 flex justify-between items-center" style="background-color: #6a994e; color: white;">
+                <h2 class="text-xl font-semibold">Requirement Details</h2>
                 <a href="{{ route('admin.requirements.edit', ['requirement' => $requirement->id]) }}" 
-                   class="btn btn-sm btn-primary inline-flex items-center">
-                    <i class="fa-solid fa-pencil mr-2"></i> Edit
+                   class="text-primary btn btn-sm btn-white inline-flex items-center font-semibold">
+                    <i class="fa-solid fa-pencil mr-2"></i> EDIT
                 </a>
             </div>
             <div class="p-6 space-y-4">
@@ -66,19 +66,19 @@
 
         {{-- Required Files Card --}}
         <div class="w-full bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
-            <div class="border-b border-gray-100 px-6 py-4 bg-gray-50">
-                <h2 class="text-lg font-semibold text-gray-800">Required Files</h2>
+            <div class="border-b border-gray-100 px-6 py-4 bg-gray-50" style="background-color: #6a994e; color: white;">
+                <h2 class="text-xl font-semibold">Required Files</h2>
             </div>
             <div class="p-6">
                 <div class="overflow-hidden rounded-lg border border-gray-200">
                     <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
+                        <thead class="bg-green-100">
                             <tr>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">File Name</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Size</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Modified</th>
-                                <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-900 uppercase tracking-wider">File Name</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-900 uppercase tracking-wider">Type</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-900 uppercase tracking-wider">Size</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-900 uppercase tracking-wider">Modified</th>
+                                <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-900 uppercase tracking-wider">Actions</th>
                             </tr>
                         </thead>
                         <tbody class="bg-white divide-y divide-gray-200">
@@ -120,16 +120,16 @@
     <div class="w-full lg:w-1/3">
         {{-- Assigned Users Card --}}
         <div class="w-full bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden h-full">
-            <div class="border-b border-gray-100 px-6 py-4 bg-gray-50">
-                <h2 class="text-lg font-semibold text-gray-800">Assigned Users</h2>
+            <div class="border-b border-gray-100 px-6 py-4 bg-gray-50" style="background-color: #6a994e; color: white;">
+                <h2 class="text-xl font-semibold">Assigned Users</h2>
             </div>
             <div class="p-6">
                 <div class="overflow-hidden rounded-lg border border-gray-200">
                     <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
+                        <thead class="bg-green-100">
                             <tr>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-900 uppercase tracking-wider">Name</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-900 uppercase tracking-wider">Email</th>
                             </tr>
                         </thead>
                         <tbody class="bg-white divide-y divide-gray-200">
@@ -137,7 +137,7 @@
                                 <tr class="hover:bg-gray-50 transition-colors cursor-pointer" wire:click='showUser({{ $user->id }})'>
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <div class="flex items-center">
-                                            <div class="flex-shrink-0 h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-600">
+                                            <div class="flex-shrink-0 h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-600" style="background-color: #6a994e; color: white;">
                                                 {{ substr($user->full_name, 0, 1) }}
                                             </div>
                                             <div class="ml-4">

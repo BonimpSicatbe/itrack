@@ -8,24 +8,42 @@ use App\Models\Requirement;
 use App\Models\Semester;
 use App\Models\User;
 use Livewire\Component;
+use Livewire\WithPagination;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 
 class RequirementIndex extends Component
 {
+    use WithPagination;
+    
     public $search = '';
     public $sortStatus = '';
     public $sortAssignedTo = '';
     public $completionFilter = 'all'; // 'all', 'pending', 'completed'
     
-    // Sorting properties
-    public $sortBy = 'due'; // default sort field
-    public $sortDir = 'desc'; // default sort direction
+    // Sorting properties (updated to match requirement.blade.php)
+    public $sortField = 'due'; // default sort field
+    public $sortDirection = 'desc'; // default sort direction
 
     // Delete confirmation properties
     public $requirementToDelete = null;
     public $showDeleteModal = false;
     public $isDeleting = false;
+
+    // Add sortBy method
+    public function sortBy($field)
+    {
+        $this->sortDirection = $this->sortField === $field
+            ? $this->sortDirection = $this->sortDirection === 'asc' ? 'desc' : 'asc'
+            : 'asc';
+
+        $this->sortField = $field;
+    }
+
+    public function showRequirement($requirementId)
+    {
+        return redirect()->route('admin.requirements.show', ['requirement' => $requirementId]);
+    }
 
     public function confirmDelete($requirementId)
     {
@@ -81,18 +99,6 @@ class RequirementIndex extends Component
         'showNotification' => 'showNotification'
     ];
 
-    public function setSort($field)
-    {
-        if ($this->sortBy === $field) {
-            // Reverse the sort direction if same field
-            $this->sortDir = $this->sortDir === 'asc' ? 'desc' : 'asc';
-        } else {
-            // Sort by new field, default to ascending
-            $this->sortDir = 'asc';
-        }
-        $this->sortBy = $field;
-    }
-
     public function render()
     {
         $colleges = College::all();
@@ -102,11 +108,10 @@ class RequirementIndex extends Component
         $activeSemester = Semester::getActiveSemester();
         
         // Only query requirements if there's an active semester
-        $requirements = collect();
+        $requirementsQuery = Requirement::query();
         
         if ($activeSemester) {
-            $requirements = Requirement::query()
-                ->where('semester_id', $activeSemester->id)
+            $requirementsQuery->where('semester_id', $activeSemester->id)
                 ->when($this->search, function ($query) {
                     $query->where('name', 'like', '%' . $this->search . '%');
                 })
@@ -122,25 +127,28 @@ class RequirementIndex extends Component
                 ->when($this->completionFilter === 'completed', function ($query) {
                     $query->where('due', '<=', Carbon::now());
                 })
-                ->orderBy($this->sortBy, $this->sortDir)
-                ->get()
-                ->map(function ($requirement) {
-                    // Calculate assigned users count without modifying the model
-                    $count = 0;
-                    
-                    if (College::where('name', $requirement->assigned_to)->exists()) {
-                        $college = College::where('name', $requirement->assigned_to)->first();
-                        $count = User::where('college_id', $college->id)->count();
-                    } elseif (Department::where('name', $requirement->assigned_to)->exists()) {
-                        $department = Department::where('name', $requirement->assigned_to)->first();
-                        $count = User::where('department_id', $department->id)->count();
-                    }
-                    
-                    // Add the count as a dynamic property
-                    $requirement->assigned_users_count = $count;
-                    return $requirement;
-                });
+                ->orderBy($this->sortField, $this->sortDirection);
+        } else {
+            // Return empty results if no active semester
+            $requirementsQuery->whereRaw('1 = 0');
         }
+
+        $requirements = $requirementsQuery->paginate(20)->through(function ($requirement) {
+            // Calculate assigned users count without modifying the model
+            $count = 0;
+            
+            if (College::where('name', $requirement->assigned_to)->exists()) {
+                $college = College::where('name', $requirement->assigned_to)->first();
+                $count = User::where('college_id', $college->id)->count();
+            } elseif (Department::where('name', $requirement->assigned_to)->exists()) {
+                $department = Department::where('name', $requirement->assigned_to)->first();
+                $count = User::where('department_id', $department->id)->count();
+            }
+            
+            // Add the count as a dynamic property
+            $requirement->assigned_users_count = $count;
+            return $requirement;
+        });
 
         return view('livewire.admin.requirements.requirement-index', [
             'requirements' => $requirements,

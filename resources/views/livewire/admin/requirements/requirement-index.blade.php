@@ -5,7 +5,7 @@
         <div class="flex flex-col gap-4 w-full h-full">
             {{-- header / actions --}}
             <div class="flex flex-col sm:flex-row flex-wrap items-center justify-between gap-4 w-full">
-                <h2 class="text-lg font-semibold w-full sm:w-auto sm:text-left">Requirements List</h2>
+                <h2 class="text-xl font-semibold w-full sm:w-auto sm:text-left">Requirements List</h2>
                 
                 @if($activeSemester)
                     <div class="flex flex-row gap-4 w-full sm:w-auto justify-center sm:justify-end">
@@ -41,71 +41,98 @@
 
             {{-- body / table --}}
             @if($activeSemester)
-                <div class="max-h-[500px] overflow-x-auto">
-                    <table class="table table-auto table-striped table-pin-rows table-sm min-w-[600px]">
+                <div class="max-h-[500px] overflow-x-auto rounded-lg"> <!-- Added rounded-lg here -->
+                    <table class="table table-auto table-striped table-pin-rows table-sm min-w-[600px] rounded-lg"> 
                         <thead>
                             <tr class="bg-base-300 font-bold uppercase">
-                                <th>Name</th>
-                                <th class="cursor-pointer hover:bg-gray-100" wire:click="setSort('due')">
+                                <th class=" cursor-pointer hover:bg-gray-100 p-4" wire:click="sortBy('name')" style="background-color: #6a994e; color: white;">
+                                    <div class="flex items-center pt-2 pb-2">
+                                        Name
+                                        <div class="ml-1">
+                                            @if($sortField === 'name')
+                                                <i class="fas fa-sort-{{ $sortDirection === 'asc' ? 'up' : 'down' }}"></i>
+                                            @else
+                                                <i class="fas fa-sort opacity-30"></i>
+                                            @endif
+                                        </div>
+                                    </div>
+                                </th>
+                                <th class="cursor-pointer hover:bg-gray-100 p-4" wire:click="sortBy('due')" style="background-color: #6a994e; color: white;">
                                     <div class="flex items-center">
                                         Due Date
                                         <div class="ml-1">
-                                            @if($sortBy === 'due')
-                                                <i class="fas fa-sort-{{ $sortDir === 'asc' ? 'up' : 'down' }}"></i>
+                                            @if($sortField === 'due')
+                                                <i class="fas fa-sort-{{ $sortDirection === 'asc' ? 'up' : 'down' }}"></i>
                                             @else
                                                 <i class="fas fa-sort opacity-30"></i>
                                             @endif
                                         </div>
                                     </div>
                                 </th>
-                                <th>Assigned To</th>
-                                <th>Users Assigned</th>
-                                <th>Status</th>
-                                <th class="cursor-pointer hover:bg-gray-100" wire:click="setSort('created_at')">
+                                <th class="cursor-pointer hover:bg-gray-100 p-4" wire:click="sortBy('assigned_to')" style="background-color: #6a994e; color: white;">
+                                    <div class="flex items-center">
+                                        Assigned To
+                                        <div class="ml-1">
+                                            @if($sortField === 'assigned_to')
+                                                <i class="fas fa-sort-{{ $sortDirection === 'asc' ? 'up' : 'down' }}"></i>
+                                            @else
+                                                <i class="fas fa-sort opacity-30"></i>
+                                            @endif
+                                        </div>
+                                    </div>
+                                </th>
+                                <th class="p-4" style="background-color: #6a994e; color: white;">Users Assigned</th>
+                                <th class="cursor-pointer hover:bg-gray-100 p-4" wire:click="sortBy('created_at')" style="background-color: #6a994e; color: white;">
                                     <div class="flex items-center">
                                         Created At
                                         <div class="ml-1">
-                                            @if($sortBy === 'created_at')
-                                                <i class="fas fa-sort-{{ $sortDir === 'asc' ? 'up' : 'down' }}"></i>
+                                            @if($sortField === 'created_at')
+                                                <i class="fas fa-sort-{{ $sortDirection === 'asc' ? 'up' : 'down' }}"></i>
                                             @else
                                                 <i class="fas fa-sort opacity-30"></i>
                                             @endif
                                         </div>
                                     </div>
                                 </th>
-                                <th class="text-center">Action</th>
+                                <th class="text-center p-4" style="background-color: #6a994e; color: white;">Action</th>
                             </tr>
                         </thead>
 
                         <tbody>
                             @forelse ($requirements as $requirement)
-                                <tr>
-                                    <td class="truncate max-w-[250px]">{{ $requirement->name }}</td>
-                                    <td class="truncate">{{ \Carbon\Carbon::parse($requirement->due)->format('m/d/Y h:i a') }}</td>
-                                    <td class="truncate">{{ $requirement->assigned_to }}</td>
-                                    <td class="truncate">{{ $requirement->assigned_users_count }}</td>
-                                    <td class="truncate">{{ $requirement->status }}</td>
-                                    <td class="truncate">
+                                <tr class="hover:bg-blue-50 transition-colors duration-150 cursor-pointer"
+                                    onclick="window.location.href='{{ route('admin.requirements.show', ['requirement' => $requirement]) }}'">
+                                    <td class="font-medium">{{ $requirement->name }}</td>
+                                    <td>
+                                        <div class="flex items-center gap-1">
+                                            @if(\Carbon\Carbon::parse($requirement->due)->isPast())
+                                                <i class="fa-solid fa-circle-exclamation text-red-500 text-xs"></i>
+                                            @endif
+                                            <span class="{{ \Carbon\Carbon::parse($requirement->due)->isPast() ? 'text-red-600 font-medium' : '' }}">
+                                                {{ \Carbon\Carbon::parse($requirement->due)->format('m/d/Y h:i a') }}
+                                            </span>
+                                        </div>
+                                    </td>
+                                    <td class="whitespace-normal min-w-[150px] max-w-[300px]">
+                                        {{ $requirement->assigned_to }}
+                                    </td>
+                                    <td>{{ $requirement->assigned_users_count }}</td>
+                                    <td>
                                         {{ \Carbon\Carbon::parse($requirement->created_at)->format('m/d/Y h:i a') }}
                                     </td>
-                                    <td class="flex justify-center gap-2">
-                                        <a href="{{ route('admin.requirements.show', ['requirement' => $requirement]) }}"
-                                            class="btn btn-xs btn-ghost btn-success tooltip"
-                                            data-tip="View Details">
-                                            <i class="fa-solid fa-eye"></i>
-                                        </a>
+                                    <td class="flex justify-center gap-2 relative z-10" onclick="event.stopPropagation()">
                                         <a href="{{ route('admin.submitted-requirements.requirement', ['requirement_id' => $requirement->id]) }}"
-                                            class="btn btn-xs btn-ghost btn-primary tooltip"
+                                            class="btn btn-xs btn-ghost btn-primary tooltip tooltip-primary"
                                             data-tip="View Submissions">
                                             <i class="fa-solid fa-file-lines"></i>
                                         </a>
                                         <a href="{{ route('admin.requirements.edit', ['requirement' => $requirement]) }}"
-                                            class="btn btn-xs btn-ghost btn-info tooltip"
+                                            class="btn btn-xs btn-ghost btn-info tooltip tooltip-info"
                                             data-tip="Edit">
                                             <i class="fa-solid fa-edit"></i>
                                         </a>
                                         <button wire:click="confirmDelete({{ $requirement->id }})" 
-                                                class="btn btn-xs btn-ghost btn-error tooltip"
+                                                class="btn btn-xs btn-ghost btn-error tooltip tooltip-error"
                                                 data-tip="Delete">
                                             <i class="fa-solid fa-trash"></i>
                                         </button>

@@ -1,31 +1,15 @@
 <div>
-    <!-- Loading State -->
-    <div wire:loading.delay class="fixed inset-0 bg-black bg-opacity-25 flex items-center justify-center z-50">
-        <div class="bg-white rounded-lg p-6 flex items-center gap-3 shadow-xl">
-            <span class="loading loading-spinner loading-md text-green-600"></span>
-            <span class="text-gray-700">Loading analytics...</span>
-        </div>
-    </div>
-
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6" wire:loading.class="opacity-50 pointer-events-none">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <!-- User Activity Metrics -->
         <div class="card bg-white shadow-lg hover:shadow-xl transition-shadow duration-300 border-0">
             <div class="card-body">
                 <div class="flex justify-between items-center mb-6">
                     <div>
                         <h4 class="card-title text-xl font-bold text-gray-800 flex items-center gap-2">
-                            <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
-                            </svg>
                             User Activity Metrics
                         </h4>
                         <p class="text-sm text-gray-500 mt-1">Top performing users by completion rate</p>
                     </div>
-                    @if(count($userActivityStats) > 0)
-                        <div class="badge badge-success badge-outline">
-                            {{ count($userActivityStats) }} active users
-                        </div>
-                    @endif
                 </div>
                 
                 @if(count($userActivityStats) > 0)
@@ -33,46 +17,11 @@
                         <table class="table w-full">
                             <thead>
                                 <tr class="border-b-2 border-gray-100">
-                                    <th class="text-left font-semibold text-gray-700 bg-gray-50 rounded-l-lg">
-                                        <div class="flex items-center gap-1">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-                                            </svg>
-                                            User
-                                        </div>
-                                    </th>
-                                    <th class="text-center font-semibold text-gray-700 bg-gray-50">
-                                        <div class="flex items-center justify-center gap-1">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
-                                            </svg>
-                                            Submitted
-                                        </div>
-                                    </th>
-                                    <th class="text-center font-semibold text-gray-700 bg-gray-50">
-                                        <div class="flex items-center justify-center gap-1">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                                            </svg>
-                                            Approved
-                                        </div>
-                                    </th>
-                                    <th class="text-center font-semibold text-gray-700 bg-gray-50">
-                                        <div class="flex items-center justify-center gap-1">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
-                                            </svg>
-                                            Total Reqs
-                                        </div>
-                                    </th>
-                                    <th class="text-center font-semibold text-gray-700 bg-gray-50 rounded-r-lg">
-                                        <div class="flex items-center justify-center gap-1">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-                                            </svg>
-                                            Completion
-                                        </div>
-                                    </th>
+                                    <th class="text-left font-semibold text-gray-700 bg-gray-50 rounded-l-lg">User</th>
+                                    <th class="text-center font-semibold text-gray-700 bg-gray-50">Submitted</th>
+                                    <th class="text-center font-semibold text-gray-700 bg-gray-50">Approved</th>
+                                    <th class="text-center font-semibold text-gray-700 bg-gray-50">Total Reqs</th>
+                                    <th class="text-center font-semibold text-gray-700 bg-gray-50 rounded-r-lg">Completion</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -90,15 +39,9 @@
                                                 <span>{{ $user['name'] }}</span>
                                             </div>
                                         </td>
-                                        <td class="text-center">
-                                            <span class="badge badge-outline badge-primary">{{ $user['submitted'] }}</span>
-                                        </td>
-                                        <td class="text-center">
-                                            <span class="badge badge-outline badge-success">{{ $user['approved'] }}</span>
-                                        </td>
-                                        <td class="text-center">
-                                            <span class="badge badge-outline badge-neutral">{{ $user['total_requirements'] }}</span>
-                                        </td>
+                                        <td class="text-center font-semibold">{{ $user['submitted'] }}</td>
+                                        <td class="text-center font-semibold">{{ $user['approved'] }}</td>
+                                        <td class="text-center font-semibold">{{ $user['total_requirements'] }}</td>
                                         <td class="text-center">
                                             <div class="flex items-center justify-center gap-2">
                                                 <div class="radial-progress text-green-600" 
@@ -145,7 +88,7 @@
                             </svg>
                         </div>
                         <h5 class="text-lg font-semibold text-gray-900 mb-2">No User Activity Data</h5>
-                        <p class="text-gray-500 max-w-sm">No user activity data found for this semester. Users may not have submitted any requirements yet.</p>
+                        <p class="text-gray-500 max-w-sm">No user activity data found for this semester.</p>
                     </div>
                 @endif
             </div>
@@ -157,9 +100,6 @@
                 <div class="flex justify-between items-center mb-6">
                     <div>
                         <h4 class="card-title text-xl font-bold text-gray-800 flex items-center gap-2">
-                            <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"></path>
-                            </svg>
                             Storage Usage
                         </h4>
                         <p class="text-sm text-gray-500 mt-1">File types and storage distribution</p>
@@ -181,7 +121,6 @@
                                     const ctx = this.$refs.canvas.getContext('2d');
                                     const mimeTypes = @js(array_keys($storageStats));
                                     const humanizedTypes = mimeTypes.map(type => {
-                                        // Convert MIME types to more readable format
                                         const typeMap = {
                                             'application/pdf': 'PDF',
                                             'application/msword': 'Word',
@@ -197,7 +136,7 @@
                                         return typeMap[type] || type;
                                     });
 
-                                    const fontFamily = 'Figtree, ui-sans-serif, system-ui, sans-serif, Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol, Noto Color Emoji';
+                                    const fontFamily = 'Figtree, ui-sans-serif, system-ui, sans-serif';
 
                                     new Chart(ctx, {
                                         type: 'pie',
@@ -216,15 +155,10 @@
                                         options: {
                                             responsive: true,
                                             maintainAspectRatio: false,
-                                            layout: {
-                                                padding: {
-                                                }
-                                            },
                                             plugins: {
                                                 legend: {
                                                     display: true,
                                                     position: 'left',
-                                                    align: 'center',
                                                     labels: {
                                                         boxWidth: 12,
                                                         padding: 20,
