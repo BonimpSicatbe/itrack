@@ -15,35 +15,95 @@ class FileManager extends Component
     public $showFileDetails = false;
     public $selectedFile = null;
     
-    // Add semester properties
+    // Add semester properties (matching dashboard)
     public $activeSemester = null;
     public $semesterMessage = null;
+    public $daysRemaining;
+    public $semesterProgress;
     
     protected $listeners = [
         'refreshFiles' => '$refresh', 
-        'fileSelected' => 'handleFileSelected'
+        'fileSelected' => 'handleFileSelected',
+        'semesterActivated' => 'refreshSemesterData',
+        'semesterArchived' => 'refreshSemesterData'
     ];
 
     public function mount()
     {
-        $this->loadActiveSemester();
+        $this->refreshSemesterData();
     }
 
-    public function loadActiveSemester()
+    public function refreshSemesterData()
     {
         $this->activeSemester = Semester::getActiveSemester();
         
-        if (!$this->activeSemester) {
-            $this->semesterMessage = 'No active semester found. Please contact administrator.';
+        if ($this->activeSemester) {
+            $this->calculateSemesterStats();
+            $this->setSemesterMessage();
         } else {
-            // Check if semester is near end (within 30 days)
-            $daysUntilEnd = now()->diffInDays($this->activeSemester->end_date, false);
-            
-            if ($daysUntilEnd < 0) {
-                $this->semesterMessage = 'Current semester has ended. Submissions may be restricted.';
-            } elseif ($daysUntilEnd <= 30) {
-                $this->semesterMessage = "Semester ends in {$daysUntilEnd} days ({$this->activeSemester->end_date->format('M d, Y')}).";
-            }
+            $this->semesterMessage = 'No active semester found. Please contact administrator.';
+        }
+    }
+
+    private function calculateSemesterStats()
+    {
+        $now = now();
+        $startDate = $this->activeSemester->start_date;
+        $endDate = $this->activeSemester->end_date;
+
+        // Calculate days remaining
+        $this->daysRemaining = $now->diffInDays($endDate, false);
+        
+        // If semester has ended, set days remaining to 0
+        if ($this->daysRemaining < 0) {
+            $this->daysRemaining = 0;
+        }
+
+        // Calculate semester progress percentage
+        $totalDays = $startDate->diffInDays($endDate);
+        $daysPassed = $startDate->diffInDays($now);
+        
+        if ($totalDays > 0) {
+            $this->semesterProgress = min(100, max(0, ($daysPassed / $totalDays) * 100));
+        } else {
+            $this->semesterProgress = 0;
+        }
+    }
+
+    private function setSemesterMessage()
+    {
+        if ($this->daysRemaining < 0) {
+            $this->semesterMessage = 'Current semester has ended. Submissions may be restricted.';
+        } elseif ($this->daysRemaining <= 30) {
+            $this->semesterMessage = "Semester ends in {$this->daysRemaining} days ({$this->activeSemester->end_date->format('M d, Y')}).";
+        } else {
+            $this->semesterMessage = null; // Clear message when not needed
+        }
+    }
+
+    public function getProgressColorProperty()
+    {
+        if ($this->semesterProgress >= 90) {
+            return 'bg-red-500';
+        } elseif ($this->semesterProgress >= 70) {
+            return 'bg-orange-500';
+        } else {
+            return 'bg-green-500';
+        }
+    }
+
+    public function getStatusColorProperty()
+    {
+        if (!$this->activeSemester) {
+            return 'text-gray-500';
+        }
+
+        if ($this->daysRemaining <= 0) {
+            return 'text-red-500';
+        } elseif ($this->daysRemaining <= 30) {
+            return 'text-orange-500';
+        } else {
+            return 'text-green-500';
         }
     }
 

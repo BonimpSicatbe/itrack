@@ -1,8 +1,8 @@
 <div class="flex flex-col gap-4 h-full">
-    {{-- Header with Semester Info --}}
+    {{-- Header with File Stats and Active Semester --}}
     <div class="flex items-center justify-between">
         <div class="text-lg uppercase font-bold">File Manager</div>
-        <div class="flex items-center gap-4 text-sm text-gray-600">
+        <div class="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
             <div class="flex items-center gap-2">
                 <i class="fa-solid fa-folder text-blue-500"></i>
                 <span>{{ $totalFiles }} files</span>
@@ -11,86 +11,41 @@
                 <i class="fa-solid fa-hard-drive text-green-500"></i>
                 <span>{{ $totalSize }}</span>
             </div>
-        </div>
-    </div>
-
-    {{-- Active Semester Display --}}
-    @if($activeSemester)
-        <div class="bg-gradient-to-r from-primary/10 to-secondary/10 border border-primary/20 rounded-lg p-4">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center gap-3">
-                    <div class="flex-shrink-0">
-                        <i class="fa-solid fa-calendar-alt text-2xl text-primary"></i>
-                    </div>
-                    <div>
-                        <h3 class="font-bold text-lg text-gray-800">{{ $activeSemester->name }}</h3>
-                        <div class="flex items-center gap-4 text-sm text-gray-600 mt-1">
-                            <span class="flex items-center gap-1">
-                                <i class="fa-solid fa-play text-green-500 text-xs"></i>
-                                {{ $activeSemester->start_date->format('M d, Y') }}
-                            </span>
-                            <span class="flex items-center gap-1">
-                                <i class="fa-solid fa-stop text-red-500 text-xs"></i>
-                                {{ $activeSemester->end_date->format('M d, Y') }}
-                            </span>
-                            <span class="badge badge-primary badge-sm">
-                                <i class="fa-solid fa-check mr-1"></i>
-                                Active
-                            </span>
-                        </div>
-                    </div>
-                </div>
-                
-                {{-- Semester Progress Bar --}}
-                <div class="hidden md:block w-48">
+            
+            {{-- Active Semester Inline Display --}}
+            @if($activeSemester)
+                <div class="flex items-center gap-2">
+                    <i class="fas fa-calendar-alt text-blue-500"></i>
+                    <span>{{ $activeSemester->name }}</span>
                     @php
                         $totalDays = $activeSemester->start_date->diffInDays($activeSemester->end_date);
                         $passedDays = $activeSemester->start_date->diffInDays(now());
-                        $progress = min(100, max(0, ($passedDays / $totalDays) * 100));
-                        $remainingDays = max(0, now()->diffInDays($activeSemester->end_date, false));
+                        $semesterProgress = min(100, max(0, ($passedDays / $totalDays) * 100));
+                        $daysRemaining = max(0, now()->diffInDays($activeSemester->end_date, false));
                     @endphp
-                    
-                    <div class="text-right mb-2">
-                        <span class="text-xs text-gray-500">
-                            {{ $remainingDays }} days remaining
-                        </span>
-                    </div>
-                    <div class="w-full bg-gray-200 rounded-full h-2">
-                        <div class="bg-gradient-to-r from-primary to-secondary h-2 rounded-full transition-all duration-500" 
-                             style="width: {{ $progress }}%"></div>
-                    </div>
-                    <div class="text-right mt-1">
-                        <span class="text-xs text-gray-500">
-                            {{ round($progress) }}% completed
-                        </span>
-                    </div>
+                    <span class="text-xs">{{ number_format($semesterProgress, 0) }}%</span>
+                    <span class="flex h-1.5 w-1.5">
+                        <span class="animate-ping absolute inline-flex h-1.5 w-1.5 rounded-full bg-green-400 opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-1.5 w-1.5 bg-green-500"></span>
+                    </span>
+                    <span class="text-xs font-medium text-green-700 dark:text-green-400">Active</span>
                 </div>
-            </div>
-            
-            {{-- Semester Message/Warning --}}
-            @if($semesterMessage)
-                <div class="mt-3 p-2 bg-white/50 border border-warning/30 rounded-lg">
-                    <div class="flex items-center gap-2 text-sm">
-                        <i class="fa-solid fa-info-circle text-warning"></i>
-                        <span class="text-gray-700">{{ $semesterMessage }}</span>
-                    </div>
+            @else
+                <div class="flex items-center gap-2">
+                    <i class="fas fa-calendar-times text-gray-500 dark:text-gray-400"></i>
+                    <span class="text-gray-500 dark:text-gray-400">No Active Semester</span>
                 </div>
             @endif
         </div>
-    @else
-        {{-- No Active Semester Warning --}}
-        <div class="bg-gradient-to-r from-error/10 to-warning/10 border border-error/20 rounded-lg p-4">
-            <div class="flex items-center gap-3">
-                <div class="flex-shrink-0">
-                    <i class="fa-solid fa-exclamation-triangle text-2xl text-error"></i>
-                </div>
-                <div>
-                    <h3 class="font-bold text-lg text-error">No Active Semester</h3>
-                    <p class="text-sm text-gray-600 mt-1">
-                        {{ $semesterMessage ?? 'There is no active semester currently set. Please contact your administrator.' }}
-                    </p>
-                </div>
-            </div>
+    </div>
+
+    {{-- Warning Messages (if needed) --}}
+    @if($activeSemester && $daysRemaining <= 7)
+        <div class="flex items-center gap-2 p-3 {{ $daysRemaining <= 0 ? 'bg-red-100 dark:bg-red-900/30 border-red-400' : 'bg-orange-100 dark:bg-orange-900/30 border-orange-400' }} rounded-lg border-l-4">
+            <i class="fas fa-exclamation-triangle {{ $daysRemaining <= 0 ? 'text-red-500' : 'text-orange-500' }} text-sm"></i>
+            <span class="text-sm {{ $daysRemaining <= 0 ? 'text-red-700 dark:text-red-300' : 'text-orange-700 dark:text-orange-300' }} font-medium">
+                {{ $daysRemaining <= 0 ? 'Semester has ended' : 'Semester ending soon' }}
+            </span>
         </div>
     @endif
 
