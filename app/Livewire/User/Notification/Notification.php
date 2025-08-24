@@ -18,11 +18,6 @@ class Notification extends Component
     public $notifications;
     public $selectedNotification = null;
     public $selectedNotificationData = null;
-    public $showSubmissionModal = false;
-    public $uploadedFiles = [];
-    public $submissionNotes = '';
-    public $currentRequirementId = null;
-    public $currentRequirementName = '';
 
     public function mount(): void
     {
@@ -73,15 +68,6 @@ class Notification extends Component
             ?? data_get($notification->data, 'requirement.id');
 
         $submissionId  = data_get($notification->data, 'submission_id');
-
-        // Store the current requirement ID for modal
-        $this->currentRequirementId = $requirementId;
-        
-        // Get requirement name for modal
-        if ($requirementId) {
-            $requirement = Requirement::find($requirementId);
-            $this->currentRequirementName = $requirement->name ?? 'Requirement';
-        }
 
         // ---------------- REQUIREMENT (details + FILES FROM REQUIREMENT) ----------------
         $requirement = null;
@@ -181,74 +167,10 @@ class Notification extends Component
         $this->loadNotifications();
     }
     
-    public function openSubmissionModal(): void
-    {
-        $this->showSubmissionModal = true;
-    }
-    
-    public function closeSubmissionModal(): void
-    {
-        $this->showSubmissionModal = false;
-        $this->uploadedFiles = [];
-        $this->submissionNotes = '';
-    }
-    
     public function submitRequirement(): Redirector
-{
-    $this->validate([
-        'uploadedFiles.*' => 'file|max:10240',
-        'submissionNotes' => 'nullable|string|max:1000',
-    ]);
-    
-    if (!$this->currentRequirementId) {
-        session()->flash('error', 'No requirement selected for submission.');
-        return redirect()->to('/user/requirements');
-    }
-    
-    $submission = SubmittedRequirement::create([
-        'user_id' => Auth::id(),
-        'requirement_id' => $this->currentRequirementId,
-        'admin_notes' => $this->submissionNotes,
-        'status' => 'under_review',
-        'submitted_at' => now(),
-    ]);
-    
-    foreach ($this->uploadedFiles as $file) {
-        try {
-            // Use the Livewire uploaded file directly with media library
-            $submission->addMedia($file->getRealPath())
-                ->usingName($file->getClientOriginalName())
-                ->usingFileName($file->getClientOriginalName())
-                ->toMediaCollection('submission_files');
-        } catch (\Exception $e) {
-            // Fallback: store temporarily and then add
-            $tempPath = $file->store('temp', 'local');
-            $fullPath = storage_path('app/' . $tempPath);
-            
-            $submission->addMedia($fullPath)
-                ->usingName($file->getClientOriginalName())
-                ->usingFileName($file->getClientOriginalName())
-                ->toMediaCollection('submission_files');
-            
-            // Clean up the temporary file after media is processed
-            if (file_exists($fullPath)) {
-                unlink($fullPath);
-            }
-        }
-    }
-    
-    $this->closeSubmissionModal();
-    
-    // Redirect to requirements page with success message
-    return redirect()->to('/user/requirements')->with('success', 'Requirement submitted successfully!');
-}
-    
-    public function removeUploadedFile($index)
     {
-        if (isset($this->uploadedFiles[$index])) {
-            unset($this->uploadedFiles[$index]);
-            $this->uploadedFiles = array_values($this->uploadedFiles);
-        }
+        // Simply redirect to requirements page
+        return redirect()->to('/user/requirements');
     }
 
     protected function statusLabel(?string $status): string
