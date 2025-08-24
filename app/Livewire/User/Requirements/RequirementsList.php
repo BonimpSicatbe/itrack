@@ -29,7 +29,8 @@ class RequirementsList extends Component
         'viewMode' => ['except' => 'list'],
     ];
 
-    protected $listeners = ['requirement-marked-done' => '$refresh'];
+    // Remove the automatic refresh listener since we'll handle it manually
+    protected $listeners = [];
 
     public function mount()
     {
@@ -46,47 +47,92 @@ class RequirementsList extends Component
 
     public function sortBy($field)
     {
+        // Add some debug logging
+        logger('Sort button clicked', ['field' => $field, 'current_sort' => $this->sortField]);
+        
         if ($this->sortField === $field) {
             $this->sortDirection = $this->sortDirection === 'asc' ? 'desc' : 'asc';
         } else {
             $this->sortDirection = 'asc';
         }
         $this->sortField = $field;
+        
+        logger('Sort updated', ['new_field' => $this->sortField, 'direction' => $this->sortDirection]);
+        
+        // Reset pagination to first page when sorting
+        $this->resetPage();
+        
+        // The component will automatically re-render, no need to force refresh
     }
 
     public function markAsDone($requirementId)
     {
-        $user = Auth::user();
-        
-        // Create a submission indicator
-        RequirementSubmissionIndicator::firstOrCreate([
-            'requirement_id' => $requirementId,
-            'user_id' => $user->id,
-        ], [
-            'submitted_at' => now(),
-        ]);
-        
-        // Show success notification
-        $this->dispatch('showNotification', 'success', 'Requirement marked as done successfully!');
-        
-        // Refresh the component to update the UI
-        $this->dispatch('requirement-marked-done');
+        try {
+            $user = Auth::user();
+            
+            // Validate the requirement exists and belongs to the user
+            $requirement = $user->requirements()->find($requirementId);
+            
+            if (!$requirement) {
+                session()->flash('error', 'Requirement not found or you do not have permission to modify it.');
+                return;
+            }
+            
+            // Create a submission indicator
+            RequirementSubmissionIndicator::updateOrCreate([
+                'requirement_id' => $requirementId,
+                'user_id' => $user->id,
+            ], [
+                'submitted_at' => now(),
+            ]);
+            
+            // Show success notification
+            session()->flash('message', 'Requirement marked as done successfully!');
+            
+        } catch (\Exception $e) {
+            logger('Error marking requirement as done', [
+                'requirement_id' => $requirementId,
+                'user_id' => Auth::id(),
+                'error' => $e->getMessage()
+            ]);
+            
+            session()->flash('error', 'An error occurred while marking the requirement as done.');
+        }
     }
 
     public function markAsUndone($requirementId)
     {
-        $user = Auth::user();
-        
-        // Delete the submission indicator
-        RequirementSubmissionIndicator::where('requirement_id', $requirementId)
-            ->where('user_id', $user->id)
-            ->delete();
-        
-        // Show success notification
-        $this->dispatch('showNotification', 'success', 'Requirement marked as undone successfully!');
-        
-        // Refresh the component to update the UI
-        $this->dispatch('requirement-marked-done');
+        try {
+            $user = Auth::user();
+            
+            // Validate the requirement exists and belongs to the user
+            $requirement = $user->requirements()->find($requirementId);
+            
+            if (!$requirement) {
+                session()->flash('error', 'Requirement not found or you do not have permission to modify it.');
+                return;
+            }
+            
+            // Delete the submission indicator
+            $deleted = RequirementSubmissionIndicator::where('requirement_id', $requirementId)
+                ->where('user_id', $user->id)
+                ->delete();
+            
+            if ($deleted) {
+                session()->flash('message', 'Requirement marked as undone successfully!');
+            } else {
+                session()->flash('error', 'No submission record found to undo.');
+            }
+            
+        } catch (\Exception $e) {
+            logger('Error marking requirement as undone', [
+                'requirement_id' => $requirementId,
+                'user_id' => Auth::id(),
+                'error' => $e->getMessage()
+            ]);
+            
+            session()->flash('error', 'An error occurred while marking the requirement as undone.');
+        }
     }
 
     public function isRequirementSubmitted($requirementId)
@@ -118,23 +164,34 @@ class RequirementsList extends Component
             ->pluck('requirement_id')
             ->toArray();
 
-        $requirements = $user->requirements()
-            ->where('semester_id', $activeSemester->id) // Only requirements from active semester
-            ->when($this->search, function ($query) {
-                $query->where(function ($q) {
-                    $q->where('name', 'like', '%' . $this->search . '%')
-                        ->orWhere('description', 'like', '%' . $this->search . '%');
-                });
-            })
-            ->when($this->completionFilter, function ($query) use ($submittedRequirementIds) {
-                if ($this->completionFilter === 'submitted') {
-                    $query->whereIn('id', $submittedRequirementIds);
-                } else if ($this->completionFilter === 'pending') {
-                    $query->whereNotIn('id', $submittedRequirementIds);
-                }
-            })
-            ->orderBy($this->sortField, $this->sortDirection)
-            ->get();
+        $query = $user->requirements()
+            ->where('semester_id', $activeSemester->id); // Only requirements from active semester
+
+        // Apply search filter
+        if ($this->search) {
+            $query->where(function ($q) {
+                $q->where('name', 'like', '%' . $this->search . '%')
+                    ->orWhere('description', 'like', '%' . $this->search . '%');
+            });
+        }
+
+        // Apply completion filter
+        if ($this->completionFilter === 'submitted') {
+            $query->whereIn('id', $submittedRequirementIds);
+        } elseif ($this->completionFilter === 'pending') {
+            $query->whereNotIn('id', $submittedRequirementIds);
+        }
+
+        // Apply sorting
+        if ($this->sortField === 'priority') {
+            // Custom sorting for priority field
+            $query->orderByRaw("FIELD(priority, 'high', 'medium', 'low') " . ($this->sortDirection === 'asc' ? 'ASC' : 'DESC'));
+        } else {
+            // Default sorting for other fields
+            $query->orderBy($this->sortField, $this->sortDirection);
+        }
+
+        $requirements = $query->get();
 
         return view('livewire.user.requirements.requirements-list', [
             'requirements' => $requirements,

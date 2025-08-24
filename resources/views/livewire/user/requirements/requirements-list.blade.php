@@ -2,7 +2,7 @@
     <!-- Main Container with Header Inside -->
     <div class="flex-1 bg-white rounded-lg shadow-sm overflow-hidden">
         <!-- Pending Requirements Header - Now Inside Container -->
-           <div class="flex items-center justify-between px-8 py-6 border-b border-gray-200" style="background: linear-gradient(148deg,rgba(18, 67, 44, 1) 0%, rgba(30, 119, 77, 1) 54%, rgba(55, 120, 64, 1) 100%);">
+        <div class="flex items-center justify-between px-8 py-6 border-b border-gray-200" style="background: linear-gradient(148deg,rgba(18, 67, 44, 1) 0%, rgba(30, 119, 77, 1) 54%, rgba(55, 120, 64, 1) 100%);">
             <div class="flex items-center gap-2">
                 <i class="fa-solid fa-clipboard-list text-white text-2xl"></i>
                 <h1 class="text-2xl font-bold text-white">Pending Requirements</h1>
@@ -25,7 +25,7 @@
                             type="text"
                             wire:model.live.debounce.300ms="search"
                             placeholder="Search requirements by name or description..."
-                            class="w-full pl-12 pr-12 py-3 text-sm bg-[#DEF4C6]/20 border border-[#73E2A7]/40 rounded-lg focus:border-[#1C7C54] focus:ring-2 focus:ring-[#1C7C54]/20 focus:bg-white focus:outline-none transition-all duration-200 placeholder-[#1B512D]/60"
+                            class="w-full pl-10 pr-10 py-1 text-sm bg-[#DEF4C6]/20 border border-[#73E2A7]/40 rounded-xl focus:border-[#1C7C54] focus:ring-2 focus:ring-[#1C7C54]/20 focus:bg-white focus:outline-none transition-all duration-200 placeholder-[#1B512D]/60"
                         >
                         <div wire:loading wire:target="search" class="absolute inset-y-0 right-0 pr-4 flex items-center">
                             <div class="animate-spin rounded-full h-4 w-4 border-2 border-[#1C7C54] border-t-transparent"></div>
@@ -36,7 +36,7 @@
                     <div class="relative">
                         <select
                             wire:model.live="completionFilter"
-                            class="appearance-none px-4 py-3 pr-10 text-sm bg-[#DEF4C6]/20 border border-[#73E2A7]/40 rounded-lg focus:border-[#1C7C54] focus:ring-2 focus:ring-[#1C7C54]/20 focus:bg-white focus:outline-none transition-all duration-200 cursor-pointer"
+                            class="appearance-none w-full pl-10 pr-10 py-1 text-sm bg-[#DEF4C6]/20 border border-[#73E2A7]/40 rounded-xl focus:border-[#1C7C54] focus:ring-2 focus:ring-[#1C7C54]/20 focus:bg-white focus:outline-none transition-all duration-200 cursor-pointer"
                         >
                             <option value="">All Requirements</option>
                             @foreach($completionStatuses as $value => $label)
@@ -56,34 +56,6 @@
                             <i class="fa-solid fa-grip text-sm"></i>
                         </button>
                     </div>
-                    
-                    <!-- Enhanced Sort Dropdown -->
-                    <div class="flex items-center bg-[#DEF4C6]/20 rounded-lg border border-[#73E2A7]/40 overflow-hidden">
-                        <!-- Sort Field Selector -->
-                        <div class="relative">
-                            <select
-                                wire:model.live="sortField"
-                                class="appearance-none px-4 py-3 pl-4 pr-8 text-sm bg-transparent border-none focus:ring-0 focus:outline-none cursor-pointer text-[#1B512D]"
-                            >
-                                <option value="due">Sort by Due Date</option>
-                                <option value="name">Sort by Name</option>
-                                <option value="priority">Sort by Priority</option>
-                            </select>
-                        </div>
-                        
-                        <!-- Sort Direction Toggle -->
-                        <button
-                            wire:click="sortBy('{{ $sortField }}')"
-                            class="px-3 py-3 border-l border-[#73E2A7]/40 text-[#1C7C54]/70 hover:text-[#1B512D] transition-colors"
-                            title="Toggle sort direction"
-                        >
-                            @if($sortDirection === 'asc')
-                                <i class="fa-solid fa-arrow-up-wide-short text-sm"></i>
-                            @else
-                                <i class="fa-solid fa-arrow-down-wide-short text-sm"></i>
-                            @endif
-                        </button>
-                    </div>
                 </div>
             </div>
 
@@ -91,6 +63,12 @@
             @if (session()->has('message'))
                 <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mt-4" role="alert">
                     <p>{{ session('message') }}</p>
+                </div>
+            @endif
+            
+            @if (session()->has('error'))
+                <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mt-4" role="alert">
+                    <p>{{ session('error') }}</p>
                 </div>
             @endif
 
@@ -134,18 +112,73 @@
             <div class="bg-gradient-to-r from-[#DEF4C6]/20 to-[#B1CF5F]/10 border-b border-[#73E2A7]/30 px-8 py-3">
                 <div class="grid grid-cols-10 gap-6 text-xs font-semibold text-[#1B512D] uppercase tracking-wider">
                     <div class="col-span-4 flex items-center gap-2">
-                        <i class="fa-solid fa-file-lines text-[#1C7C54]/70"></i>
-                        Name
+                        <button 
+                            type="button"
+                            wire:click="sortBy('name')" 
+                            class="flex items-center gap-2 hover:text-[#1C7C54] transition-colors disabled:opacity-50"
+                        >
+                            <i class="fa-solid fa-file-lines text-[#1C7C54]/70"></i>
+                            <span>Name</span>
+                            @if($sortField === 'name')
+                                @if($sortDirection === 'asc')
+                                    <i class="fa-solid fa-sort-up ml-1 text-[#1C7C54]"></i>
+                                @else
+                                    <i class="fa-solid fa-sort-down ml-1 text-[#1C7C54]"></i>
+                                @endif
+                            @else
+                                <i class="fa-solid fa-sort ml-1 opacity-50"></i>
+                            @endif
+                        </button>
+                        <div wire:loading wire:target="sortBy" class="ml-1">
+                            <i class="fa-solid fa-spinner fa-spin text-xs text-[#1C7C54]"></i>
+                        </div>
                     </div>
                     <div class="col-span-2 flex items-center gap-2">
-                        <i class="fa-regular fa-calendar text-[#1C7C54]/70"></i>
-                        Due Date
+                        <button 
+                            type="button"
+                            wire:click="sortBy('due')" 
+                            class="flex items-center gap-2 hover:text-[#1C7C54] transition-colors disabled:opacity-50"
+                        >
+                            <i class="fa-regular fa-calendar text-[#1C7C54]/70"></i>
+                            <span>Due Date</span>
+                            @if($sortField === 'due')
+                                @if($sortDirection === 'asc')
+                                    <i class="fa-solid fa-sort-up ml-1 text-[#1C7C54]"></i>
+                                @else
+                                    <i class="fa-solid fa-sort-down ml-1 text-[#1C7C54]"></i>
+                                @endif
+                            @else
+                                <i class="fa-solid fa-sort ml-1 opacity-50"></i>
+                            @endif
+                        </button>
+                        <div wire:loading wire:target="sortBy" class="ml-1">
+                            <i class="fa-solid fa-spinner fa-spin text-xs text-[#1C7C54]"></i>
+                        </div>
                     </div>
                     <div class="col-span-2 flex items-center gap-2">
-                        <i class="fa-solid fa-exclamation-triangle text-[#1C7C54]/70"></i>
-                        Priority
+                        <button 
+                            type="button"
+                            wire:click="sortBy('priority')" 
+                            class="flex items-center gap-2 hover:text-[#1C7C54] transition-colors disabled:opacity-50"
+                        >
+                            <i class="fa-solid fa-exclamation-triangle text-[#1C7C54]/70"></i>
+                            <span>Priority</span>
+                            @if($sortField === 'priority')
+                                @if($sortDirection === 'asc')
+                                    <i class="fa-solid fa-sort-up ml-1 text-[#1C7C54]"></i>
+                                @else
+                                    <i class="fa-solid fa-sort-down ml-1 text-[#1C7C54]"></i>
+                                @endif
+                            @else
+                                <i class="fa-solid fa-sort ml-1 opacity-50"></i>
+                            @endif
+                        </button>
+                        <div wire:loading wire:target="sortBy" class="ml-1">
+                            <i class="fa-solid fa-spinner fa-spin text-xs text-[#1C7C54]"></i>
+                        </div>
                     </div>
                     <div class="col-span-2 flex items-center gap-2 justify-end">
+                        <span>Actions</span>
                     </div>
                 </div>
             </div>
@@ -178,11 +211,11 @@
                         </div>
                         
                         <h3 class="font-semibold text-gray-900 mb-2 truncate">{{ $requirement->name }}</h3>
-                        <p class="text-sm text-gray-500 mb-4 line-clamp-2">{{ $requirement->description }}</p>
+                        
                         
                         <div class="flex items-center justify-between mb-3">
                             <div>
-                                <div class="text-sm font-medium text-gray-900">{{ $requirement->due->format('M j, Y') }}</div>
+                                <div class="text-xs font-medium text-gray-900">{{ $requirement->due->format('M j, Y') }}</div>
                                 <div class="text-xs {{ $requirement->due->isPast() ? 'text-red-600 font-medium' : 'text-gray-500' }}">
                                     {{ $requirement->due->diffForHumans() }}
                                 </div>
@@ -202,7 +235,7 @@
                         </div>
                         
                         <!-- Mark as Done Button for Grid View -->
-                        <div class="mt-4">
+                        <div class="mt-4" onclick="event.stopPropagation();">
                             @if($this->isRequirementSubmitted($requirement->id))
                                 <div class="mt-4 flex flex-col gap-2">
                                     <span class="px-3 py-2 bg-green-100 text-green-800 text-xs font-medium rounded-full flex items-center justify-center">
@@ -212,11 +245,13 @@
                                         wire:click="markAsUndone({{ $requirement->id }})" 
                                         class="w-full px-3 py-2 bg-gray-100 text-gray-800 text-xs font-medium rounded-full hover:bg-gray-200 transition-colors flex items-center justify-center"
                                         wire:loading.attr="disabled"
-                                        wire:click.stop
                                     >
-                                        <i class="fa-solid fa-rotate-left mr-1"></i>
-                                        <span wire:loading.remove>Mark as Undone</span>
-                                        <span wire:loading>Processing...</span>
+                                        <div wire:loading wire:target="markAsUndone({{ $requirement->id }})" class="mr-2">
+                                            <i class="fa-solid fa-spinner fa-spin"></i>
+                                        </div>
+                                        <i wire:loading.remove wire:target="markAsUndone({{ $requirement->id }})" class="fa-solid fa-rotate-left mr-1"></i>
+                                        <span wire:loading.remove wire:target="markAsUndone({{ $requirement->id }})">Mark as Undone</span>
+                                        <span wire:loading wire:target="markAsUndone({{ $requirement->id }})">Processing...</span>
                                     </button>
                                 </div>
                             @else
@@ -225,11 +260,13 @@
                                     wire:click="markAsDone({{ $requirement->id }})" 
                                     class="w-full px-3 py-2 bg-blue-100 text-blue-800 text-xs font-medium rounded-full hover:bg-blue-200 transition-colors flex items-center justify-center"
                                     wire:loading.attr="disabled"
-                                    wire:click.stop
                                 >
-                                    <i class="fa-solid fa-check mr-1"></i>
-                                    <span wire:loading.remove>Mark as Done</span>
-                                    <span wire:loading>Processing...</span>
+                                    <div wire:loading wire:target="markAsDone({{ $requirement->id }})" class="mr-2">
+                                        <i class="fa-solid fa-spinner fa-spin"></i>
+                                    </div>
+                                    <i wire:loading.remove wire:target="markAsDone({{ $requirement->id }})" class="fa-solid fa-check mr-1"></i>
+                                    <span wire:loading.remove wire:target="markAsDone({{ $requirement->id }})">Mark as Done</span>
+                                    <span wire:loading wire:target="markAsDone({{ $requirement->id }})">Processing...</span>
                                 </button>
                             @endif
                         </div>
@@ -267,7 +304,7 @@
             @forelse($requirements as $index => $requirement)
                 <div
                     wire:click="$dispatch('showRequirementDetail', { requirementId: {{ $requirement->id }} })"
-                    class="grid grid-cols-10 gap-6 items-center px-8 py-5 border-b border-gray-100 hover:bg-blue-50/50 cursor-pointer group transition-all duration-200 {{ $index % 2 === 1 ? 'bg-gray-50/30' : 'bg-white' }}"
+                    class="grid grid-cols-10 gap-6 items-center px-8 py-3 border-b border-gray-100   hover:bg-blue-50/50 cursor-pointer group transition-all duration-200 {{ $index % 2 === 1 ? 'bg-gray-50/30' : 'bg-white' }}"
                 >
                     <!-- Name Column -->
                     <div class="col-span-4 flex items-center gap-4 min-w-0">
@@ -325,7 +362,7 @@
                             <p class="text-sm font-semibold text-gray-900 truncate group-hover:text-blue-700 transition-colors mb-1">
                                 {{ $requirement->name }}
                             </p>
-                            <p class="text-xs text-gray-500 line-clamp-1">{{ $requirement->description }}</p>
+                            
                         </div>
                     </div>
 
@@ -338,7 +375,7 @@
                                     <span class="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs font-medium rounded-full">Today</span>
                                 @endif
                             </div>
-                            <span class="text-xs mt-1 {{ $requirement->due->isPast() ? 'text-red-600 font-medium' : 'text-gray-500' }}">
+                            <span class="text-xs mt-1 {{ $requirement->due->isPast() ? 'text-red-600 font-small' : 'text-gray-500' }}">
                                 {{ $requirement->due->diffForHumans() }}
                             </span>
                         </div>
@@ -354,16 +391,16 @@
                                 default => ['color' => 'gray', 'icon' => 'fa-circle']
                             };
                         @endphp
-                        <span class="inline-flex items-center px-3 py-2 rounded-lg text-xs font-semibold border border-{{ $priorityConfig['color'] }}-200 bg-{{ $priorityConfig['color'] }}-50 text-{{ $priorityConfig['color'] }}-800 group-hover:shadow-sm transition-shadow">
+                        <span class="inline-flex items-center text-xs font-semibold text-{{ $priorityConfig['color'] }}-800">
                             <i class="fa-solid {{ $priorityConfig['icon'] }} mr-2 text-{{ $priorityConfig['color'] }}-600"></i>
                             {{ ucfirst($requirement->priority) }}
                         </span>
                     </div>
 
                     <!-- Mark as Done Button for List View -->
-                    <div class="col-span-2 flex justify-end">
+                    <div class="col-span-2 flex justify-end" onclick="event.stopPropagation();">
                         @if($this->isRequirementSubmitted($requirement->id))
-                            <div class="col-span-2 flex justify-end gap-2">
+                            <div class="flex justify-end gap-2">
                                 <span class="px-3 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full flex items-center">
                                     <i class="fa-solid fa-check mr-1"></i> Submitted
                                 </span>
@@ -371,11 +408,13 @@
                                     wire:click="markAsUndone({{ $requirement->id }})" 
                                     class="px-3 py-1 bg-gray-100 text-gray-800 text-xs font-medium rounded-full hover:bg-gray-200 transition-colors flex items-center"
                                     wire:loading.attr="disabled"
-                                    wire:click.stop
                                 >
-                                    <i class="fa-solid fa-rotate-left mr-1"></i>
-                                    <span wire:loading.remove>Undo</span>
-                                    <span wire:loading>Processing...</span>
+                                    <div wire:loading wire:target="markAsUndone({{ $requirement->id }})" class="mr-1">
+                                        <i class="fa-solid fa-spinner fa-spin"></i>
+                                    </div>
+                                    <i wire:loading.remove wire:target="markAsUndone({{ $requirement->id }})" class="fa-solid fa-rotate-left mr-1"></i>
+                                    <span wire:loading.remove wire:target="markAsUndone({{ $requirement->id }})">Undo</span>
+                                    <span wire:loading wire:target="markAsUndone({{ $requirement->id }})">Processing...</span>
                                 </button>
                             </div>
                         @else
@@ -384,11 +423,13 @@
                                 wire:click="markAsDone({{ $requirement->id }})" 
                                 class="px-3 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full hover:bg-blue-200 transition-colors flex items-center"
                                 wire:loading.attr="disabled"
-                                wire:click.stop
                             >
-                                <i class="fa-solid fa-check mr-1"></i>
-                                <span wire:loading.remove>Mark as Done</span>
-                                <span wire:loading>Processing...</span>
+                                <div wire:loading wire:target="markAsDone({{ $requirement->id }})" class="mr-1">
+                                    <i class="fa-solid fa-spinner fa-spin"></i>
+                                </div>
+                                <i wire:loading.remove wire:target="markAsDone({{ $requirement->id }})" class="fa-solid fa-check mr-1"></i>
+                                <span wire:loading.remove wire:target="markAsDone({{ $requirement->id }})">Mark as Done</span>
+                                <span wire:loading wire:target="markAsDone({{ $requirement->id }})">Processing...</span>
                             </button>
                         @endif
                     </div>
