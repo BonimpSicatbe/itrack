@@ -17,7 +17,7 @@ class RequirementIndex extends Component
     public $sortStatus = '';
     public $sortAssignedTo = '';
     public $completionFilter = 'all'; // 'all', 'pending', 'completed'
-    
+
     // Sorting properties
     public $sortBy = 'due'; // default sort field
     public $sortDir = 'desc'; // default sort direction
@@ -35,29 +35,29 @@ class RequirementIndex extends Component
 
     public function loadRequirements()
     {
-        
+
     }
 
     public function deleteRequirement()
     {
         $this->isDeleting = true;
-        
+
         try {
             $requirement = Requirement::findOrFail($this->requirementToDelete);
             $requirement->clearMediaCollection('requirementRequiredFiles');
             $requirement->delete();
-            
+
             $this->resetDeleteModal();
-            $this->dispatch('showNotification', 
-                type: 'success', 
+            $this->dispatch('showNotification',
+                type: 'success',
                 content: 'Requirement deleted successfully.',
                 duration: 3000
             );
             Log::info('Requirement deleted', ['requirement_id' => $this->requirementToDelete]);
         } catch (\Exception $e) {
             $this->resetDeleteModal();
-            $this->dispatch('showNotification', 
-                type: 'error', 
+            $this->dispatch('showNotification',
+                type: 'error',
                 content: 'Failed to delete requirement.',
                 duration: 3000
             );
@@ -66,7 +66,7 @@ class RequirementIndex extends Component
                 'trace' => $e->getTraceAsString()
             ]);
         } finally {
-            $this->isDeleting = false; 
+            $this->isDeleting = false;
         }
     }
 
@@ -97,13 +97,13 @@ class RequirementIndex extends Component
     {
         $colleges = College::all();
         $departments = Department::all();
-        
+
         // Get the active semester
         $activeSemester = Semester::getActiveSemester();
-        
+
         // Only query requirements if there's an active semester
         $requirements = collect();
-        
+
         if ($activeSemester) {
             $requirements = Requirement::query()
                 ->where('semester_id', $activeSemester->id)
@@ -127,15 +127,14 @@ class RequirementIndex extends Component
                 ->map(function ($requirement) {
                     // Calculate assigned users count without modifying the model
                     $count = 0;
-                    
-                    if (College::where('name', $requirement->assigned_to)->exists()) {
-                        $college = College::where('name', $requirement->assigned_to)->first();
+                    $college = College::where('name', $requirement->assigned_to)->first();
+                    if ($college) {
                         $count = User::where('college_id', $college->id)->count();
                     } elseif (Department::where('name', $requirement->assigned_to)->exists()) {
                         $department = Department::where('name', $requirement->assigned_to)->first();
                         $count = User::where('department_id', $department->id)->count();
                     }
-                    
+
                     // Add the count as a dynamic property
                     $requirement->assigned_users_count = $count;
                     return $requirement;

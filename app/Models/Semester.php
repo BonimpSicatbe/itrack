@@ -49,6 +49,10 @@ class Semester extends Model
             ->first();
     }
 
+    public function requirements() {
+        return $this->hasMany(Requirement::class);
+    }
+
     public function scopeActive($query)
     {
         return $query->where('is_active', true);
@@ -69,10 +73,10 @@ class Semester extends Model
     {
         // Deactivate all semesters first
         self::query()->update(['is_active' => false]);
-        
+
         // Activate this semester
         $this->update(['is_active' => true]);
-        
+
         return $this;
     }
 

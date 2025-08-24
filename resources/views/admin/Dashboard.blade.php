@@ -1,10 +1,10 @@
 <x-admin.app-layout>
     <div class="flex flex-col gap-6">
         {{-- Overview section (always visible) --}}
-        @livewire('admin.dashboard.overview')
+        @livewire('admin.dashboard.overview', ['currentSemester' => $currentSemester])
 
         {{-- Semester Analytics --}}
-        @livewire('admin.dashboard.semester-analytics')
+        @livewire('admin.dashboard.semester-analytics', ['currentSemester' => $currentSemester])
 
         {{-- Accordion Sections --}}
         <div class="flex flex-col gap-4 pb-6">
@@ -12,12 +12,12 @@
             <div class="card bg-base-100 shadow">
                 <div class="card-body p-0">
                     <div class="collapse collapse-arrow">
-                        <input type="checkbox" name="dashboard-accordion" checked /> 
+                        <input type="checkbox" name="dashboard-accordion" checked />
                         <div class="collapse-title font-semibold text-lg px-6 py-4 hover:bg-base-200">
                             Requirements
                         </div>
                         <div class="collapse-content px-6 pb-4">
-                            @livewire('admin.dashboard.requirement')
+                            @livewire('admin.dashboard.requirement', ['currentSemester' => $currentSemester])
                         </div>
                     </div>
                 </div>

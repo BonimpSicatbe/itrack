@@ -9,6 +9,7 @@ use App\Http\Controllers\FileController;
 use App\Http\Controllers\FileManagerController;
 use App\Http\Controllers\FileUploadController;
 use App\Http\Controllers\admin\SemesterController;
+use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
@@ -52,7 +53,9 @@ Route::middleware(['auth', 'role:admin|super-admin'])
     ->group(function () {
         // Dashboard
         Route::get('/dashboard', function () {
-            return view('admin.dashboard');
+            return view('admin.dashboard', [
+                'currentSemester' => \App\Models\Semester::with('requirements')->where('is_active', true)->first(),
+            ]);
         })->name('dashboard');
 
         // Notifications
@@ -83,7 +86,7 @@ Route::middleware(['auth', 'role:admin|super-admin'])
 
         // Users
         Route::resource('users', UserController::class);
-        
+
 
         // Semesters
         Route::prefix('semesters')->group(function () {
@@ -113,12 +116,12 @@ Route::middleware('auth')->group(function () {
 // Notification routes
 Route::middleware('auth')->group(function () {
     Route::post('/notifications/mark-all-read', function () {
-        auth()->user()->unreadNotifications->markAsRead();
+        Auth::user()->unreadNotifications->markAsRead();
         return back()->with('success', 'All notifications marked as read');
     })->name('notifications.markAllRead');
 
     Route::post('/notifications/{notification}/mark-as-read', function ($notificationId) {
-        $notification = auth()->user()->notifications()->findOrFail($notificationId);
+        $notification = Auth::user()->notifications->findOrFail($notificationId);
         $notification->markAsRead();
         return response()->json(['success' => true]);
     })->name('notifications.markAsRead');
@@ -130,7 +133,7 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     Route::put('/password', [ProfileController::class, 'updatePassword'])->name('password.update');
-    
+
     // Email verification
     Route::post('/email/verification-notification', function (Request $request) {
         $request->user()->sendEmailVerificationNotification();

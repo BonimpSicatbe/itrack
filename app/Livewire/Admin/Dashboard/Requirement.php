@@ -17,8 +17,14 @@ class Requirement extends Component
     public $search = '';
     public $sortField = 'created_at';
     public $sortDirection = 'asc';
+    public $currentSemester;
 
     protected $listeners = ['requirementCreated' => '$refresh'];
+
+    public function mount($currentSemester)
+    {
+        $this->currentSemester = $currentSemester;
+    }
 
     #[Computed()]
     public function sectors()
@@ -45,20 +51,7 @@ class Requirement extends Component
 
     public function render()
     {
-        // Get the active semester
-        $activeSemester = Semester::getActiveSemester();
-        
-        // Only query requirements if there's an active semester
-        $requirementsQuery = ModelsRequirement::query();
-        
-        if ($activeSemester) {
-            $requirementsQuery->where('semester_id', $activeSemester->id);
-        } else {
-            // Return empty results if no active semester
-            $requirementsQuery->whereRaw('1 = 0');
-        }
-
-        $requirements = $requirementsQuery
+        $requirements = $this->currentSemester->requirements()
             ->search('name', $this->search)
             ->orderBy($this->sortField, $this->sortDirection)
             ->paginate(20);
@@ -67,7 +60,7 @@ class Requirement extends Component
             'requirements' => $requirements,
             'colleges' => College::all(),
             'departments' => Department::all(),
-            'activeSemester' => $activeSemester, // Pass to view
+            'activeSemester' => $this->currentSemester, // Pass to view
         ]);
     }
 }

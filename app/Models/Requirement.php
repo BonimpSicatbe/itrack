@@ -119,11 +119,13 @@ class Requirement extends Model implements HasMedia
 
     public function assignedTargets()
     {
-        if (College::where('name', $this->assigned_to)->exists()) {
-            $college = College::where('name', $this->assigned_to)->first();
+        $college = College::where('name', $this->assigned_to)->first();
+        if ($college) {
             return User::where('college_id', $college->id)->get();
-        } elseif (Department::where('name', $this->assigned_to)->exists()) {
-            $department = Department::where('name', $this->assigned_to)->first();
+        }
+
+        $department = Department::where('name', $this->assigned_to)->first();
+        if ($department) {
             return User::where('department_id', $department->id)->get();
         }
 
@@ -178,21 +180,21 @@ class Requirement extends Model implements HasMedia
         static::deleting(function ($requirement) {
             // Delete related media (guides)
             $requirement->media()->delete();
-            
+
             // Delete related submissions and their media
             $requirement->submissions()->each(function ($submission) {
                 $submission->delete();
             });
-            
+
             // Delete both types of related notifications
             DB::table('notifications')
                 ->where(function ($query) use ($requirement) {
                     $query->where('type', 'App\Notifications\NewSubmissionNotification')
-                          ->where('data->requirement_id', $requirement->id);
+                        ->where('data->requirement_id', $requirement->id);
                 })
                 ->orWhere(function ($query) use ($requirement) {
                     $query->where('type', 'App\Notifications\NewRequirementNotification')
-                          ->where('data->requirement_id', $requirement->id);
+                        ->where('data->requirement_id', $requirement->id);
                 })
                 ->delete();
         });

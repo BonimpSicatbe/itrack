@@ -14,15 +14,17 @@ class SemesterAnalytics extends Component
     public $selectedSemesterId;
     public $userActivityStats = [];
     public $storageStats = [];
-    public $semesters = [];
+    public $semesters;
     public $totalStorage = 0;
+    public $currentSemester;
 
     protected $listeners = ['refreshCharts'];
 
-    public function mount()
+    public function mount($currentSemester)
     {
+        $this->currentSemester = $currentSemester;
         $this->semesters = Semester::orderBy('end_date', 'desc')->get();
-        $this->selectedSemesterId = Semester::active()->first()?->id;
+        // $this->selectedSemesterId = Semester::active()->first()?->id;
         $this->loadStats();
     }
 
@@ -33,8 +35,8 @@ class SemesterAnalytics extends Component
 
     public function loadStats()
     {
-        $semester = Semester::find($this->selectedSemesterId);
-        
+        $semester = $this->currentSemester;
+
         if (!$semester) {
             $this->reset(['userActivityStats', 'storageStats', 'totalStorage']);
             return;
@@ -65,7 +67,7 @@ class SemesterAnalytics extends Component
             ->get();
 
         $this->userActivityStats = collect();
-        
+
         foreach ($activeSubmitters as $user) {
             $totalSubmitted = 0;
             $totalApproved = 0;
@@ -83,7 +85,7 @@ class SemesterAnalytics extends Component
 
                 if ($submissions->count() > 0) {
                     $totalSubmitted += $submissions->count();
-                    
+
                     $approvedCount = $submissions->where('status', 'approved')->count();
                     $totalApproved += $approvedCount;
 

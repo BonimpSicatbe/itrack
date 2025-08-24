@@ -11,18 +11,22 @@ class Overview extends Component
 {
     public $stats = [];
     public $totalRequirements = 0;
+    public $currentSemester;
+    public $requirements;
 
-    public function mount()
+    public function mount($currentSemester)
     {
-        $currentSemester = Semester::getActiveSemester();
-        $semesterDescription = $currentSemester 
-            ? $currentSemester->start_date->format('M d, Y') . ' - ' . $currentSemester->end_date->format('M d, Y')
+        $this->currentSemester = $currentSemester;
+        $this->requirements = $this->currentSemester->requirements;
+
+        $semesterDescription = $this->currentSemester
+            ? $this->currentSemester->start_date->format('M d, Y') . ' - ' . $this->currentSemester->end_date->format('M d, Y')
             : 'No active semester';
 
         $this->stats = [
             [
                 'title' => 'Current Semester',
-                'count' => $currentSemester ? $currentSemester->name : 'None',
+                'count' => $this->currentSemester ? $this->currentSemester->name : 'None',
                 'description' => $semesterDescription,
                 'icon' => 'fa-calendar-days',
                 'color' => 'primary',
@@ -30,8 +34,8 @@ class Overview extends Component
         ];
 
         // Only show requirement-related stats if there's an active semester
-        if ($currentSemester) {
-            $this->totalRequirements = Requirement::where('semester_id', $currentSemester->id)->count();
+        if ($this->currentSemester) {
+            $this->totalRequirements = $this->requirements->count();
 
             $this->stats = array_merge($this->stats, [
                 [
@@ -42,26 +46,19 @@ class Overview extends Component
                 ],
                 [
                     'title' => 'Pending Requirements',
-                    'count' => Requirement::where('semester_id', $currentSemester->id)
-                        ->where('status', 'pending')
-                        ->count(),
+                    'count' => $this->requirements->where('status', 'pending')->count(),
                     'icon' => 'fa-clock',
                     'color' => 'warning',
                 ],
                 [
                     'title' => 'Completed',
-                    'count' => Requirement::where('semester_id', $currentSemester->id)
-                        ->where('status', 'completed')
-                        ->count(),
+                    'count' => $this->requirements->where('status', 'completed')->count(),
                     'icon' => 'fa-circle-check',
                     'color' => 'success',
                 ],
                 [
                     'title' => 'Due This Week',
-                    'count' => Requirement::where('semester_id', $currentSemester->id)
-                        ->whereBetween('due', [now(), now()->addWeek()])
-                        ->where('status', '!=', 'completed')
-                        ->count(),
+                    'count' => $this->requirements->whereBetween('due', [now(), now()->addWeek()])->where('status', '!=', 'completed')->count(),
                     'icon' => 'fa-calendar-week',
                     'color' => 'accent',
                 ],

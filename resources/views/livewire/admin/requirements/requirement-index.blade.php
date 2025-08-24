@@ -6,31 +6,31 @@
             {{-- header / actions --}}
             <div class="flex flex-col sm:flex-row flex-wrap items-center justify-between gap-4 w-full">
                 <h2 class="text-lg font-semibold w-full sm:w-auto sm:text-left">Requirements List</h2>
-                
+
                 @if($activeSemester)
                     <div class="flex flex-row gap-4 w-full sm:w-auto justify-center sm:justify-end">
                         <input type="text" wire:model.live="search" id="search" class="input input-bordered input-sm w-full sm:w-sm"
                             placeholder="Search requirements...">
-                        
+
                         {{-- Completion Filter Buttons --}}
                         <div class="join">
-                            <button 
+                            <button
                                 class="btn btn-sm join-item {{ $completionFilter === 'all' ? 'btn-active' : '' }}"
                                 wire:click="$set('completionFilter', 'all')">
                                 All
                             </button>
-                            <button 
+                            <button
                                 class="btn btn-sm join-item {{ $completionFilter === 'pending' ? 'btn-active' : '' }}"
                                 wire:click="$set('completionFilter', 'pending')">
                                 Pending
                             </button>
-                            <button 
+                            <button
                                 class="btn btn-sm join-item {{ $completionFilter === 'completed' ? 'btn-active' : '' }}"
                                 wire:click="$set('completionFilter', 'completed')">
                                 Completed
                             </button>
                         </div>
-                        
+
                         <label for="createRequirement" class="btn btn-sm btn-success flex items-center gap-2">
                             <i class="fa-solid fa-plus"></i>
                             <span class="hidden sm:inline">Create Requirement</span>
@@ -83,7 +83,7 @@
                                     <td class="truncate max-w-[250px]">{{ $requirement->name }}</td>
                                     <td class="truncate">{{ \Carbon\Carbon::parse($requirement->due)->format('m/d/Y h:i a') }}</td>
                                     <td class="truncate">{{ $requirement->assigned_to }}</td>
-                                    <td class="truncate">{{ $requirement->assigned_users_count }}</td>
+                                    <td class="truncate">{{ $requirement->assignedTargets()->count() }}</td>
                                     <td class="truncate">{{ $requirement->status }}</td>
                                     <td class="truncate">
                                         {{ \Carbon\Carbon::parse($requirement->created_at)->format('m/d/Y h:i a') }}
@@ -104,7 +104,7 @@
                                             data-tip="Edit">
                                             <i class="fa-solid fa-edit"></i>
                                         </a>
-                                        <button wire:click="confirmDelete({{ $requirement->id }})" 
+                                        <button wire:click="confirmDelete({{ $requirement->id }})"
                                                 class="btn btn-xs btn-ghost btn-error tooltip"
                                                 data-tip="Delete">
                                             <i class="fa-solid fa-trash"></i>
@@ -134,13 +134,13 @@
             <div class="bg-white rounded-lg p-6 max-w-md w-full shadow-xl"> <!-- Added shadow -->
                 <h3 class="text-lg font-bold mb-4">Confirm Deletion</h3>
                 <p class="mb-6">Are you sure you want to delete this requirement? This action cannot be undone.</p>
-                
+
                 <div class="flex justify-end gap-3">
-                    <button wire:click="$set('showDeleteModal', false)" 
+                    <button wire:click="$set('showDeleteModal', false)"
                             class="btn btn-ghost hover:bg-gray-100"> <!-- Added hover effect -->
                         Cancel
                     </button>
-                    <button wire:click="deleteRequirement" 
+                    <button wire:click="deleteRequirement"
                             class="btn btn-error"
                             wire:loading.attr="disabled"
                             wire:target="deleteRequirement">
