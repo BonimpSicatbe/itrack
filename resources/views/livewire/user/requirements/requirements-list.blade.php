@@ -1,145 +1,157 @@
-<div class="flex flex-col w-full bg-gray-50 min-h-screen">
-    <!-- Enhanced Toolbar -->
-    <div class="bg-white border-b border-gray-200 px-8 py-4 shadow-sm">
-        <div class="flex items-center justify-between">
-            <!-- Search and Filters -->
-            <div class="flex items-center gap-4 flex-1 flex-wrap">
-                <div class="relative flex-1 min-w-[300px] max-w-md">
-                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                        <i class="fa-solid fa-magnifying-glass text-gray-400 text-sm"></i>
-                    </div>
-                    <input
-                        type="text"
-                        wire:model.live.debounce.300ms="search"
-                        placeholder="Search requirements by name or description..."
-                        class="w-full pl-12 pr-12 py-3 text-sm bg-gray-50 border border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:bg-white focus:outline-none transition-all duration-200 placeholder-gray-500"
-                    >
-                    <div wire:loading wire:target="search" class="absolute inset-y-0 right-0 pr-4 flex items-center">
-                        <div class="animate-spin rounded-full h-4 w-4 border-2 border-blue-500 border-t-transparent"></div>
-                    </div>
-                </div>
-                
-                <!-- Enhanced Completion Filter -->
-                <div class="relative">
-                    <select
-                        wire:model.live="completionFilter"
-                        class="appearance-none px-4 py-3 pr-10 text-sm bg-gray-50 border border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:bg-white focus:outline-none transition-all duration-200 cursor-pointer"
-                    >
-                        <option value="">All Requirements</option>
-                        @foreach($completionStatuses as $value => $label)
-                            <option value="{{ $value }}">{{ $label }}</option>
-                        @endforeach
-                    </select>
-                </div>
+<div class="flex flex-col w-full max-w-7xl mx-auto bg-gray-50 min-h-screen">
+    <!-- Main Container with Header Inside -->
+    <div class="flex-1 bg-white rounded-lg shadow-sm overflow-hidden">
+        <!-- Pending Requirements Header - Now Inside Container -->
+           <div class="flex items-center justify-between px-8 py-6 border-b border-gray-200" style="background: linear-gradient(148deg,rgba(18, 67, 44, 1) 0%, rgba(30, 119, 77, 1) 54%, rgba(55, 120, 64, 1) 100%);">
+            <div class="flex items-center gap-2">
+                <i class="fa-solid fa-clipboard-list text-white text-2xl"></i>
+                <h1 class="text-2xl font-bold text-white">Pending Requirements</h1>
             </div>
+            <div>
+                @livewire('user.requirements.calendar-button')
+            </div>
+        </div>
 
-            <!-- Enhanced View Controls -->
-            <div class="flex items-center gap-3">
-                <div class="flex items-center bg-gray-100 rounded-lg p-1">
-                    <button class="p-2 {{ $viewMode === 'list' ? 'text-blue-600 bg-white rounded-md shadow-sm' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50 rounded-md transition-colors' }}" wire:click="$set('viewMode', 'list')">
-                        <i class="fa-solid fa-list text-sm"></i>
-                    </button>
-                    <button class="p-2 {{ $viewMode === 'grid' ? 'text-blue-600 bg-white rounded-md shadow-sm' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50 rounded-md transition-colors' }}" wire:click="$set('viewMode', 'grid')">
-                        <i class="fa-solid fa-grip text-sm"></i>
-                    </button>
-                </div>
-                
-                <!-- Enhanced Sort Dropdown -->
-                <div class="flex items-center bg-gray-50 rounded-lg border border-gray-300 overflow-hidden">
-                    <!-- Sort Field Selector -->
-                    <div class="relative">
-                        <select
-                            wire:model.live="sortField"
-                            class="appearance-none px-4 py-3 pl-4 pr-8 text-sm bg-transparent border-none focus:ring-0 focus:outline-none cursor-pointer"
+        <!-- Enhanced Toolbar -->
+        <div class="bg-white border-b border-[#DEF4C6]/30 px-8 py-4 shadow-sm">
+            <div class="flex items-center justify-between">
+                <!-- Search and Filters -->
+                <div class="flex items-center gap-4 flex-1 flex-wrap">
+                    <div class="relative flex-1 min-w-[300px] max-w-md">
+                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                            <i class="fa-solid fa-magnifying-glass text-[#1B512D] text-sm"></i>
+                        </div>
+                        <input
+                            type="text"
+                            wire:model.live.debounce.300ms="search"
+                            placeholder="Search requirements by name or description..."
+                            class="w-full pl-12 pr-12 py-3 text-sm bg-[#DEF4C6]/20 border border-[#73E2A7]/40 rounded-lg focus:border-[#1C7C54] focus:ring-2 focus:ring-[#1C7C54]/20 focus:bg-white focus:outline-none transition-all duration-200 placeholder-[#1B512D]/60"
                         >
-                            <option value="due">Sort by Due Date</option>
-                            <option value="name">Sort by Name</option>
-                            <option value="priority">Sort by Priority</option>
-                        </select>
+                        <div wire:loading wire:target="search" class="absolute inset-y-0 right-0 pr-4 flex items-center">
+                            <div class="animate-spin rounded-full h-4 w-4 border-2 border-[#1C7C54] border-t-transparent"></div>
+                        </div>
                     </div>
                     
-                    <!-- Sort Direction Toggle -->
-                    <button
-                        wire:click="sortBy('{{ $sortField }}')"
-                        class="px-3 py-3 border-l border-gray-300 text-gray-400 hover:text-blue-600 transition-colors"
-                        title="Toggle sort direction"
-                    >
-                        @if($sortDirection === 'asc')
-                            <i class="fa-solid fa-arrow-up-wide-short text-sm"></i>
-                        @else
-                            <i class="fa-solid fa-arrow-down-wide-short text-sm"></i>
+                    <!-- Enhanced Completion Filter -->
+                    <div class="relative">
+                        <select
+                            wire:model.live="completionFilter"
+                            class="appearance-none px-4 py-3 pr-10 text-sm bg-[#DEF4C6]/20 border border-[#73E2A7]/40 rounded-lg focus:border-[#1C7C54] focus:ring-2 focus:ring-[#1C7C54]/20 focus:bg-white focus:outline-none transition-all duration-200 cursor-pointer"
+                        >
+                            <option value="">All Requirements</option>
+                            @foreach($completionStatuses as $value => $label)
+                                <option value="{{ $value }}">{{ $label }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Enhanced View Controls -->
+                <div class="flex items-center gap-3">
+                    <div class="flex items-center bg-[#DEF4C6]/30 rounded-lg p-1">
+                        <button class="p-2 {{ $viewMode === 'list' ? 'text-[#1B512D] bg-white rounded-md shadow-sm' : 'text-[#1C7C54]/70 hover:text-[#1B512D] hover:bg-[#DEF4C6]/20 rounded-md transition-colors' }}" wire:click="$set('viewMode', 'list')">
+                            <i class="fa-solid fa-list text-sm"></i>
+                        </button>
+                        <button class="p-2 {{ $viewMode === 'grid' ? 'text-[#1B512D] bg-white rounded-md shadow-sm' : 'text-[#1C7C54]/70 hover:text-[#1B512D] hover:bg-[#DEF4C6]/20 rounded-md transition-colors' }}" wire:click="$set('viewMode', 'grid')">
+                            <i class="fa-solid fa-grip text-sm"></i>
+                        </button>
+                    </div>
+                    
+                    <!-- Enhanced Sort Dropdown -->
+                    <div class="flex items-center bg-[#DEF4C6]/20 rounded-lg border border-[#73E2A7]/40 overflow-hidden">
+                        <!-- Sort Field Selector -->
+                        <div class="relative">
+                            <select
+                                wire:model.live="sortField"
+                                class="appearance-none px-4 py-3 pl-4 pr-8 text-sm bg-transparent border-none focus:ring-0 focus:outline-none cursor-pointer text-[#1B512D]"
+                            >
+                                <option value="due">Sort by Due Date</option>
+                                <option value="name">Sort by Name</option>
+                                <option value="priority">Sort by Priority</option>
+                            </select>
+                        </div>
+                        
+                        <!-- Sort Direction Toggle -->
+                        <button
+                            wire:click="sortBy('{{ $sortField }}')"
+                            class="px-3 py-3 border-l border-[#73E2A7]/40 text-[#1C7C54]/70 hover:text-[#1B512D] transition-colors"
+                            title="Toggle sort direction"
+                        >
+                            @if($sortDirection === 'asc')
+                                <i class="fa-solid fa-arrow-up-wide-short text-sm"></i>
+                            @else
+                                <i class="fa-solid fa-arrow-down-wide-short text-sm"></i>
+                            @endif
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Flash message -->
+            @if (session()->has('message'))
+                <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mt-4" role="alert">
+                    <p>{{ session('message') }}</p>
+                </div>
+            @endif
+
+            <!-- Enhanced Active Filters -->
+            @if($search || $completionFilter)
+                <div class="flex items-center gap-3 mt-4 pt-4 border-t border-[#DEF4C6]/30">
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-filter text-[#1C7C54]"></i>
+                        <span class="text-sm font-semibold text-[#1B512D]">Active filters:</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        @if($search)
+                            <div class="flex items-center gap-2 px-3 py-2 bg-[#73E2A7]/20 border border-[#73E2A7]/40 rounded-lg">
+                                <i class="fa-solid fa-magnifying-glass text-[#1C7C54] text-xs"></i>
+                                <span class="text-sm text-[#1B512D] font-medium">"{{ $search }}"</span>
+                                <button wire:click="$set('search', '')" class="ml-1 w-5 h-5 bg-[#73E2A7]/30 hover:bg-[#73E2A7]/50 rounded-full flex items-center justify-center transition-colors duration-200">
+                                    <i class="fa-solid fa-xmark text-[#1B512D] text-xs"></i>
+                                </button>
+                            </div>
                         @endif
+                        @if($completionFilter)
+                            <div class="flex items-center gap-2 px-3 py-2 bg-[#B1CF5F]/20 border border-[#B1CF5F]/40 rounded-lg">
+                                <i class="fa-solid fa-check-circle text-[#1B512D] text-xs"></i>
+                                <span class="text-sm text-[#1B512D] font-medium">{{ $completionStatuses[$completionFilter] ?? $completionFilter }}</span>
+                                <button wire:click="$set('completionFilter', '')" class="ml-1 w-5 h-5 bg-[#B1CF5F]/30 hover:bg-[#B1CF5F]/50 rounded-full flex items-center justify-center transition-colors duration-200">
+                                    <i class="fa-solid fa-xmark text-[#1B512D] text-xs"></i>
+                                </button>
+                            </div>
+                        @endif
+                    </div>
+                    <button wire:click="$set('search', ''); $set('completionFilter', '')" class="text-sm text-[#1C7C54]/70 hover:text-[#1B512D] underline ml-auto">
+                        Clear all filters
                     </button>
                 </div>
-            </div>
+            @endif
         </div>
 
-        <!-- Flash message -->
-        @if (session()->has('message'))
-            <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mt-4" role="alert">
-                <p>{{ session('message') }}</p>
+        <!-- Only show table header in list view -->
+        @if($viewMode === 'list')
+            <!-- Enhanced File List Header -->
+            <div class="bg-gradient-to-r from-[#DEF4C6]/20 to-[#B1CF5F]/10 border-b border-[#73E2A7]/30 px-8 py-3">
+                <div class="grid grid-cols-10 gap-6 text-xs font-semibold text-[#1B512D] uppercase tracking-wider">
+                    <div class="col-span-4 flex items-center gap-2">
+                        <i class="fa-solid fa-file-lines text-[#1C7C54]/70"></i>
+                        Name
+                    </div>
+                    <div class="col-span-2 flex items-center gap-2">
+                        <i class="fa-regular fa-calendar text-[#1C7C54]/70"></i>
+                        Due Date
+                    </div>
+                    <div class="col-span-2 flex items-center gap-2">
+                        <i class="fa-solid fa-exclamation-triangle text-[#1C7C54]/70"></i>
+                        Priority
+                    </div>
+                    <div class="col-span-2 flex items-center gap-2 justify-end">
+                    </div>
+                </div>
             </div>
         @endif
 
-        <!-- Enhanced Active Filters -->
-        @if($search || $completionFilter)
-            <div class="flex items-center gap-3 mt-4 pt-4 border-t border-gray-100">
-                <div class="flex items-center gap-2">
-                    <i class="fa-solid fa-filter text-blue-600"></i>
-                    <span class="text-sm font-semibold text-gray-700">Active filters:</span>
-                </div>
-                <div class="flex items-center gap-2">
-                    @if($search)
-                        <div class="flex items-center gap-2 px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg">
-                            <i class="fa-solid fa-magnifying-glass text-blue-600 text-xs"></i>
-                            <span class="text-sm text-blue-800 font-medium">"{{ $search }}"</span>
-                            <button wire:click="$set('search', '')" class="ml-1 w-5 h-5 bg-blue-100 hover:bg-blue-200 rounded-full flex items-center justify-center transition-colors duration-200">
-                                <i class="fa-solid fa-xmark text-blue-600 text-xs"></i>
-                            </button>
-                        </div>
-                    @endif
-                    @if($completionFilter)
-                        <div class="flex items-center gap-2 px-3 py-2 bg-green-50 border border-green-200 rounded-lg">
-                            <i class="fa-solid fa-check-circle text-green-600 text-xs"></i>
-                            <span class="text-sm text-green-800 font-medium">{{ $completionStatuses[$completionFilter] ?? $completionFilter }}</span>
-                            <button wire:click="$set('completionFilter', '')" class="ml-1 w-5 h-5 bg-green-100 hover:bg-green-200 rounded-full flex items-center justify-center transition-colors duration-200">
-                                <i class="fa-solid fa-xmark text-green-600 text-xs"></i>
-                            </button>
-                        </div>
-                    @endif
-                </div>
-                <button wire:click="$set('search', ''); $set('completionFilter', '')" class="text-sm text-gray-500 hover:text-gray-700 underline ml-auto">
-                    Clear all filters
-                </button>
-            </div>
-        @endif
-    </div>
-
-    <!-- Only show table header in list view -->
-    @if($viewMode === 'list')
-        <!-- Enhanced File List Header -->
-        <div class="bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200 px-8 py-3">
-            <div class="grid grid-cols-10 gap-6 text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                <div class="col-span-4 flex items-center gap-2">
-                    <i class="fa-solid fa-file-lines text-gray-400"></i>
-                    Name
-                </div>
-                <div class="col-span-2 flex items-center gap-2">
-                    <i class="fa-regular fa-calendar text-gray-400"></i>
-                    Due Date
-                </div>
-                <div class="col-span-2 flex items-center gap-2">
-                    <i class="fa-solid fa-exclamation-triangle text-gray-400"></i>
-                    Priority
-                </div>
-                <div class="col-span-2 flex items-center gap-2 justify-end">
-                </div>
-            </div>
-        </div>
-    @endif
-
-    <!-- Enhanced Requirements List -->
-    <div class="flex-1 bg-white">
+        <!-- Enhanced Requirements List Content -->
         @if($viewMode === 'grid')
             <!-- Grid View Layout -->
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
@@ -147,14 +159,16 @@
                     <div class="bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow p-5 cursor-pointer" wire:click="$dispatch('showRequirementDetail', { requirementId: {{ $requirement->id }} })">
                         <div class="flex items-center justify-between mb-4">
                             @php
-                                $extension = pathinfo($requirement->name, PATHINFO_EXTENSION);
-                                $iconData = match(strtolower($extension)) {
-                                    'pdf' => ['icon' => 'fa-file-pdf', 'color' => 'text-red-600'],
-                                    'doc', 'docx' => ['icon' => 'fa-file-word', 'color' => 'text-purple-600'],
-                                    'ppt', 'pptx' => ['icon' => 'fa-file-powerpoint', 'color' => 'text-orange-600'],
-                                    default => ['icon' => 'fa-file', 'color' => 'text-purple-600']
-                                };
-                            @endphp
+                             $extension = pathinfo($requirement->name, PATHINFO_EXTENSION);
+                            $iconData = match(strtolower($extension)) {
+                                'pdf' => ['icon' => 'fa-file-pdf', 'color' => 'text-[#1C7C54]'], // Changed to green
+                                'doc', 'docx' => ['icon' => 'fa-file-word', 'color' => 'text-[#1B512D]'], // Changed to dark green
+                                'ppt', 'pptx' => ['icon' => 'fa-file-powerpoint', 'color' => 'text-[#73E2A7]'], // Changed to light green
+                                'xls', 'xlsx' => ['icon' => 'fa-file-excel', 'color' => 'text-[#B1CF5F]'], // Changed to lime green
+                                default => ['icon' => 'fa-file', 'color' => 'text-[#1C7C54]'] // Changed to green
+                            };
+                             @endphp
+
                             <div class="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
                                 <i class="fa-solid {{ $iconData['icon'] }} {{ $iconData['color'] }} text-xl"></i>
                             </div>
@@ -261,11 +275,41 @@
                             @php
                                 $extension = pathinfo($requirement->name, PATHINFO_EXTENSION);
                                 $iconData = match(strtolower($extension)) {
-                                    'pdf' => ['icon' => 'fa-file-pdf', 'color' => 'text-red-600', 'bg' => 'bg-red-100', 'hover_color' => 'group-hover:text-red-700', 'hover_bg' => 'group-hover:bg-red-200'],
-                                    'doc', 'docx' => ['icon' => 'fa-file-word', 'color' => 'text-purple-600', 'bg' => 'bg-purple-100', 'hover_color' => 'group-hover:text-purple-700', 'hover_bg' => 'group-hover:bg-purple-200'],
-                                    'ppt', 'pptx' => ['icon' => 'fa-file-powerpoint', 'color' => 'text-orange-600', 'bg' => 'bg-orange-100', 'hover_color' => 'group-hover:text-orange-700', 'hover_bg' => 'group-hover:bg-orange-200'],
-                                    'xls', 'xlsx' => ['icon' => 'fa-file-excel', 'color' => 'text-green-600', 'bg' => 'bg-green-100', 'hover_color' => 'group-hover:text-green-700', 'hover_bg' => 'group-hover:bg-green-200'],
-                                    default => ['icon' => 'fa-file', 'color' => 'text-purple-600', 'bg' => 'bg-purple-100', 'hover_color' => 'group-hover:text-purple-700', 'hover_bg' => 'group-hover:bg-purple-200']
+                                    'pdf' => [
+                                        'icon' => 'fa-file-pdf', 
+                                        'color' => 'text-[#1C7C54]', 
+                                        'bg' => 'bg-[#DEF4C6]/30', 
+                                        'hover_color' => 'group-hover:text-[#1B512D]', 
+                                        'hover_bg' => 'group-hover:bg-[#DEF4C6]/50'
+                                    ],
+                                    'doc', 'docx' => [
+                                        'icon' => 'fa-file-word', 
+                                        'color' => 'text-[#1B512D]', 
+                                        'bg' => 'bg-[#73E2A7]/20', 
+                                        'hover_color' => 'group-hover:text-[#1C7C54]', 
+                                        'hover_bg' => 'group-hover:bg-[#73E2A7]/40'
+                                    ],
+                                    'ppt', 'pptx' => [
+                                        'icon' => 'fa-file-powerpoint', 
+                                        'color' => 'text-[#73E2A7]', 
+                                        'bg' => 'bg-[#B1CF5F]/20', 
+                                        'hover_color' => 'group-hover:text-[#1B512D]', 
+                                        'hover_bg' => 'group-hover:bg-[#B1CF5F]/40'
+                                    ],
+                                    'xls', 'xlsx' => [
+                                        'icon' => 'fa-file-excel', 
+                                        'color' => 'text-[#B1CF5F]', 
+                                        'bg' => 'bg-[#DEF4C6]/20', 
+                                        'hover_color' => 'group-hover:text-[#1C7C54]', 
+                                        'hover_bg' => 'group-hover:bg-[#DEF4C6]/40'
+                                    ],
+                                    default => [
+                                        'icon' => 'fa-file', 
+                                        'color' => 'text-[#1C7C54]', 
+                                        'bg' => 'bg-[#DEF4C6]/30', 
+                                        'hover_color' => 'group-hover:text-[#1B512D]', 
+                                        'hover_bg' => 'group-hover:bg-[#DEF4C6]/50'
+                                    ]
                                 };
                             @endphp
                             <div class="w-10 h-10 {{ $iconData['bg'] }} {{ $iconData['hover_bg'] }} rounded-lg flex items-center justify-center group-hover:scale-105 transition-all duration-200">
@@ -377,27 +421,27 @@
                 </div>
             @endforelse
         @endif
-    </div>
 
-    <!-- Enhanced Footer/Status Bar -->
-    <div class="bg-white border-t border-gray-200 px-8 py-4 shadow-sm">
-        <div class="flex items-center justify-between">
-            <div class="flex items-center gap-6 text-sm text-gray-600">
-                @if($requirements->count() > 0)
+        <!-- Enhanced Footer/Status Bar -->
+        <div class="bg-white border-t border-gray-200 px-8 py-4 shadow-sm">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-6 text-sm text-gray-600">
+                    @if($requirements->count() > 0)
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-list-check text-gray-400"></i>
+                            <span>Showing <span class="font-semibold text-gray-900">{{ $requirements->count() }}</span> {{ $requirements->count() === 1 ? 'requirement' : 'requirements' }}</span>
+                        </div>
+                    @endif
                     <div class="flex items-center gap-2">
-                        <i class="fa-solid fa-list-check text-gray-400"></i>
-                        <span>Showing <span class="font-semibold text-gray-900">{{ $requirements->count() }}</span> {{ $requirements->count() === 1 ? 'requirement' : 'requirements' }}</span>
+                        <i class="fa-solid fa-clock text-gray-400"></i>
+                        <span>Last updated: <span class="font-medium">{{ now()->format('M j, Y g:i A') }}</span></span>
                     </div>
-                @endif
-                <div class="flex items-center gap-2">
-                    <i class="fa-solid fa-clock text-gray-400"></i>
-                    <span>Last updated: <span class="font-medium">{{ now()->format('M j, Y g:i A') }}</span></span>
                 </div>
-            </div>
-            <div class="flex items-center gap-2 text-xs text-gray-500">
-                <div class="flex items-center gap-1">
-                    <div class="w-2 h-2 bg-green-500 rounded-full"></div>
-                    <span>System Online</span>
+                <div class="flex items-center gap-2 text-xs text-gray-500">
+                    <div class="flex items-center gap-1">
+                        <div class="w-2 h-2 bg-green-500 rounded-full"></div>
+                        <span>System Online</span>
+                    </div>
                 </div>
             </div>
         </div>

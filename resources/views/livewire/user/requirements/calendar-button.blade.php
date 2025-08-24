@@ -60,11 +60,13 @@
 }">
     <button 
         @click="showCalendar = !showCalendar"
-        class="btn btn-sm btn-ghost gap-2"
-    >
-        <i class="fa-regular fa-calendar"></i>
-        <span>Calendar</span>
-    </button>
+    class="flex items-center gap-2 px-4 py-2 bg-white/90 hover:bg-white text-[#1B512D] border border-white/20 hover:border-white/40 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 backdrop-blur-sm"
+>
+    <i class="fa-regular fa-calendar text-[#1C7C54]"></i>
+    <span class="font-medium text-sm">Calendar</span>
+    <i class="fa-solid fa-chevron-down text-xs transition-transform duration-200" 
+       :class="showCalendar ? 'rotate-180' : ''"></i>
+</button>
 
     <div 
         x-show="showCalendar"
