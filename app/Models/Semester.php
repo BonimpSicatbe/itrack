@@ -4,7 +4,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use ZipArchive;
 
 class Semester extends Model
 {
@@ -49,7 +51,8 @@ class Semester extends Model
             ->first();
     }
 
-    public function requirements() {
+    public function requirements()
+    {
         return $this->hasMany(Requirement::class);
     }
 
@@ -66,7 +69,7 @@ class Semester extends Model
     public function scopeDuring($query, $date)
     {
         return $query->where('start_date', '<=', $date)
-                    ->where('end_date', '>=', $date);
+            ->where('end_date', '>=', $date);
     }
 
     public function setActive()
@@ -95,5 +98,58 @@ class Semester extends Model
             return true;
         }
         return false;
+    }
+
+    public function submittedRequirements()
+    {
+        return SubmittedRequirement::whereBetween('submitted_at', [$this->start_date, $this->end_date]);
+    }
+
+    public function archiveSemesterWithFiles()
+    {
+        // Deactivate semester
+        $this->update(['is_active' => false]);
+
+        // For each submission → move files
+        foreach ($this->requirements as $requirement) {
+            foreach ($requirement->media as $media) {
+                $media->move("archives/semesters/{$this->name}", $media->file_name);
+            }
+        }
+    }
+
+    public function downloadArchive()
+    {
+        if (!Auth::user() || !Auth::user()->hasRole('super-admin')) {
+            abort(403, 'Unauthorized');
+        }
+
+        $zipFileName = "semester_{$this->id}_archive.zip";
+        $dir = storage_path("app/archives/zips");
+        $zipPath = "{$dir}/{$zipFileName}";
+
+        // Ensure directory exists
+        if (!file_exists($dir)) {
+            mkdir($dir, 0755, true);
+        }
+
+        $zip = new \ZipArchive;
+        if ($zip->open($zipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) === TRUE) {
+            foreach ($this->requirements as $requirement) {
+                foreach ($requirement->media as $media) {
+                    $filePath = $media->getPath();
+                    if (file_exists($filePath)) {
+                        $zip->addFile($filePath, "{$requirement->name}/{$media->file_name}");
+                    } else {
+                        \Log::warning("File missing in media", ['id' => $media->id, 'path' => $filePath]);
+                    }
+                }
+            }
+            $zip->close();
+        } else {
+            abort(500, 'Could not create archive.');
+        }
+
+        return response()->download($zipPath)->deleteFileAfterSend(true);
     }
 }

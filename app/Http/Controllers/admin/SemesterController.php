@@ -62,4 +62,9 @@ class SemesterController extends Controller
         $semester->update(['is_active' => true]);
         session()->flash('success', 'Semester activated successfully');
     }
+
+    public function downloadArchive(Semester $semester)
+    {
+        return $semester->downloadArchive();
+    }
 }

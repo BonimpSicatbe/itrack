@@ -51,6 +51,11 @@ Route::middleware(['auth', 'role:admin|super-admin'])
     ->prefix('/admin')
     ->as('admin.')
     ->group(function () {
+        Route::middleware(['auth', 'role:super-admin'])->group(function () {
+            Route::get('/semesters/{semester}/download-archive', [SemesterController::class, 'downloadArchive'])
+                ->name('semesters.downloadArchive');
+        });
+
         // Dashboard
         Route::get('/dashboard', function () {
             return view('admin.dashboard', [
@@ -107,7 +112,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/preview/file/{submission}', [FileController::class, 'preview'])
         ->name('file.preview');
     // Add this new route for guide files
-     Route::get('/download/guide/{media}', [FileController::class, 'downloadGuide'])
+    Route::get('/download/guide/{media}', [FileController::class, 'downloadGuide'])
         ->name('guide.download');
     Route::get('/preview/guide/{media}', [FileController::class, 'previewGuide'])
         ->name('guide.preview');
