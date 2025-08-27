@@ -29,8 +29,8 @@
             
             .wave-layer {
                 position: absolute;
-                width: 300%;
-                height: 20vh;
+                width: 500%;
+                height: 100vh;
                 opacity: 0.9;
                 bottom: 0;
             }
@@ -60,7 +60,7 @@
                 background: linear-gradient(135deg, #16a34a 0%, #166534 50%, #14532d 100%);
                 clip-path: path('M-800,250 C-400,50 0,450 400,250 C800,50 1200,450 1600,250 C2000,50 2400,450 2800,250 C3200,50 3600,450 4000,250 L4000,1200 L-800,1200 Z');
                 height: 40vh;
-                animation: slideLeft5 5s linear infinite;
+                animation: slideLeft5 10s linear infinite;
             }
             
             @keyframes slideLeft1 {
