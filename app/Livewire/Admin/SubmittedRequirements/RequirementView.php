@@ -53,7 +53,7 @@ class RequirementView extends Component
             ->latest()
             ->get();
 
-        // Collect all files from all submissions
+        // Collect all files from all submissions as a collection
         $this->allFiles = $this->allSubmissions->flatMap(function ($submission) {
             return $submission->getMedia('submission_files')->map(function ($media) use ($submission) {
                 $extension = strtolower(pathinfo($media->file_name, PATHINFO_EXTENSION));
@@ -78,7 +78,7 @@ class RequirementView extends Component
                     'submitted_at' => $submission->submitted_at,
                 ];
             });
-        })->toArray();
+        });
 
         // Select the file to preview
         $this->selectInitialFile();
@@ -86,13 +86,22 @@ class RequirementView extends Component
 
     protected function selectInitialFile()
     {
-        if (empty($this->allFiles)) {
+        // Check if there are any files
+        if ($this->allFiles->isEmpty()) {
+            $this->selectedFile = null;
+            $this->fileUrl = null;
+            $this->isImage = false;
+            $this->isPdf = false;
+            $this->isOfficeDoc = false;
+            $this->isPreviewable = false;
+            $this->selectedStatus = '';
+            $this->adminNotes = '';
             return;
         }
 
         // Try to select the initial file if provided
         if ($this->initialFileId) {
-            $file = collect($this->allFiles)->firstWhere('id', $this->initialFileId);
+            $file = $this->allFiles->firstWhere('id', $this->initialFileId);
             if ($file) {
                 $this->selectFile($file['id']);
                 return;
@@ -100,7 +109,7 @@ class RequirementView extends Component
         }
 
         // Fallback to the first file
-        $this->selectFile($this->allFiles[0]['id']);
+        $this->selectFile($this->allFiles->first()['id']);
     }
 
     public function selectFile($fileId)

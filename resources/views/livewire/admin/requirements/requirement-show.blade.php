@@ -4,7 +4,9 @@
         {{-- Requirement Details Card --}}
         <div class="w-full bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
             <div class="bg-DEF4C6 border-b border-DEF4C6 px-6 py-4 flex justify-between items-center">
-                <h2 class="text-gray-800 text-xl font-bold tracking-wide">Requirement Details</h2>
+                <h2 class="text-xl font-semibold text-1B512D">
+                    <i class="fa-solid fa-circle-info mr-2"></i> Requirement Details
+                </h2>
                 <a href="{{ route('admin.requirements.edit', ['requirement' => $requirement->id]) }}" 
                    class="bg-white text-1C7C54 px-4 py-1.5 rounded-full shadow hover:bg-DEF4C6 hover:text-1B512D font-semibold text-sm transition-all duration-200">
                     <i class="text-1C7C54 fa-solid fa-pencil mr-2"></i> EDIT

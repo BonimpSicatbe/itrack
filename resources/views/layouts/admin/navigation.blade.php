@@ -22,13 +22,14 @@
                 {{-- Main Navigation --}}
                 <div class="flex items-center space-x-1">
                     @foreach ($navLinks['main'] as $navlink)
-                        <div class="relative group" x-data="{ isActive: {{ request()->routeIs($navlink['route']) ? 'true' : 'false' }} }">
+                        <div class="relative group" 
+                             x-data="{ isActive: {{ request()->routeIs($navlink['group'] ?? $navlink['route']) ? 'true' : 'false' }} }">
                             <a href="{{ route($navlink['route']) }}"
-                            class="px-4 py-2 rounded-lg text-xs font-medium transition-all duration-200 flex items-center space-x-2 relative
-                                    {{ request()->routeIs($navlink['route']) 
-                                        ? 'bg-green-50 text-green-700 shadow-sm' 
-                                        : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900' }}"
-                            :aria-current="isActive ? 'page' : 'false'">
+                               class="px-4 py-2 rounded-lg text-xs font-medium transition-all duration-200 flex items-center space-x-2 relative
+                                      {{ request()->routeIs($navlink['group'] ?? $navlink['route']) 
+                                          ? 'bg-green-50 text-green-700 shadow-sm' 
+                                          : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900' }}"
+                               :aria-current="isActive ? 'page' : 'false'">
                                 <i class="fa-solid fa-{{ $navlink['icon'] }} text-sm" aria-hidden="true"></i>
                                 <span>{{ $navlink['label'] }}</span>
                             </a>
@@ -144,15 +145,15 @@
                 @foreach ($navLinks['main'] as $navlink)
                     <a href="{{ route($navlink['route']) }}"
                        class="flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors duration-200 relative
-                              {{ request()->routeIs($navlink['route']) 
-                                 ? 'bg-green-50 text-green-700' 
-                                 : 'text-gray-700 hover:bg-gray-50' }}"
+                              {{ request()->routeIs($navlink['group'] ?? $navlink['route']) 
+                                  ? 'bg-green-50 text-green-700' 
+                                  : 'text-gray-700 hover:bg-gray-50' }}"
                        @click="mobileMenuOpen = false"
-                       :aria-current="{{ request()->routeIs($navlink['route']) ? "'page'" : 'false' }}">
+                       :aria-current="{{ request()->routeIs($navlink['group'] ?? $navlink['route']) ? "'page'" : 'false' }}">
                         <i class="fa-solid fa-{{ $navlink['icon'] }} text-sm w-5" aria-hidden="true"></i>
                         <span class="flex-1">{{ $navlink['label'] }}</span>
                         
-                        @if (request()->routeIs($navlink['route']))
+                        @if (request()->routeIs($navlink['group'] ?? $navlink['route']))
                             <i class="fa-solid fa-chevron-right text-green-600 text-sm" aria-hidden="true"></i>
                         @endif
                     </a>

@@ -43,6 +43,13 @@ class SemesterView extends Component
     {
         $this->semesterToArchive = $semesterId;
         $this->showArchiveModal = true;
+        
+        // Example of warning notification
+        $this->dispatch('showNotification', 
+            type: 'warning', 
+            content: 'You are about to archive a semester. This action cannot be undone.',
+            duration: 5000
+        );
     }
 
     public function archiveSemester()
@@ -106,8 +113,8 @@ class SemesterView extends Component
         foreach ($semesters as $semester) {
             if ($semester->shouldAutoArchive()) {
                 $this->dispatch('showNotification', 
-                    type: 'info', 
-                    content: "Semester '{$semester->name}' has ended and will be auto-archived soon.",
+                    type: 'warning', // Changed from 'info' to 'warning'
+                    content: "Semester '{$semester->name}' will be ended today and will be auto-archived soon.",
                     duration: 5000
                 );
             }

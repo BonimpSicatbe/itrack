@@ -29,7 +29,7 @@
   ::before,
   ::backdrop,
   ::file-selector-button {
-    border-color: var(--color-gray-200, currentcolor);
+    border-color: var(--color-green-200, currentcolor);
   }
 }
 
@@ -67,52 +67,6 @@
     .focus\:ring-1B512D:focus { --tw-ring-color: #1B512D; }
     .focus\:border-1B512D:focus { border-color: #1B512D; }
     
-    /* Pagination styling */
-    .pagination {
-        display: flex;
-        list-style: none;
-        padding: 0;
-        gap: 0.5rem;
-        justify-content: center;
-    }
-    
-    .pagination li a {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        height: 2.25rem;
-        min-width: 2.25rem;
-        padding: 0 0.75rem;
-        border-radius: 9999px;
-        border: 1px solid #DEF4C6;
-        background-color: white;
-        color: #1C7C54;
-        font-weight: 500;
-        transition: all 0.2s;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-    }
-    
-    .pagination li a:hover {
-        background-color: #DEF4C6;
-        border-color: #1C7C54;
-        transform: translateY(-1px);
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    }
-    
-    .pagination li.active a {
-        background: linear-gradient(to right, #1C7C54, #1B512D);
-        color: white;
-        border-color: #1C7C54;
-        box-shadow: 0 2px 5px rgba(28, 124, 84, 0.3);
-    }
-    
-    .pagination li.disabled a {
-        opacity: 0.5;
-        cursor: not-allowed;
-        transform: none;
-        box-shadow: none;
-    }
-    
     /* Table styling */
     table {
         border-collapse: separate;
@@ -143,6 +97,21 @@
     
     .last\:pr-6:last-child {
         padding-right: 1.5rem;
+    }
+
+    /* Custom styles for amber warning notifications */
+    .alert-warning {
+        background-color: rgb(252 211 77) !important; /* Amber-400 */
+        border-color: rgb(251 191 36) !important; /* Amber-500 */
+        color: rgb(120 53 15) !important; /* Amber-900 */
+    }
+    
+    .alert-warning .stroke-current {
+        color: rgb(120 53 15) !important; /* Amber-900 */
+    }
+    
+    .alert-warning button {
+        color: rgb(120 53 15) !important; /* Amber-900 */
     }
 
 

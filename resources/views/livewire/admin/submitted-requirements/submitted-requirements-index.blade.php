@@ -1,44 +1,46 @@
-<div class="flex flex-col gap-4 w-[92%] mx-auto">
-    <div class="flex flex-col gap-6 bg-white p-6 w-full rounded-xl shadow-md border border-DEF4C6">
-        <!-- Header and View Toggle -->
-        <div class="flex justify-between items-center">
-            <h2 class="text-xl font-semibold text-1B512D">📂 Submitted Requirements</h2>
-            @if($activeSemester)
-                <div class="flex items-center gap-2">
-                    <div class="flex items-center gap-2 bg-DEF4C6 p-1 rounded-xl">
-                        <button 
-                            wire:click="switchView('list')" 
-                            class="p-2 rounded-lg transition-colors {{ $viewMode === 'list' ? 'bg-73E2A7 text-1B512D shadow-sm' : 'hover:bg-DEF4C6 text-1C7C54' }}"
-                            title="List view"
-                        >
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd" />
-                            </svg>
-                        </button>
-                        <button 
-                            wire:click="switchView('grid')" 
-                            class="p-2 rounded-lg transition-colors {{ $viewMode === 'grid' ? 'bg-73E2A7 text-1B512D shadow-sm' : 'hover:bg-DEF4C6 text-1C7C54' }}"
-                            title="Grid view"
-                        >
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                <path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-                            </svg>
-                        </button>
-                    </div>
-                </div>
-            @endif
+<div class="flex flex-col gap-2 w-[92%] mx-auto mb-6">
+    <!-- Header / Toolbar -->
+    <div class="flex justify-between items-center bg-1C7C54 text-white p-4 rounded-2xl shadow-md">
+        <div class="flex items-center gap-3">
+            <div class="pl-3 bg-1C7C54/10 rounded-xl">
+                <i class="fa-solid fa-paper-plane text-white text-2xl"></i>
+            </div>
+            <h2 class="text-xl md:text-xl font-semibold">Submitted Requirements</h2>
         </div>
 
+        <!-- Always show view toggle buttons -->
+        <div class="flex items-center gap-1 bg-white/20 p-1 rounded-xl">
+            <!-- List Toggle -->
+            <button 
+                wire:click="switchView('list')" 
+                class="p-2 rounded-lg transition-colors {{ $viewMode === 'list' ? 'bg-white text-1C7C54 shadow-sm' : 'hover:bg-white/20 text-white' }}"
+                title="List view"
+            >
+                <i class="fas fa-list"></i>
+            </button>
+            <!-- Grid Toggle -->
+            <button 
+                wire:click="switchView('grid')" 
+                class="p-2 rounded-lg transition-colors {{ $viewMode === 'grid' ? 'bg-white text-1C7C54 shadow-sm' : 'hover:bg-white/20 text-white' }}"
+                title="Grid view"
+            >
+                <i class="fas fa-th"></i>
+            </button>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-2xl shadow-md p-6 flex flex-col gap-6">
+
         @if($activeSemester)
-            <!-- Combined Controls Row -->
-            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <!-- Filter Bar -->
+            <div class="bg-DEF4C6 p-4 rounded-xl flex flex-col md:flex-row md:items-center md:justify-between gap-4 shadow-sm">
                 <!-- Category Buttons -->
                 <div class="flex flex-wrap items-center gap-2">
                     @foreach($categories as $key => $label)
                         <button
                             wire:click="setCategory('{{ $key }}')"
                             class="px-4 py-2 text-sm rounded-xl font-medium transition-colors 
-                                   {{ $category === $key ? 'bg-1C7C54 text-white shadow-sm' : 'bg-DEF4C6 text-1C7C54 hover:bg-73E2A7 hover:text-1B512D' }}"
+                                   {{ $category === $key ? 'bg-1C7C54 text-white shadow-sm' : 'bg-white text-1C7C54 hover:bg-73E2A7 hover:text-1B512D' }}"
                         >
                             {{ $label }}
                         </button>
@@ -46,30 +48,28 @@
                 </div>
 
                 @if($category === 'file')
-                    <!-- Search and Status Filter -->
+                    <!-- Search + Status Filter -->
                     <div class="flex flex-col sm:flex-row items-center gap-4">
-                        <!-- Search Bar -->
-                        <div class="relative max-w-md w-full">
+                        <!-- Search -->
+                        <div class="relative max-w-md w-[300px]">
                             <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                                <svg class="w-4 h-4 text-1C7C54" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
-                                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z"/>
-                                </svg>
+                                <i class="fas fa-search text-1C7C54 text-sm"></i>
                             </div>
                             <input 
                                 type="text" 
                                 wire:model.live.debounce.300ms="search"
-                                class="block w-full p-2 pl-10 text-sm text-1B512D border border-DEF4C6 rounded-xl bg-gray-50 focus:ring-1B512D focus:border-1B512D" 
-                                placeholder="Search files, or users..."
+                                class="block w-[300px] p-2 pl-9 text-sm text-1B512D border border-DEF4C6 rounded-xl bg-white focus:ring-1C7C54 focus:border-1C7C54" 
+                                placeholder="Search files or users..."
                             >
                         </div>
 
-                        <!-- Status Filter -->
+                        <!-- Status -->
                         <div class="flex items-center gap-2">
                             <label for="statusFilter" class="text-sm font-medium text-1B512D whitespace-nowrap">Status:</label>
                             <select 
                                 id="statusFilter" 
                                 wire:model.live="statusFilter"
-                                class="block p-2 text-sm text-1B512D border border-DEF4C6 rounded-xl bg-gray-50 focus:ring-1B512D focus:border-1B512D"
+                                class="block p-2 text-sm text-1B512D border border-DEF4C6 rounded-xl bg-white focus:ring-1C7C54 focus:border-1C7C54"
                             >
                                 <option value="">All Statuses</option>
                                 <option value="under_review">Under Review</option>
@@ -83,170 +83,176 @@
             </div>
         @endif
 
-        <!-- File Display Section (Scrollable) -->
+        <!-- Content -->
         <div class="overflow-y-auto" style="max-height: calc(100vh - 250px);">
             @if($activeSemester)
+
                 @if($category === 'file')
-                    <div class="text-sm text-gray-500 mb-2">
-                        Showing {{ $submittedRequirements->firstItem() }} to {{ $submittedRequirements->lastItem() }} of {{ $submittedRequirements->total() }} results
+                    <div class="mb-4">
+                        {{ $submittedRequirements->links('livewire.pagination') }}
                     </div>
 
                     @if($viewMode === 'list')
-                        <!-- List View -->
-                        <div class="flex flex-col gap-4">
+                        <!-- List View with Column Layout -->
+                        <div class="flex flex-col gap-2 ml-2 mr-2 mb-2">
+                            <!-- Column Headers -->
+                            <div class="grid grid-cols-12 gap-4 px-4 py-2 bg-DEF4C6/30 rounded-lg text-sm font-semibold text-1B512D">
+                                <div class="col-span-3">File</div>
+                                <div class="col-span-2">Requirement</div>
+                                <div class="col-span-3">Submitted By</div>
+                                <div class="col-span-2">Status</div>
+                                <div class="col-span-2">Date Submitted</div>
+                            </div>
+                            
+                            <!-- File Items -->
                             @forelse ($submittedRequirements as $submittedRequirement)
                                 <a href="{{ route('admin.submitted-requirements.show', ['submitted_requirement' => $submittedRequirement, 'file_id' => $submittedRequirement->media->first()->id]) }}" 
-                                   class="flex items-center justify-between p-4 border border-DEF4C6 rounded-xl hover:bg-DEF4C6 transition-colors">
-                                    <div class="flex items-center gap-4">
-                                        <div class="flex items-center">
-                                            @if($submittedRequirement->media->count() > 0)
-                                                @foreach ($submittedRequirement->media as $media)
-                                                    <img src="{{ $media->getUrl() }}" alt="Media" class="w-12 h-12 object-cover rounded-full border border-DEF4C6">
-                                                @endforeach
-                                            @else
-                                                <div class="w-12 h-12 bg-DEF4C6 rounded-full"></div>
-                                            @endif
+                                   class="grid grid-cols-12 gap-4 p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition items-center">
+                                    <!-- File Icon & Name -->
+                                    <div class="col-span-3 flex items-center gap-3">
+                                        <div class="w-8 h-8 flex items-center justify-center">
+                                            <i class="fas {{ $submittedRequirement->getFileIcon() }} {{ $submittedRequirement->getFileIconColor() }} text-xl"></i>
                                         </div>
-                                        <div>
-                                            <h3 class="font-semibold text-1B512D">
-                                                @if($submittedRequirement->media->count() > 0)
-                                                    {{ $submittedRequirement->media->first()->file_name }}
-                                                @else
-                                                    No file attached
-                                                @endif
-                                            </h3>
-                                            <p class="text-sm text-gray-600">
-                                                <span class="font-medium text-1C7C54">Requirement:</span> {{ $submittedRequirement->requirement->name }}
-                                            </p>
-                                            <p class="text-sm text-gray-600">
-                                                <span class="font-medium text-1C7C54">Submitted by:</span> {{ $submittedRequirement->user->full_name }}
-                                                @if($submittedRequirement->user->college)
-                                                    ({{ $submittedRequirement->user->college->name }})
-                                                @endif
-                                            </p>
-                                        </div>
+                                        <span class="text-sm font-medium text-1B512D truncate" title="{{ $submittedRequirement->media->first()->file_name ?? 'No file attached' }}">
+                                            {{ $submittedRequirement->media->first()->file_name ?? 'No file attached' }}
+                                        </span>
                                     </div>
-                                    <div class="flex items-center gap-4">
-                                        <span class="px-2 py-1 text-xs rounded-full {{ $submittedRequirement->status_badge }}">
+                                    
+                                    <!-- Requirement -->
+                                    <div class="col-span-2 text-sm text-gray-600 truncate" title="{{ $submittedRequirement->requirement->name }}">
+                                        {{ $submittedRequirement->requirement->name }}
+                                    </div>
+                                    
+                                    <!-- Submitted By -->
+                                    <div class="col-span-3 text-sm text-gray-600 truncate" title="{{ $submittedRequirement->user->full_name }}@if($submittedRequirement->user->college) ({{ $submittedRequirement->user->college->name }})@endif">
+                                        {{ $submittedRequirement->user->full_name }}
+                                        @if($submittedRequirement->user->college)
+                                            <span class="text-xs">({{ $submittedRequirement->user->college->name }})</span>
+                                        @endif
+                                    </div>
+                                    
+                                    <!-- Status -->
+                                    <div class="col-span-2 flex items-center">
+                                        <span class="px-2 py-1 font-semibold text-xs rounded-full {{ $submittedRequirement->status_badge }}">
                                             {{ $submittedRequirement->status === 'under_review' ? 'Needs Review' : $submittedRequirement->status_text }}
                                         </span>
-                                        <div class="text-right">
-                                            <p class="text-xs text-gray-500">
-                                                {{ $submittedRequirement->submitted_at->diffForHumans() }}
-                                            </p>
-                                            <p class="text-xs text-gray-400">
-                                                {{ $submittedRequirement->submitted_at->format('M j, Y g:i A') }}
-                                            </p>
-                                        </div>
+                                    </div>
+                                    
+                                    <!-- Date -->
+                                    <div class="col-span-2 text-xs text-gray-400">
+                                        {{ $submittedRequirement->submitted_at->diffForHumans() }}
                                     </div>
                                 </a>
                             @empty
-                                <p class="text-gray-500 py-4 text-center">No submitted requirements found.</p>
+                                <div class="flex flex-col items-center justify-center py-8 text-gray-400 col-span-12">
+                                    <i class="fas fa-folder-open text-4xl mb-2"></i>
+                                    <p>No submitted requirements found.</p>
+                                </div>
                             @endforelse
                         </div>
+
                     @else
                         <!-- Grid View -->
-                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6 mb-2">
                             @forelse ($submittedRequirements as $submittedRequirement)
                                 <a href="{{ route('admin.submitted-requirements.show', ['submitted_requirement' => $submittedRequirement, 'file_id' => $submittedRequirement->media->first()->id]) }}" 
-                                   class="flex flex-col p-4 border border-DEF4C6 rounded-xl hover:bg-DEF4C6 transition-colors">
-                                    <div class="flex justify-between items-start mb-2">
-                                        <div>
-                                            <h3 class="font-semibold text-1B512D">
-                                                @if($submittedRequirement->media->count() > 0)
-                                                    {{ $submittedRequirement->media->first()->file_name }}
-                                                @else
-                                                    No file attached
-                                                @endif
-                                            </h3>
-                                            <p class="text-sm text-gray-600 mt-1">
-                                                <span class="font-medium text-1C7C54">Requirement:</span> {{ $submittedRequirement->requirement->name }}
-                                            </p>
-                                        </div>
-                                        <span class="px-2 py-1 text-xs rounded-full {{ $submittedRequirement->status_badge }}">
-                                            {{ $submittedRequirement->status === 'under_review' ? 'Needs Review' : $submittedRequirement->status_text }}
-                                        </span>
+                                   class="bg-white rounded-2xl shadow-md hover:shadow-lg transition p-6 flex flex-col items-center text-center gap-3">
+                                    <!-- Icon -->
+                                    <div class="w-16 h-16 flex items-center justify-center bg-DEF4C6 rounded-full">
+                                        <i class="fas {{ $submittedRequirement->getFileIcon() }} {{ $submittedRequirement->getFileIconColor() }} text-2xl"></i>
                                     </div>
-                                    <p class="text-sm text-gray-600 mb-2">
-                                        <span class="font-medium text-1C7C54">Submitted by:</span> {{ $submittedRequirement->user->full_name }}
+                                    <!-- File Info -->
+                                    <h3 class="font-semibold text-1B512D truncate w-full" title="{{ $submittedRequirement->media->first()->file_name ?? 'No file attached' }}">
+                                        {{ $submittedRequirement->media->first()->file_name ?? 'No file attached' }}
+                                    </h3>
+                                    <p class="text-sm text-gray-600 truncate w-full" title="{{ $submittedRequirement->requirement->name }}">
+                                        <span class="font-medium text-1C7C54">Requirement:</span> {{ $submittedRequirement->requirement->name }}
+                                    </p>
+                                    <p class="text-xs text-gray-500 truncate w-full" title="{{ $submittedRequirement->user->full_name }}@if($submittedRequirement->user->college) ({{ $submittedRequirement->user->college->name }})@endif">
+                                        Submitted by: {{ $submittedRequirement->user->full_name }}
                                         @if($submittedRequirement->user->college)
                                             <br>({{ $submittedRequirement->user->college->name }})
                                         @endif
                                     </p>
-                                    <div class="flex justify-between items-end mt-auto">
-                                        <div class="flex -space-x-2">
-                                            @if($submittedRequirement->media->count() > 0)
-                                                @foreach ($submittedRequirement->media as $media)
-                                                    <img src="{{ $media->getUrl() }}" alt="Media" class="w-12 h-12 object-cover rounded-full border border-DEF4C6">
-                                                @endforeach
-                                            @else
-                                                <div class="w-12 h-12 bg-DEF4C6 rounded-full"></div>
-                                            @endif
-                                        </div>
-                                        <p class="text-xs text-gray-500">
-                                            {{ $submittedRequirement->submitted_at->diffForHumans() }}
-                                        </p>
-                                    </div>
+                                    <!-- Status -->
+                                    <span class="px-3 py-1 text-xs rounded-full {{ $submittedRequirement->status_badge }}">
+                                        {{ $submittedRequirement->status === 'under_review' ? 'Needs Review' : $submittedRequirement->status_text }}
+                                    </span>
+                                    <!-- Time -->
+                                    <p class="text-xs text-gray-400">{{ $submittedRequirement->submitted_at->diffForHumans() }}</p>
                                 </a>
                             @empty
-                                <p class="text-gray-500 col-span-3 py-4 text-center">No submitted requirements found.</p>
+                                <div class="flex flex-col items-center justify-center py-8 text-gray-400 col-span-3">
+                                    <i class="fas fa-folder-open text-4xl mb-2"></i>
+                                    <p>No submitted requirements found.</p>
+                                </div>
                             @endforelse
                         </div>
                     @endif
 
-                    <div class="mt-4">
-                        {{ $submittedRequirements->links() }}
-                    </div>
                 @else
-                    <!-- Groups for other categories -->
+                    <!-- Groups (other categories) - Apply view mode here too -->
                     @if($viewMode === 'list')
-                        <div class="flex flex-col gap-4">
+                        <!-- List View for Groups -->
+                        <div class="flex flex-col gap-2 ml-2 mr-2 mb-2">
+                            <!-- Column Headers -->
+                            <div class="grid grid-cols-12 gap-4 px-4 py-2 bg-DEF4C6/30 rounded-lg text-sm font-semibold text-1B512D">
+                                <div class="col-span-10">Requirement Name</div>
+                                <div class="col-span-2">Items Count</div>
+                            </div>
+                            
+                            <!-- Group Items -->
                             @forelse ($groupedItems as $groupId => $group)
                                 <a href="{{ route('admin.submitted-requirements.requirement', ['requirement_id' => $groupId]) }}" 
-                                   class="border border-DEF4C6 rounded-xl overflow-hidden hover:shadow-md transition-shadow">
-                                    <div class="flex items-center justify-between bg-DEF4C6 p-4 hover:bg-73E2A7">
-                                        <div class="flex items-center gap-3">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-1C7C54" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
-                                            </svg>
-                                            <h3 class="font-semibold text-1B512D">{{ $group['name'] }}</h3>
-                                            <span class="text-xs bg-white text-1C7C54 px-2 py-1 rounded-full">{{ $group['count'] }} items</span>
-                                        </div>
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
-                                            <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
-                                        </svg>
+                                class="grid grid-cols-12 gap-4 p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition items-center">
+                                    <!-- Group Name -->
+                                    <div class="col-span-10 flex items-center gap-3">
+                                        <i class="fas fa-folder text-1C7C54 text-xl"></i>
+                                        <span class="text-sm font-medium text-1B512D truncate" title="{{ $group['name'] }}">
+                                            {{ $group['name'] }}
+                                        </span>
+                                    </div>
+                                    
+                                    <!-- Items Count -->
+                                    <div class="col-span-2 flex items-center">
+                                        <span class="px-2 py-1 text-xs bg-DEF4C6 text-1C7C54 rounded-full">
+                                            {{ $group['count'] }} {{ $group['count'] == 1 ? 'item' : 'items' }}
+                                        </span>
                                     </div>
                                 </a>
                             @empty
-                                <p class="text-gray-500 py-4 text-center">No groups found in this category.</p>
+                                <div class="flex flex-col items-center justify-center py-8 text-gray-400 col-span-12">
+                                    <i class="fas fa-folder-open text-4xl mb-2"></i>
+                                    <p>No requirements found.</p>
+                                </div>
                             @endforelse
                         </div>
                     @else
-                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <!-- Grid View for Groups (default) -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-3">
                             @forelse ($groupedItems as $groupId => $group)
                                 <a href="{{ route('admin.submitted-requirements.requirement', ['requirement_id' => $groupId]) }}" 
-                                   class="border border-DEF4C6 rounded-xl overflow-hidden hover:shadow-md transition-shadow">
-                                    <div class="flex flex-col h-full">
-                                        <div class="flex items-center justify-between bg-DEF4C6 p-4 hover:bg-73E2A7">
-                                            <div class="flex items-center gap-3">
-                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-1C7C54" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
-                                                </svg>
-                                                <h3 class="font-semibold text-1B512D">{{ $group['name'] }}</h3>
-                                            </div>
-                                            <span class="text-xs bg-white text-1C7C54 px-2 py-1 rounded-full">{{ $group['count'] }} items</span>
-                                        </div>
+                                class="bg-white rounded-2xl shadow-md hover:shadow-lg transition p-6 flex flex-col gap-3">
+                                    <div class="flex items-center gap-3">
+                                        <i class="fas fa-folder text-1C7C54 text-xl"></i>
+                                        <h3 class="font-semibold text-1B512D truncate" title="{{ $group['name'] }}">{{ $group['name'] }}</h3>
                                     </div>
+                                    <span class="text-xs bg-DEF4C6 text-1C7C54 px-2 py-1 rounded-full w-fit">
+                                        {{ $group['count'] }} {{ $group['count'] == 1 ? 'item' : 'items' }}
+                                    </span>
                                 </a>
                             @empty
-                                <p class="text-gray-500 col-span-3 py-4 text-center">No groups found in this category.</p>
+                                <div class="flex flex-col items-center justify-center py-8 text-gray-400 col-span-3">
+                                    <i class="fas fa-folder-open text-4xl mb-2"></i>
+                                    <p>No requirements found.</p>
+                                </div>
                             @endforelse
                         </div>
                     @endif
                 @endif
             @else
-                <div class="alert alert-warning rounded-xl border border-B1CF5F bg-DEF4C6 text-1B512D p-4 flex items-center gap-2">
-                    <i class="fa-solid fa-triangle-exclamation text-B1CF5F"></i>
+                <div class="bg-DEF4C6 text-1B512D p-6 rounded-xl flex items-center gap-3 border border-B1CF5F">
+                    <i class="fa-solid fa-triangle-exclamation text-B1CF5F text-xl"></i>
                     <span>No active semester. Please activate a semester to view submitted requirements.</span>
                 </div>
             @endif
