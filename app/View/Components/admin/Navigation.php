@@ -56,16 +56,17 @@ class Navigation extends Component
                     'group' => 'admin.file-manager.*',
                     'description' => 'File management'
                 ],
-                [
-                    'label' => 'Users',
-                    'icon' => 'users',
-                    'route' => 'admin.users.index',
-                    'group' => 'admin.users.*',
-                    'description' => 'User management'
-                ],
+                
             ],
-            // Secondary navigation
+            // Secondary navigation (dropdown menu)
             'secondary' => [
+                [
+                    'label' => 'Management',
+                    'icon' => 'gears',
+                    'route' => 'admin.management.index',
+                    'group' => 'admin.management.*',
+                    'description' => 'System management'
+                ],
                 [
                     'label' => 'Notifications',
                     'icon' => 'bell',
