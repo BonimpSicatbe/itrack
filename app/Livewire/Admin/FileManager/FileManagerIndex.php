@@ -23,13 +23,25 @@ class FileManagerIndex extends Component
     public $search = '';
     public $selectedGroup = null;
     public $selectedSemester = null;
-    public $showSemesterPanel = true;
+    public $showSemesterPanel = false; // Hidden by default
+    public $currentFolder = null;
+    public $folderType = null;
+    public $breadcrumbs = [];
+    public $fileUrl = null;
+    public $isImage = false;
+    public $isPdf = false;
+    public $isOfficeDoc = false;
+    public $isPreviewable = false;
+
     
     protected $queryString = [
         'search' => ['except' => ''],
         'groupBy' => ['except' => ''],
         'selectedGroup' => ['except' => ''],
-        'viewMode' => ['except' => 'grid']
+        'viewMode' => ['except' => 'grid'],
+        'showSemesterPanel' => ['except' => false], // Hidden by default
+        'currentFolder' => ['except' => null],
+        'folderType' => ['except' => null],
     ];
 
     protected $listeners = [
@@ -38,6 +50,19 @@ class FileManagerIndex extends Component
         'semesterArchived' => 'handleSemesterArchived',
         'clearSelectedSemester' => 'clearSelectedSemester'
     ];
+
+    // New method to handle panel toggling
+    public function togglePanel()
+    {
+        // If file details are open, close them first
+        if ($this->selectedFile) {
+            $this->selectedFile = null;
+            $this->updateBreadcrumbs();
+        }
+        
+        // Then toggle the semester panel
+        $this->showSemesterPanel = !$this->showSemesterPanel;
+    }
 
     public function handleSemesterArchived()
     {
@@ -60,16 +85,41 @@ class FileManagerIndex extends Component
     public function mount()
     {
         $this->viewMode = 'grid';
+        $this->updateBreadcrumbs();
     }
 
     public function selectFile($fileId)
     {
         $this->selectedFile = Media::find($fileId);
+        
+        if ($this->selectedFile) {
+            // Set file URL and determine file type
+            $this->fileUrl = route('file.preview', [
+                'submission' => $this->selectedFile->model_id,
+                'file' => $this->selectedFile->id
+            ]);
+            
+            // Determine file type for proper display
+            $this->isImage = str_starts_with($this->selectedFile->mime_type, 'image/');
+            $this->isPdf = $this->selectedFile->mime_type === 'application/pdf';
+            $this->isOfficeDoc = in_array(pathinfo($this->selectedFile->file_name, PATHINFO_EXTENSION), ['doc', 'docx', 'xls', 'xlsx']);
+            $this->isPreviewable = $this->isImage || $this->isPdf || $this->isOfficeDoc;
+        }
+        
+        // Automatically hide semester panel when file is selected
+        $this->showSemesterPanel = false;
+        $this->updateBreadcrumbs();
     }
     
     public function clearSelection()
     {
         $this->selectedFile = null;
+        $this->fileUrl = null;
+        $this->isImage = false;
+        $this->isPdf = false;
+        $this->isOfficeDoc = false;
+        $this->isPreviewable = false;
+        $this->updateBreadcrumbs();
     }
     
     public function setViewMode($mode)
@@ -81,20 +131,62 @@ class FileManagerIndex extends Component
     {
         $this->groupBy = $group;
         $this->selectedGroup = null;
+        $this->currentFolder = null;
+        $this->folderType = null;
+        $this->updateBreadcrumbs();
+        $this->resetPage();
+    }
+
+    public function navigateToFolder($type, $id)
+    {
+        $this->currentFolder = $id;
+        $this->folderType = $type;
+        $this->selectedGroup = $id; // For backward compatibility
+        $this->groupBy = $type; // For backward compatibility
+        $this->updateBreadcrumbs();
         $this->resetPage();
     }
 
     public function selectGroup($groupId)
     {
-        $this->selectedGroup = $groupId;
-        $this->resetPage();
+        $this->navigateToFolder($this->groupBy, $groupId);
     }
 
     public function clearGroupFilter()
     {
         $this->groupBy = null;
         $this->selectedGroup = null;
+        $this->currentFolder = null;
+        $this->folderType = null;
+        $this->updateBreadcrumbs();
         $this->resetPage();
+    }
+
+    public function updateBreadcrumbs()
+    {
+        $this->breadcrumbs = [
+            ['type' => 'root', 'name' => 'File Manager', 'id' => null]
+        ];
+        
+        if ($this->currentFolder && $this->folderType) {
+            $folderName = $this->getSelectedGroupName();
+            
+            if ($folderName) {
+                $this->breadcrumbs[] = [
+                    'type' => $this->folderType,
+                    'name' => $folderName,
+                    'id' => $this->currentFolder
+                ];
+            }
+        }
+        
+        if ($this->selectedFile) {
+            $this->breadcrumbs[] = [
+                'type' => 'file',
+                'name' => $this->selectedFile->file_name,
+                'id' => $this->selectedFile->id
+            ];
+        }
     }
 
     public function getGroupedFiles()
@@ -109,38 +201,53 @@ class FileManagerIndex extends Component
         $query = Media::query()
             ->with(['model.user', 'model.user.college', 'model.user.department'])
             ->whereHasMorph('model', [SubmittedRequirement::class], function($q) use ($semester) {
-                if ($semester) {
-                    $q->whereBetween('created_at', [
-                        $semester->start_date,
-                        $semester->end_date
-                    ]);
-                } else {
-                    $q->whereNull('id'); // Force no results if no semester
-                }
+                $q->whereBetween('created_at', [
+                    $semester->start_date,
+                    $semester->end_date
+                ]);
             })
             ->orderBy('created_at', 'desc');
 
         // Apply search filter
         if ($this->search) {
-            $query->where('file_name', 'like', '%'.$this->search.'%');
+            $query->where(function($q) {
+                $q->where('file_name', 'like', '%'.$this->search.'%')
+                ->orWhereHasMorph('model', [SubmittedRequirement::class], function($modelQuery) {
+                    $modelQuery->whereHas('user', function($userQuery) {
+                        $userQuery->where('firstname', 'like', '%'.$this->search.'%')
+                                ->orWhere('lastname', 'like', '%'.$this->search.'%')
+                                ->orWhere('email', 'like', '%'.$this->search.'%')
+                                ->orWhereHas('college', function($collegeQuery) {
+                                    $collegeQuery->where('name', 'like', '%'.$this->search.'%');
+                                })
+                                ->orWhereHas('department', function($deptQuery) {
+                                    $deptQuery->where('name', 'like', '%'.$this->search.'%');
+                                });
+                    });
+                });
+            });
         }
 
         // Apply group filter if selected
         if ($this->groupBy && $this->selectedGroup) {
             switch ($this->groupBy) {
                 case 'user':
-                    $query->whereHas('model', function($q) {
+                    $query->whereHasMorph('model', [SubmittedRequirement::class], function($q) {
                         $q->where('user_id', $this->selectedGroup);
                     });
                     break;
                 case 'college':
-                    $query->whereHas('model.user', function($q) {
-                        $q->where('college_id', $this->selectedGroup);
+                    $query->whereHasMorph('model', [SubmittedRequirement::class], function($q) {
+                        $q->whereHas('user', function($userQuery) {
+                            $userQuery->where('college_id', $this->selectedGroup);
+                        });
                     });
                     break;
                 case 'department':
-                    $query->whereHas('model.user', function($q) {
-                        $q->where('department_id', $this->selectedGroup);
+                    $query->whereHasMorph('model', [SubmittedRequirement::class], function($q) {
+                        $q->whereHas('user', function($userQuery) {
+                            $userQuery->where('department_id', $this->selectedGroup);
+                        });
                     });
                     break;
             }
@@ -212,6 +319,11 @@ class FileManagerIndex extends Component
         }
     }
 
+    public function shouldDisplayFiles()
+    {
+        return !$this->groupBy || ($this->groupBy && $this->selectedGroup);
+    }
+
     public function render()
     {
         $files = $this->getGroupedFiles();
@@ -223,7 +335,8 @@ class FileManagerIndex extends Component
             'groups' => $groups,
             'selectedGroupName' => $this->getSelectedGroupName(),
             'activeSemester' => $activeSemester,
-        ]);
+            'shouldDisplayFiles' => $this->shouldDisplayFiles(),
+        ])->extends('layouts.app'); // Add this line if needed
     }
     
     protected function getSelectedGroupName()

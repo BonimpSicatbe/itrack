@@ -1,4 +1,3 @@
-{{-- Enhanced Navigation with improved UX/UI --}}
 <nav class="shadow-sm sticky top-0 z-50 bg-white" 
      x-data="{ 
         unreadCount: {{ $unreadCount }}, 
@@ -22,13 +21,14 @@
                 {{-- Main Navigation --}}
                 <div class="flex items-center space-x-1">
                     @foreach ($navLinks['main'] as $navlink)
-                        <div class="relative group" x-data="{ isActive: {{ request()->routeIs($navlink['route']) ? 'true' : 'false' }} }">
+                        <div class="relative group" 
+                             x-data="{ isActive: {{ request()->routeIs($navlink['group'] ?? $navlink['route']) ? 'true' : 'false' }} }">
                             <a href="{{ route($navlink['route']) }}"
-                            class="px-4 py-2 rounded-lg text-xs font-medium transition-all duration-200 flex items-center space-x-2 relative
-                                    {{ request()->routeIs($navlink['route']) 
-                                        ? 'bg-green-50 text-green-700 shadow-sm' 
-                                        : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900' }}"
-                            :aria-current="isActive ? 'page' : 'false'">
+                               class="px-4 py-2 rounded-lg text-xs font-medium transition-all duration-200 flex items-center space-x-2 relative
+                                      {{ request()->routeIs($navlink['group'] ?? $navlink['route']) 
+                                          ? 'bg-green-50 text-green-700 shadow-sm' 
+                                          : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900' }}"
+                               :aria-current="isActive ? 'page' : 'false'">
                                 <i class="fa-solid fa-{{ $navlink['icon'] }} text-sm" aria-hidden="true"></i>
                                 <span>{{ $navlink['label'] }}</span>
                             </a>
@@ -68,20 +68,33 @@
 
                     {{-- Dropdown Menu --}}
                     <div x-show="showUserMenu"
-                         x-transition:enter="transition ease-out duration-200"
-                         x-transition:enter-start="opacity-0 transform scale-95"
-                         x-transition:enter-end="opacity-100 transform scale-100"
-                         x-transition:leave="transition ease-in duration-150"
-                         x-transition:leave-start="opacity-100 transform scale-100"
-                         x-transition:leave-end="opacity-0 transform scale-95"
-                         class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50"
-                         @keydown.tab="if ($event.shiftKey) showUserMenu = false"
-                         x-cloak>
-                         
+                        x-transition:enter="transition ease-out duration-200"
+                        x-transition:enter-start="opacity-0 transform scale-95"
+                        x-transition:enter-end="opacity-100 transform scale-100"
+                        x-transition:leave="transition ease-in duration-150"
+                        x-transition:leave-start="opacity-100 transform scale-100"
+                        x-transition:leave-end="opacity-0 transform scale-95"
+                        class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50"
+                        @keydown.tab="if ($event.shiftKey) showUserMenu = false"
+                        x-cloak>
+                        
                         <a href="{{ route('profile.edit') }}"
-                           class="flex items-center space-x-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors duration-200">
-                            <i class="fa-solid fa-user-circle text-gray-400" aria-hidden="true"></i>
+                        class="flex items-center space-x-3 px-4 py-2 text-sm transition-colors duration-200
+                                {{ request()->routeIs('profile.*') 
+                                    ? 'bg-green-50 text-green-700' 
+                                    : 'text-gray-700 hover:bg-gray-50' }}">
+                            <i class="fa-solid fa-user-circle {{ request()->routeIs('profile.*') ? 'text-green-600' : 'text-gray-400' }}" aria-hidden="true"></i>
                             <span>Your Profile</span>
+                        </a>
+
+                        <!-- Management link -->
+                        <a href="{{ route('admin.management.index') }}"
+                        class="flex items-center space-x-3 px-4 py-2 text-sm transition-colors duration-200
+                                {{ request()->routeIs('admin.management.*') 
+                                    ? 'bg-green-50 text-green-700' 
+                                    : 'text-gray-700 hover:bg-gray-50' }}">
+                            <i class="fa-solid fa-gears {{ request()->routeIs('admin.management.*') ? 'text-green-600' : 'text-gray-400' }}" aria-hidden="true"></i>
+                            <span>Management</span>
                         </a>
                         
                         <form method="POST" action="{{ route('logout') }}" class="px-1">
@@ -135,36 +148,54 @@
 
             {{-- Mobile Menu --}}
             <div x-show="mobileMenuOpen"
-                 x-transition:enter="transition ease-out duration-200"
-                 x-transition:enter-start="opacity-0 transform -translate-y-2"
-                 x-transition:enter-end="opacity-100 transform translate-y-0"
-                 class="border-t border-gray-200 py-4 space-y-2"
-                 x-cloak>
+                x-transition:enter="transition ease-out duration-200"
+                x-transition:enter-start="opacity-0 transform -translate-y-2"
+                x-transition:enter-end="opacity-100 transform translate-y-0"
+                class="border-t border-gray-200 py-4 space-y-2"
+                x-cloak>
                 
                 @foreach ($navLinks['main'] as $navlink)
                     <a href="{{ route($navlink['route']) }}"
-                       class="flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors duration-200 relative
-                              {{ request()->routeIs($navlink['route']) 
-                                 ? 'bg-green-50 text-green-700' 
-                                 : 'text-gray-700 hover:bg-gray-50' }}"
-                       @click="mobileMenuOpen = false"
-                       :aria-current="{{ request()->routeIs($navlink['route']) ? "'page'" : 'false' }}">
+                    class="flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors duration-200 relative
+                            {{ request()->routeIs($navlink['group'] ?? $navlink['route']) 
+                                ? 'bg-green-50 text-green-700' 
+                                : 'text-gray-700 hover:bg-gray-50' }}"
+                    @click="mobileMenuOpen = false"
+                    :aria-current="{{ request()->routeIs($navlink['group'] ?? $navlink['route']) ? "'page'" : 'false' }}">
                         <i class="fa-solid fa-{{ $navlink['icon'] }} text-sm w-5" aria-hidden="true"></i>
                         <span class="flex-1">{{ $navlink['label'] }}</span>
                         
-                        @if (request()->routeIs($navlink['route']))
+                        @if (request()->routeIs($navlink['group'] ?? $navlink['route']))
                             <i class="fa-solid fa-chevron-right text-green-600 text-sm" aria-hidden="true"></i>
                         @endif
                     </a>
                 @endforeach
 
-                {{-- Mobile Profile Link --}}
-                <a href="{{ route('profile.edit') }}"
-                   class="flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors duration-200 text-gray-700 hover:bg-gray-50"
-                   @click="mobileMenuOpen = false">
-                    <i class="fa-solid fa-user-circle text-sm w-5" aria-hidden="true"></i>
-                    <span class="flex-1">Your Profile</span>
-                </a>
+                <!-- Secondary navigation items for mobile -->
+                @foreach ($navLinks['secondary'] as $navlink)
+                    @if($navlink['route'] !== 'logout')
+                        <a href="{{ route($navlink['route']) }}"
+                        class="flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors duration-200 relative
+                                {{ request()->routeIs($navlink['group'] ?? $navlink['route']) 
+                                    ? 'bg-green-50 text-green-700' 
+                                    : 'text-gray-700 hover:bg-gray-50' }}"
+                        @click="mobileMenuOpen = false"
+                        :aria-current="{{ request()->routeIs($navlink['group'] ?? $navlink['route']) ? "'page'" : 'false' }}">
+                            <i class="fa-solid fa-{{ $navlink['icon'] }} text-sm w-5" aria-hidden="true"></i>
+                            <span class="flex-1">{{ $navlink['label'] }}</span>
+                            
+                            @if (request()->routeIs($navlink['group'] ?? $navlink['route']))
+                                <i class="fa-solid fa-chevron-right text-green-600 text-sm" aria-hidden="true"></i>
+                            @endif
+                            
+                            @if(isset($navlink['badge']) && $navlink['badge'] > 0)
+                                <span class="bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium">
+                                    {{ $navlink['badge'] > 99 ? '99+' : $navlink['badge'] }}
+                                </span>
+                            @endif
+                        </a>
+                    @endif
+                @endforeach
 
                 {{-- Mobile Logout --}}
                 <form method="POST" action="{{ route('logout') }}" class="mt-4 pt-4 border-t border-gray-200">

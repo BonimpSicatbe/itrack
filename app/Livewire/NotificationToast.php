@@ -8,30 +8,51 @@ class NotificationToast extends Component
 {
     public $messages = [];
     public $show = false;
-    public $type = '';
-    public $content = '';
-    public $duration = 10000;
 
     protected $listeners = [
-        'showNotification' => 'show',
+        'showNotification' => 'showNotification',
         'hideNotification' => 'hide'
     ];
 
-    public function show($type, $content, $duration = null)
+    public function showNotification($type, $content, $duration = 5000)
     {
-        $this->type = $type;
-        $this->content = $content;
-        $this->duration = $duration ?? $this->duration;
+        // Add the new message to the messages array
+        $this->messages[] = [
+            'type' => $type,
+            'content' => $content,
+            'duration' => $duration,
+            'id' => uniqid()
+        ];
+        
+        // Show the notification
         $this->show = true;
         
-        // Dispatch event to auto-hide after duration
-        $this->dispatch('hide-notification-after-delay', duration: $this->duration);
+        // If there are too many messages, remove the oldest one
+        if (count($this->messages) > 5) {
+            array_shift($this->messages);
+        }
+        
+        $this->dispatch('notificationsUpdated');
+    }
+
+    public function removeMessage($id)
+    {
+        $this->messages = array_filter($this->messages, function($message) use ($id) {
+            return $message['id'] !== $id;
+        });
+        
+        // Hide notification if no messages left
+        if (empty($this->messages)) {
+            $this->show = false;
+        }
+        
+        $this->dispatch('notificationsUpdated');
     }
 
     public function hide()
     {
         $this->show = false;
-        $this->reset(['type', 'content']);
+        $this->messages = [];
     }
 
     public function render()

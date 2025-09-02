@@ -45,7 +45,7 @@ class SubmittedRequirementsShow extends Component
         // Load all submissions for this requirement by this user
         $this->allSubmissions = SubmittedRequirement::where('requirement_id', $this->submittedRequirement->requirement_id)
             ->where('user_id', $this->submittedRequirement->user_id)
-            ->with(['media', 'reviewer'])
+            ->with(['media', 'reviewer', 'user']) // Add user relationship
             ->latest()
             ->get();
 
@@ -70,23 +70,28 @@ class SubmittedRequirementsShow extends Component
                     'admin_notes' => $submission->admin_notes,
                     'reviewed_at' => $submission->reviewed_at,
                     'reviewer' => $submission->reviewer,
+                    'user' => [ // Add user information
+                        'id' => $submission->user->id,
+                        'full_name' => $submission->user->full_name,
+                    ],
                 ];
             });
-        })->toArray();
+        });
 
-        // Select the file to preview
+        // Select the initial file after loading
         $this->selectInitialFile();
     }
 
     protected function selectInitialFile()
     {
-        if (empty($this->allFiles)) {
+        if ($this->allFiles->isEmpty()) {
+            $this->resetFileSelection();
             return;
         }
 
         // Try to select the initial file if provided
         if ($this->initialFileId) {
-            $file = collect($this->allFiles)->firstWhere('id', $this->initialFileId);
+            $file = $this->allFiles->firstWhere('id', $this->initialFileId);
             if ($file) {
                 $this->selectFile($file['id']);
                 return;
@@ -97,11 +102,24 @@ class SubmittedRequirementsShow extends Component
         $this->selectFile($this->allFiles[0]['id']);
     }
 
+    protected function resetFileSelection()
+    {
+        $this->selectedFile = null;
+        $this->fileUrl = null;
+        $this->isImage = false;
+        $this->isPdf = false;
+        $this->isOfficeDoc = false;
+        $this->isPreviewable = false;
+        $this->selectedStatus = '';
+        $this->adminNotes = '';
+    }
+
     public function selectFile($fileId)
     {
-        $this->selectedFile = collect($this->allFiles)->firstWhere('id', $fileId);
+        $file = $this->allFiles->firstWhere('id', $fileId);
         
-        if ($this->selectedFile) {
+        if ($file) {
+            $this->selectedFile = $file;
             $this->fileUrl = route('file.preview', [
                 'submission' => $this->selectedFile['submission_id'],
                 'file' => $this->selectedFile['id']
@@ -116,6 +134,8 @@ class SubmittedRequirementsShow extends Component
             // Set the current status and notes
             $this->selectedStatus = $this->selectedFile['status'];
             $this->adminNotes = $this->selectedFile['admin_notes'] ?? '';
+        } else {
+            $this->resetFileSelection();
         }
     }
 

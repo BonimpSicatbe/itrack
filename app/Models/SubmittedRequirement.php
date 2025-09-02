@@ -36,6 +36,39 @@ class SubmittedRequirement extends Model implements HasMedia
     const STATUS_REJECTED = 'rejected';
     const STATUS_APPROVED = 'approved';
 
+    /* ========== FONT AWESOME FILE ICONS WITH COLORS ========== */
+    const FILE_ICONS = [
+        'pdf' => ['icon' => 'fa-file-pdf', 'color' => 'text-red-500'],
+        'doc' => ['icon' => 'fa-file-word', 'color' => 'text-blue-600'],
+        'docx' => ['icon' => 'fa-file-word', 'color' => 'text-blue-600'],
+        'txt' => ['icon' => 'fa-file-alt', 'color' => 'text-gray-500'],
+        'rtf' => ['icon' => 'fa-file-alt', 'color' => 'text-gray-500'],
+        'xls' => ['icon' => 'fa-file-excel', 'color' => 'text-green-600'],
+        'xlsx' => ['icon' => 'fa-file-excel', 'color' => 'text-green-600'],
+        'csv' => ['icon' => 'fa-file-csv', 'color' => 'text-green-500'],
+        'ppt' => ['icon' => 'fa-file-powerpoint', 'color' => 'text-orange-500'],
+        'pptx' => ['icon' => 'fa-file-powerpoint', 'color' => 'text-orange-500'],
+        'jpg' => ['icon' => 'fa-file-image', 'color' => 'text-purple-500'],
+        'jpeg' => ['icon' => 'fa-file-image', 'color' => 'text-purple-500'],
+        'png' => ['icon' => 'fa-file-image', 'color' => 'text-purple-500'],
+        'gif' => ['icon' => 'fa-file-image', 'color' => 'text-purple-500'],
+        'bmp' => ['icon' => 'fa-file-image', 'color' => 'text-purple-500'],
+        'svg' => ['icon' => 'fa-file-image', 'color' => 'text-purple-500'],
+        'zip' => ['icon' => 'fa-file-archive', 'color' => 'text-yellow-600'],
+        'rar' => ['icon' => 'fa-file-archive', 'color' => 'text-yellow-600'],
+        '7z' => ['icon' => 'fa-file-archive', 'color' => 'text-yellow-600'],
+        'tar' => ['icon' => 'fa-file-archive', 'color' => 'text-yellow-600'],
+        'gz' => ['icon' => 'fa-file-archive', 'color' => 'text-yellow-600'],
+        'mp4' => ['icon' => 'fa-file-video', 'color' => 'text-pink-500'],
+        'mov' => ['icon' => 'fa-file-video', 'color' => 'text-pink-500'],
+        'avi' => ['icon' => 'fa-file-video', 'color' => 'text-pink-500'],
+        'wmv' => ['icon' => 'fa-file-video', 'color' => 'text-pink-500'],
+        'mp3' => ['icon' => 'fa-file-audio', 'color' => 'text-indigo-500'],
+        'wav' => ['icon' => 'fa-file-audio', 'color' => 'text-indigo-500'],
+        'flac' => ['icon' => 'fa-file-audio', 'color' => 'text-indigo-500'],
+        'default' => ['icon' => 'fa-file', 'color' => 'text-gray-400']
+    ];
+
     /* ========== RELATIONSHIPS ========== */
 
     /**
@@ -132,30 +165,6 @@ class SubmittedRequirement extends Model implements HasMedia
         ];
     }
 
-    public static function getStatusColor($status)
-    {
-        $colors = [
-            self::STATUS_APPROVED => '#a7c957',
-            self::STATUS_REVISION_NEEDED => '#ffba08',
-            self::STATUS_UNDER_REVIEW => '#84dcc6',
-            'default' => '#6b7280',
-        ];
-
-        return $colors[$status] ?? $colors['default'];
-    }
-
-    public static function getPriorityColor($priority)
-    {
-        $colors = [
-            'high' => '#f87171',    // red
-            'medium' => '#fbbf24',  // amber
-            'low' => '#a3e635',    // lime
-            'default' => '#9ca3af', // gray
-        ];
-
-        return $colors[strtolower($priority)] ?? $colors['default'];
-    }
-
     public function registerMediaCollections(): void
     {
         $this->addMediaCollection('submission_files')
@@ -215,6 +224,63 @@ class SubmittedRequirement extends Model implements HasMedia
                $this->status !== self::STATUS_APPROVED;
     }
 
+    /* ========== FILE TYPE METHODS ========== */
+
+    /**
+     * Get file extension from media
+     */
+    public function getFileExtension()
+    {
+        $media = $this->getFirstMedia('submission_files');
+        if (!$media) {
+            return null;
+        }
+        
+        return pathinfo($media->file_name, PATHINFO_EXTENSION);
+    }
+
+    /**
+     * Get appropriate Font Awesome icon class for file type
+     */
+    public function getFileIcon()
+    {
+        $extension = $this->getFileExtension();
+        if (!$extension) {
+            return self::FILE_ICONS['default']['icon'];
+        }
+        
+        $extension = strtolower($extension);
+        return self::FILE_ICONS[$extension]['icon'] ?? self::FILE_ICONS['default']['icon'];
+    }
+
+    /**
+     * Get appropriate color class for file type
+     */
+    public function getFileIconColor()
+    {
+        $extension = $this->getFileExtension();
+        if (!$extension) {
+            return self::FILE_ICONS['default']['color'];
+        }
+        
+        $extension = strtolower($extension);
+        return self::FILE_ICONS[$extension]['color'] ?? self::FILE_ICONS['default']['color'];
+    }
+
+    /**
+     * Check if file is an image
+     */
+    public function isImageFile()
+    {
+        $extension = $this->getFileExtension();
+        if (!$extension) {
+            return false;
+        }
+        
+        $imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'svg'];
+        return in_array(strtolower($extension), $imageExtensions);
+    }
+
     /* ========== ACCESSORS ========== */
 
     public function getStatusTextAttribute()
@@ -225,10 +291,10 @@ class SubmittedRequirement extends Model implements HasMedia
     public function getStatusBadgeAttribute()
     {
         return match($this->status) {
-            self::STATUS_APPROVED => 'badge-success',
-            self::STATUS_REJECTED => 'badge-error',
-            self::STATUS_REVISION_NEEDED => 'badge-warning',
-            default => 'badge-info',
+            self::STATUS_APPROVED => 'bg-green-100 text-green-800',
+            self::STATUS_REJECTED => 'bg-red-100 text-red-800',
+            self::STATUS_REVISION_NEEDED => 'bg-yellow-100 text-yellow-800',
+            default => 'bg-blue-100 text-blue-800', // For under_review and any other status
         };
     }
 

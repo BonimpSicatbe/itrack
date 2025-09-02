@@ -20,33 +20,6 @@ class SubmittedRequirementsIndex extends Component
     public $search = '';
     public $statusFilter = '';
 
-    const STATUS_UNDER_REVIEW = 'under_review';
-    const STATUS_REVISION_NEEDED = 'revision_needed';
-    const STATUS_REJECTED = 'rejected';
-    const STATUS_APPROVED = 'approved';
-
-    public function getStatusText($status)
-    {
-        return match($status) {
-            self::STATUS_UNDER_REVIEW => 'Under Review',
-            self::STATUS_REVISION_NEEDED => 'Revision Needed',
-            self::STATUS_REJECTED => 'Rejected',
-            self::STATUS_APPROVED => 'Approved',
-            default => 'Unknown',
-        };
-    }
-
-    public function getStatusBadge($status)
-    {
-        return match($status) {
-            self::STATUS_UNDER_REVIEW => 'bg-blue-100 text-blue-800',
-            self::STATUS_REVISION_NEEDED => 'bg-yellow-100 text-yellow-800',
-            self::STATUS_REJECTED => 'bg-red-100 text-red-800',
-            self::STATUS_APPROVED => 'bg-green-100 text-green-800',
-            default => 'bg-gray-100 text-gray-800',
-        };
-    }
-
     protected $queryString = [
         'category' => ['except' => 'file'],
         'search' => ['except' => ''],
@@ -126,42 +99,25 @@ class SubmittedRequirementsIndex extends Component
 
                 $submittedRequirements = $query->paginate(10);
             } else {
-                // For other categories, group the results
-                $items = SubmittedRequirement::query()
-                    ->with([
-                        'requirement', 
-                        'user.college', 
-                        'user.department', 
-                        'media'
-                    ])
-                    ->whereHas('requirement', function($q) use ($activeSemester) {
-                        $q->where('semester_id', $activeSemester->id);
-                    })
-                    ->orderBy('submitted_at', 'asc')
+                // For other categories, get all requirements and group the results
+                $requirements = Requirement::where('semester_id', $activeSemester->id)
+                    ->orderBy('name')
                     ->get();
 
-                foreach ($items as $item) {
-                    $groupKey = null;
-                    $groupName = null;
-
-                    switch ($this->category) {
-                        case 'requirement':
-                            $groupKey = $item->requirement_id;
-                            $groupName = $item->requirement->name;
-                            break;
-                    }
-
-                    if ($groupKey) {
-                        if (!isset($groupedItems[$groupKey])) {
-                            $groupedItems[$groupKey] = [
-                                'name' => $groupName,
-                                'count' => 0,
-                                'items' => []
-                            ];
-                        }
-                        $groupedItems[$groupKey]['items'][] = $item;
-                        $groupedItems[$groupKey]['count']++;
-                    }
+                foreach ($requirements as $requirement) {
+                    $groupKey = $requirement->id;
+                    $groupName = $requirement->name;
+                    
+                    // Get submissions for this requirement
+                    $submissions = SubmittedRequirement::where('requirement_id', $requirement->id)
+                        ->with(['user.college', 'user.department', 'media'])
+                        ->get();
+                        
+                    $groupedItems[$groupKey] = [
+                        'name' => $groupName,
+                        'count' => $submissions->count(),
+                        'items' => $submissions
+                    ];
                 }
             }
         }
@@ -175,5 +131,12 @@ class SubmittedRequirementsIndex extends Component
             ],
             'activeSemester' => $activeSemester,
         ]);
+    }
+
+    /* ========== STATUS HELPER METHODS (Using the Model) ========== */
+
+    public function getStatusText($status)
+    {
+        return SubmittedRequirement::statuses()[$status] ?? 'Unknown';
     }
 }

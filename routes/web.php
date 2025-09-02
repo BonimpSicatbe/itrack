@@ -9,6 +9,7 @@ use App\Http\Controllers\FileController;
 use App\Http\Controllers\FileManagerController;
 use App\Http\Controllers\FileUploadController;
 use App\Http\Controllers\admin\SemesterController;
+use App\Http\Controllers\Admin\ManagementController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
@@ -81,9 +82,21 @@ Route::middleware(['auth', 'role:admin|super-admin'])
             return view('admin.pages.submitted-requirements.requirement', ['requirement_id' => $requirement_id]);
         })->name('submitted-requirements.requirement');
 
-        // Users
-        Route::resource('users', UserController::class);
-        
+        Route::prefix('management')->group(function () {
+            // Main management dashboard
+            Route::get('/', [ManagementController::class, 'index'])
+                ->name('management.index');
+            
+            // User management routes - remove or comment out for now
+            // Route::prefix('users')->group(function () {
+            //     Route::get('/{user}/edit', [ManagementController::class, 'editUser'])
+            //         ->name('management.users.edit');
+            //     Route::put('/{user}', [ManagementController::class, 'updateUser'])
+            //         ->name('management.users.update');
+            //     Route::delete('/{user}', [ManagementController::class, 'destroyUser'])
+            //         ->name('management.users.destroy');
+            // });
+        });
 
         // Semesters
         Route::prefix('semesters')->group(function () {
@@ -123,11 +136,12 @@ Route::middleware('auth')->group(function () {
         return response()->json(['success' => true]);
     })->name('notifications.markAsRead');
 });
+
 Route::get('/user/files/{media}/preview', [UserController::class, 'preview'])
         ->whereNumber('media')
         ->name('user.file.preview');
 
-    Route::get('/user/files/{media}/download', [UserController::class, 'download'])
+Route::get('/user/files/{media}/download', [UserController::class, 'download'])
         ->whereNumber('media')
         ->name('user.file.download');
 
@@ -143,6 +157,15 @@ Route::middleware('auth')->group(function () {
         $request->user()->sendEmailVerificationNotification();
         return back()->with('status', 'verification-link-sent');
     })->middleware(['throttle:6,1'])->name('verification.send');
+});
+
+// Livewire routes (add these if not already present)
+Livewire::setScriptRoute(function ($handle) {
+    return Route::get('/vendor/livewire/livewire.js', $handle);
+});
+
+Livewire::setUpdateRoute(function ($handle) {
+    return Route::post('/vendor/livewire/update', $handle);
 });
 
 require __DIR__ . '/auth.php';
