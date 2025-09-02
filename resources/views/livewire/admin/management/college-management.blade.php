@@ -1,0 +1,268 @@
+<!-- college-management.blade.php -->
+<div class="w-full flex">
+    <!-- Main Content Area -->
+    <div class="w-full transition-all duration-300 ease-in-out">
+        <!-- Header -->
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-2 gap-4">
+            <div>
+                <div class="flex items-center gap-2">
+                    <h3 class="text-xl font-semibold text-1B512D">College Management</h3>
+                    <p class="text-sm text-gray-600">| Manage colleges and their information.</p>
+                </div>
+            </div>
+            <button 
+                wire:click="openAddCollegeModal" 
+                class="px-5 py-2 bg-1C7C54 text-white font-semibold rounded-full hover:bg-1B512D focus:outline-none focus:ring-2 focus:ring-73E2A7 focus:ring-offset-2 transition text-sm cursor-pointer"
+            >
+                <i class="fa-solid fa-plus mr-2"></i>Add College
+            </button>
+        </div>
+
+        <!-- Divider -->
+        <div class="border-b border-gray-200 mb-4"></div>
+
+        <!-- Search and Total Colleges -->
+        <div class="flex flex-col sm:flex-row items-center justify-between gap-4 mb-4">
+            
+            <!-- Total Colleges Badge -->
+            <div class="flex items-center gap-2 bg-1C7C54/10 border border-1C7C54/30 px-4 py-2 rounded-xl shadow-sm">
+                <i class="fa-solid fa-building-columns text-1C7C54"></i>
+                <span class="text-sm font-semibold text-1C7C54">
+                    Total Colleges: {{ $colleges->count() }}
+                </span>
+            </div>
+
+            <!-- Search Box -->
+            <div class="w-full sm:w-1/2">
+                <label for="search" class="block text-sm font-semibold text-gray-700 mb-1">Search Colleges</label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i class="fa-solid fa-magnifying-glass text-gray-400"></i>
+                    </div>
+                    <input 
+                        type="text" 
+                        wire:model.live.debounce.300ms="search"
+                        class="pl-10 block w-full rounded-xl border-gray-300 shadow-sm focus:border-1C7C54 focus:ring-1C7C54 sm:text-sm" 
+                        placeholder="Search by name or acronym"
+                    >
+                </div>
+            </div>
+        </div>
+
+        <!-- Colleges Table -->
+        <div class="max-h-[500px] overflow-x-auto rounded-xl border border-gray-200 shadow-sm">
+            <table class="table table-auto table-striped table-pin-rows table-sm w-full rounded-lg">
+                <thead>
+                    <tr class="bg-base-300 font-bold uppercase">
+                        <th class="cursor-pointer hover:bg-blue-50 p-4 text-left" wire:click="sortBy('name')" style="background-color: #1C7C54; color: white; width: 45%;">
+                            <div class="flex items-center pt-2 pb-2">
+                                Name
+                                <div class="ml-1">
+                                    @if($sortField === 'name')
+                                        <i class="fas fa-sort-{{ $sortDirection === 'asc' ? 'up' : 'down' }}"></i>
+                                    @else
+                                        <i class="fas fa-sort opacity-30"></i>
+                                    @endif
+                                </div>
+                            </div>
+                        </th>
+                        <th class="cursor-pointer hover:bg-blue-50 p-4 text-left" wire:click="sortBy('acronym')" style="background-color: #1C7C54; color: white; width: 25%;">
+                            <div class="flex items-center pt-2 pb-2">
+                                Acronym
+                                <div class="ml-1">
+                                    @if($sortField === 'acronym')
+                                        <i class="fas fa-sort-{{ $sortDirection === 'asc' ? 'up' : 'down' }}"></i>
+                                    @else
+                                        <i class="fas fa-sort opacity-30"></i>
+                                    @endif
+                                </div>
+                            </div>
+                        </th>
+                        <th class="p-4 text-center" style="background-color: #1C7C54; color: white; width: 30%;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($colleges as $college)
+                        <tr class="hover:bg-blue-50">
+                            <td class="whitespace-nowrap p-4">
+                                <div class="text-sm font-medium text-gray-900 pl-4">
+                                    {{ $college->name }}
+                                </div>
+                            </td>
+                            <td class="whitespace-nowrap p-4">
+                                <div class="text-sm font-medium text-gray-900">
+                                    {{ $college->acronym }}
+                                </div>
+                            </td>
+                            <td class="whitespace-nowrap p-4">
+                                <div class="flex justify-center space-x-2 text-base">
+                                    <!-- Edit button -->
+                                    <button class="text-amber-500 hover:bg-amber-100 rounded-lg p-2 tooltip cursor-pointer" 
+                                            data-tip="Edit" 
+                                            wire:click="openEditCollegeModal({{ $college->id }})">
+                                        <i class="fa-solid fa-pen-to-square"></i>
+                                    </button>
+                                    
+                                    <!-- Delete button -->
+                                    <button class="text-red-600 hover:bg-red-100 rounded-lg p-2 tooltip cursor-pointer"
+                                            data-tip="Delete" 
+                                            wire:click="openDeleteConfirmationModal({{ $college->id }})">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="3" class="text-center p-4">No colleges found.</td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Add College Modal -->
+        @if($showAddCollegeModal)
+            <x-modal name="add-college-modal" :show="$showAddCollegeModal" maxWidth="2xl">
+                <!-- Header -->
+                <div class="bg-1C7C54 text-white rounded-t-2xl px-6 py-4 flex items-center space-x-3">
+                    <i class="fa-solid fa-building-columns text-lg"></i>
+                    <h3 class="text-xl font-semibold">Add New College</h3>
+                </div>
+
+                <!-- Body -->
+                <div class="bg-white px-6 py-6 rounded-b-2xl">
+                    <div class="space-y-6">
+                        <!-- College Name -->
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700">College Name *</label>
+                            <input type="text" wire:model="newCollege.name"
+                                class="mt-2 block w-full rounded-xl border-gray-300 focus:border-1C7C54 focus:ring-1C7C54 sm:text-sm"
+                                placeholder="Enter college name">
+                            @error('newCollege.name') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
+                        </div>
+
+                        <!-- College Acronym -->
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700">College Acronym *</label>
+                            <input type="text" wire:model="newCollege.acronym"
+                                class="mt-2 block w-full rounded-xl border-gray-300 focus:border-1C7C54 focus:ring-1C7C54 sm:text-sm"
+                                placeholder="Enter college acronym">
+                            @error('newCollege.acronym') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
+                        </div>
+                    </div>
+
+                    <!-- Footer -->
+                    <div class="mt-8 flex justify-end space-x-3">
+                        <button type="button" wire:click="closeAddCollegeModal"
+                            class="px-5 py-2 rounded-full border border-1C7C54 text-1C7C54 bg-white hover:bg-73E2A7 hover:text-white font-semibold text-sm cursor-pointer">
+                            Cancel
+                        </button>
+                        <button type="button" wire:click="addCollege" wire:loading.attr="disabled"
+                            class="px-5 py-2 rounded-full bg-1C7C54 text-white font-semibold text-sm shadow hover:bg-1B512D cursor-pointer">
+                            <span wire:loading.remove wire:target="addCollege">Add College</span>
+                            <span wire:loading wire:target="addCollege">
+                                <i class="fa-solid fa-spinner fa-spin mr-2"></i> Adding...
+                            </span>
+                        </button>
+                    </div>
+                </div>
+            </x-modal>
+        @endif
+
+        <!-- Edit College Modal -->
+        @if($showEditCollegeModal)
+            <x-modal name="edit-college-modal" :show="$showEditCollegeModal" maxWidth="2xl">
+                <!-- Header -->
+                <div class="bg-1C7C54 text-white rounded-t-2xl px-6 py-4 flex items-center space-x-3">
+                    <i class="fa-solid fa-building-columns text-lg"></i>
+                    <h3 class="text-xl font-semibold">Edit College</h3>
+                </div>
+
+                <!-- Body -->
+                <div class="bg-white px-6 py-6 rounded-b-2xl">
+                    <div class="space-y-6">
+                        <!-- College Name -->
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700">College Name *</label>
+                            <input type="text" wire:model="editingCollege.name"
+                                class="mt-2 block w-full rounded-xl border-gray-300 focus:border-1C7C54 focus:ring-1C7C54 sm:text-sm"
+                                placeholder="Enter college name">
+                            @error('editingCollege.name') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
+                        </div>
+
+                        <!-- College Acronym -->
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700">College Acronym *</label>
+                            <input type="text" wire:model="editingCollege.acronym"
+                                class="mt-2 block w-full rounded-xl border-gray-300 focus:border-1C7C54 focus:ring-1C7C54 sm:text-sm"
+                                placeholder="Enter college acronym">
+                            @error('editingCollege.acronym') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
+                        </div>
+                    </div>
+
+                    <!-- Footer -->
+                    <div class="mt-8 flex justify-end space-x-3">
+                        <button type="button" wire:click="closeEditCollegeModal"
+                            class="px-5 py-2 rounded-full border border-1C7C54 text-1C7C54 bg-white hover:bg-73E2A7 hover:text-white font-semibold text-sm cursor-pointer">
+                            Cancel
+                        </button>
+                        <button type="button" wire:click="updateCollege" wire:loading.attr="disabled"
+                            class="px-5 py-2 rounded-full bg-1C7C54 text-white font-semibold text-sm shadow hover:bg-1B512D cursor-pointer">
+                            <span wire:loading.remove wire:target="updateCollege">Update College</span>
+                            <span wire:loading wire:target="updateCollege">
+                                <i class="fa-solid fa-spinner fa-spin mr-2"></i> Updating...
+                            </span>
+                        </button>
+                    </div>
+                </div>
+            </x-modal>
+        @endif
+
+        <!-- Delete Confirmation Modal -->
+        @if($showDeleteConfirmationModal && $collegeToDelete)
+            <x-modal name="delete-college-modal" :show="$showDeleteConfirmationModal" maxWidth="md">
+                <!-- Header -->
+                <div class="bg-red-600 text-white rounded-t-2xl px-6 py-4 flex items-center space-x-3">
+                    <i class="fa-solid fa-triangle-exclamation text-lg"></i>
+                    <h3 class="text-xl font-semibold">Delete College</h3>
+                </div>
+
+                <!-- Body -->
+                <div class="bg-white px-6 py-6 rounded-b-2xl">
+                    <div class="text-center">
+                        <p class="text-sm text-gray-700">
+                            Are you sure you want to delete  
+                            <span class="font-semibold text-gray-900">
+                                {{ $collegeToDelete->name }} ({{ $collegeToDelete->acronym }})
+                            </span>?  
+                            <br>This action cannot be undone.
+                        </p>
+                    </div>
+
+                    <!-- Footer -->
+                    <div class="mt-8 flex justify-center space-x-3">
+                        <button 
+                            type="button" 
+                            wire:click="closeDeleteConfirmationModal" 
+                            class="px-5 py-2 rounded-full border border-1C7C54 text-1C7C54 bg-white hover:bg-73E2A7 hover:text-white font-semibold text-sm cursor-pointer"
+                        >
+                            Cancel
+                        </button>
+                        <button 
+                            type="button" 
+                            wire:click="deleteCollege" 
+                            wire:loading.attr="disabled"
+                            class="px-5 py-2 rounded-full bg-red-600 text-white font-semibold text-sm shadow hover:bg-red-700 cursor-pointer"
+                        >
+                            <span wire:loading.remove wire:target="deleteCollege">Delete</span>
+                            <span wire:loading wire:target="deleteCollege">
+                                <i class="fa-solid fa-spinner fa-spin mr-2"></i> Deleting...
+                            </span>
+                        </button>
+                    </div>
+                </div>
+            </x-modal>
+        @endif
+    </div>
+</div>

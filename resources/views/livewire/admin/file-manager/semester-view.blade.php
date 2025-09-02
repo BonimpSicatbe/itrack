@@ -7,7 +7,7 @@
             </div>
             <h2 class="text-xl md:text-xl font-semibold text-1B512D">Semester</h2>
         </div>
-        <a href="{{ route('admin.semesters.index') }}" 
+        <a href="{{ route('admin.management.index', ['tab' => 'semesters']) }}" 
            class="px-4 py-2 rounded-full bg-1C7C54 text-white text-sm font-semibold hover:bg-73E2A7 transition flex items-center shadow">
             <i class="fa-solid fa-calendar-days mr-2"></i>
             Manage

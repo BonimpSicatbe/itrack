@@ -3,29 +3,19 @@
 namespace App\Livewire\Admin\Management;
 
 use Livewire\Component;
-use Livewire\WithPagination;
 use App\Models\User;
 use App\Models\College;
 use App\Models\Department;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
+use Spatie\Permission\Models\Role;
 
 class UserManagement extends Component
 {
-    use WithPagination;
-
-     #[Url]
     public $search = '';
-    
-    #[Url]
     public $collegeFilter = '';
-    
-    #[Url]
     public $departmentFilter = '';
     
-    #[Url]
-    public $perPage = 10;
-
     public $sortField = 'lastname';
     public $sortDirection = 'asc';
     public $selectedUser = null;
@@ -40,7 +30,8 @@ class UserManagement extends Component
         'college_id' => '',
         'department_id' => '',
         'password' => '',
-        'password_confirmation' => ''
+        'password_confirmation' => '',
+        'role' => ''
     ];
 
     // Edit User Modal Properties
@@ -54,20 +45,12 @@ class UserManagement extends Component
         'email' => '',
         'college_id' => '',
         'department_id' => '',
+        'role' => ''
     ];
 
     // Delete Confirmation Properties
     public $showDeleteConfirmationModal = false;
     public $userToDelete = null;
-
-    protected $queryString = [
-        'search' => ['except' => ''],
-        'collegeFilter' => ['except' => ''],
-        'departmentFilter' => ['except' => ''],
-        'perPage' => ['except' => 10],
-        'sortField' => ['except' => 'lastname'],
-        'sortDirection' => ['except' => 'asc'],
-    ];
 
     public function showUser($userId)
     {
@@ -107,6 +90,7 @@ class UserManagement extends Component
             'email' => $user->email,
             'college_id' => $user->college_id,
             'department_id' => $user->department_id,
+            'role' => $user->roles->first() ? $user->roles->first()->id : ''
         ];
         
         $this->showEditUserModal = true;
@@ -153,7 +137,6 @@ class UserManagement extends Component
         }
     }
 
-
     public function updateUser()
     {
         try {
@@ -166,6 +149,7 @@ class UserManagement extends Component
                 'editingUser.college_id' => 'nullable|exists:colleges,id',
                 'editingUser.department_id' => 'nullable|exists:departments,id',
                 'editingUser.password' => 'nullable|confirmed|min:8',
+                'editingUser.role' => 'required|exists:roles,id',
             ], [
                 'editingUser.firstname.required' => 'First name is required.',
                 'editingUser.lastname.required' => 'Last name is required.',
@@ -173,6 +157,7 @@ class UserManagement extends Component
                 'editingUser.email.unique' => 'This email is already in use.',
                 'editingUser.password.confirmed' => 'Password confirmation does not match.',
                 'editingUser.password.min' => 'Password must be at least 8 characters.',
+                'editingUser.role.required' => 'Role is required.',
             ]);
 
             // Check if another user with same first and last name already exists
@@ -208,6 +193,9 @@ class UserManagement extends Component
             }
             
             $user->update($updateData);
+
+            $role = Role::find($this->editingUser['role']);
+            $user->syncRoles([$role->name]);
 
             $this->closeEditUserModal();
             $this->dispatch('showNotification', 
@@ -248,6 +236,7 @@ class UserManagement extends Component
                 'newUser.college_id' => 'nullable|exists:colleges,id',
                 'newUser.department_id' => 'nullable|exists:departments,id',
                 'newUser.password' => ['required', 'confirmed', Rules\Password::defaults()],
+                'newUser.role' => 'required|exists:roles,id',
             ], [
                 'newUser.firstname.required' => 'First name is required.',
                 'newUser.lastname.required' => 'Last name is required.',
@@ -255,6 +244,7 @@ class UserManagement extends Component
                 'newUser.email.unique' => 'This email is already in use.',
                 'newUser.password.required' => 'Password is required.',
                 'newUser.password.confirmed' => 'Password confirmation does not match.',
+                'newUser.role.required' => 'Role is required.',
             ]);
 
             // Check if user with same first and last name already exists
@@ -280,6 +270,9 @@ class UserManagement extends Component
                 'department_id' => $this->newUser['department_id'] ?: null,
                 'password' => Hash::make($this->newUser['password']),
             ]);
+
+            $role = Role::find($this->newUser['role']);
+            $user->assignRole($role->name);
 
             $userName = $user->firstname . ' ' . $user->lastname;
             $this->closeAddUserModal();
@@ -317,22 +310,7 @@ class UserManagement extends Component
 
     public function updatingSearch()
     {
-        $this->resetPage();
-    }
-
-    public function updatingCollegeFilter()
-    {
-        $this->resetPage();
-    }
-
-    public function updatingDepartmentFilter()
-    {
-        $this->resetPage();
-    }
-
-    public function updatingPerPage()
-    {
-        $this->resetPage();
+        // No need to reset page since we removed pagination
     }
 
     public function render()
@@ -353,15 +331,17 @@ class UserManagement extends Component
                 $query->where('department_id', $this->departmentFilter);
             })
             ->orderBy($this->sortField, $this->sortDirection)
-            ->paginate($this->perPage);
+            ->get();
 
         $colleges = College::orderBy('name')->get();
         $departments = Department::orderBy('name')->get();
+        $roles = Role::orderBy('name')->get();
 
         return view('livewire.admin.management.user-management', [
             'users' => $users,
             'colleges' => $colleges,
             'departments' => $departments,
+            'roles' => $roles,
         ]);
     }
 }

@@ -15,16 +15,16 @@
             <div class="mt-4 lg:mt-0">
                 <nav class="flex gap-3">
                     @foreach($tabs as $tabKey => $tab)
-                        <button
-                            wire:click="setActiveTab('{{ $tabKey }}')"
+                        <a
+                            href="{{ route('admin.management.index', ['tab' => $tabKey]) }}"
                             class="px-4 py-2 rounded-full text-sm font-semibold transition-colors duration-200 shadow-sm
                                 {{ $activeTab === $tabKey 
                                     ? 'bg-white text-1C7C54' 
-                                    : 'bg-white/20 text-white hover:bg-white hover:text-1C7C54' }}"
+                                    : 'bg-white/20 hover:bg-white text-1C7C54' }}"
                         >
                             <i class="fa-solid fa-{{ $tab['icon'] }}"></i>
                             {{ $tab['label'] }}
-                        </button>
+                        </a>
                     @endforeach
                 </nav>
             </div>
@@ -33,33 +33,26 @@
         <!-- Scrollable Content -->
         <div class="flex-1 overflow-y-auto bg-white rounded-2xl shadow p-6 mt-4">
             @switch($activeTab)
+                @case('semesters')
+                    <div>
+                        @livewire('admin.management.semester-management')
+                    </div>
+                @break
                 @case('users')
                     <div>
                         @livewire('admin.management.user-management')
                     </div>
                 @break
-
                 @case('colleges')
                     <div>
-                        <h3 class="text-xl font-semibold text-1C7C54 mb-2">College Management</h3>
-                        <p class="text-sm text-gray-500">Manage colleges and their departments.</p>
+                        @livewire('admin.management.college-management')
                     </div>
                 @break
-
                 @case('departments')
                     <div>
-                        <h3 class="text-xl font-semibold text-1C7C54 mb-2">Department Management</h3>
-                        <p class="text-sm text-gray-500">Manage departments and their programs.</p>
+                        @livewire('admin.management.department-management')
                     </div>
                 @break
-
-                @case('settings')
-                    <div>
-                        <h3 class="text-xl font-semibold text-1C7C54 mb-2">System Settings</h3>
-                        <p class="text-sm text-gray-500">Configure system-wide settings and preferences.</p>
-                    </div>
-                @break
-
                 @default
                     <div>
                         <h3 class="text-xl font-semibold text-1C7C54 mb-2">Welcome</h3>

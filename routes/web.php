@@ -86,27 +86,6 @@ Route::middleware(['auth', 'role:admin|super-admin'])
             // Main management dashboard
             Route::get('/', [ManagementController::class, 'index'])
                 ->name('management.index');
-            
-            // User management routes - remove or comment out for now
-            // Route::prefix('users')->group(function () {
-            //     Route::get('/{user}/edit', [ManagementController::class, 'editUser'])
-            //         ->name('management.users.edit');
-            //     Route::put('/{user}', [ManagementController::class, 'updateUser'])
-            //         ->name('management.users.update');
-            //     Route::delete('/{user}', [ManagementController::class, 'destroyUser'])
-            //         ->name('management.users.destroy');
-            // });
-        });
-
-        // Semesters
-        Route::prefix('semesters')->group(function () {
-            Route::get('/', [SemesterController::class, 'index'])
-                ->name('semesters.index');
-            Route::post('/', [SemesterController::class, 'store']);
-            Route::put('/{semester}', [SemesterController::class, 'update']);
-            Route::delete('/{semester}', [SemesterController::class, 'destroy']);
-            Route::post('/{semester}/activate', [SemesterController::class, 'setActive'])
-                ->name('semesters.activate');
         });
     });
 
