@@ -12,6 +12,8 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 class FileManager extends Component
 {
     public $search = '';
+    public $statusFilter = '';
+    public $viewMode = 'grid';
     public $showFileDetails = false;
     public $selectedFile = null;
     
@@ -109,8 +111,20 @@ class FileManager extends Component
 
     public function updatedSearch()
     {
-        // Trigger re-render when search changes
-        $this->render();
+        // Pass search to child component
+        $this->dispatch('searchUpdated', $this->search);
+    }
+
+    public function updatedStatusFilter()
+    {
+        // Pass filter to child component
+        $this->dispatch('statusFilterUpdated', $this->statusFilter);
+    }
+
+    public function updatedViewMode()
+    {
+        // Pass view mode to child component
+        $this->dispatch('viewModeUpdated', $this->viewMode);
     }
 
     public function handleFileSelected($submissionId)
@@ -252,6 +266,7 @@ class FileManager extends Component
         return view('livewire.user.file-manager.file-manager', [
             'totalFiles' => $this->getTotalFiles(),
             'totalSize' => $this->getTotalSize(),
+            'statuses' => SubmittedRequirement::statuses(),
         ]);
     }
 
