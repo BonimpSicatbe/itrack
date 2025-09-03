@@ -36,6 +36,12 @@ class RecentSubmissionsList extends Component
         }
     }
 
+    public function clearFilters()
+    {
+        $this->reset(['search', 'statusFilter']);
+        $this->loadRecentSubmissions();
+    }
+
     public function loadRecentSubmissions()
     {
         $query = SubmittedRequirement::where('user_id', Auth::id())
