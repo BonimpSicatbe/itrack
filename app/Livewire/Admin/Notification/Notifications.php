@@ -5,6 +5,7 @@ namespace App\Livewire\Admin\Notification;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use App\Models\SubmittedRequirement;
+use Illuminate\Notifications\DatabaseNotification;
 
 class Notifications extends Component
 {
@@ -16,6 +17,10 @@ class Notifications extends Component
     public $selectedFileId;
     public $newStatus;
     public $adminNotes;
+
+    // For delete confirmation modal
+    public $showDeleteConfirmationModal = false;
+    public $notificationToDelete = null;
 
     public function mount()
     {
@@ -33,14 +38,19 @@ class Notifications extends Component
 
     public function selectNotification($id)
     {
+        // Decode the ID if it's encoded
+        $id = urldecode($id);
         $this->selectedNotification = $id;
-        $notification = $this->notifications->firstWhere('id', $id);
+        
+        // Find the notification by ID
+        $notification = DatabaseNotification::find($id);
         
         if ($notification) {
-            // Mark as read when selected
+            // Mark as read when selected only if unread
             if ($notification->unread()) {
                 $notification->markAsRead();
-                $this->dispatch('notificationRead'); // Dispatch event for navbar update
+                $this->dispatch('notification-read'); // Fixed event name to match navigation
+                $this->loadNotifications(); // Reload to update read status
             }
 
             // Prepare basic notification data
@@ -185,19 +195,21 @@ class Notifications extends Component
         ]);
 
         // Reload data
-        $notification = $this->notifications->firstWhere('id', $this->selectedNotification);
-        if ($notification) {
-            $this->loadDetails($notification->data);
+        if ($this->selectedNotification) {
+            $notification = DatabaseNotification::find($this->selectedNotification);
+            if ($notification) {
+                $this->loadDetails($notification->data);
+            }
         }
 
         // Reset and show success message
         $this->reset(['newStatus', 'adminNotes']);
         
-        $this->dispatch('notify', [
-            'type' => 'success',
-            'message' => 'Status updated successfully!',
-            'timeout' => 3000
-        ]);
+        $this->dispatch('showNotification', 
+            type: 'success',
+            content: 'Status updated successfully!',
+            duration: 3000
+        );
     }
 
     protected function formatFileSize($bytes)
@@ -219,8 +231,119 @@ class Notifications extends Component
         $this->selectedNotification = null;
         $this->selectedNotificationData = null;
         
-        // Dispatch event for navbar update
-        $this->dispatch('notificationsMarkedRead');
+        // Fixed event name to match navigation
+        $this->dispatch('notifications-marked-read');
+        
+        $this->dispatch('showNotification', 
+            type: 'success',
+            content: 'All notifications marked as read!',
+            duration: 3000
+        );
+    }
+
+    public function markAllAsUnread()
+    {
+        $readNotifications = Auth::user()->readNotifications;
+        $readNotifications->each(function ($notification) {
+            $notification->markAsUnread();
+        });
+        
+        $this->loadNotifications();
+        $this->selectedNotification = null;
+        $this->selectedNotificationData = null;
+        
+        // Fixed event name to match navigation
+        $this->dispatch('notifications-marked-unread', count: $readNotifications->count());
+        
+        $this->dispatch('showNotification', 
+            type: 'success',
+            content: 'All notifications marked as unread!',
+            duration: 3000
+        );
+    }
+
+    public function toggleNotificationReadStatus($notificationId)
+    {
+        // Decode the ID if it's encoded
+        $notificationId = urldecode($notificationId);
+        $notification = DatabaseNotification::find($notificationId);
+        
+        if ($notification) {
+            if ($notification->unread()) {
+                $notification->markAsRead();
+                $message = 'Notification marked as read';
+                $this->dispatch('notification-read'); // Fixed event name to match navigation
+            } else {
+                $notification->markAsUnread();
+                $message = 'Notification marked as unread';
+                $this->dispatch('notification-unread'); // Fixed event name to match navigation
+            }
+            
+            $this->loadNotifications();
+            
+            // If the selected notification was toggled, update its data
+            if ($this->selectedNotification === $notificationId) {
+                $this->selectedNotificationData['unread'] = $notification->unread();
+            }
+            
+            $this->dispatch('showNotification', 
+                type: 'success',
+                content: $message,
+                duration: 3000
+            );
+        }
+    }
+
+    // Delete confirmation modal methods
+    public function openDeleteConfirmationModal($notificationId)
+    {
+        $this->notificationToDelete = $notificationId;
+        $this->showDeleteConfirmationModal = true;
+    }
+
+    public function closeDeleteConfirmationModal()
+    {
+        $this->showDeleteConfirmationModal = false;
+        $this->notificationToDelete = null;
+    }
+
+    public function confirmDeleteNotification()
+    {
+        if ($this->notificationToDelete) {
+            $this->deleteNotification($this->notificationToDelete);
+            $this->closeDeleteConfirmationModal();
+        }
+    }
+
+    public function deleteNotification($notificationId)
+    {
+        // Decode the ID if it's encoded
+        $notificationId = urldecode($notificationId);
+        $notification = DatabaseNotification::find($notificationId);
+        
+        if ($notification) {
+            $wasUnread = $notification->unread();
+            $notification->delete();
+            
+            $this->loadNotifications();
+            
+            // If the deleted notification was selected, clear the selection
+            if ($this->selectedNotification === $notificationId) {
+                $this->selectedNotification = null;
+                $this->selectedNotificationData = null;
+            }
+            
+            // If the deleted notification was unread, update the count
+            if ($wasUnread) {
+                $this->dispatch('notification-read'); // Fixed event name to match navigation
+            }
+            
+            $this->dispatch('showNotification', 
+                type: 'success',
+                content: 'Notification deleted successfully!',
+                duration: 3000
+            );
+        }
     }
 
     public function render()

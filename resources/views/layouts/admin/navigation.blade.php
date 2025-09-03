@@ -4,8 +4,10 @@
         mobileMenuOpen: false,
         showUserMenu: false
      }" 
-     @notification-read.window="if (unreadCount > 0) unreadCount--"
-     @notifications-marked-read.window="unreadCount = 0"
+     @notification-read.window="if (unreadCount > 0) unreadCount--"  
+     @notifications-marked-read.window="unreadCount = 0"  
+     @notification-unread.window="unreadCount++"  
+     @notifications-marked-unread.window="unreadCount = $event.detail.count"  
      @click.away="showUserMenu = false"
      @keydown.escape="showUserMenu = false; mobileMenuOpen = false">
 
@@ -27,7 +29,7 @@
                                class="px-4 py-2 rounded-lg text-xs font-medium transition-all duration-200 flex items-center space-x-2 relative
                                       {{ request()->routeIs($navlink['group'] ?? $navlink['route']) 
                                           ? 'bg-green-50 text-green-700 shadow-sm' 
-                                          : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900' }}"
+                                          : 'text-gray-700 hover:bg-gray-300 hover:text-gray-900' }}"
                                :aria-current="isActive ? 'page' : 'false'">
                                 <i class="fa-solid fa-{{ $navlink['icon'] }} text-sm" aria-hidden="true"></i>
                                 <span>{{ $navlink['label'] }}</span>
@@ -38,15 +40,18 @@
             </div>
 
             {{-- Right side: Notifications, Admin Panel, User Menu --}}
-            <div class="flex items-center space-x-5">
+            <div class="flex items-center space-x-2">
                 {{-- Notifications --}}
                 <a href="{{ route('admin.notifications') }}" 
-                   class="relative p-2 rounded-lg hover:bg-gray-50 transition-colors duration-200"
+                   class="relative rounded-lg transition-colors duration-200 p-2
+                          {{ request()->routeIs('admin.notifications') 
+                              ? 'bg-green-50 text-green-600' 
+                              : 'text-gray-600 hover:text-green-600' }}"
                    aria-label="Notifications">
-                    <i class="fa-solid fa-bell text-gray-600 hover:text-gray-900 transition-colors" aria-hidden="true"></i>
+                    <i class="fa-solid fa-bell text-xl transition-colors" aria-hidden="true"></i>
                     <span x-show="unreadCount > 0" 
                           x-transition
-                          class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium shadow-sm"
+                          class="absolute -top-2 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium shadow-sm"
                           x-text="unreadCount > 99 ? '99+' : unreadCount"
                           aria-live="polite">
                     </span>
@@ -55,7 +60,7 @@
                 {{-- User Menu --}}
                 <div class="relative">
                     <button @click="showUserMenu = !showUserMenu"
-                            class="flex items-center space-x-3 px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors duration-200"
+                            class="flex items-center space-x-3 p-2 py-2 rounded-lg hover:bg-gray-300 hover:text-gray-900 transition-colors duration-200"
                             :aria-expanded="showUserMenu"
                             aria-label="User menu">
                         <div class="w-8 h-8 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center">
@@ -79,20 +84,23 @@
                         x-cloak>
                         
                         <a href="{{ route('profile.edit') }}"
-                        class="flex items-center space-x-3 px-4 py-2 text-sm transition-colors duration-200
+                        class="flex items-center space-x-3 px-3 py-2 m-1 rounded-md text-sm transition-colors duration-200
                                 {{ request()->routeIs('profile.*') 
                                     ? 'bg-green-50 text-green-700' 
-                                    : 'text-gray-700 hover:bg-gray-50' }}">
-                            <i class="fa-solid fa-user-circle {{ request()->routeIs('profile.*') ? 'text-green-600' : 'text-gray-400' }}" aria-hidden="true"></i>
+                                    : 'text-gray-700 hover:bg-gray-300 hover:text-gray-900' }}">
+                            <i class="fa-solid fa-user-circle {{ request()->routeIs('profile.*') 
+                                ? 'text-green-600' 
+                                : 'text-gray-400' }}" aria-hidden="true">
+                            </i>
                             <span>Your Profile</span>
                         </a>
 
                         <!-- Management link -->
                         <a href="{{ route('admin.management.index') }}"
-                        class="flex items-center space-x-3 px-4 py-2 text-sm transition-colors duration-200
+                        class="flex items-center space-x-3 px-3 py-2 text-sm m-1 rounded-md transition-colors duration-200
                                 {{ request()->routeIs('admin.management.*') 
                                     ? 'bg-green-50 text-green-700' 
-                                    : 'text-gray-700 hover:bg-gray-50' }}">
+                                    : 'text-gray-700 hover:bg-gray-300' }}">
                             <i class="fa-solid fa-gears {{ request()->routeIs('admin.management.*') ? 'text-green-600' : 'text-gray-400' }}" aria-hidden="true"></i>
                             <span>Management</span>
                         </a>
@@ -100,7 +108,7 @@
                         <form method="POST" action="{{ route('logout') }}" class="px-1">
                             @csrf
                             <button type="submit" 
-                                    class="w-full flex items-center space-x-3 px-3 py-2 text-sm text-gray-700 hover:bg-red-50 hover:text-red-700 rounded-md transition-colors duration-200 group">
+                                    class="w-full flex items-center space-x-3 px-3 py-2 text-sm text-gray-700 hover:bg-red-100 hover:text-red-700 rounded-md transition-colors duration-200 group">
                                 <i class="fa-solid fa-right-from-bracket text-gray-400 group-hover:text-red-500" aria-hidden="true"></i>
                                 <span>Logout</span>
                             </button>
@@ -115,16 +123,19 @@
             {{-- Mobile Header --}}
             <div class="flex items-center justify-between py-4">
                 <div class="flex items-center space-x-3">
-                    <img src="{{ asset('images/logo.png') }}" alt="iTrack Logo" class="w-8 h-8 object-contain" loading="lazy">
+                    <img src="{{ asset('images/logo-title.png') }}" alt="iTrack Logo" class="w-8 h-8 object-contain" loading="lazy">
                     <span class="font-bold text-gray-900">iTrack</span>
                 </div>
 
                 <div class="flex items-center space-x-4">
                     {{-- Mobile Notification Button --}}
                     <a href="{{ route('admin.notifications') }}" 
-                       class="relative p-2 rounded-lg hover:bg-gray-50 transition-colors"
+                       class="relative p-2 rounded-lg transition-colors
+                              {{ request()->routeIs('admin.notifications') 
+                                  ? 'bg-green-50 text-green-600' 
+                                  : 'text-gray-600 hover:bg-gray-50' }}"
                        aria-label="Notifications">
-                        <i class="fa-solid fa-bell text-gray-600" aria-hidden="true"></i>
+                        <i class="fa-solid fa-bell" aria-hidden="true"></i>
                         <span x-show="unreadCount > 0" 
                               class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium"
                               x-text="unreadCount > 99 ? '99+' : unreadCount"
@@ -220,6 +231,5 @@
      x-cloak>
     <div class="flex items-center space-x-3">
         <div class="animate-spin rounded-full h-6 w-6 border-2 border-green-600 border-t-transparent"></div>
-        <span class="text-gray-700 font-medium">Loading...</span>
     </div>
 </div>

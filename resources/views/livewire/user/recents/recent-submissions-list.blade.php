@@ -80,8 +80,7 @@
                                 </div>
                             </div>
                             <div class="flex flex-col items-end space-y-1">
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium" 
-                                      style="background-color: {{ \App\Models\SubmittedRequirement::getStatusColor($submission->status) }}; color: white">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $submission->status_badge }}">
                                     {{ $submission->status_text }}
                                 </span>
                                 @if($submission->submissionFile)
