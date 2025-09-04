@@ -1,6 +1,6 @@
 <div class="flex flex-col gap-2 w-[92%] mx-auto mb-6">
     <!-- Header / Toolbar -->
-    <div class="flex justify-between items-center bg-1C7C54 text-white p-4 rounded-2xl shadow-md">
+    <div class="flex justify-between items-center text-white p-4 rounded-2xl shadow-md" style="background: linear-gradient(148deg,rgba(18, 67, 44, 1) 0%, rgba(30, 119, 77, 1) 54%, rgba(55, 120, 64, 1) 100%);">
         <div class="flex items-center gap-3">
             <div class="pl-3 bg-1C7C54/10 rounded-xl">
                 <i class="fa-solid fa-paper-plane text-white text-2xl"></i>
@@ -94,18 +94,17 @@
 
                     @if($viewMode === 'list')
                         <!-- List View with Column Layout -->
-                        <div class="flex flex-col gap-2 ml-2 mr-2 mb-2">
-                            <!-- Column Headers -->
-                            <div class="grid grid-cols-12 gap-4 px-4 py-2 bg-DEF4C6/30 rounded-lg text-sm font-semibold text-1B512D">
-                                <div class="col-span-3">File</div>
-                                <div class="col-span-2">Requirement</div>
-                                <div class="col-span-3">Submitted By</div>
-                                <div class="col-span-2">Status</div>
-                                <div class="col-span-2">Date Submitted</div>
-                            </div>
+                        <div class="flex flex-col gap-2 ml-2 mr-2 mb-2">                            
                             
                             <!-- File Items -->
                             @forelse ($submittedRequirements as $submittedRequirement)
+                                <div class="grid grid-cols-12 gap-4 px-4 py-2 bg-DEF4C6/30 rounded-lg text-sm font-semibold text-1B512D">
+                                    <div class="col-span-3">File</div>
+                                    <div class="col-span-2">Requirement</div>
+                                    <div class="col-span-3">Submitted By</div>
+                                    <div class="col-span-2">Status</div>
+                                    <div class="col-span-2">Date Submitted</div>
+                                </div>
                                 <a href="{{ route('admin.submitted-requirements.show', ['submitted_requirement' => $submittedRequirement, 'file_id' => $submittedRequirement->media->first()->id]) }}" 
                                    class="grid grid-cols-12 gap-4 p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition items-center">
                                     <!-- File Icon & Name -->

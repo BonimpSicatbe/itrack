@@ -114,10 +114,14 @@
         color: rgb(120 53 15) !important; /* Amber-900 */
     }
 
+    button {
+        cursor: pointer;
+    }
 
 
 
-    
+
+
 /* File Manager Styles */
 .file-manager .overflow-y-auto::-webkit-scrollbar {
     width: 6px;

@@ -3,7 +3,7 @@
         <legend class="fieldset-legend w-full capitalize">{{ $label }}</legend>
     @endif
     <select
-        {{ $attributes->merge(['class' => 'select w-full']) }}>
+        {{ $attributes->merge(['class' => 'select w-full rounded-xl']) }}>
         <option value="" disabled selected>select {{ $label }}</option>
         {{ $slot }}
     </select>

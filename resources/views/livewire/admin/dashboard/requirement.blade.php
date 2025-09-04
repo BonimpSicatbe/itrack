@@ -1,21 +1,30 @@
-<div class="flex flex-col w-full gap-6">
+<div class="flex flex-col w-full gap-6 rounded-xl">
     @if($activeSemester)
-        <div class="flex flex-col sm:flex-row gap-4 w-full items-start sm:items-center">
-            <div class="relative w-full sm:w-96">
-                <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                <input type="text" wire:model.live="search" id="search" 
-                    class="input input-sm input-bordered pl-9 w-full rounded-xl" 
-                    placeholder="Search requirements by name...">
+        <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+
+            <!-- Search Box -->
+            <div class="w-full sm:w-1/3">
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i class="fa-solid fa-magnifying-glass text-gray-500"></i>
+                    </div>
+                    <input 
+                        type="text" 
+                        wire:model.live.debounce.300ms="search" id="search"
+                        class="pl-10 block w-sm rounded-xl border-gray-300 shadow-sm focus:border-1C7C54 focus:ring-1C7C54 sm:text-sm" 
+                        placeholder="Search requirements..."
+                    >
+                </div>
             </div>
-            
-            <div class="grow"></div>
-            
+
             <!-- Redirect Button -->
-            <a href="{{ route('admin.requirements.index') }}" 
-               class="btn bg-[#1C7C54] hover:bg-[#1B512D] text-xs text-white rounded-full flex items-center gap-2">
-                Go to Requirements Page
-                <i class="fa-solid fa-arrow-right"></i>
-            </a>
+            <div class="w-full sm:w-auto mt-4 sm:mt-0">
+                <a href="{{ route('admin.requirements.index') }}" 
+                class="px-4 py-1.5 bg-1C7C54 text-white font-semibold rounded-full hover:bg-1B512D focus:outline-none focus:ring-2 focus:ring-73E2A7 focus:ring-offset-2 transition text-sm cursor-pointer flex items-center gap-2">
+                    Requirements Page
+                    <i class="fa-solid fa-arrow-right"></i>
+                </a>
+            </div>
         </div>
 
         {{-- content --}}
@@ -98,7 +107,7 @@
                             <td>
                                 <div class="flex items-center gap-1">
                                     @if(\Carbon\Carbon::parse($requirement->due)->isPast())
-                                        <i class="fa-solid fa-circle-exclamation text-red-500 text-xs"></i>
+                                        <i class="fa-solid fa-circle-exclamation text-red-500 text-sm"></i>
                                     @endif
                                     <span class="{{ \Carbon\Carbon::parse($requirement->due)->isPast() ? 'text-red-600 font-medium' : '' }}">
                                         {{ \Carbon\Carbon::parse($requirement->due)->format('m/d/Y h:i a') }}
@@ -117,7 +126,13 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="text-center p-4">No requirements found.</td>
+                            <td colspan="6" class="text-center p-8 text-gray-500">
+                                <i class="fa-solid fa-inbox text-4xl text-gray-300 mb-2"></i>
+                                <p>No requirements found.</p>
+                                @if($search)
+                                    <p class="text-sm mt-2">Try adjusting your search term</p>
+                                @endif
+                            </td>
                         </tr>
                     @endforelse
                 </tbody>

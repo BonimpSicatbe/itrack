@@ -1,7 +1,7 @@
 <div class="w-[92%] mx-auto">
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <!-- User Activity Metrics -->
-        <div class="card bg-white shadow-lg hover:shadow-xl transition-shadow duration-300 border-0">
+        <div class="card bg-white shadow-lg hover:shadow-xl transition-shadow duration-300 border-0 rounded-xl">
             <div class="card-body">
                 <div class="flex justify-between items-center mb-6">
                     <div>
@@ -87,7 +87,7 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
                             </svg>
                         </div>
-                        <h5 class="text-lg font-semibold text-gray-900 mb-2">No User Activity Data</h5>
+                        <h5 class="text-lg font-semibold text-gray-800 mb-2">No User Activity Data</h5>
                         <p class="text-gray-500 max-w-sm">No user activity data found for this semester.</p>
                     </div>
                 @endif
@@ -95,7 +95,7 @@
         </div>
 
         <!-- Storage Usage Chart -->
-        <div class="card bg-white shadow-lg hover:shadow-xl transition-shadow duration-300 border-0">
+        <div class="card bg-white shadow-lg hover:shadow-xl transition-shadow duration-300 border-0 rounded-xl">
             <div class="card-body">
                 <div class="flex justify-between items-center mb-6">
                     <div>
@@ -218,7 +218,7 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
                             </svg>
                         </div>
-                        <h5 class="text-lg font-semibold text-gray-900 mb-2">No Storage Data</h5>
+                        <h5 class="text-lg font-semibold text-gray-800 mb-2">No Storage Data</h5>
                         <p class="text-gray-500 max-w-sm">No files have been uploaded for this semester yet.</p>
                     </div>
                 @endif

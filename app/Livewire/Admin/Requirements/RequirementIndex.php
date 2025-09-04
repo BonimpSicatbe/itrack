@@ -30,6 +30,8 @@ class RequirementIndex extends Component
     public $showDeleteModal = false;
     public $isDeleting = false;
 
+    public $viewMode = 'list';
+
     // Add sortBy method
     public function sortBy($field)
     {
@@ -38,6 +40,11 @@ class RequirementIndex extends Component
             : 'asc';
 
         $this->sortField = $field;
+    }
+
+    public function changeViewMode($mode)
+    {
+        $this->viewMode = $mode;
     }
 
     public function showRequirement($requirementId)

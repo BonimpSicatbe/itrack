@@ -8,7 +8,7 @@
     <legend class="fieldset-legend w-full capitalize">{{ $label }}</legend>
     <input
         type="file"
-        {{ $attributes->merge(['class' => 'file-input w-full']) }}
+        {{ $attributes->merge(['class' => 'file-input w-full rounded-xl']) }}
         autofocus
     />
     @error($name)

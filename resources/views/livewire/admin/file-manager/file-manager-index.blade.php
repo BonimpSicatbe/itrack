@@ -9,7 +9,7 @@
         <!-- Left: File Manager -->
         <div class="{{ (!$selectedFile && $showSemesterPanel) || $selectedFile ? 'lg:w-3/4' : 'w-full' }} h-[calc(100vh-6rem)] overflow-y-auto" style="padding-right: 10px;">
             <!-- HEADER -->
-            <div class="flex justify-between items-center bg-1C7C54 text-white p-4 rounded-2xl shadow-md mb-2">
+            <div class="flex justify-between items-center text-white p-4 rounded-2xl shadow-md mb-2" style="background: linear-gradient(148deg,rgba(18, 67, 44, 1) 0%, rgba(30, 119, 77, 1) 54%, rgba(55, 120, 64, 1) 100%);">
                 <div class="flex items-center gap-3">
                     <div class="pl-3 bg-1C7C54/10 rounded-xl">
                         <i class="fa-solid fa-file text-white text-2xl"></i>

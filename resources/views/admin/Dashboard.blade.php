@@ -9,11 +9,11 @@
         {{-- Accordion Sections --}}
         <div class="flex flex-col gap-4 pb-6">
             {{-- Requirements --}}
-            <div class="card bg-base-100 shadow w-[92%] mx-auto">
+            <div class="card bg-base-100 shadow w-[92%] mx-auto rounded-xl">
                 <div class="card-body p-0">
                     <div class="collapse collapse-arrow">
                         <input type="checkbox" name="dashboard-accordion" checked /> 
-                        <div class="collapse-title font-semibold text-xl px-6 py-4 hover:bg-base-200">
+                        <div class="collapse-title font-semibold text-xl px-6 py-4 hover:bg-base-200 text-gray-800">
                             Requirements
                         </div>
                         <div class="collapse-content px-6 pb-4">
