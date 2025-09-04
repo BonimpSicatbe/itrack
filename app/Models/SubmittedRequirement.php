@@ -283,6 +283,66 @@ class SubmittedRequirement extends Model implements HasMedia
 
     /* ========== ACCESSORS ========== */
 
+    /**
+     * Get priority color for display - FIXED: Made static and added fallback
+     */
+    public static function getPriorityColor($priority = null, $requirement = null)
+    {
+        // If priority is directly provided
+        if ($priority) {
+            return match($priority) {
+                'high' => 'red',
+                'medium' => 'yellow', 
+                'low' => 'green',
+                default => 'gray'
+            };
+        }
+        
+        // If requirement object is provided
+        if ($requirement && isset($requirement->priority)) {
+            return match($requirement->priority) {
+                'high' => 'red',
+                'medium' => 'yellow',
+                'low' => 'green', 
+                default => 'gray'
+            };
+        }
+        
+        return 'gray';
+    }
+
+    /**
+     * Get status color for badge display - ADDED: Missing method
+     */
+    public static function getStatusColor($status)
+    {
+        return match($status) {
+            self::STATUS_APPROVED => '#22c55e',      // Green
+            self::STATUS_REJECTED => '#ef4444',      // Red
+            self::STATUS_REVISION_NEEDED => '#f59e0b', // Yellow/Orange
+            self::STATUS_UNDER_REVIEW => '#3b82f6',  // Blue
+            default => '#6b7280', // Gray
+        };
+    }
+
+    /**
+     * Get instance priority color - for backward compatibility
+     */
+    public function getInstancePriorityColor()
+    {
+        // If this model has a direct priority field
+        if (isset($this->priority)) {
+            return self::getPriorityColor($this->priority);
+        }
+        
+        // If priority comes from the related requirement
+        if ($this->requirement) {
+            return self::getPriorityColor(null, $this->requirement);
+        }
+        
+        return 'gray';
+    }
+
     public function getStatusTextAttribute()
     {
         return self::statuses()[$this->status] ?? $this->status;
