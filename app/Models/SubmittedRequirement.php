@@ -283,6 +283,16 @@ class SubmittedRequirement extends Model implements HasMedia
 
     /* ========== ACCESSORS ========== */
 
+    public static function getPriorityColor($priority)
+    {
+        return match(strtolower($priority)) {
+            'high' => '#dc2626', // red-600
+            'medium' => '#ea580c', // orange-600
+            'low' => '#16a34a', // green-600
+            default => '#6b7280', // gray-500
+        };
+    }
+
     public function getStatusTextAttribute()
     {
         return self::statuses()[$this->status] ?? $this->status;

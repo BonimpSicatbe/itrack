@@ -145,9 +145,7 @@
                                                 </div>
                                             </td>
                                             <td class="whitespace-nowrap">
-                                                <span class="badge whitespace-nowrap px-2 py-1 text-xs" style="background-color: {{ \App\Models\SubmittedRequirement::getStatusColor($submission->status) }}; color: white">
-                                                    {{ $submission->status_text }}
-                                                </span>
+                                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $submission->status_badge }}">
                                             </td>
                                             <td class="whitespace-nowrap">
                                                 {{ $submission->submitted_at->format('M j, Y h:i A') }}
