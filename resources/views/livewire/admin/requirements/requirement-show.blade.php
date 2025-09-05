@@ -7,9 +7,9 @@
             <h2 class="text-xl font-bold text-white flex items-center gap-2">
                 <i class="text-2xl fa-solid fa-circle-info"></i> Requirement Details
             </h2>
-            <a href="{{ route('admin.requirements.edit', ['requirement' => $requirement->id]) }}"
-               class="bg-white text-1C7C54 px-4 py-1.5 rounded-full shadow hover:bg-73E2A7 hover:text-1B512D font-semibold text-sm transition-all duration-200 flex items-center gap-2">
-                <i class="fa-solid fa-pencil"></i> Edit
+            <a href="{{ route('admin.requirements.edit', $requirement->id) }}"
+               class="bg-white text-green-700 px-4 py-1.5 rounded-full shadow font-semibold text-sm transition-all duration-200 flex items-center gap-2">
+                <i class="fa-solid fa-pencil text-green-700"></i> Edit
             </a>
         </div>
 
@@ -36,11 +36,15 @@
                 </div>
                 <div>
                     <span class="block text-sm font-semibold uppercase tracking-wide text-gray-800">Priority</span>
-                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold shadow-sm
-                        @if ($requirement->priority === 'low') bg-B1CF5F text-1B512D
-                        @elseif($requirement->priority === 'normal') bg-73E2A7 text-1C7C54
-                        @elseif($requirement->priority === 'high') bg-red-100 text-red-800
-                        @else bg-gray-200 text-gray-800 @endif">
+                    @php
+                        $priorityClasses = [
+                            'low' => 'bg-B1CF5F text-1B512D',
+                            'normal' => 'bg-73E2A7 text-1C7C54',
+                            'high' => 'bg-red-100 text-red-800'
+                        ];
+                        $class = $priorityClasses[$requirement->priority] ?? 'bg-gray-200 text-gray-800';
+                    @endphp
+                    <span class="inline-flex items-center px-4 py-1.5 rounded-full text-xs font-bold shadow-sm {{ $class }}">
                         {{ ucfirst($requirement->priority) }}
                     </span>
                 </div>
@@ -48,35 +52,35 @@
 
             <!-- Required Files -->
             <div class="px-6 py-3 bg-gray-100 border-t border-gray-100 flex items-center gap-2">
-                <i class="text-xl fa-solid fa-folder-open text-1C7C54"></i>
+                <i class="text-xl fa-solid fa-folder-open text-green-700"></i>
                 <h3 class="text-lg font-semibold text-gray-800">Required Files</h3>
             </div>
 
             <div class="p-4">
                 <div class="overflow-hidden rounded-xl border border-gray-200">
                     <table class="min-w-full divide-y divide-gray-100">
-                        <thead class="bg-gray-50">
+                        <thead class="bg-green-700">
                             <tr>
-                                <th class="px-6 py-3 text-left text-xs font-semibold text-gray-800 uppercase">File Name</th>
-                                <th class="px-6 py-3 text-left text-xs font-semibold text-gray-800 uppercase">Type</th>
-                                <th class="px-6 py-3 text-left text-xs font-semibold text-gray-800 uppercase">Size</th>
-                                <th class="px-6 py-3 text-left text-xs font-semibold text-gray-800 uppercase">Modified</th>
-                                <th class="px-6 py-3 text-right text-xs font-semibold text-gray-800 uppercase">Actions</th>
+                                <th class="px-6 py-3 text-left text-xs font-semibold text-white uppercase">File Name</th>
+                                <th class="px-6 py-3 text-left text-xs font-semibold text-white uppercase">Type</th>
+                                <th class="px-6 py-3 text-left text-xs font-semibold text-white uppercase">Size</th>
+                                <th class="px-6 py-3 text-left text-xs font-semibold text-white uppercase">Modified</th>
+                                <th class="px-6 py-3 text-right text-xs font-semibold text-white uppercase">Actions</th>
                             </tr>
                         </thead>
                         <tbody class="bg-white divide-y divide-gray-100">
                             @forelse ($requiredFiles as $file)
                                 <tr class="hover:bg-73E2A7/10 transition duration-200">
-                                    <td class="px-6 py-4 text-sm font-medium text-gray-900 truncate">{{ $file->file_name }}</td>
+                                    <td class="px-6 py-4 text-sm font-medium text-gray-900 truncate max-w-xs">{{ $file->file_name }}</td>
                                     <td class="px-6 py-4 text-sm text-gray-700">{{ strtoupper($file->extension) }}</td>
                                     <td class="px-6 py-4 text-sm text-gray-700">{{ $file->humanReadableSize }}</td>
                                     <td class="px-6 py-4 text-sm text-gray-700">{{ $file->updated_at->format('M d, Y h:i A') }}</td>
                                     <td class="px-6 py-4 text-right text-sm font-medium space-x-3">
-                                        <a href="{{ route('guide.download', ['media' => $file->id]) }}" class="text-1C7C54 hover:text-1B512D transition">
+                                        <a href="{{ route('guide.download', $file->id) }}" class="text-green-700 hover:text-green-800 transition">
                                             <i class="fa-solid fa-download"></i>
                                         </a>
                                         @if($this->isPreviewable($file->mime_type))
-                                        <a href="{{ route('guide.preview', ['media' => $file->id]) }}" target="_blank" class="text-B1CF5F hover:text-1B512D transition">
+                                        <a href="{{ route('guide.preview', $file->id) }}" target="_blank" class="text-amber-500 hover:text-1B512D transition">
                                             <i class="fa-solid fa-eye"></i>
                                         </a>
                                         @endif
@@ -94,26 +98,32 @@
 
             <!-- Assigned Users -->
             <div class="px-6 py-3 bg-gray-100 border-t border-gray-100 flex items-center gap-2">
-                <i class="fa-solid text-xl fa-users text-1C7C54"></i>
+                <i class="fa-solid text-xl fa-users text-green-700"></i>
                 <h3 class="font-semibold text-lg text-gray-800">Assigned Users</h3>
             </div>
             
             <div class="p-4">
                 <div class="overflow-hidden rounded-xl border border-gray-200">
                     <table class="min-w-full divide-y divide-gray-100">
+                        <thead class="bg-green-700">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-semibold text-white uppercase">Name</th>
+                                <th class="px-6 py-3 text-left text-xs font-semibold text-white uppercase">Email</th>
+                            </tr>
+                        </thead>
                         <tbody class="bg-white divide-y divide-gray-100">
                             @forelse ($assignedUsers as $user)
-                                <tr class="hover:bg-73E2A7/10 transition cursor-pointer" wire:click='showUser({{ $user->id }})'>
+                                <tr class="hover:bg-73E2A7/10 transition cursor-pointer" wire:click="showUser({{ $user->id }})">
                                     <td class="px-6 py-4 flex items-center gap-3">
                                         <div class="h-10 w-10 rounded-full flex items-center justify-center bg-73E2A7 text-1B512D font-bold shadow">
                                             {{ substr($user->full_name, 0, 1) }}
                                         </div>
-                                        <div>
-                                            <div class="text-sm font-semibold text-gray-900">{{ $user->full_name }}</div>
-                                            <div class="text-xs text-gray-500">{{ $user->department->name ?? 'N/A' }}</div>
+                                        <div class="min-w-0">
+                                            <div class="text-sm font-semibold text-gray-900 truncate">{{ $user->full_name }}</div>
+                                            <div class="text-xs text-gray-500 truncate">{{ $user->department->name ?? 'N/A' }}</div>
                                         </div>
                                     </td>
-                                    <td class="px-6 py-4 text-sm text-gray-700">{{ $user->email }}</td>
+                                    <td class="px-6 py-4 text-sm text-gray-700 truncate">{{ $user->email }}</td>
                                 </tr>
                             @empty
                                 <tr>
@@ -124,7 +134,6 @@
                     </table>
                 </div>
             </div>
-
         </div>
     </div>
 </div>
