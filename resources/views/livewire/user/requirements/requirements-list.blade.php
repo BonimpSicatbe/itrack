@@ -5,106 +5,115 @@
         <div class="flex items-center justify-between px-8 py-6 border-b border-gray-200" style="background: linear-gradient(148deg,rgba(18, 67, 44, 1) 0%, rgba(30, 119, 77, 1) 54%, rgba(55, 120, 64, 1) 100%);">
             <div class="flex items-center gap-2">
                 <i class="fa-solid fa-clipboard-list text-white text-2xl"></i>
-                <h1 class="text-2xl font-bold text-white">Pending Requirements</h1>
+                <h1 class="text-2xl font-bold text-white">Requirements List</h1>
             </div>
             <div>
                 @livewire('user.requirements.calendar-button')
             </div>
         </div>
 
-        <!-- Enhanced Toolbar -->
-        <div class="bg-white border-b border-[#DEF4C6]/30 px-8 py-4 shadow-sm">
-            <div class="flex items-center justify-between">
-                <!-- Search and Filters -->
-                <div class="flex items-center gap-4 flex-1 flex-wrap">
-                    <div class="relative flex-1 min-w-[300px] max-w-md">
-                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                            <i class="fa-solid fa-magnifying-glass text-[#1B512D] text-sm"></i>
-                        </div>
-                        <input
-                            type="text"
-                            wire:model.live.debounce.300ms="search"
-                            placeholder="Search requirements by name or description..."
-                            class="w-full pl-10 pr-10 py-1 text-sm bg-[#DEF4C6]/20 border border-[#73E2A7]/40 rounded-xl focus:border-[#1C7C54] focus:ring-2 focus:ring-[#1C7C54]/20 focus:bg-white focus:outline-none transition-all duration-200 placeholder-[#1B512D]/60"
-                        >
-                        <div wire:loading wire:target="search" class="absolute inset-y-0 right-0 pr-4 flex items-center">
-                            <div class="animate-spin rounded-full h-4 w-4 border-2 border-[#1C7C54] border-t-transparent"></div>
-                        </div>
-                    </div>
-                    
-                    <!-- Enhanced Completion Filter -->
-                    <div class="relative">
-                        <select
-                            wire:model.live="completionFilter"
-                            class="appearance-none w-full pl-10 pr-10 py-1 text-sm bg-[#DEF4C6]/20 border border-[#73E2A7]/40 rounded-xl focus:border-[#1C7C54] focus:ring-2 focus:ring-[#1C7C54]/20 focus:bg-white focus:outline-none transition-all duration-200 cursor-pointer"
-                        >
-                            <option value="">All Requirements</option>
-                            @foreach($completionStatuses as $value => $label)
-                                <option value="{{ $value }}">{{ $label }}</option>
-                            @endforeach
-                        </select>
-                    </div>
+       <!-- Enhanced Toolbar -->
+<div class="bg-white border-b border-[#DEF4C6]/30 px-8 py-4 shadow-sm">
+    <div class="flex items-center justify-between">
+        <!-- Search and Filters -->
+        <div class="flex items-center gap-4 flex-1 flex-wrap">
+            <div class="relative flex-1 min-w-[300px] max-w-md">
+                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <i class="fa-solid fa-magnifying-glass text-[#1B512D] text-sm"></i>
                 </div>
-
-                <!-- Enhanced View Controls -->
-                <div class="flex items-center gap-3">
-                    <div class="flex items-center bg-[#DEF4C6]/30 rounded-lg p-1">
-                        <button class="p-2 {{ $viewMode === 'list' ? 'text-[#1B512D] bg-white rounded-md shadow-sm' : 'text-[#1C7C54]/70 hover:text-[#1B512D] hover:bg-[#DEF4C6]/20 rounded-md transition-colors' }}" wire:click="$set('viewMode', 'list')">
-                            <i class="fa-solid fa-list text-sm"></i>
-                        </button>
-                        <button class="p-2 {{ $viewMode === 'grid' ? 'text-[#1B512D] bg-white rounded-md shadow-sm' : 'text-[#1C7C54]/70 hover:text-[#1B512D] hover:bg-[#DEF4C6]/20 rounded-md transition-colors' }}" wire:click="$set('viewMode', 'grid')">
-                            <i class="fa-solid fa-grip text-sm"></i>
-                        </button>
-                    </div>
+                <input
+                    type="text"
+                    wire:model.live.debounce.300ms="search"
+                    placeholder="Search requirements by name or description..."
+                    class="w-full pl-10 pr-10 py-1 text-sm bg-[#DEF4C6]/20 border border-[#73E2A7]/40 rounded-xl focus:border-[#1C7C54] focus:ring-2 focus:ring-[#1C7C54]/20 focus:bg-white focus:outline-none transition-all duration-200 placeholder-[#1B512D]/60"
+                >
+                <div wire:loading wire:target="search" class="absolute inset-y-0 right-0 pr-4 flex items-center">
+                    <div class="animate-spin rounded-full h-4 w-4 border-2 border-[#1C7C54] border-t-transparent"></div>
                 </div>
             </div>
-
-            <!-- Flash message -->
-            @if (session()->has('message'))
-                <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mt-4" role="alert">
-                    <p>{{ session('message') }}</p>
-                </div>
-            @endif
             
-            @if (session()->has('error'))
-                <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mt-4" role="alert">
-                    <p>{{ session('error') }}</p>
-                </div>
-            @endif
+            <!-- Fixed: Enhanced Completion Filter Buttons -->
+            <div class="flex items-center gap-1 bg-white/80 p-1 rounded-xl font-semibold border border-gray-300 shadow-sm">
+                <button 
+                    type="button"
+                    class="px-4 py-1.5 text-sm rounded-lg transition-all duration-200 {{ $completionFilter === 'all' ? 'bg-[#1C7C54] text-white shadow-sm' : 'hover:bg-[#1C7C54]/20 text-[#1C7C54]' }}"
+                    wire:click="setCompletionFilter('all')">
+                    All
+                </button>
+                <button 
+                    type="button"
+                    class="px-4 py-1.5 text-sm rounded-lg transition-all duration-200 {{ $completionFilter === 'pending' ? 'bg-[#B1CF5F] text-white shadow-sm' : 'hover:bg-[#B1CF5F]/20 text-[#B1CF5F]' }}"
+                    wire:click="setCompletionFilter('pending')">
+                    Pending
+                </button>
+                <button 
+                    type="button"
+                    class="px-4 py-1.5 text-sm rounded-lg transition-all duration-200 {{ $completionFilter === 'submitted' ? 'bg-[#1B512D] text-white shadow-sm' : 'hover:bg-[#1B512D]/20 text-[#1B512D]' }}"
+                    wire:click="setCompletionFilter('submitted')">
+                    Submitted
+                </button>
+            </div>
 
-            <!-- Enhanced Active Filters -->
-            @if($search || $completionFilter)
-                <div class="flex items-center gap-3 mt-4 pt-4 border-t border-[#DEF4C6]/30">
-                    <div class="flex items-center gap-2">
-                        <i class="fa-solid fa-filter text-[#1C7C54]"></i>
-                        <span class="text-sm font-semibold text-[#1B512D]">Active filters:</span>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        @if($search)
-                            <div class="flex items-center gap-2 px-3 py-2 bg-[#73E2A7]/20 border border-[#73E2A7]/40 rounded-lg">
-                                <i class="fa-solid fa-magnifying-glass text-[#1C7C54] text-xs"></i>
-                                <span class="text-sm text-[#1B512D] font-medium">"{{ $search }}"</span>
-                                <button wire:click="$set('search', '')" class="ml-1 w-5 h-5 bg-[#73E2A7]/30 hover:bg-[#73E2A7]/50 rounded-full flex items-center justify-center transition-colors duration-200">
-                                    <i class="fa-solid fa-xmark text-[#1B512D] text-xs"></i>
-                                </button>
-                            </div>
-                        @endif
-                        @if($completionFilter)
-                            <div class="flex items-center gap-2 px-3 py-2 bg-[#B1CF5F]/20 border border-[#B1CF5F]/40 rounded-lg">
-                                <i class="fa-solid fa-check-circle text-[#1B512D] text-xs"></i>
-                                <span class="text-sm text-[#1B512D] font-medium">{{ $completionStatuses[$completionFilter] ?? $completionFilter }}</span>
-                                <button wire:click="$set('completionFilter', '')" class="ml-1 w-5 h-5 bg-[#B1CF5F]/30 hover:bg-[#B1CF5F]/50 rounded-full flex items-center justify-center transition-colors duration-200">
-                                    <i class="fa-solid fa-xmark text-[#1B512D] text-xs"></i>
-                                </button>
-                            </div>
-                        @endif
-                    </div>
-                    <button wire:click="$set('search', ''); $set('completionFilter', '')" class="text-sm text-[#1C7C54]/70 hover:text-[#1B512D] underline ml-auto">
-                        Clear all filters
+            <!-- Enhanced View Controls -->
+            <div class="flex items-center gap-3">
+                <div class="flex items-center bg-[#DEF4C6]/30 rounded-lg p-1">
+                    <button class="p-2 {{ $viewMode === 'list' ? 'text-[#1B512D] bg-white rounded-md shadow-sm' : 'text-[#1C7C54]/70 hover:text-[#1B512D] hover:bg-[#DEF4C6]/20 rounded-md transition-colors' }}" wire:click="$set('viewMode', 'list')">
+                        <i class="fa-solid fa-list text-sm"></i>
+                    </button>
+                    <button class="p-2 {{ $viewMode === 'grid' ? 'text-[#1B512D] bg-white rounded-md shadow-sm' : 'text-[#1C7C54]/70 hover:text-[#1B512D] hover:bg-[#DEF4C6]/20 rounded-md transition-colors' }}" wire:click="$set('viewMode', 'grid')">
+                        <i class="fa-solid fa-grip text-sm"></i>
                     </button>
                 </div>
-            @endif
+            </div>
         </div>
+    </div>
+
+    <!-- Flash message -->
+    @if (session()->has('message'))
+        <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mt-4" role="alert">
+            <p>{{ session('message') }}</p>
+        </div>
+    @endif
+    
+    @if (session()->has('error'))
+        <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mt-4" role="alert">
+            <p>{{ session('error') }}</p>
+        </div>
+    @endif
+
+    <!-- FIXED: Enhanced Active Filters with proper filter handling -->
+    @if($search || ($completionFilter && $completionFilter !== 'all'))
+        <div class="flex items-center gap-3 mt-4 pt-4 border-t border-[#DEF4C6]/30">
+            <div class="flex items-center gap-2">
+                <i class="fa-solid fa-filter text-[#1C7C54]"></i>
+                <span class="text-sm font-semibold text-[#1B512D]">Active filters:</span>
+            </div>
+            <div class="flex items-center gap-2">
+                @if($search)
+                    <div class="flex items-center gap-2 px-3 py-2 bg-[#73E2A7]/20 border border-[#73E2A7]/40 rounded-lg">
+                        <i class="fa-solid fa-magnifying-glass text-[#1C7C54] text-xs"></i>
+                        <span class="text-sm text-[#1B512D] font-medium">"{{ $search }}"</span>
+                        <button wire:click="$set('search', '')" class="ml-1 w-5 h-5 bg-[#73E2A7]/30 hover:bg-[#73E2A7]/50 rounded-full flex items-center justify-center transition-colors duration-200">
+                            <i class="fa-solid fa-xmark text-[#1B512D] text-xs"></i>
+                        </button>
+                    </div>
+                @endif
+                @if($completionFilter && $completionFilter !== 'all')
+                    <div class="flex items-center gap-2 px-3 py-2 bg-[#B1CF5F]/20 border border-[#B1CF5F]/40 rounded-lg">
+                        <i class="fa-solid fa-check-circle text-[#1B512D] text-xs"></i>
+                        <span class="text-sm text-[#1B512D] font-medium">{{ $completionStatuses[$completionFilter] ?? ucfirst($completionFilter) }}</span>
+                        <button wire:click="setCompletionFilter('all')" class="ml-1 w-5 h-5 bg-[#B1CF5F]/30 hover:bg-[#B1CF5F]/50 rounded-full flex items-center justify-center transition-colors duration-200">
+                            <i class="fa-solid fa-xmark text-[#1B512D] text-xs"></i>
+                        </button>
+                    </div>
+                @endif
+            </div>
+            <button wire:click="$set('search', ''); setCompletionFilter('all')" class="text-sm text-[#1C7C54]/70 hover:text-[#1B512D] underline ml-auto">
+                Clear all filters
+            </button>
+        </div>
+    @endif
+</div>
 
         <!-- Only show table header in list view -->
         @if($viewMode === 'list')
@@ -188,24 +197,30 @@
         @if($viewMode === 'grid')
             <!-- Grid View Layout -->
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
-                @forelse($requirements as $requirement)
-                    <div class="bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow p-5 cursor-pointer" wire:click="$dispatch('showRequirementDetail', { requirementId: {{ $requirement->id }} })">
+               @forelse($requirements as $requirement)
+    <div class="bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow p-5 cursor-pointer {{ $highlightedRequirement == $requirement->id ? 'ring-2 ring-[#1C7C54] ring-offset-2 bg-[#DEF4C6]/10' : '' }}" 
+         wire:click="$dispatch('showRequirementDetail', { requirementId: {{ $requirement->id }} })">
                         <div class="flex items-center justify-between mb-4">
                             @php
                              $extension = pathinfo($requirement->name, PATHINFO_EXTENSION);
                             $iconData = match(strtolower($extension)) {
-                                'pdf' => ['icon' => 'fa-file-pdf', 'color' => 'text-[#1C7C54]'], // Changed to green
-                                'doc', 'docx' => ['icon' => 'fa-file-word', 'color' => 'text-[#1B512D]'], // Changed to dark green
-                                'ppt', 'pptx' => ['icon' => 'fa-file-powerpoint', 'color' => 'text-[#73E2A7]'], // Changed to light green
-                                'xls', 'xlsx' => ['icon' => 'fa-file-excel', 'color' => 'text-[#B1CF5F]'], // Changed to lime green
-                                default => ['icon' => 'fa-file', 'color' => 'text-[#1C7C54]'] // Changed to green
+                                'pdf' => ['icon' => 'fa-file-pdf', 'color' => 'text-[#1C7C54]'],
+                                'doc', 'docx' => ['icon' => 'fa-file-word', 'color' => 'text-[#1B512D]'],
+                                'ppt', 'pptx' => ['icon' => 'fa-file-powerpoint', 'color' => 'text-[#73E2A7]'],
+                                'xls', 'xlsx' => ['icon' => 'fa-file-excel', 'color' => 'text-[#B1CF5F]'],
+                                default => ['icon' => 'fa-file', 'color' => 'text-[#1C7C54]']
                             };
                              @endphp
 
-                            <div class="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
+                            <div class="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center relative">
                                 <i class="fa-solid {{ $iconData['icon'] }} {{ $iconData['color'] }} text-xl"></i>
+                                @if($requirement->due->isPast() && !$this->isRequirementSubmitted($requirement->id))
+                                    <div class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full border-2 border-white">
+                                        <i class="fa-solid fa-exclamation text-white text-xs absolute top-0 left-0.5"></i>
+                                    </div>
+                                @endif
                             </div>
-                            @if($requirement->due->isPast())
+                            @if($requirement->due->isPast() && !$this->isRequirementSubmitted($requirement->id))
                                 <span class="px-2 py-1 bg-red-100 text-red-800 text-xs font-medium rounded-full">Overdue</span>
                             @endif
                         </div>
@@ -216,7 +231,7 @@
                         <div class="flex items-center justify-between mb-3">
                             <div>
                                 <div class="text-xs font-medium text-gray-900">{{ $requirement->due->format('M j, Y') }}</div>
-                                <div class="text-xs {{ $requirement->due->isPast() ? 'text-red-600 font-medium' : 'text-gray-500' }}">
+                                <div class="text-xs {{ $requirement->due->isPast() && !$this->isRequirementSubmitted($requirement->id) ? 'text-red-600 font-medium' : 'text-gray-500' }}">
                                     {{ $requirement->due->diffForHumans() }}
                                 </div>
                             </div>
@@ -284,14 +299,14 @@
                         </div>
                         <h3 class="text-xl font-bold text-gray-800 mb-3">No requirements found</h3>
                         <p class="text-gray-600 text-center mb-8 max-w-md leading-relaxed">
-                            @if($search || $completionFilter)
+                            @if($search || ($completionFilter && $completionFilter !== 'all'))
                                 We couldn't find any requirements matching your current search criteria. Try adjusting your filters or search terms.
                             @else
                                 You don't have any requirements assigned yet for the current semester. New requirements will appear here when they're created.
                             @endif
                         </p>
-                        @if($search || $completionFilter)
-                            <button wire:click="$set('search', ''); $set('completionFilter', '')" class="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white text-sm font-semibold rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-200 shadow-lg hover:shadow-xl">
+                        @if($search || ($completionFilter && $completionFilter !== 'all'))
+                            <button wire:click="$set('search', ''); setCompletionFilter('all')" class="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white text-sm font-semibold rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-200 shadow-lg hover:shadow-xl">
                                 <i class="fa-solid fa-refresh mr-2"></i>
                                 Clear All Filters
                             </button>
@@ -301,11 +316,11 @@
             </div>
         @else
             <!-- List View Layout -->
-            @forelse($requirements as $index => $requirement)
-                <div
-                    wire:click="$dispatch('showRequirementDetail', { requirementId: {{ $requirement->id }} })"
-                    class="grid grid-cols-10 gap-6 items-center px-8 py-3 border-b border-gray-100   hover:bg-blue-50/50 cursor-pointer group transition-all duration-200 {{ $index % 2 === 1 ? 'bg-gray-50/30' : 'bg-white' }}"
-                >
+           @forelse($requirements as $index => $requirement)
+            <div
+                wire:click="$dispatch('showRequirementDetail', { requirementId: {{ $requirement->id }} })"
+                class="grid grid-cols-10 gap-6 items-center px-8 py-3 border-b border-gray-100 hover:bg-blue-50/50 cursor-pointer group transition-all duration-200 {{ $index % 2 === 1 ? 'bg-gray-50/30' : 'bg-white' }} {{ $highlightedRequirement == $requirement->id ? 'ring-2 ring-[#1C7C54] ring-offset-2 bg-[#DEF4C6]/20' : '' }}"
+            >
                     <!-- Name Column -->
                     <div class="col-span-4 flex items-center gap-4 min-w-0">
                         <div class="flex-shrink-0 relative">
@@ -352,7 +367,8 @@
                             <div class="w-10 h-10 {{ $iconData['bg'] }} {{ $iconData['hover_bg'] }} rounded-lg flex items-center justify-center group-hover:scale-105 transition-all duration-200">
                                 <i class="fa-solid {{ $iconData['icon'] }} {{ $iconData['color'] }} {{ $iconData['hover_color'] }} text-lg transition-colors duration-200"></i>
                             </div>
-                            @if($requirement->due->isPast())
+                            {{-- Warning sign only shows if requirement is overdue AND not submitted --}}
+                            @if($requirement->due->isPast() && !$this->isRequirementSubmitted($requirement->id))
                                 <div class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full border-2 border-white">
                                     <i class="fa-solid fa-exclamation text-white text-xs absolute top-0 left-0.5"></i>
                                 </div>
@@ -375,7 +391,7 @@
                                     <span class="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs font-medium rounded-full">Today</span>
                                 @endif
                             </div>
-                            <span class="text-xs mt-1 {{ $requirement->due->isPast() ? 'text-red-600 font-small' : 'text-gray-500' }}">
+                            <span class="text-xs mt-1 {{ $requirement->due->isPast() && !$this->isRequirementSubmitted($requirement->id) ? 'text-red-600 font-small' : 'text-gray-500' }}">
                                 {{ $requirement->due->diffForHumans() }}
                             </span>
                         </div>
@@ -447,14 +463,14 @@
                     </div>
                     <h3 class="text-xl font-bold text-gray-800 mb-3">No requirements found</h3>
                     <p class="text-gray-600 text-center mb-8 max-w-md leading-relaxed">
-                        @if($search || $completionFilter)
+                        @if($search || ($completionFilter && $completionFilter !== 'all'))
                             We couldn't find any requirements matching your current search criteria. Try adjusting your filters or search terms.
                         @else
                             You don't have any requirements assigned yet for the current semester. New requirements will appear here when they're created.
                         @endif
                     </p>
-                    @if($search || $completionFilter)
-                        <button wire:click="$set('search', ''); $set('completionFilter', '')" class="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white text-sm font-semibold rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-200 shadow-lg hover:shadow-xl">
+                    @if($search || ($completionFilter && $completionFilter !== 'all'))
+                        <button wire:click="$set('search', ''); setCompletionFilter('all')" class="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white text-sm font-semibold rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-200 shadow-lg hover:shadow-xl">
                             <i class="fa-solid fa-refresh mr-2"></i>
                             Clear All Filters
                         </button>
@@ -463,6 +479,8 @@
             @endforelse
         @endif
 
+       
+
         <!-- Enhanced Footer/Status Bar -->
         <div class="bg-white border-t border-gray-200 px-8 py-4 shadow-sm">
             <div class="flex items-center justify-between">
@@ -470,7 +488,7 @@
                     @if($requirements->count() > 0)
                         <div class="flex items-center gap-2">
                             <i class="fa-solid fa-list-check text-gray-400"></i>
-                            <span>Showing <span class="font-semibold text-gray-900">{{ $requirements->count() }}</span> {{ $requirements->count() === 1 ? 'requirement' : 'requirements' }}</span>
+                            <span>Showing <span class="font-semibold text-gray-900">{{ $requirements->firstItem() }}</span> to <span class="font-semibold text-gray-900">{{ $requirements->lastItem() }}</span> of <span class="font-semibold text-gray-900">{{ $requirements->total() }}</span> {{ $requirements->total() === 1 ? 'requirement' : 'requirements' }}</span>
                         </div>
                     @endif
                     <div class="flex items-center gap-2">
@@ -486,8 +504,46 @@
                 </div>
             </div>
         </div>
+
+        <!-- Pagination for list view -->
+        @if($requirements->hasPages() && $viewMode === 'list')
+            <div class="bg-white border-t border-gray-200 px-8 py-4">
+                <div class="flex items-center justify-between">
+                    <div class="text-sm text-gray-700">
+                        Showing {{ $requirements->firstItem() }} to {{ $requirements->lastItem() }} of {{ $requirements->total() }} results
+                    </div>
+                    <div>
+                        {{ $requirements->links() }}
+                    </div>
+                </div>
+            </div>
+        @endif
     </div>
 
     <!-- Include the reusable modal component -->
     @livewire('user.requirement-detail-modal')
+
+    <!-- Add this script at the bottom of the file -->
+@script
+<script>
+    // Listen for Livewire initialization
+    Livewire.hook('component.initialized', (component) => {
+        if (component.name === 'user.requirements.requirements-list') {
+            // Check if there's a highlighted requirement in the URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const requirementId = urlParams.get('requirement');
+            
+            if (requirementId) {
+                // Wait a bit for the component to fully initialize
+                setTimeout(() => {
+                    // Dispatch event to show the requirement detail modal
+                    window.dispatchEvent(new CustomEvent('showRequirementDetail', {
+                        detail: { requirementId: requirementId }
+                    }));
+                }, 300);
+            }
+        }
+    });
+</script>
+@endscript
 </div>
