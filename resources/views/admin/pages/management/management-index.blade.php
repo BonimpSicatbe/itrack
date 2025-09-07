@@ -1,5 +1,5 @@
 <x-admin.app-layout>
-    <div class="w-[92%] mx-auto h-[calc(100vh-6rem)] flex flex-col">
+    <div class="h-[calc(100vh-6rem)] flex flex-col">
 
         <!-- Fixed Header with Gradient -->
         <div class="rounded-2xl p-5 shadow flex flex-col lg:flex-row lg:items-center lg:justify-between"

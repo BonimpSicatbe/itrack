@@ -9,7 +9,7 @@
         {{-- Accordion Sections --}}
         <div class="flex flex-col gap-4 pb-6">
             {{-- Requirements --}}
-            <div class="card bg-base-100 shadow w-[92%] mx-auto rounded-xl">
+            <div class="card bg-base-100 shadow rounded-xl">
                 <div class="card-body p-0">
                     <div class="collapse collapse-arrow">
                         <input type="checkbox" name="dashboard-accordion" checked /> 

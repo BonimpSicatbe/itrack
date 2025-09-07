@@ -265,7 +265,7 @@ class FileManagerIndex extends Component
 
         switch ($this->groupBy) {
             case 'user':
-                return User::withCount(['submittedRequirements as files_count' => function($query) use ($activeSemester) {
+                $query = User::withCount(['submittedRequirements as files_count' => function($query) use ($activeSemester) {
                     $query->select(\DB::raw('count(distinct media.id)'))
                         ->join('media', function($join) {
                             $join->on('media.model_id', '=', 'submitted_requirements.id')
@@ -276,12 +276,21 @@ class FileManagerIndex extends Component
                             $activeSemester->end_date
                         ]);
                 }])
-                ->has('submittedRequirements')
-                ->orderBy('lastname')
-                ->get();
+                ->has('submittedRequirements');
+                
+                // Apply search filter for users
+                if ($this->search) {
+                    $query->where(function($q) {
+                        $q->where('firstname', 'like', '%'.$this->search.'%')
+                        ->orWhere('lastname', 'like', '%'.$this->search.'%')
+                        ->orWhere('email', 'like', '%'.$this->search.'%');
+                    });
+                }
+                
+                return $query->orderBy('lastname')->get();
                 
             case 'college':
-                return College::withCount(['users as files_count' => function($query) use ($activeSemester) {
+                $query = College::withCount(['users as files_count' => function($query) use ($activeSemester) {
                     $query->select(\DB::raw('count(distinct media.id)'))
                         ->join('submitted_requirements', 'submitted_requirements.user_id', '=', 'users.id')
                         ->join('media', function($join) {
@@ -293,12 +302,17 @@ class FileManagerIndex extends Component
                             $activeSemester->end_date
                         ]);
                 }])
-                ->has('users.submittedRequirements')
-                ->orderBy('name')
-                ->get();
+                ->has('users.submittedRequirements');
+                
+                // Apply search filter for colleges
+                if ($this->search) {
+                    $query->where('name', 'like', '%'.$this->search.'%');
+                }
+                
+                return $query->orderBy('name')->get();
                 
             case 'department':
-                return Department::withCount(['users as files_count' => function($query) use ($activeSemester) {
+                $query = Department::withCount(['users as files_count' => function($query) use ($activeSemester) {
                     $query->select(\DB::raw('count(distinct media.id)'))
                         ->join('submitted_requirements', 'submitted_requirements.user_id', '=', 'users.id')
                         ->join('media', function($join) {
@@ -310,9 +324,14 @@ class FileManagerIndex extends Component
                             $activeSemester->end_date
                         ]);
                 }])
-                ->has('users.submittedRequirements')
-                ->orderBy('name')
-                ->get();
+                ->has('users.submittedRequirements');
+                
+                // Apply search filter for departments
+                if ($this->search) {
+                    $query->where('name', 'like', '%'.$this->search.'%');
+                }
+                
+                return $query->orderBy('name')->get();
                 
             default:
                 return collect();
@@ -336,7 +355,23 @@ class FileManagerIndex extends Component
             'selectedGroupName' => $this->getSelectedGroupName(),
             'activeSemester' => $activeSemester,
             'shouldDisplayFiles' => $this->shouldDisplayFiles(),
-        ])->extends('layouts.app'); // Add this line if needed
+            'groupedItems' => $this->getGroupsAsItems(), // Add this line
+        ])->extends('layouts.app');
+    }
+
+    protected function getGroupsAsItems()
+    {
+        $groups = $this->getGroups();
+        $groupedItems = [];
+        
+        foreach ($groups as $group) {
+            $groupedItems[$group->id] = [
+                'name' => $this->groupBy === 'user' ? $group->full_name : $group->name,
+                'count' => $group->files_count
+            ];
+        }
+        
+        return $groupedItems;
     }
     
     protected function getSelectedGroupName()

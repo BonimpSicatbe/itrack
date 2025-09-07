@@ -1,4 +1,4 @@
-<div class="flex flex-col gap-3 w-[92%] mx-auto" wire:poll.visible>
+<div class="flex flex-col gap-3" wire:poll.visible>
     <!-- Header -->
     <div class="flex justify-between items-center text-white p-4 rounded-xl shadow-md" style="background: linear-gradient(148deg,rgba(18, 67, 44, 1) 0%, rgba(30, 119, 77, 1) 54%, rgba(55, 120, 64, 1) 100%);">
         <div class="flex items-center gap-3">
@@ -133,10 +133,10 @@
                             </div>
                         @empty
                             <div class="flex flex-col items-center justify-center text-gray-500 col-span-full py-8">
-                                <i class="fa-solid fa-inbox text-4xl text-gray-300 mb-2"></i>
-                                <p class="text-sm">No requirements found.</p>
+                                <i class="fa-solid fa-folder-open text-4xl text-gray-300 mb-2"></i>
+                                <p class="text-sm font-semibold text-gray-500">No requirements found.</p>
                                 @if($search)
-                                    <p class="text-xs text-amber-500 mt-1">Try adjusting your search term</p>
+                                    <p class="text-sm font-semibold text-amber-500 mt-1">Try adjusting your search term</p>
                                 @endif
                             </div>
                         @endforelse
@@ -262,10 +262,10 @@
                                     @empty
                                         <tr>
                                             <td colspan="6" class="px-4 py-8 text-center text-gray-500">
-                                                <i class="fa-solid fa-inbox text-3xl text-gray-300 mb-2"></i>
-                                                <p class="text-sm">No requirements found.</p>
+                                                <i class="fa-solid fa-folder-open text-3xl text-gray-300 mb-2"></i>
+                                                <p class="text-sm font-semibold text-gray-500">No requirements found.</p>
                                                 @if($search)
-                                                    <p class="text-xs text-amber-500 mt-1">Try adjusting your search term</p>
+                                                    <p class="text-sm font-semibold text-amber-500 mt-1">Try adjusting your search term</p>
                                                 @endif
                                             </td>
                                         </tr>
@@ -275,19 +275,12 @@
                         </div>
                     </div>
                 @endif
-                
-                <!-- Pagination -->
-                @if($requirements->hasPages())
-                    <div class="mt-4">
-                        {{ $requirements->onEachSide(1)->links() }}
-                    </div>
-                @endif
             @else
-                <div class="alert bg-green-100 text-green-800 rounded-lg p-4">
-                    <i class="fa-solid fa-triangle-exclamation text-lg"></i>
+                <div class="flex items-center p-4 bg-[#DEF4C6] text-[#1B512D] rounded-lg shadow-lg">
+                    <i class="fa-solid fa-triangle-exclamation text-lg mr-3"></i>
                     <div>
                         <h3 class="font-bold">No Active Semester</h3>
-                        <div class="text-sm">Please activate a semester to view requirements.</div>
+                        <div class="text-xs">Please activate a semester to view requirements.</div>
                     </div>
                 </div>
             @endif
@@ -297,12 +290,12 @@
     <!-- Delete Confirmation Modal -->
     @if($showDeleteModal)
         <x-modal name="delete-requirement-confirmation-modal" :show="$showDeleteModal" maxWidth="md">
-            <div class="bg-red-600 text-white rounded-t-2xl px-6 py-4 flex items-center space-x-3">
+            <div class="bg-red-600 text-white rounded-t-xl px-6 py-4 flex items-center space-x-3">
                 <i class="fa-solid fa-triangle-exclamation text-lg"></i>
                 <h3 class="text-xl font-semibold">Confirm Deletion</h3>
             </div>
 
-            <div class="bg-white px-6 py-6 rounded-b-2xl">
+            <div class="bg-white px-6 py-6 rounded-b-xl">
                 <div class="space-y-4">
                     <p class="text-gray-700">
                         Are you sure you want to delete the requirement 

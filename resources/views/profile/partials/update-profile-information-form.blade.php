@@ -2,7 +2,7 @@
     <header class="border-b border-gray-100 pb-6 mb-8">
         <div class="flex items-center space-x-3">
             <div class="flex-shrink-0">
-                <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                <div class="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center">
                     <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
                     </svg>
@@ -37,7 +37,7 @@
                         id="name" 
                         name="name" 
                         type="text" 
-                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors duration-200 pr-10"
+                        class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors duration-200 pr-10"
                         value="{{ old('name', $user->name) }}" 
                         required 
                         autofocus 
@@ -62,7 +62,7 @@
                         id="email" 
                         name="email" 
                         type="email" 
-                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors duration-200 pr-10"
+                        class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors duration-200 pr-10"
                         value="{{ old('email', $user->email) }}" 
                         required 
                         autocomplete="username"
@@ -77,7 +77,7 @@
                 <x-input-error class="mt-2" :messages="$errors->get('email')" />
 
                 @if ($user instanceof \Illuminate\Contracts\Auth\MustVerifyEmail && ! $user->hasVerifiedEmail())
-                    <div class="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <div class="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-xl">
                         <div class="flex items-start">
                             <div class="flex-shrink-0">
                                 <svg class="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
@@ -103,7 +103,7 @@
                         </div>
 
                         @if (session('status') === 'verification-link-sent')
-                            <div class="mt-3 text-sm font-medium text-green-600 bg-green-50 px-3 py-2 rounded-lg">
+                            <div class="mt-3 text-sm font-medium text-green-600 bg-green-50 px-3 py-2 rounded-xl">
                                 {{ __('A new verification link has been sent to your email address.') }}
                             </div>
                         @endif
@@ -125,7 +125,7 @@
                         x-transition:leave-start="opacity-100 transform translate-y-0"
                         x-transition:leave-end="opacity-0 transform translate-y-2"
                         x-init="setTimeout(() => show = false, 3000)"
-                        class="flex items-center space-x-2 text-sm text-green-600 bg-green-50 px-3 py-2 rounded-lg"
+                        class="flex items-center space-x-2 text-sm text-green-600 bg-green-50 px-3 py-2 rounded-xl"
                     >
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
@@ -137,7 +137,7 @@
             
             <button 
                 type="submit"
-                class="inline-flex items-center px-6 py-3 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+                class="inline-flex items-center px-5 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
             >
                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>

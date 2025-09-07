@@ -1,5 +1,5 @@
-<div class="flex flex-col lg:flex-row gap-6 w-[92%] mx-auto">
-    <div class="w-full bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+<div class="flex flex-col lg:flex-row gap-6">
+    <div class="w-full bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
 
         <!-- Header (Fixed) -->
         <div class="flex items-center justify-between px-6 py-4 sticky top-0 z-10"
@@ -17,36 +17,53 @@
         <div class="border-b border-gray-100 max-h-[625px] overflow-y-auto">
 
             <!-- Details -->
-            <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                    <span class="block text-sm font-semibold uppercase tracking-wide text-gray-800">Name</span>
-                    <p class="text-base text-gray-500">{{ $requirement->name }}</p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 p-6">
+                <!-- Name -->
+                <div class="space-y-2">
+                    <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Name</p>
+                    <div class="bg-gray-50 p-3 rounded-xl text-sm font-medium text-gray-900 shadow-inner">
+                        {{ $requirement->name }}
+                    </div>
                 </div>
-                <div>
-                    <span class="block text-sm font-semibold uppercase tracking-wide text-gray-800">Due Date</span>
-                    <p class="text-sm text-gray-500">{{ $requirement->due->format('M d, Y h:i A') }}</p>
+
+                <!-- Due Date -->
+                <div class="space-y-2">
+                    <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Due Date</p>
+                    <div class="bg-gray-50 p-3 rounded-xl flex items-center text-sm text-gray-900 shadow-inner">
+                        <i class="fa-regular fa-calendar mr-2 text-gray-500"></i>
+                        {{ $requirement->due->format('M d, Y g:i A') }}
+                        @if($requirement->due->isPast())
+                            <span class="ml-2 px-2 py-0.5 text-xs font-semibold text-red-700 bg-red-100 rounded-full">
+                                Overdue
+                            </span>
+                        @endif
+                    </div>
                 </div>
-                <div class="md:col-span-2">
-                    <span class="block text-sm font-semibold uppercase tracking-wide text-gray-800">Description</span>
-                    <p class="text-sm text-gray-500">{{ $requirement->description ?? 'No description provided.' }}</p>
+
+                <!-- Description -->
+                <div class="space-y-2 md:col-span-2">
+                    <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Description</p>
+                    <div class="bg-gray-50 p-3 rounded-xl text-sm text-gray-700 leading-relaxed shadow-inner">
+                        {{ $requirement->description ?? 'No description provided.' }}
+                    </div>
                 </div>
-                <div>
-                    <span class="block text-sm font-semibold uppercase tracking-wide text-gray-800">Assigned To</span>
-                    <p class="text-sm text-gray-500">{{ $requirement->assigned_to }}</p>
+
+                <!-- Assigned To -->
+                <div class="space-y-2">
+                    <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Assigned To</p>
+                    <div class="bg-gray-50 p-3 rounded-xl flex items-center text-sm text-gray-900 shadow-inner">
+                        <i class="fa-regular fa-user mr-2 text-gray-500"></i>
+                        {{ $requirement->assigned_to }}
+                    </div>
                 </div>
-                <div>
-                    <span class="block text-sm font-semibold uppercase tracking-wide text-gray-800">Priority</span>
-                    @php
-                        $priorityClasses = [
-                            'low' => 'bg-B1CF5F text-1B512D',
-                            'normal' => 'bg-73E2A7 text-1C7C54',
-                            'high' => 'bg-red-100 text-red-800'
-                        ];
-                        $class = $priorityClasses[$requirement->priority] ?? 'bg-gray-200 text-gray-800';
-                    @endphp
-                    <span class="inline-flex items-center px-4 py-1.5 rounded-full text-xs font-bold shadow-sm {{ $class }}">
+
+                <!-- Priority -->
+                <div class="space-y-2">
+                    <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Priority</p>
+                    <div class="bg-gray-50 p-3 rounded-xl flex items-center text-sm text-gray-900 capitalize shadow-inner">
+                        <i class="fa-solid fa-flag mr-2 text-gray-500"></i>
                         {{ ucfirst($requirement->priority) }}
-                    </span>
+                    </div>
                 </div>
             </div>
 

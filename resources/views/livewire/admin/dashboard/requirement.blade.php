@@ -94,10 +94,10 @@
                     @empty
                         <tr>
                             <td colspan="6" class="px-4 py-8 text-center text-gray-500">
-                                <i class="fa-solid fa-inbox text-4xl text-gray-300 mb-2 block mx-auto"></i>
-                                <p>No requirements found.</p>
+                                <i class="fa-solid fa-folder-open text-4xl text-gray-300 mb-2 block mx-auto"></i>
+                                <p class="text-sm font-semibold">No requirements found.</p>
                                 @if($search)
-                                    <p class="text-sm mt-2">Try adjusting your search term</p>
+                                    <p class="text-sm font-semibold text-amber-500 mt-1">Try adjusting your search term</p>
                                 @endif
                             </td>
                         </tr>

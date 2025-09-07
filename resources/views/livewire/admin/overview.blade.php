@@ -1,4 +1,4 @@
-<div class="w-[92%] mx-auto stats stats-vertical sm:stats-horizontal shadow text-white rounded-xl" style="background: linear-gradient(148deg,rgba(18, 67, 44, 1) 0%, rgba(30, 119, 77, 1) 54%, rgba(55, 120, 64, 1) 100%);">
+<div class="stats stats-vertical sm:stats-horizontal shadow text-white rounded-xl" style="background: linear-gradient(148deg,rgba(18, 67, 44, 1) 0%, rgba(30, 119, 77, 1) 54%, rgba(55, 120, 64, 1) 100%);">
     @foreach ($stats as $stat)
         <div class="stat">
             <div class="stat-figure text-2xl">

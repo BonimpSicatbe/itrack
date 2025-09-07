@@ -1,7 +1,7 @@
 <div>
     <input type="checkbox" id="createRequirement" class="modal-toggle" />
-    <div class="modal bg-gray-800 bg-opacity-75 modal-no-animation" role="dialog">
-        <div class="modal-box w-full max-w-2xl rounded-xl bg-white">
+    <div class="modal bg-gray-800 bg-opacity-500 modal-no-animation" role="dialog">
+        <div class="modal-box w-full max-w-2xl rounded-xl bg-white max-h-[95vh] overflow-y-auto">
             <div class="pb-4 flex items-center space-x-3 border-b border-gray-200">
                 <i class="fa-solid fa-file-circle-plus text-green-600 text-2xl"></i>
                 <h3 class="text-xl text-gray-800 font-semibold">Create Requirement</h3>
@@ -81,7 +81,7 @@
                 <x-select-fieldset 
                     name="assigned_to" 
                     wire:model="assigned_to" 
-                    :label="$sector ? ($sector === 'college' ? 'Select College' : 'Select Department') : 'Select Sector First'"
+                    :label="$sector ? ($sector === 'college' ? 'Select College' : 'Select Department') : '(Select Sector First)'"
                     :disabled="!$sector"
                     required
                 >

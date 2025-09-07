@@ -1,4 +1,4 @@
-<div class="w-[92%] mx-auto">
+<div>
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <!-- User Activity Metrics -->
         <div class="card bg-white shadow-lg hover:shadow-xl transition-shadow duration-300 border-0 rounded-xl">

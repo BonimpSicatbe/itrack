@@ -31,7 +31,7 @@ class Notifications extends Component
     {
         $this->notifications = Auth::user()
             ->notifications()
-            ->where('data->type', 'new_submission')
+            ->where('type', 'App\Notifications\NewSubmissionNotification')
             ->latest()
             ->get();
     }
@@ -226,12 +226,14 @@ class Notifications extends Component
 
     public function markAllAsRead()
     {
-        Auth::user()->unreadNotifications->markAsRead();
+        Auth::user()->unreadNotifications()
+            ->where('type', 'App\Notifications\NewSubmissionNotification')
+            ->update(['read_at' => now()]);
+        
         $this->loadNotifications();
         $this->selectedNotification = null;
         $this->selectedNotificationData = null;
         
-        // Fixed event name to match navigation
         $this->dispatch('notifications-marked-read');
         
         $this->dispatch('showNotification', 
@@ -243,7 +245,10 @@ class Notifications extends Component
 
     public function markAllAsUnread()
     {
-        $readNotifications = Auth::user()->readNotifications;
+        $readNotifications = Auth::user()->readNotifications()
+            ->where('type', 'App\Notifications\NewSubmissionNotification')
+            ->get();
+        
         $readNotifications->each(function ($notification) {
             $notification->markAsUnread();
         });
@@ -252,7 +257,6 @@ class Notifications extends Component
         $this->selectedNotification = null;
         $this->selectedNotificationData = null;
         
-        // Fixed event name to match navigation
         $this->dispatch('notifications-marked-unread', count: $readNotifications->count());
         
         $this->dispatch('showNotification', 
@@ -264,24 +268,27 @@ class Notifications extends Component
 
     public function toggleNotificationReadStatus($notificationId)
     {
-        // Decode the ID if it's encoded
         $notificationId = urldecode($notificationId);
-        $notification = DatabaseNotification::find($notificationId);
+        
+        // Get the notification scoped to the current user
+        $notification = Auth::user()->notifications()
+            ->where('id', $notificationId)
+            ->where('type', 'App\Notifications\NewSubmissionNotification')
+            ->first();
         
         if ($notification) {
             if ($notification->unread()) {
                 $notification->markAsRead();
                 $message = 'Notification marked as read';
-                $this->dispatch('notification-read'); // Fixed event name to match navigation
+                $this->dispatch('notification-read');
             } else {
                 $notification->markAsUnread();
                 $message = 'Notification marked as unread';
-                $this->dispatch('notification-unread'); // Fixed event name to match navigation
+                $this->dispatch('notification-unread');
             }
             
             $this->loadNotifications();
             
-            // If the selected notification was toggled, update its data
             if ($this->selectedNotification === $notificationId) {
                 $this->selectedNotificationData['unread'] = $notification->unread();
             }
@@ -317,9 +324,13 @@ class Notifications extends Component
 
     public function deleteNotification($notificationId)
     {
-        // Decode the ID if it's encoded
         $notificationId = urldecode($notificationId);
-        $notification = DatabaseNotification::find($notificationId);
+        
+        // Get the notification scoped to the current user
+        $notification = Auth::user()->notifications()
+            ->where('id', $notificationId)
+            ->where('type', 'App\Notifications\NewSubmissionNotification')
+            ->first();
         
         if ($notification) {
             $wasUnread = $notification->unread();
@@ -327,15 +338,13 @@ class Notifications extends Component
             
             $this->loadNotifications();
             
-            // If the deleted notification was selected, clear the selection
             if ($this->selectedNotification === $notificationId) {
                 $this->selectedNotification = null;
                 $this->selectedNotificationData = null;
             }
             
-            // If the deleted notification was unread, update the count
             if ($wasUnread) {
-                $this->dispatch('notification-read'); // Fixed event name to match navigation
+                $this->dispatch('notification-read');
             }
             
             $this->dispatch('showNotification', 

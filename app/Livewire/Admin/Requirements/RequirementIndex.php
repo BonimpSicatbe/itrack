@@ -8,15 +8,12 @@ use App\Models\Requirement;
 use App\Models\Semester;
 use App\Models\User;
 use Livewire\Component;
-use Livewire\WithPagination;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 use Livewire\Attributes\Computed;
 
 class RequirementIndex extends Component
 {
-    use WithPagination;
-    
     public $search = '';
     public $sortStatus = '';
     public $sortAssignedTo = '';
@@ -121,18 +118,19 @@ class RequirementIndex extends Component
         $activeSemester = $this->activeSemester();
         
         if (!$activeSemester) {
-            return collect()->paginate(20);
+            return collect();
         }
 
-        $query = Requirement::where('semester_id', $activeSemester->id)
+        $requirements = Requirement::where('semester_id', $activeSemester->id)
             ->when($this->search, fn($q) => $q->where('name', 'like', '%' . $this->search . '%'))
             ->when($this->sortStatus, fn($q) => $q->where('status', $this->sortStatus))
             ->when($this->sortAssignedTo, fn($q) => $q->where('assigned_to', $this->sortAssignedTo))
             ->when($this->completionFilter === 'pending', fn($q) => $q->where('due', '>', Carbon::now()))
             ->when($this->completionFilter === 'completed', fn($q) => $q->where('due', '<=', Carbon::now()))
-            ->orderBy($this->sortField, $this->sortDirection);
+            ->orderBy($this->sortField, $this->sortDirection)
+            ->get();
 
-        return $query->paginate(20)->through(function ($requirement) {
+        return $requirements->map(function ($requirement) {
             $count = 0;
             
             if (College::where('name', $requirement->assigned_to)->exists()) {

@@ -1,5 +1,5 @@
-<div class="flex flex-col lg:flex-row gap-6 w-[92%] mx-auto">
-    <div class="w-full bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+<div class="flex flex-col lg:flex-row gap-6">
+    <div class="w-full bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
 
         <!-- Header (Fixed) -->
         <div class="flex items-center justify-between px-6 py-4 sticky top-0 z-10"
@@ -100,15 +100,15 @@
                                             <i class="fa-solid fa-eye"></i>
                                         </a>
                                         @endif
-                                        <button wire:click.prevent="removeFile({{ $file->id }})" 
+                                        <button wire:click.prevent="confirmFileRemoval({{ $file->id }})" 
                                                 wire:loading.attr="disabled"
                                                 type="button"
                                                 class="text-red-600 hover:text-red-800 transition" 
                                                 >
-                                            <span wire:loading.remove wire:target="removeFile({{ $file->id }})">
+                                            <span wire:loading.remove wire:target="removeFile">
                                                 <i class="fa-solid fa-trash"></i>
                                             </span>
-                                            <span wire:loading wire:target="removeFile({{ $file->id }})">
+                                            <span wire:loading wire:target="removeFile">
                                                 <i class="fa-solid fa-spinner animate-spin"></i>
                                             </span>
                                         </button>
@@ -186,4 +186,46 @@
         </form>
         <label class="modal-backdrop" wire:click="$set('showUploadModal', false)"></label>
     </div>
+
+    {{-- Delete Confirmation Modal --}}
+    @if($showDeleteModal)
+        <x-modal name="delete-file-confirmation-modal" :show="$showDeleteModal" maxWidth="md">
+            <div class="bg-red-600 text-white rounded-t-2xl px-6 py-4 flex items-center space-x-3">
+                <i class="fa-solid fa-triangle-exclamation text-lg"></i>
+                <h3 class="text-xl font-semibold">Confirm File Deletion</h3>
+            </div>
+
+            <div class="bg-white px-6 py-6 rounded-b-2xl">
+                <div class="space-y-4">
+                    @php
+                        $fileToDelete = $requiredFiles->find($fileToDelete);
+                    @endphp
+                    <p class="text-gray-700">
+                        Are you sure you want to delete the file 
+                        <span class="font-semibold text-red-600">"{{ $fileToDelete->file_name ?? 'this file' }}"</span>?
+                    </p>
+                    <p class="text-sm text-gray-600">
+                        This action cannot be undone. The file will be permanently removed.
+                    </p>
+                </div>
+
+                <div class="mt-6 pt-4 border-t border-gray-200 flex justify-end space-x-3">
+                    <button type="button" wire:click="$set('showDeleteModal', false)" 
+                            class="px-4 py-2 border border-gray-300 rounded-full text-sm font-medium text-gray-700 hover:bg-gray-50 cursor-pointer">
+                        Cancel
+                    </button>
+                    <button type="button" wire:click="removeFile" 
+                            class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-full text-sm font-medium cursor-pointer"
+                            wire:loading.attr="disabled">
+                        <span wire:loading.remove wire:target="removeFile">
+                            <i class="fa-solid fa-trash mr-2"></i> Delete
+                        </span>
+                        <span wire:loading wire:target="removeFile">
+                            <i class="fa-solid fa-spinner fa-spin mr-2"></i> Deleting...
+                        </span>
+                    </button>
+                </div>
+            </div>
+        </x-modal>
+    @endif
 </div>

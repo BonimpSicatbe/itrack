@@ -1,5 +1,5 @@
 <x-admin.app-layout>
-    <div class="w-[92%] mx-auto">
+    <div>
         @livewire('admin.file-manager.file-manager-index')
     </div>
 </x-admin.app-layout>

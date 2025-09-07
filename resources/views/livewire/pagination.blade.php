@@ -1,7 +1,7 @@
 @if ($paginator->hasPages())
     <div class="flex items-center justify-between mt-4">
         {{-- Results Info --}}
-        <div class="text-sm text-1B512D">
+        <div class="text-sm text-gray-700">
             Showing
             <span class="font-medium">{{ $paginator->firstItem() ?? 0 }}</span>
             to
@@ -64,7 +64,7 @@
 @else
     {{-- Show results info even when no pagination is needed --}}
     <div class="flex items-center justify-between mt-4">
-        <div class="text-sm text-1B512D">
+        <div class="text-sm text-gray-700 font-semibold">
             Showing
             <span class="font-medium">{{ $paginator->firstItem() ?? 0 }}</span>
             to

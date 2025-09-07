@@ -134,7 +134,7 @@
         
         <!-- Main Content -->
         <div class="pt-22 px-6 container mx-auto min-h-screen">
-            <div class="content-wrapper">
+            <div class="content-wrapper w-[92%] mx-auto">
                 {{ $slot }}
             </div>
         </div>

@@ -24,6 +24,10 @@ class RequirementEdit extends Component
     public $priority = '';
     public $required_files = [];
     public $showUploadModal = false;
+    
+    // Add these properties for delete confirmation
+    public $showDeleteModal = false;
+    public $fileToDelete = null;
 
     #[Validate('required|in:college,department')]
     public $sector = '';
@@ -41,8 +45,8 @@ class RequirementEdit extends Component
         
         // Load assigned users with their relationships
         $this->assignedUsers = $requirement->assignedTargets()->map(function($user) {
-        return $user->load(['department', 'college']);
-    });
+            return $user->load(['department', 'college']);
+        });
     }
 
     public function updateRequirement()
@@ -109,10 +113,16 @@ class RequirementEdit extends Component
         }
     }
 
-    public function removeFile($fileId)
+    public function confirmFileRemoval($fileId)
+    {
+        $this->fileToDelete = $fileId;
+        $this->showDeleteModal = true;
+    }
+
+    public function removeFile()
     {
         try {
-            $file = $this->requirement->getMedia('guides')->find($fileId);
+            $file = $this->requirement->getMedia('guides')->find($this->fileToDelete);
             
             if ($file) {
                 $file->delete();
@@ -134,6 +144,8 @@ class RequirementEdit extends Component
                 type: 'error', 
                 content: 'Error removing file: ' . $e->getMessage()
             );
+        } finally {
+            $this->reset(['showDeleteModal', 'fileToDelete']);
         }
     }
 

@@ -20,7 +20,13 @@ class Navigation extends Component
 
     protected function getUnreadCount(): int
     {
-        return Auth::check() ? Auth::user()->unreadNotifications()->count() : 0;
+        if (!Auth::check()) {
+            return 0;
+        }
+
+        return Auth::user()->unreadNotifications()
+            ->where('type', 'App\Notifications\NewSubmissionNotification')
+            ->count();
     }
 
     protected function prepareNavigation(): array
