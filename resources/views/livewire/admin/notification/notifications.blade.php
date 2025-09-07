@@ -91,8 +91,8 @@
                 </div>
             @empty
                 <div class="text-center py-12">
-                    <div class="bg-gray-100 rounded-xl p-8">
-                        <i class="fa-regular fa-bell-slash text-gray-400 text-4xl mb-4"></i>
+                    <div class="p-8">
+                        <i class="fa-regular fa-bell-slash text-green-600 text-7xl mb-4"></i>
                         <p class="text-gray-600 text-sm font-semibold">No notifications</p>
                         <p class="text-gray-500 text-xs mt-1">You're all caught up!</p>
                     </div>
@@ -347,9 +347,6 @@
         @else
             <div class="h-full flex items-center justify-center p-6">
                 <div class="text-center rounded-xl p-12">
-                    <div class="bg-gradient-to-r from-gray-100 to-gray-200 p-6 rounded-xl inline-block mb-6">
-                        <i class="fas fa-bell-slash text-8xl text-green-700"></i>
-                    </div>
                     <h3 class="text-xl font-semibold text-gray-900 mb-3">No notification selected</h3>
                     <p class="text-sm text-gray-500 font-semibold">Click on a notification from the list to view details</p>
                 </div>
