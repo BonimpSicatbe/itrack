@@ -63,7 +63,7 @@
                     @forelse ($requirements as $requirement)
                         <tr class="hover:bg-green-50 transition-colors duration-150 cursor-pointer" 
                             wire:click="showRequirement({{ $requirement->id }})">
-                            <td class="px-4 py-3 font-medium">{{ $requirement->name }}</td>
+                            <td class="px-4 py-3 font-semibold text-gray-800">{{ $requirement->name }}</td>
                             <td class="px-4 py-3 whitespace-normal max-w-[300px]">
                                 {{ Str::limit($requirement->description, 50) }}
                             </td>

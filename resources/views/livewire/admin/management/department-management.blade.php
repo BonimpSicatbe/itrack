@@ -6,13 +6,13 @@
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-2 gap-4">
             <div>
                 <div class="flex items-center gap-2">
-                    <h3 class="text-xl font-semibold text-1B512D">Department Management</h3>
+                    <h3 class="text-xl font-semibold text-green-700">Department Management</h3>
                     <p class="text-sm text-gray-600">| Manage departments and their information.</p>
                 </div>
             </div>
             <button 
                 wire:click="openAddDepartmentModal" 
-                class="px-5 py-2 bg-1C7C54 text-white font-semibold rounded-full hover:bg-1B512D focus:outline-none focus:ring-2 focus:ring-73E2A7 focus:ring-offset-2 transition text-sm cursor-pointer"
+                class="px-5 py-2 bg-green-600 text-white font-semibold rounded-full text-sm cursor-pointer"
             >
                 <i class="fa-solid fa-plus mr-2"></i>Add Department
             </button>
@@ -25,9 +25,9 @@
         <div class="flex flex-col sm:flex-row items-center justify-between gap-4 mb-4">
             
             <!-- Total Departments Badge -->
-            <div class="flex items-center gap-2 bg-1C7C54/10 border border-1C7C54/30 px-4 py-2 rounded-xl shadow-sm">
-                <i class="fa-solid fa-building text-1C7C54"></i>
-                <span class="text-sm font-semibold text-1C7C54">
+            <div class="flex items-center gap-2 bg-green-50 border border-green-600 px-4 py-2 rounded-xl shadow-sm">
+                <i class="fa-solid fa-building text-green-700"></i>
+                <span class="text-sm font-semibold text-green-700">
                     Total Departments: {{ $departments->count() }}
                 </span>
             </div>
@@ -51,10 +51,10 @@
 
         <!-- Departments Table -->
         <div class="max-h-[500px] overflow-x-auto rounded-xl border border-gray-200 shadow-sm">
-            <table class="table table-auto table-striped table-pin-rows table-sm min-w-[800px] rounded-lg">
+            <table class="table table-auto table-striped table-pin-rows table-sm min-w-[800px] rounded-xl">
                 <thead>
                     <tr class="bg-base-300 font-bold uppercase">
-                        <th class="cursor-pointer hover:bg-blue-50 p-4" wire:click="sortBy('name')" style="background-color: #1C7C54; color: white;">
+                        <th class="cursor-pointer hover:bg-green-800 bg-green-700 p-4" wire:click="sortBy('name')" style="color: white;">
                             <div class="flex items-center pt-2 pb-2">
                                 Name
                                 <div class="ml-1">
@@ -66,7 +66,7 @@
                                 </div>
                             </div>
                         </th>
-                        <th class="cursor-pointer hover:bg-blue-50 p-4" wire:click="sortBy('college_id')" style="background-color: #1C7C54; color: white;">
+                        <th class="cursor-pointer hover:bg-green-800 bg-green-700 p-4" wire:click="sortBy('college_id')" style="color: white;">
                             <div class="flex items-center pt-2 pb-2">
                                 College
                                 <div class="ml-1">
@@ -78,12 +78,12 @@
                                 </div>
                             </div>
                         </th>
-                        <th class="p-4 text-right" style="background-color: #1C7C54; color: white;">Actions</th>
+                        <th class="p-4 text-right bg-green-700" style="color: white;">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse($departments as $department)
-                        <tr>
+                        <tr class="hover:bg-green-50">
                             <td class="whitespace-nowrap p-4">
                                 <div class="text-sm font-medium text-gray-900">{{ $department->name }}</div>
                             </td>
@@ -92,10 +92,10 @@
                             </td>
                             <td class="whitespace-nowrap text-right text-sm font-medium p-4">
                                 <div class="flex justify-end space-x-2 text-base">
-                                    <button class="text-amber-500 hover:bg-amber-100 rounded-lg p-2 tooltip cursor-pointer" data-tip="Edit" wire:click="openEditDepartmentModal({{ $department->id }})">
+                                    <button class="text-amber-500 hover:bg-amber-100 rounded-xl p-2 tooltip cursor-pointer" data-tip="Edit" wire:click="openEditDepartmentModal({{ $department->id }})">
                                         <i class="fa-solid fa-pen-to-square"></i>
                                     </button>
-                                    <button class="text-red-600 hover:bg-red-100 rounded-lg p-2 tooltip cursor-pointer"
+                                    <button class="text-red-600 hover:bg-red-100 rounded-xl p-2 tooltip cursor-pointer"
                                                 data-tip="Delete" wire:click="openDeleteConfirmationModal({{ $department->id }})">
                                         <i class="fa-solid fa-trash"></i>
                                     </button>
@@ -110,24 +110,19 @@
                 </tbody>
             </table>
         </div>
-
-        <!-- Results Count Footer -->
-        <div class="mt-4 text-sm text-gray-700 text-right">
-            Showing {{ $departments->count() }} of {{ $departments->count() }} results
-        </div>
     </div>
 
     <!-- Add Department Modal -->
     @if($showAddDepartmentModal)
         <x-modal name="add-department-modal" :show="$showAddDepartmentModal" maxWidth="2xl">
             <!-- Header -->
-            <div class="bg-1C7C54 text-white rounded-t-2xl px-6 py-4 flex items-center space-x-3">
+            <div class="bg-1C7C54 text-white rounded-t-xl px-6 py-4 flex items-center space-x-3">
                 <i class="fa-solid fa-building text-lg"></i>
                 <h3 class="text-xl font-semibold">Add New Department</h3>
             </div>
 
             <!-- Body -->
-            <div class="bg-white px-6 py-6 rounded-b-2xl">
+            <div class="bg-white px-6 py-6 rounded-b-xl">
                 <div class="space-y-6">
                     <!-- Department Name -->
                     <div>
@@ -155,7 +150,7 @@
                 <!-- Footer -->
                 <div class="mt-8 flex justify-end space-x-3">
                     <button type="button" wire:click="closeAddDepartmentModal"
-                        class="px-5 py-2 rounded-full border border-1C7C54 text-1C7C54 bg-white hover:bg-73E2A7 hover:text-white font-semibold text-sm cursor-pointer">
+                        class="px-5 py-2 rounded-full border border-gray-300 text-gray-500 bg-white font-semibold text-sm cursor-pointer">
                         Cancel
                     </button>
                     <button type="button" wire:click="addDepartment" wire:loading.attr="disabled"
@@ -174,13 +169,13 @@
     @if($showEditDepartmentModal)
         <x-modal name="edit-department-modal" :show="$showEditDepartmentModal" maxWidth="2xl">
             <!-- Header -->
-            <div class="bg-1C7C54 text-white rounded-t-2xl px-6 py-4 flex items-center space-x-3">
+            <div class="bg-1C7C54 text-white rounded-t-xl px-6 py-4 flex items-center space-x-3">
                 <i class="fa-solid fa-building text-lg"></i>
                 <h3 class="text-xl font-semibold">Edit Department</h3>
             </div>
 
             <!-- Body -->
-            <div class="bg-white px-6 py-6 rounded-b-2xl">
+            <div class="bg-white px-6 py-6 rounded-b-xl">
                 <div class="space-y-6">
                     <!-- Department Name -->
                     <div>
@@ -208,7 +203,7 @@
                 <!-- Footer -->
                 <div class="mt-8 flex justify-end space-x-3">
                     <button type="button" wire:click="closeEditDepartmentModal"
-                        class="px-5 py-2 rounded-full border border-1C7C54 text-1C7C54 bg-white hover:bg-73E2A7 hover:text-white font-semibold text-sm cursor-pointer">
+                        class="px-5 py-2 rounded-full border border-gray-300 text-gray-500 bg-white font-semibold text-sm cursor-pointer">
                         Cancel
                     </button>
                     <button type="button" wire:click="updateDepartment" wire:loading.attr="disabled"
@@ -226,40 +221,33 @@
     <!-- Delete Confirmation Modal -->
     @if($showDeleteConfirmationModal && $departmentToDelete)
         <x-modal name="delete-department-modal" :show="$showDeleteConfirmationModal" maxWidth="md">
-            <!-- Header -->
-            <div class="bg-red-600 text-white rounded-t-2xl px-6 py-4 flex items-center space-x-3">
+            <div class="bg-red-600 text-white rounded-t-xl px-6 py-4 flex items-center space-x-3">
                 <i class="fa-solid fa-triangle-exclamation text-lg"></i>
-                <h3 class="text-xl font-semibold">Delete Department</h3>
+                <h3 class="text-xl font-semibold">Confirm Deletion</h3>
             </div>
 
-            <!-- Body -->
-            <div class="bg-white px-6 py-6 rounded-b-2xl">
-                <div class="text-center">
-                    <p class="text-sm text-gray-700">
-                        Are you sure you want to delete  
-                        <span class="font-semibold text-gray-900">
-                            {{ $departmentToDelete->name }}
-                        </span>?  
-                        <br>This action cannot be undone.
+            <div class="bg-white px-6 py-6 rounded-b-xl">
+                <div class="space-y-4">
+                    <p class="text-gray-700">
+                        Are you sure you want to delete the department 
+                        <span class="font-semibold text-red-600">"{{ $departmentToDelete->name }}"</span>?
+                    </p>
+                    <p class="text-sm text-gray-600">
+                        This action cannot be undone. All data will be permanently removed.
                     </p>
                 </div>
 
-                <!-- Footer -->
-                <div class="mt-8 flex justify-center space-x-3">
-                    <button 
-                        type="button" 
-                        wire:click="closeDeleteConfirmationModal" 
-                        class="px-5 py-2 rounded-full border border-1C7C54 text-1C7C54 bg-white hover:bg-73E2A7 hover:text-white font-semibold text-sm cursor-pointer"
-                    >
+                <div class="mt-6 pt-4 border-t border-gray-200 flex justify-end space-x-3">
+                    <button type="button" wire:click="closeDeleteConfirmationModal" 
+                            class="px-4 py-2 border border-gray-300 rounded-full text-sm font-medium text-gray-700 hover:bg-gray-50 cursor-pointer">
                         Cancel
                     </button>
-                    <button 
-                        type="button" 
-                        wire:click="deleteDepartment" 
-                        wire:loading.attr="disabled"
-                        class="px-5 py-2 rounded-full bg-red-600 text-white font-semibold text-sm shadow hover:bg-red-700 cursor-pointer"
-                    >
-                        <span wire:loading.remove wire:target="deleteDepartment">Delete</span>
+                    <button type="button" wire:click="deleteDepartment" 
+                            class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-full text-sm font-medium cursor-pointer"
+                            wire:loading.attr="disabled">
+                        <span wire:loading.remove wire:target="deleteDepartment">
+                            <i class="fa-solid fa-trash mr-2"></i> Delete
+                        </span>
                         <span wire:loading wire:target="deleteDepartment">
                             <i class="fa-solid fa-spinner fa-spin mr-2"></i> Deleting...
                         </span>

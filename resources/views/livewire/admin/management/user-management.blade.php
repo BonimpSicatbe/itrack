@@ -4,12 +4,12 @@
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-2 gap-4">
         <div>
             <div class="flex items-center gap-2">
-                <h3 class="text-xl font-semibold text-1B512D">User Management</h3>
+                <h3 class="text-xl font-semibold text-green-700">User Management</h3>
                 <p class="text-sm text-gray-600">| Manage system users and their permissions.</p>
             </div>
         </div>
         <button wire:click="openAddUserModal"
-            class="px-5 py-2 bg-1C7C54 text-white font-semibold rounded-full hover:bg-1B512D focus:outline-none focus:ring-2 focus:ring-73E2A7 focus:ring-offset-2 transition text-sm cursor-pointer">
+            class="px-5 py-2 bg-green-600 text-white font-semibold rounded-full hover:bg-green-700 text-sm cursor-pointer">
             <i class="fa-solid fa-plus mr-2"></i>Add User
         </button>
     </div>
@@ -21,9 +21,9 @@
     <div class="flex flex-col sm:flex-row items-center justify-between gap-4 mb-4">
         
         <!-- Total Users Badge -->
-        <div class="flex items-center gap-2 bg-1C7C54/10 border border-1C7C54/30 px-4 py-2 rounded-xl shadow-sm">
-            <i class="fa-solid fa-users text-1C7C54"></i>
-            <span class="text-sm font-semibold text-1C7C54">
+        <div class="flex items-center gap-2 bg-green-50 border border-green-600 px-4 py-2 rounded-xl shadow-sm">
+            <i class="fa-solid fa-users text-green-700"></i>
+            <span class="text-sm font-semibold text-green-700">
                 Total Users: {{ $users->count() }}
             </span>
         </div>
@@ -75,10 +75,10 @@
 
     <!-- Users Table -->
     <div class="max-h-[500px] overflow-x-auto rounded-xl border border-gray-200 shadow-sm">
-        <table class="table table-auto table-striped table-pin-rows table-sm w-full rounded-lg">
+        <table class="table table-auto table-striped table-pin-rows table-sm w-full rounded-xl">
             <thead>
                 <tr class="bg-base-300 font-bold uppercase">
-                    <th class="cursor-pointer hover:bg-blue-50 p-4 text-left" wire:click="sortBy('lastname')" style="background-color: #1C7C54; color: white; width: 25%;">
+                    <th class="cursor-pointer hover:bg-green-800 bg-green-700 p-4 text-left" wire:click="sortBy('lastname')" style="color: white; width: 25%;">
                         <div class="flex items-center pt-2 pb-2">
                             Name
                             <div class="ml-1">
@@ -90,26 +90,26 @@
                             </div>
                         </div>
                     </th>
-                    <th class="p-4 text-left" style="background-color: #1C7C54; color: white; width: 20%;">Email</th>
-                    <th class="p-4 text-left" style="background-color: #1C7C54; color: white; width: 15%;">College</th>
-                    <th class="p-4 text-left" style="background-color: #1C7C54; color: white; width: 15%;">Department</th>
-                    <th class="p-4 text-left" style="background-color: #1C7C54; color: white; width: 15%;">Roles</th>
-                    <th class="p-4 text-center" style="background-color: #1C7C54; color: white; width: 10%;">Actions</th>
+                    <th class="p-4 text-left bg-green-700" style="color: white; width: 20%;">Email</th>
+                    <th class="p-4 text-left bg-green-700" style="color: white; width: 15%;">College</th>
+                    <th class="p-4 text-left bg-green-700" style="color: white; width: 15%;">Department</th>
+                    <th class="p-4 text-left bg-green-700" style="color: white; width: 15%;">Roles</th>
+                    <th class="p-4 text-center bg-green-700" style="color: white; width: 10%;">Actions</th>
                 </tr>
             </thead>
             <tbody>
                 @forelse($users as $user)
-                    <tr class="hover:bg-blue-50 transition-colors duration-150 cursor-pointer" 
+                    <tr class="hover:bg-green-50 transition-colors duration-150 cursor-pointer" 
                         wire:click="showUser({{ $user->id }})">
                         <td class="whitespace-nowrap p-4">
                             <div class="flex items-center">
                                 <div class="h-10 w-10 flex-shrink-0">
                                     <div class="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center">
-                                        <span class="font-medium text-green-800">{{ substr($user->firstname, 0, 1) }}{{ substr($user->lastname, 0, 1) }}</span>
+                                        <span class="font-semibold text-green-800">{{ substr($user->firstname, 0, 1) }}{{ substr($user->lastname, 0, 1) }}</span>
                                     </div>
                                 </div>
                                 <div class="ml-4">
-                                    <div class="text-sm font-medium text-gray-900">
+                                    <div class="text-sm font-semibold text-gray-900">
                                         {{ $user->firstname }} 
                                         {{ $user->middlename ? $user->middlename . ' ' : '' }}
                                         {{ $user->lastname }}
@@ -149,12 +149,12 @@
                         </td>
                         <td class="whitespace-nowrap p-4">
                             <div class="flex justify-center space-x-2 text-base" onclick="event.stopPropagation()">
-                                <button class="text-amber-500 hover:bg-amber-100 rounded-lg p-2 tooltip cursor-pointer" 
+                                <button class="text-amber-500 hover:bg-amber-100 rounded-xl p-2 tooltip cursor-pointer" 
                                         data-tip="Edit" 
                                         wire:click="openEditUserModal({{ $user->id }})">
                                     <i class="fa-solid fa-pen-to-square"></i>
                                 </button>
-                                <button class="text-red-600 hover:bg-red-100 rounded-lg p-2 tooltip cursor-pointer"
+                                <button class="text-red-600 hover:bg-red-100 rounded-xl p-2 tooltip cursor-pointer"
                                         data-tip="Delete" 
                                         wire:click="openDeleteConfirmationModal({{ $user->id }})">
                                     <i class="fa-solid fa-trash"></i>
@@ -175,7 +175,7 @@
     @if($selectedUser)
         <x-modal name="user-details-modal" :show="!!$selectedUser" maxWidth="2xl">
             <!-- Header -->
-            <div class="bg-1C7C54 text-white rounded-t-2xl px-6 py-4 flex items-center justify-between">
+            <div class="bg-1C7C54 text-white rounded-t-xl px-6 py-4 flex items-center justify-between">
                 <div class="flex items-center space-x-3">
                     <i class="fa-solid fa-user text-lg"></i>
                     <h3 class="text-xl font-semibold">User Details</h3>
@@ -186,7 +186,7 @@
             </div>
             
             <!-- Body -->
-            <div class="bg-white px-6 py-6 rounded-b-2xl">
+            <div class="bg-white px-6 py-6 rounded-b-xl">
                 <!-- User profile header -->
                 <div class="mb-6 pb-4 border-b border-gray-200">
                     <div class="flex items-center justify-between">
@@ -320,13 +320,13 @@
     @if($showAddUserModal)
         <x-modal name="add-user-modal" :show="$showAddUserModal" maxWidth="2xl">
             <!-- Header -->
-            <div class="bg-1C7C54 text-white rounded-t-2xl px-6 py-4 flex items-center space-x-3">
+            <div class="bg-1C7C54 text-white rounded-t-xl px-6 py-4 flex items-center space-x-3">
                 <i class="fa-solid fa-user-plus text-lg"></i>
                 <h3 class="text-xl font-semibold">Add New User</h3>
             </div>
 
             <!-- Body -->
-            <div class="bg-white px-6 py-6 rounded-b-2xl">
+            <div class="bg-white px-6 py-6 rounded-b-xl">
                 <div class="space-y-6">
                     <!-- First/Last Name -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -425,10 +425,10 @@
 
                 <!-- Action buttons -->
                 <div class="mt-6 pt-4 border-t border-gray-200 flex justify-end space-x-3">
-                    <button type="button" wire:click="closeAddUserModal" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 cursor-pointer">
+                    <button type="button" wire:click="closeAddUserModal" class="bg-white py-2 px-4 border border-gray-300 rounded-full shadow-sm text-sm font-medium text-gray-500 cursor-pointer">
                         Cancel
                     </button>
-                    <button type="button" wire:click="addUser" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-1C7C54 hover:bg-1B512D focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-73E2A7 cursor-pointer">
+                    <button type="button" wire:click="addUser" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-full shadow-sm text-white bg-1C7C54 hover:bg-1B512D focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-73E2A7 cursor-pointer">
                         <i class="fa-solid fa-user-plus mr-2"></i> Add User
                     </button>
                 </div>
@@ -440,13 +440,13 @@
     @if($showEditUserModal)
         <x-modal name="edit-user-modal" :show="$showEditUserModal" maxWidth="2xl">
             <!-- Header -->
-            <div class="bg-1C7C54 text-white rounded-t-2xl px-6 py-4 flex items-center space-x-3">
+            <div class="bg-1C7C54 text-white rounded-t-xl px-6 py-4 flex items-center space-x-3">
                 <i class="fa-solid fa-user-edit text-lg"></i>
                 <h3 class="text-xl font-semibold">Edit User</h3>
             </div>
 
             <!-- Body -->
-            <div class="bg-white px-6 py-6 rounded-b-2xl">
+            <div class="bg-white px-6 py-6 rounded-b-xl">
                 <div class="space-y-6">
                     <!-- First/Last Name -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -547,10 +547,10 @@
 
                 <!-- Action buttons -->
                 <div class="mt-6 pt-4 border-t border-gray-200 flex justify-end space-x-3">
-                    <button type="button" wire:click="closeEditUserModal" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 cursor-pointer">
+                    <button type="button" wire:click="closeEditUserModal" class="bg-white py-2 px-4 border border-gray-300 rounded-full shadow-sm text-sm font-medium text-gray-500 cursor-pointer">
                         Cancel
                     </button>
-                    <button type="button" wire:click="updateUser" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-1C7C54 hover:bg-1B512D focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-73E2A7 cursor-pointer">
+                    <button type="button" wire:click="updateUser" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-full shadow-sm text-white bg-1C7C54 hover:bg-1B512D focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-73E2A7 cursor-pointer">
                         <i class="fa-solid fa-user-check mr-2"></i> Update User
                     </button>
                 </div>
@@ -562,13 +562,13 @@
     @if($showDeleteConfirmationModal && $userToDelete)
         <x-modal name="delete-user-confirmation-modal" :show="$showDeleteConfirmationModal" maxWidth="md">
             <!-- Header -->
-            <div class="bg-red-600 text-white rounded-t-2xl px-6 py-4 flex items-center space-x-3">
+            <div class="bg-red-600 text-white rounded-t-xl px-6 py-4 flex items-center space-x-3">
                 <i class="fa-solid fa-triangle-exclamation text-lg"></i>
                 <h3 class="text-xl font-semibold">Confirm Deletion</h3>
             </div>
 
             <!-- Body -->
-            <div class="bg-white px-6 py-6 rounded-b-2xl">
+            <div class="bg-white px-6 py-6 rounded-b-xl">
                 <div class="space-y-4">
                     <p class="text-gray-700">
                         Are you sure you want to delete the user 
@@ -581,10 +581,10 @@
 
                 <!-- Action buttons -->
                 <div class="mt-6 pt-4 border-t border-gray-200 flex justify-end space-x-3">
-                    <button type="button" wire:click="closeDeleteConfirmationModal" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 cursor-pointer">
+                    <button type="button" wire:click="closeDeleteConfirmationModal" class="bg-white py-2 px-4 border border-gray-300 rounded-full shadow-sm text-sm font-medium text-gray-500 cursor-pointer">
                         Cancel
                     </button>
-                    <button type="button" wire:click="deleteUser" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 cursor-pointer">
+                    <button type="button" wire:click="deleteUser" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-full shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 cursor-pointer">
                         <i class="fa-solid fa-trash mr-2"></i> Delete User
                     </button>
                 </div>

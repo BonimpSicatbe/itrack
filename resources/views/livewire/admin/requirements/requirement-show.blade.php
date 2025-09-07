@@ -17,19 +17,19 @@
         <div class="border-b border-gray-100 max-h-[625px] overflow-y-auto">
 
             <!-- Details -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 p-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 w-[90%] mx-auto">
                 <!-- Name -->
                 <div class="space-y-2">
-                    <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Name</p>
-                    <div class="bg-gray-50 p-3 rounded-xl text-sm font-medium text-gray-900 shadow-inner">
+                    <p class="text-xs font-semibold text-gray-800 uppercase tracking-wide">Name</p>
+                    <div class="bg-gray-50 p-3 rounded-xl text-sm font-semibold text-gray-500 shadow-inner">
                         {{ $requirement->name }}
                     </div>
                 </div>
 
                 <!-- Due Date -->
                 <div class="space-y-2">
-                    <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Due Date</p>
-                    <div class="bg-gray-50 p-3 rounded-xl flex items-center text-sm text-gray-900 shadow-inner">
+                    <p class="text-xs font-semibold text-gray-800 uppercase tracking-wide">Due Date</p>
+                    <div class="bg-gray-50 p-3 rounded-xl flex items-center text-sm text-gray-500 shadow-inner font-semibold">
                         <i class="fa-regular fa-calendar mr-2 text-gray-500"></i>
                         {{ $requirement->due->format('M d, Y g:i A') }}
                         @if($requirement->due->isPast())
@@ -42,16 +42,16 @@
 
                 <!-- Description -->
                 <div class="space-y-2 md:col-span-2">
-                    <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Description</p>
-                    <div class="bg-gray-50 p-3 rounded-xl text-sm text-gray-700 leading-relaxed shadow-inner">
+                    <p class="text-xs font-semibold text-gray-800 uppercase tracking-wide">Description</p>
+                    <div class="bg-gray-50 p-3 rounded-xl text-sm text-gray-500 leading-relaxed shadow-inner font-semibold">
                         {{ $requirement->description ?? 'No description provided.' }}
                     </div>
                 </div>
 
                 <!-- Assigned To -->
                 <div class="space-y-2">
-                    <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Assigned To</p>
-                    <div class="bg-gray-50 p-3 rounded-xl flex items-center text-sm text-gray-900 shadow-inner">
+                    <p class="text-xs font-semibold text-gray-800 uppercase tracking-wide">Assigned To</p>
+                    <div class="bg-gray-50 p-3 rounded-xl flex items-center text-sm text-gray-500 shadow-inner font-semibold">
                         <i class="fa-regular fa-user mr-2 text-gray-500"></i>
                         {{ $requirement->assigned_to }}
                     </div>
@@ -59,8 +59,8 @@
 
                 <!-- Priority -->
                 <div class="space-y-2">
-                    <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Priority</p>
-                    <div class="bg-gray-50 p-3 rounded-xl flex items-center text-sm text-gray-900 capitalize shadow-inner">
+                    <p class="text-xs font-semibold text-gray-800 uppercase tracking-wide">Priority</p>
+                    <div class="bg-gray-50 p-3 rounded-xl flex items-center text-sm text-gray-500 font-semibold capitalize shadow-inner">
                         <i class="fa-solid fa-flag mr-2 text-gray-500"></i>
                         {{ ucfirst($requirement->priority) }}
                     </div>

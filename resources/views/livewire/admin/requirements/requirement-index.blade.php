@@ -82,7 +82,7 @@
                                 <!-- Requirement Name -->
                                 <div class="flex items-center gap-2">
                                     <i class="fas fa-clipboard-list text-green-600 text-lg"></i>
-                                    <h3 class="font-semibold text-green-800 truncate text-sm">{{ $requirement->name }}</h3>
+                                    <h3 class="font-semibold text-gray-800 truncate text-sm">{{ $requirement->name }}</h3>
                                 </div>
                                 
                                 <!-- Due Date -->
@@ -208,7 +208,7 @@
                                             <td class="px-4 py-3 whitespace-nowrap">
                                                 <div class="flex items-center gap-2">
                                                     <i class="fas fa-clipboard-list text-green-600 text-sm"></i>
-                                                    <span class="text-sm font-medium text-gray-900 truncate max-w-xs">
+                                                    <span class="text-sm font-semibold text-gray-800 truncate max-w-xs">
                                                         {{ $requirement->name }}
                                                     </span>
                                                 </div>

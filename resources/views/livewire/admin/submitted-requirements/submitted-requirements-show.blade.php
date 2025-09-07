@@ -11,27 +11,27 @@
             </div>
 
             <!-- Body -->
-            <div class="p-6 space-y-4 text-sm text-gray-500">
+            <div class="p-6 space-y-4 text-sm text-gray-900">
                 <div>
                     <h3 class="font-semibold uppercase text-xs">Requirement Name</h3>
-                    <p class="mt-1 text-gray-900 font-semibold">{{ $submittedRequirement->requirement->name }}</p>
+                    <p class="mt-1 text-gray-500 font-semibold">{{ $submittedRequirement->requirement->name }}</p>
                 </div>
 
                 @if($submittedRequirement->requirement->description)
                 <div>
                     <h3 class="font-semibold uppercase text-xs">Description</h3>
-                    <p class="mt-1 text-gray-900 whitespace-pre-line">{{ $submittedRequirement->requirement->description }}</p>
+                    <p class="mt-1 text-gray-500 whitespace-pre-line font-semibold">{{ $submittedRequirement->requirement->description }}</p>
                 </div>
                 @endif
 
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <h3 class="font-semibold uppercase text-xs">Due Date</h3>
-                        <p class="mt-1 text-gray-900">{{ $submittedRequirement->requirement->due->format('M j, Y \a\t g:i A') }}</p>
+                        <p class="mt-1 text-gray-500 font-semibold">{{ $submittedRequirement->requirement->due->format('M j, Y \a\t g:i A') }}</p>
                     </div>
                     <div>
                         <h3 class="font-semibold uppercase text-xs">Created By</h3>
-                        <p class="mt-1 text-gray-900">{{ $submittedRequirement->requirement->creator->full_name }}</p>
+                        <p class="mt-1 text-gray-500 font-semibold">{{ $submittedRequirement->requirement->creator->full_name }}</p>
                     </div>
                 </div>
 

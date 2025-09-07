@@ -408,7 +408,10 @@
                 @if($selectedFile)
                 <div class="bg-white rounded-xl border border-gray-200 shadow-md p-5 h-full flex flex-col">
                     <div class="flex justify-between items-center mb-4">
-                        <h3 class="text-xl font-semibold text-1C7C54">File Details</h3>
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-circle-info text-green-800 text-2xl"></i>
+                            <h3 class="text-xl font-semibold text-green-800">File Details</h3>
+                        </div>
                         <button wire:click="clearSelection" class="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center">
                             <i class="fa-solid fa-times text-gray-600 text-sm"></i>
                         </button>
@@ -416,16 +419,16 @@
 
                     <div class="flex flex-col gap-4 text-sm">
                         <div>
-                            <p class="font-semibold text-gray-500 uppercase">File Name</p>
-                            <p class="text-gray-900 break-all">{{ $selectedFile->file_name }}</p>
+                            <p class="font-semibold text-gray-800 uppercase text-xs">File Name</p>
+                            <p class="text-gray-500 font-semibold break-all">{{ $selectedFile->file_name }}</p>
                         </div>
                         <div>
-                            <p class="font-semibold text-gray-500 uppercase">File Type</p>
-                            <p class="text-gray-900">{{ $selectedFile->mime_type }}</p>
+                            <p class="font-semibold text-gray-800 uppercase text-xs">File Type</p>
+                            <p class="text-gray-500 font-semibold">{{ $selectedFile->mime_type }}</p>
                         </div>
                         <div>
-                            <p class="font-semibold text-gray-500 uppercase">Size</p>
-                            <p class="text-gray-900">
+                            <p class="font-semibold text-gray-800 uppercase text-xs">Size</p>
+                            <p class="text-gray-500 font-semibold">
                                 @if($selectedFile->size >= 1073741824)
                                     {{ number_format($selectedFile->size / 1073741824, 2) }} GB
                                 @elseif($selectedFile->size >= 1048576)
@@ -438,26 +441,23 @@
                             </p>
                         </div>
                         <div>
-                            <p class="font-semibold text-gray-500 uppercase">Uploaded At</p>
-                            <p class="text-gray-900">{{ $selectedFile->created_at->format('M d, Y g:i A') }}</p>
+                            <p class="font-semibold text-gray-800 uppercase text-xs">Uploaded At</p>
+                            <p class="text-gray-500 font-semibold">{{ $selectedFile->created_at->format('M d, Y g:i A') }}</p>
                         </div>
 
                         {{-- Requirement Info --}}
                         @if($selectedFile->model && $selectedFile->model->requirement)
-                        <div class="pt-3 border-t">
-                            <p class="font-semibold text-gray-500 uppercase">Requirement</p>
-                            <p class="text-gray-900 font-semibold">{{ $selectedFile->model->requirement->name }}</p>
-                            @if($selectedFile->model->requirement->description)
-                                <p class="text-sm text-gray-600 mt-1">{{ $selectedFile->model->requirement->description }}</p>
-                            @endif
-                            <div class="grid grid-cols-2 gap-2 mt-2">
+                        <div class="pt-3 border-t-2 border-gray-300 text-sm">
+                            <p class="font-semibold text-gray-800 uppercase text-xs">Requirement</p>
+                            <p class="text-gray-500 font-semibold">{{ $selectedFile->model->requirement->name }}</p>
+                            <div class="grid grid-cols-2 gap-2 mt-4">
                                 <div>
-                                    <p class="text-gray-500 font-semibold">Due Date</p>
-                                    <p class="text-gray-800">{{ $selectedFile->model->requirement->due->format('M d, Y') }}</p>
+                                    <p class="text-gray-800 font-semibold uppercase text-xs">Due Date</p>
+                                    <p class="text-gray-500 font-semibold text-sm">{{ $selectedFile->model->requirement->due->format('M d, Y') }}</p>
                                 </div>
                                 <div>
-                                    <p class="text-gray-500 font-semibold">Status</p>
-                                    <p class="text-gray-800 capitalize">{{ $selectedFile->model->status }}</p>
+                                    <p class="text-gray-800 font-semibold uppercase text-xs">Status</p>
+                                    <p class="text-gray-500 capitalize text-sm font-semibold">{{ $selectedFile->model->status }}</p>
                                 </div>
                             </div>
                         </div>
@@ -465,20 +465,20 @@
 
                         {{-- Uploader Info --}}
                         @if($selectedFile->model && $selectedFile->model->user)
-                        <div class="pt-3 border-t">
-                            <p class="font-semibold text-gray-500">Uploaded By</p>
-                            <p class="text-gray-800">{{ $selectedFile->model->user->full_name }}</p>
-                            <div class="grid grid-cols-2 gap-2 mt-2">
+                        <div class="pt-3 border-t-2 border-gray-300">
+                            <p class="font-semibold text-gray-800 uppercase text-xs">Uploaded By</p>
+                            <p class="text-gray-500 text-sm font-semibold">{{ $selectedFile->model->user->full_name }}</p>
+                            <div class="grid grid-cols-2 gap-2 mt-4">
                                 @if($selectedFile->model->user->department)
                                 <div>
-                                    <p class="text-gray-500 font-semibold">Department</p>
-                                    <p class="text-gray-800">{{ $selectedFile->model->user->department->name }}</p>
+                                    <p class="text-gray-800 font-semibold text-xs uppercase">Department</p>
+                                    <p class="text-gray-500 font-semibold text-sm">{{ $selectedFile->model->user->department->name }}</p>
                                 </div>
                                 @endif
                                 @if($selectedFile->model->user->college)
                                 <div>
-                                    <p class="text-gray-500 font-semibold">College</p>
-                                    <p class="text-gray-800">{{ $selectedFile->model->user->college->name }}</p>
+                                    <p class="text-gray-800 font-semibold text-xs uppercase">College</p>
+                                    <p class="text-gray-500 font-semibold text-sm">{{ $selectedFile->model->user->college->name }}</p>
                                 </div>
                                 @endif
                             </div>
@@ -487,7 +487,7 @@
                     </div>
 
                     {{-- Actions --}}
-                    <div class="flex gap-2 pt-5 border-t mt-auto">
+                    <div class="flex gap-2 pt-5 border-t-2 border-gray-300 mt-auto">
                         <a href="{{ $selectedFile->getUrl() }}" target="_blank"
                         class="flex-1 px-4 py-2 bg-1C7C54 text-white rounded-full text-sm font-semibold shadow-sm hover:bg-73E2A7 transition flex items-center justify-center">
                             <i class="fa-solid fa-download mr-2"></i> Download

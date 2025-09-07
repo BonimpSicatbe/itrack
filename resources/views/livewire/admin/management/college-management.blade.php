@@ -6,13 +6,13 @@
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-2 gap-4">
             <div>
                 <div class="flex items-center gap-2">
-                    <h3 class="text-xl font-semibold text-1B512D">College Management</h3>
+                    <h3 class="text-xl font-semibold text-green-700">College Management</h3>
                     <p class="text-sm text-gray-600">| Manage colleges and their information.</p>
                 </div>
             </div>
             <button 
                 wire:click="openAddCollegeModal" 
-                class="px-5 py-2 bg-1C7C54 text-white font-semibold rounded-full hover:bg-1B512D focus:outline-none focus:ring-2 focus:ring-73E2A7 focus:ring-offset-2 transition text-sm cursor-pointer"
+                class="px-5 py-2 bg-green-600 text-white font-semibold rounded-full text-sm cursor-pointer"
             >
                 <i class="fa-solid fa-plus mr-2"></i>Add College
             </button>
@@ -25,9 +25,9 @@
         <div class="flex flex-col sm:flex-row items-center justify-between gap-4 mb-4">
             
             <!-- Total Colleges Badge -->
-            <div class="flex items-center gap-2 bg-1C7C54/10 border border-1C7C54/30 px-4 py-2 rounded-xl shadow-sm">
-                <i class="fa-solid fa-building-columns text-1C7C54"></i>
-                <span class="text-sm font-semibold text-1C7C54">
+            <div class="flex items-center gap-2 bg-green-50 border border-green-600 px-4 py-2 rounded-xl shadow-sm">
+                <i class="fa-solid fa-building-columns text-green-700"></i>
+                <span class="text-sm font-semibold text-green-700">
                     Total Colleges: {{ $colleges->count() }}
                 </span>
             </div>
@@ -54,7 +54,7 @@
             <table class="table table-auto table-striped table-pin-rows table-sm w-full rounded-lg">
                 <thead>
                     <tr class="bg-base-300 font-bold uppercase">
-                        <th class="cursor-pointer hover:bg-blue-50 p-4 text-left" wire:click="sortBy('name')" style="background-color: #1C7C54; color: white; width: 45%;">
+                        <th class="cursor-pointer hover:bg-green-800 bg-green-700 p-4 text-left" wire:click="sortBy('name')" style="color: white; width: 45%;">
                             <div class="flex items-center pt-2 pb-2">
                                 Name
                                 <div class="ml-1">
@@ -66,7 +66,7 @@
                                 </div>
                             </div>
                         </th>
-                        <th class="cursor-pointer hover:bg-blue-50 p-4 text-left" wire:click="sortBy('acronym')" style="background-color: #1C7C54; color: white; width: 25%;">
+                        <th class="cursor-pointer hover:bg-green-800 bg-green-700 p-4 text-left" wire:click="sortBy('acronym')" style="color: white; width: 25%;">
                             <div class="flex items-center pt-2 pb-2">
                                 Acronym
                                 <div class="ml-1">
@@ -78,12 +78,12 @@
                                 </div>
                             </div>
                         </th>
-                        <th class="p-4 text-center" style="background-color: #1C7C54; color: white; width: 30%;">Actions</th>
+                        <th class="p-4 text-center bg-green-700" style="color: white; width: 30%;">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse($colleges as $college)
-                        <tr class="hover:bg-blue-50">
+                        <tr class="hover:bg-green-50">
                             <td class="whitespace-nowrap p-4">
                                 <div class="text-sm font-medium text-gray-900 pl-4">
                                     {{ $college->name }}
@@ -125,13 +125,13 @@
         @if($showAddCollegeModal)
             <x-modal name="add-college-modal" :show="$showAddCollegeModal" maxWidth="2xl">
                 <!-- Header -->
-                <div class="bg-1C7C54 text-white rounded-t-2xl px-6 py-4 flex items-center space-x-3">
+                <div class="bg-1C7C54 text-white rounded-t-xl px-6 py-4 flex items-center space-x-3">
                     <i class="fa-solid fa-building-columns text-lg"></i>
                     <h3 class="text-xl font-semibold">Add New College</h3>
                 </div>
 
                 <!-- Body -->
-                <div class="bg-white px-6 py-6 rounded-b-2xl">
+                <div class="bg-white px-6 py-6 rounded-b-xl">
                     <div class="space-y-6">
                         <!-- College Name -->
                         <div>
@@ -155,7 +155,7 @@
                     <!-- Footer -->
                     <div class="mt-8 flex justify-end space-x-3">
                         <button type="button" wire:click="closeAddCollegeModal"
-                            class="px-5 py-2 rounded-full border border-1C7C54 text-1C7C54 bg-white hover:bg-73E2A7 hover:text-white font-semibold text-sm cursor-pointer">
+                            class="px-5 py-2 rounded-full border border-gray-300 text-gray-500 bg-white font-semibold text-sm cursor-pointer">
                             Cancel
                         </button>
                         <button type="button" wire:click="addCollege" wire:loading.attr="disabled"
@@ -174,13 +174,13 @@
         @if($showEditCollegeModal)
             <x-modal name="edit-college-modal" :show="$showEditCollegeModal" maxWidth="2xl">
                 <!-- Header -->
-                <div class="bg-1C7C54 text-white rounded-t-2xl px-6 py-4 flex items-center space-x-3">
+                <div class="bg-1C7C54 text-white rounded-t-xl px-6 py-4 flex items-center space-x-3">
                     <i class="fa-solid fa-building-columns text-lg"></i>
                     <h3 class="text-xl font-semibold">Edit College</h3>
                 </div>
 
                 <!-- Body -->
-                <div class="bg-white px-6 py-6 rounded-b-2xl">
+                <div class="bg-white px-6 py-6 rounded-b-xl">
                     <div class="space-y-6">
                         <!-- College Name -->
                         <div>
@@ -204,7 +204,7 @@
                     <!-- Footer -->
                     <div class="mt-8 flex justify-end space-x-3">
                         <button type="button" wire:click="closeEditCollegeModal"
-                            class="px-5 py-2 rounded-full border border-1C7C54 text-1C7C54 bg-white hover:bg-73E2A7 hover:text-white font-semibold text-sm cursor-pointer">
+                            class="px-5 py-2 rounded-full border border-gray-300 text-gray-500 bg-white font-semibold text-sm cursor-pointer">
                             Cancel
                         </button>
                         <button type="button" wire:click="updateCollege" wire:loading.attr="disabled"
@@ -220,49 +220,42 @@
         @endif
 
         <!-- Delete Confirmation Modal -->
-        @if($showDeleteConfirmationModal && $collegeToDelete)
-            <x-modal name="delete-college-modal" :show="$showDeleteConfirmationModal" maxWidth="md">
-                <!-- Header -->
-                <div class="bg-red-600 text-white rounded-t-2xl px-6 py-4 flex items-center space-x-3">
-                    <i class="fa-solid fa-triangle-exclamation text-lg"></i>
-                    <h3 class="text-xl font-semibold">Delete College</h3>
+    @if($showDeleteConfirmationModal && $collegeToDelete)
+        <x-modal name="delete-college-modal" :show="$showDeleteConfirmationModal" maxWidth="md">
+            <div class="bg-red-600 text-white rounded-t-xl px-6 py-4 flex items-center space-x-3">
+                <i class="fa-solid fa-triangle-exclamation text-lg"></i>
+                <h3 class="text-xl font-semibold">Confirm Deletion</h3>
+            </div>
+
+            <div class="bg-white px-6 py-6 rounded-b-xl">
+                <div class="space-y-4">
+                    <p class="text-gray-700">
+                        Are you sure you want to delete the college 
+                        <span class="font-semibold text-red-600">"{{ $collegeToDelete->name }} ({{ $collegeToDelete->acronym }})"</span>?
+                    </p>
+                    <p class="text-sm text-gray-600">
+                        This action cannot be undone. All data will be permanently removed.
+                    </p>
                 </div>
 
-                <!-- Body -->
-                <div class="bg-white px-6 py-6 rounded-b-2xl">
-                    <div class="text-center">
-                        <p class="text-sm text-gray-700">
-                            Are you sure you want to delete  
-                            <span class="font-semibold text-gray-900">
-                                {{ $collegeToDelete->name }} ({{ $collegeToDelete->acronym }})
-                            </span>?  
-                            <br>This action cannot be undone.
-                        </p>
-                    </div>
-
-                    <!-- Footer -->
-                    <div class="mt-8 flex justify-center space-x-3">
-                        <button 
-                            type="button" 
-                            wire:click="closeDeleteConfirmationModal" 
-                            class="px-5 py-2 rounded-full border border-1C7C54 text-1C7C54 bg-white hover:bg-73E2A7 hover:text-white font-semibold text-sm cursor-pointer"
-                        >
-                            Cancel
-                        </button>
-                        <button 
-                            type="button" 
-                            wire:click="deleteCollege" 
-                            wire:loading.attr="disabled"
-                            class="px-5 py-2 rounded-full bg-red-600 text-white font-semibold text-sm shadow hover:bg-red-700 cursor-pointer"
-                        >
-                            <span wire:loading.remove wire:target="deleteCollege">Delete</span>
-                            <span wire:loading wire:target="deleteCollege">
-                                <i class="fa-solid fa-spinner fa-spin mr-2"></i> Deleting...
-                            </span>
-                        </button>
-                    </div>
+                <div class="mt-6 pt-4 border-t border-gray-200 flex justify-end space-x-3">
+                    <button type="button" wire:click="closeDeleteConfirmationModal" 
+                            class="px-4 py-2 border border-gray-300 rounded-full text-sm font-medium text-gray-700 hover:bg-gray-50 cursor-pointer">
+                        Cancel
+                    </button>
+                    <button type="button" wire:click="deleteCollege" 
+                            class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-full text-sm font-medium cursor-pointer"
+                            wire:loading.attr="disabled">
+                        <span wire:loading.remove wire:target="deleteCollege">
+                            <i class="fa-solid fa-trash mr-2"></i> Delete
+                        </span>
+                        <span wire:loading wire:target="deleteCollege">
+                            <i class="fa-solid fa-spinner fa-spin mr-2"></i> Deleting...
+                        </span>
+                    </button>
                 </div>
-            </x-modal>
-        @endif
+            </div>
+        </x-modal>
+    @endif
     </div>
 </div>

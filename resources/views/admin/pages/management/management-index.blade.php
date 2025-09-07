@@ -2,7 +2,7 @@
     <div class="h-[calc(100vh-6rem)] flex flex-col">
 
         <!-- Fixed Header with Gradient -->
-        <div class="rounded-2xl p-5 shadow flex flex-col lg:flex-row lg:items-center lg:justify-between"
+        <div class="rounded-xl p-5 shadow flex flex-col lg:flex-row lg:items-center lg:justify-between"
              style="background: linear-gradient(148deg,rgba(18, 67, 44, 1) 0%, rgba(30, 119, 77, 1) 54%, rgba(55, 120, 64, 1) 100%);">
             
             <!-- Title -->
@@ -31,7 +31,7 @@
         </div>
 
         <!-- Scrollable Content -->
-        <div class="flex-1 overflow-y-auto bg-white rounded-2xl shadow p-6 mt-4">
+        <div class="flex-1 overflow-y-auto bg-white rounded-xl shadow p-6 mt-4">
             @switch($activeTab)
                 @case('semesters')
                     <div>

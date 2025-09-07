@@ -84,7 +84,7 @@
                         <!-- List View -->
                         <div class="flex flex-col gap-2 mb-2">                            
                             <!-- Column Headers -->
-                            <div class="grid grid-cols-12 gap-4 px-4 py-3 bg-green-700 rounded-xl text-sm font-semibold text-white">
+                            <div class="grid grid-cols-12 gap-4 px-4 py-3 bg-green-700 rounded-xl text-xs font-semibold text-white uppercase">
                                 <div class="col-span-3">File</div>
                                 <div class="col-span-2">Requirement</div>
                                 <div class="col-span-3">Submitted By</div>
@@ -106,13 +106,13 @@
                                         <div class="w-8 h-8 flex items-center justify-center">
                                             <i class="fas {{ $submittedRequirement->getFileIcon() }} {{ $submittedRequirement->getFileIconColor() }} text-xl"></i>
                                         </div>
-                                        <span class="text-sm font-semibold text-gray-500 truncate" title="{{ $media->file_name ?? 'No file attached' }}">
+                                        <span class="text-sm font-semibold text-gray-800 truncate" title="{{ $media->file_name ?? 'No file attached' }}">
                                             {{ $media->file_name ?? 'No file attached' }}
                                         </span>
                                     </div>
                                     
                                     <!-- Requirement -->
-                                    <div class="col-span-2 text-sm text-gray-600 truncate" title="{{ $requirement->name }}">
+                                    <div class="col-span-2 text-sm text-gray-500 truncate" title="{{ $requirement->name }}">
                                         {{ $requirement->name }}
                                     </div>
                                     
@@ -173,10 +173,10 @@
                                                 <i class="fas {{ $submittedRequirement->getFileIcon() }} {{ $submittedRequirement->getFileIconColor() }} text-2xl"></i>
                                             </div>
                                             <div class="flex-1 min-w-0">
-                                                <h3 class="font-semibold text-green-800 truncate" title="{{ $media->file_name ?? 'No file attached' }}">
+                                                <h3 class="font-semibold text-gray-800 text-sm truncate" title="{{ $media->file_name ?? 'No file attached' }}">
                                                     {{ $media->file_name ?? 'No file attached' }}
                                                 </h3>
-                                                <p class="text-sm text-gray-700 mb-2 font-medium truncate" title="{{ $requirement->name }}">
+                                                <p class="text-sm text-green-700 mb-2 font-medium truncate" title="{{ $requirement->name }}">
                                                     {{ $requirement->name }}
                                                 </p>
                                             </div>
@@ -208,7 +208,7 @@
                     @if($viewMode === 'list')
                         <!-- List View for Groups -->
                         <div class="flex flex-col gap-2 ml-2 mr-2 mb-2">
-                            <div class="grid grid-cols-12 gap-4 px-4 py-2 bg-DEF4C6/30 rounded-lg text-sm font-semibold text-1B512D">
+                            <div class="grid grid-cols-12 gap-4 px-4 py-3 bg-green-700 rounded-lg text-xs font-semibold text-white uppercase">
                                 <div class="col-span-10">Requirement Name</div>
                                 <div class="col-span-2">Items Count</div>
                             </div>
@@ -218,7 +218,7 @@
                                 class="grid grid-cols-12 gap-4 p-4 bg-white rounded-xl border border-gray-300 hover:bg-green-50">
                                     <div class="col-span-10 flex items-center gap-3">
                                         <i class="fas fa-folder-open text-green-700 text-xl"></i>
-                                        <span class="text-sm font-semibold text-1B512D truncate" title="{{ $group['name'] }}">
+                                        <span class="text-sm font-semibold text-gray-800 truncate" title="{{ $group['name'] }}">
                                             {{ $group['name'] }}
                                         </span>
                                     </div>

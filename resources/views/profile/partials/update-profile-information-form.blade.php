@@ -1,24 +1,4 @@
 <section class="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
-    <header class="border-b border-gray-100 pb-6 mb-8">
-        <div class="flex items-center space-x-3">
-            <div class="flex-shrink-0">
-                <div class="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center">
-                    <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-                    </svg>
-                </div>
-            </div>
-            <div>
-                <h2 class="text-xl font-semibold text-gray-900">
-                    {{ __('Profile Information') }}
-                </h2>
-                <p class="mt-1 text-sm text-gray-500">
-                    {{ __("Update your account's profile information and email address.") }}
-                </p>
-            </div>
-        </div>
-    </header>
-
     <form id="send-verification" method="post" action="{{ route('verification.send') }}">
         @csrf
     </form>
