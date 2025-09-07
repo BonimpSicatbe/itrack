@@ -25,14 +25,6 @@ class RequirementDetailModal extends Component
 
     protected $listeners = ['showRequirementDetail' => 'loadRequirement'];
 
-    // Add this method for preview checking
-    public function isPreviewable($mimeType)
-    {
-        return Str::startsWith($mimeType, 'image/') || 
-               Str::startsWith($mimeType, 'application/pdf') ||
-               Str::startsWith($mimeType, 'text/');
-    }
-
     public function loadRequirement($requirementId)
     {
         $this->requirement = Requirement::with([
@@ -48,6 +40,16 @@ class RequirementDetailModal extends Component
         }
 
         $this->reset(['file', 'submissionNotes']);
+    }
+
+    public function mount()
+    {
+        // Check if there's a requirement ID in the URL
+        $requirementId = request()->get('requirement');
+        
+        if ($requirementId) {
+            $this->loadRequirement($requirementId);
+        }
     }
 
     public function closeModal()

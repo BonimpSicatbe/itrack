@@ -169,9 +169,18 @@ class Notification extends Component
     
     public function submitRequirement(): Redirector
     {
-        // Simply redirect to requirements page
+        // Get the requirement ID from the selected notification data
+        $requirementId = $this->selectedNotificationData['requirement']['id'] ?? null;
+        
+        if ($requirementId) {
+            // Redirect to requirements page with the specific requirement highlighted/opened
+            return redirect()->to("/user/requirements?requirement={$requirementId}");
+        }
+        
+        // Fallback: redirect to general requirements page
         return redirect()->to('/user/requirements');
     }
+    
 
     protected function statusLabel(?string $status): string
     {
