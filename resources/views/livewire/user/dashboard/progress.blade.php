@@ -1,10 +1,34 @@
 <div class="flex flex-col p-4 overflow-hidden bg-white rounded-lg">
-    {{-- heading --}}
-    <div class="flex flex-row items-center justify-between w-full">
-        <div class="text-lg uppercase font-bold">Progress</div>
-        <a href="" class="text-green-500 hover:text-green-700 text-xs hover:link transition-all">see more <i
-                class="fa-solid fa-chevron-right"></i></a>
-    </div>
-    {{-- list --}}
-    <div class="skeleton w-full h-128"></div>
+    
+    {{-- Progress Bar --}}
+    @if($totalSubmissions > 0)
+        <div class="w-full bg-gray-200 rounded-full h-4 mb-4 overflow-hidden">
+            @foreach($statusPercentagesRaw as $status => $percentage)
+                @if($percentage > 0)
+                    <div 
+                        class="h-4 float-left {{ $this->getStatusColor($status) }}"
+                        style="width: {{ $percentage }}%"
+                        title="{{ $this->getStatusLabel($status) }}: {{ $statusPercentages[$status] }}%"
+                    ></div>
+                @endif
+            @endforeach
+        </div>
+
+        {{-- Legend --}}
+        <div class="flex flex-wrap gap-3 text-xs">
+            @foreach($statusPercentages as $status => $percentage)
+                @if($statusPercentagesRaw[$status] > 0)
+                    <div class="flex items-center gap-1">
+                        <span class="w-3 h-3 rounded-full {{ $this->getStatusColor($status) }}"></span>
+                        <span>{{ $this->getStatusLabel($status) }}: {{ $percentage }}% ({{ $statusCounts[$status] }})</span>
+                    </div>
+                @endif
+            @endforeach
+        </div>
+    @else
+        <div class="text-center py-8 text-gray-500">
+            <i class="fa-solid fa-inbox text-4xl mb-2"></i>
+            <p>No submissions yet</p>
+        </div>
+    @endif
 </div>

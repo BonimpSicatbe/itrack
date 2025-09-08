@@ -42,6 +42,19 @@ class RequirementDetailModal extends Component
         $this->reset(['file', 'submissionNotes']);
     }
 
+    public function isPreviewable($mimeType)
+    {
+        $previewableMimes = [
+            'image/jpeg',
+            'image/png',
+            'image/gif',
+            'application/pdf',
+            'text/plain',
+        ];
+        
+        return in_array($mimeType, $previewableMimes);
+    }
+
     public function mount()
     {
         // Check if there's a requirement ID in the URL
