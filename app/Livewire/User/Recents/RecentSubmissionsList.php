@@ -69,13 +69,9 @@ class RecentSubmissionsList extends Component
         $this->recentSubmissions = $query->get();
     }
 
-    public function showRequirementDetail($submissionId)
+    public function showSubmissionDetail($submissionId)
     {
-        $submission = SubmittedRequirement::find($submissionId);
-        $this->dispatch('showRequirementDetail', 
-            requirementId: $submission->requirement_id,
-            preserveState: true // Preserves filter/search state
-        );
+        $this->dispatch('showRecentSubmissionDetail', submissionId: $submissionId);
     }
 
     public function render()

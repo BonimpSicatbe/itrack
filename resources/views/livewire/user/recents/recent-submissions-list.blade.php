@@ -100,7 +100,7 @@
             @if($recentSubmissions->count() > 0)
                 @foreach($recentSubmissions as $submission)
                     <div 
-                        wire:click="showRequirementDetail({{ $submission->id }})"
+                        wire:click="showSubmissionDetail({{ $submission->id }})"
                         class="px-6 py-4 hover:bg-[#DEF4C6]/10 transition-colors duration-150 cursor-pointer"
                     >
                         <div class="flex items-center justify-between">
@@ -192,6 +192,6 @@
         </div>
     </div>
 
-    {{-- Include the Requirement Detail Modal component --}}
-    @livewire('user.requirement-detail-modal')
+    {{-- Include the Recent Submission Detail Modal component --}}
+    @livewire('user.recents.recent-submission-detail-modal')
 </div>
