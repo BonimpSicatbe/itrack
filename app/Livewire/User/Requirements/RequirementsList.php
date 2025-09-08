@@ -17,11 +17,8 @@ class RequirementsList extends Component
 
     public $perPage = 10;
     public $search = '';
-    public $completionFilter = 'all';
     public $sortField = 'due';
     public $sortDirection = 'asc';
-    public $completionStatuses = [];
-    public $viewMode = 'list';
     
     // Track submitted requirements in real-time
     public $submittedRequirements = [];
@@ -32,12 +29,10 @@ class RequirementsList extends Component
     public $selectedRequirementData = null;
 
     protected $queryString = [
-    'search' => ['except' => ''],
-    'completionFilter' => ['except' => 'all'],
-    'sortField' => ['except' => 'due'],
-    'sortDirection' => ['except' => 'asc'],
-    'viewMode' => ['except' => 'list'],
-    'requirement' => ['except' => '', 'as' => 'req'], // Add query string support for requirement ID
+        'search' => ['except' => ''],
+        'sortField' => ['except' => 'due'],
+        'sortDirection' => ['except' => 'asc'],
+        'requirement' => ['except' => '', 'as' => 'req'], // Add query string support for requirement ID
     ];
 
     protected $listeners = [
@@ -47,12 +42,6 @@ class RequirementsList extends Component
 
     public function mount()
     {
-        $this->completionStatuses = [
-            'all' => 'All Requirements',
-            'submitted' => 'Submitted',
-            'pending' => 'Pending Submission'
-        ];
-        
         // Check if a specific requirement should be highlighted from URL parameter
         $this->highlightedRequirement = request()->get('requirement');
         
@@ -65,60 +54,52 @@ class RequirementsList extends Component
         }
     }
 
-    
-    
     // New method to handle requirement selection from notifications
-        public function selectRequirement($requirementId)
-        {
-            $this->selectedRequirement = $requirementId;
+    public function selectRequirement($requirementId)
+    {
+        $this->selectedRequirement = $requirementId;
+        
+        // Load the requirement details
+        $requirement = Requirement::with(['media', 'userSubmissions'])
+            ->where('id', $requirementId)
+            ->first();
             
-            // Load the requirement details
-            $requirement = Requirement::with(['media', 'userSubmissions'])
-                ->where('id', $requirementId)
-                ->first();
-                
-            if ($requirement) {
-                $this->selectedRequirementData = $requirement;
-                
-                // Clear the highlight after selection
-                $this->highlightedRequirement = null;
-                
-                // Update the URL without the requirement parameter
-                $this->js('window.history.replaceState({}, "", "/user/requirements")');
-                
-                // Dispatch event to show requirement detail modal
-                $this->dispatch('showRequirementDetail', requirementId: $requirementId);
-            }
+        if ($requirement) {
+            $this->selectedRequirementData = $requirement;
+            
+            // Clear the highlight after selection
+            $this->highlightedRequirement = null;
+            
+            // Update the URL without the requirement parameter
+            $this->js('window.history.replaceState({}, "", "/user/requirements")');
+            
+            // Dispatch event to show requirement detail modal
+            $this->dispatch('showRequirementDetail', requirementId: $requirementId);
         }
-    
+    }
+
     // Method to handle requirement detail display
     public function showRequirementDetail($requirementId)
     {
-        $this->selectRequirement($requirementId);
+        $this->selectedRequirement = $requirementId;
         
-        // Dispatch event to show requirement detail modal
-        $this->dispatch('showRequirementDetail', requirementId: $requirementId);
-    }
-
-    // Fixed completion filter method
-    public function setCompletionFilter($filter)
-    {
-        // Validate filter value
-        $validFilters = ['all', 'submitted', 'pending'];
-        if (!in_array($filter, $validFilters)) {
-            $filter = 'all';
+        // Load the requirement details
+        $requirement = Requirement::with(['media', 'userSubmissions'])
+            ->where('id', $requirementId)
+            ->first();
+            
+        if ($requirement) {
+            $this->selectedRequirementData = $requirement;
+            
+            // Clear the highlight after selection
+            $this->highlightedRequirement = null;
+            
+            // Update the URL without the requirement parameter
+            $this->js('window.history.replaceState({}, "", "/user/requirements")');
+            
+            // Dispatch event to show requirement detail modal - FIXED THIS LINE
+            $this->dispatch('showRequirementDetail', requirementId: $requirementId)->to('user.requirement-detail-modal');
         }
-        
-        $this->completionFilter = $filter;
-        $this->resetPage();
-        
-        // Refresh submitted requirements to ensure accuracy
-        $this->loadSubmittedRequirements();
-        
-        Log::info('Completion filter updated', [
-            'new_filter' => $this->completionFilter,
-            'user_id' => Auth::id()
-        ]);
     }
 
     public function updatedHighlightedRequirement()
@@ -127,19 +108,6 @@ class RequirementsList extends Component
             // Automatically open the modal for the highlighted requirement
             $this->dispatch('showRequirementDetail', requirementId: $this->highlightedRequirement);
         }
-    }
-    
-    // Handle completion filter changes
-    public function updatedCompletionFilter()
-    {
-        $this->resetPage();
-        $this->loadSubmittedRequirements();
-    }
-    
-    // Handle view mode changes
-    public function updatedViewMode()
-    {
-        $this->resetPage();
     }
     
     public function loadSubmittedRequirements()
@@ -349,7 +317,6 @@ class RequirementsList extends Component
         if (!$user) {
             return view('livewire.user.requirements.requirements-list', [
                 'requirements' => collect()->paginate($this->perPage),
-                'completionStatuses' => $this->completionStatuses,
             ]);
         }
 
@@ -361,7 +328,6 @@ class RequirementsList extends Component
         if (!$activeSemester) {
             return view('livewire.user.requirements.requirements-list', [
                 'requirements' => collect()->paginate($this->perPage),
-                'completionStatuses' => $this->completionStatuses,
             ]);
         }
 
@@ -380,20 +346,6 @@ class RequirementsList extends Component
             });
         }
 
-        // Fixed completion filter logic
-        if ($this->completionFilter === 'submitted') {
-            // Only show submitted requirements
-            $query->whereHas('submissionIndicators', function ($q) use ($userId) {
-                $q->where('user_id', $userId);
-            });
-        } elseif ($this->completionFilter === 'pending') {
-            // Only show pending (not submitted) requirements
-            $query->whereDoesntHave('submissionIndicators', function ($q) use ($userId) {
-                $q->where('user_id', $userId);
-            });
-        }
-        // If completionFilter is 'all', no additional filtering is applied
-
         // Apply sorting with proper validation
         $allowedSortFields = ['name', 'due', 'priority', 'created_at'];
         $sortField = in_array($this->sortField, $allowedSortFields) ? $this->sortField : 'due';
@@ -411,7 +363,6 @@ class RequirementsList extends Component
         $requirements = $query->paginate($this->perPage);
 
         Log::info('Render requirements', [
-            'completion_filter' => $this->completionFilter,
             'submitted_count' => count($this->submittedRequirements),
             'total_requirements' => $requirements->total(),
             'search' => $this->search,
@@ -422,7 +373,6 @@ class RequirementsList extends Component
 
         return view('livewire.user.requirements.requirements-list', [
             'requirements' => $requirements,
-            'completionStatuses' => $this->completionStatuses,
         ]);
     }
 }

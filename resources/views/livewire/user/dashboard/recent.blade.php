@@ -1,6 +1,6 @@
-<div class="bg-white rounded-lg border p-4">
+<div class="bg-white rounded-lg p-4">
     {{-- Header --}}
-    <div class="flex items-center justify-between mb-4">
+    <div class="flex items-center justify-between mb-3">
         <h3 class="text-xl font-semibold text-gray-800">Recent Submissions</h3>
         <a href="{{ route('user.recents') }}" class="text-sm text-green-700 hover:text-green-500 font-semibold hover:underline">
             see more <i class="fa-solid fa-chevron-right text-xs"></i>
@@ -25,14 +25,16 @@
                         
                         {{-- File Info --}}
                         <div class="flex-1 min-w-0">
-                            <p class="font-medium text-gray-900 truncate">
-                                {{ $submission->requirement?->name ?? 'Deleted Requirement' }}
+                            <p class="text-sm font-semibold text-gray-800 truncate">
+                                @if($submission->submissionFile)
+                                    {{ $submission->submissionFile->file_name }}
+                                @else
+                                    No file uploaded
+                                @endif
                             </p>
                             <p class="text-sm text-gray-500">
                                 {{ $submission->submitted_at->format('M j, Y') }}
-                                @if($submission->submissionFile)
-                                    • {{ $submission->submissionFile->file_name }}
-                                @endif
+                                • {{ $submission->requirement?->name ?? 'Deleted Requirement' }}
                             </p>
                         </div>
                     </div>

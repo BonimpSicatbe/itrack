@@ -6,13 +6,15 @@
         {{-- overview --}}
         @livewire('user.dashboard.overview')
 
+        {{-- progress --}}
+        @livewire('user.dashboard.progress')
+
         {{-- pendings --}}
         @livewire('user.dashboard.pending')
 
         {{-- recents --}}
         @livewire('user.dashboard.recent')
 
-        {{-- progress --}}
-        @livewire('user.dashboard.progress')
+        
     </div>
 </x-user.app-layout>

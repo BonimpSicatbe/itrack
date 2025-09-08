@@ -1,11 +1,11 @@
-<div class="flex flex-col gap-4 p-4 bg-white rounded-lg shadow-sm">
+<div class="flex flex-col gap-2 p-4 bg-white rounded-lg shadow-sm">
     {{-- Header --}}
     <div class="flex flex-row items-center justify-between w-full">
         <div class="text-xl font-bold text-gray-800 tracking-wide">Pendings</div>
         <a href="{{ route('user.requirements') }}" class="flex items-center gap-1 hover:text-green-500 text-sm text-green-700 font-semibold hover:underline transition-colors">
             see more <i class="fa-solid fa-chevron-right text-xs"></i>
         </a>
-    </div>
+    </div>  
 
     {{-- Horizontal scroll cards --}}
     <div class="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
@@ -20,7 +20,7 @@
                 {{-- Header with folder icon and title --}}
                 <div class="flex items-center gap-3 mb-3">
                     <div class>
-                        <i class="fa-solid fa-folder text-xl" style="color: #1C7C54;"></i>
+                        <i class="fa-solid fa-folder text-xl text-green-700"></i>
                     </div>
                     <div class="flex-1 min-w-0">
                         <h4 class="font-semibold text-slate-800 text-sm truncate" title="{{ $requirement->name }}">
@@ -31,11 +31,6 @@
 
                 {{-- Content section --}}
                 <div class="space-y-3">
-                    {{-- Priority indicator --}}
-                    <div class="flex items-center gap-2">
-                        <div class="w-2 h-2 rounded-full" style="background-color: #B1CF5F;"></div>
-                        <span class="text-xs text-slate-600 capitalize font-semibold">{{ $requirement->priority }} Priority</span>
-                    </div>
 
                     {{-- Due date section --}}
                     <div class="pt-2 border-t border-slate-100">
