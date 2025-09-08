@@ -138,13 +138,4 @@ Route::middleware('auth')->group(function () {
     })->middleware(['throttle:6,1'])->name('verification.send');
 });
 
-// Livewire routes (add these if not already present)
-Livewire::setScriptRoute(function ($handle) {
-    return Route::get('/vendor/livewire/livewire.js', $handle);
-});
-
-Livewire::setUpdateRoute(function ($handle) {
-    return Route::post('/vendor/livewire/update', $handle);
-});
-
 require __DIR__ . '/auth.php';

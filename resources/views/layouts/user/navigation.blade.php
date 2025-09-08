@@ -12,29 +12,30 @@
     
     <!-- Header with Logo, Title and Hamburger -->
     <div class="flex items-center justify-between p-4 border-b border-gray-100">
-        <!-- Expanded state - show logo and title -->
+        <!-- Expanded state - show logo with title -->
         <div class="flex items-center space-x-2 cursor-pointer" 
              x-show="!collapsed" 
              x-transition
              @click="collapsed = !collapsed">
-            <img src="{{ asset('images/logo-1.png') }}" alt="iTrack Logo" class="w-8 h-8 object-contain">
-            <span class="font-bold text-xl" style="color: #1B512D;">iTrack</span>
+            <!-- Use expanded logo -->
+            <img src="{{ $logos['expanded'] }}" alt="iTrack Logo" class="w-40 h-8 object-contain">
         </div>
         
-        <!-- Collapsed state - only show logo centered -->
+        <!-- Collapsed state - only show small logo centered -->
         <div class="flex items-center justify-center cursor-pointer" 
              x-show="collapsed" 
              x-transition
              @click="collapsed = !collapsed"
              :class="collapsed ? 'w-full' : ''">
-            <img src="{{ asset('images/logo-1.png') }}" alt="iTrack Logo" class="w-8 h-8 object-contain">
+            <!-- Use collapsed logo -->
+            <img src="{{ $logos['collapsed'] }}" alt="iTrack Logo" class="w-8 h-8 object-contain">
         </div>
         
-        <!-- Hamburger Menu Button -->
-        <button @click="collapsed = !collapsed" 
+        <!-- Hamburger Menu Button - Only show when sidebar is expanded -->
+        <button x-show="!collapsed"
+                @click="collapsed = !collapsed" 
                 type="button"
-                class="p-1.5 rounded-md hover:bg-gray-100 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-1"
-                :class="collapsed ? 'absolute top-4 right-4' : ''">
+                class="p-1.5 rounded-md hover:bg-gray-100 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-1">
             <svg class="w-5 h-5 text-gray-600 transition-transform duration-200" 
                  :class="{ 'rotate-180': collapsed }"
                  fill="none" 

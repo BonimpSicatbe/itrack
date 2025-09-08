@@ -1,11 +1,9 @@
 <div class="bg-white rounded-lg border p-4">
     {{-- Header --}}
     <div class="flex items-center justify-between mb-4">
-        <h3 class="text-lg font-semibold text-gray-800">Recent Submissions</h3>
-        <a href="{{ route('user.recents') }}" 
-           class="text-sm font-medium hover:underline"
-           style="color: #1C7C54;">
-            View All →
+        <h3 class="text-xl font-semibold text-gray-800">Recent Submissions</h3>
+        <a href="{{ route('user.recents') }}" class="text-sm text-green-700 hover:text-green-500 font-semibold hover:underline">
+            see more <i class="fa-solid fa-chevron-right text-xs"></i>
         </a>
     </div>
 
@@ -57,9 +55,9 @@
             @endforeach
         </div>
     @else
-        <div class="text-center py-8 text-gray-500">
-            <i class="fas fa-inbox text-2xl mb-2"></i>
-            <p>No recent submissions</p>
+        <div class="text-center py-8 text-gray-300">
+            <i class="fas fa-folder-open text-3xl mb-2"></i>
+            <p class="text-gray-500 text-sm ">No recent submissions</p>
         </div>
     @endif
 

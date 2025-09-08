@@ -1,8 +1,8 @@
 <div class="flex flex-col gap-4 p-4 bg-white rounded-lg shadow-sm">
     {{-- Header --}}
     <div class="flex flex-row items-center justify-between w-full">
-        <div class="text-lg font-bold text-slate-800 uppercase tracking-wide">Pendings</div>
-        <a href="{{ route('user.requirements') }}" class="flex items-center gap-1 hover:text-opacity-80 text-sm font-medium transition-colors" style="color: #1C7C54;">
+        <div class="text-xl font-bold text-gray-800 tracking-wide">Pendings</div>
+        <a href="{{ route('user.requirements') }}" class="flex items-center gap-1 hover:text-green-500 text-sm text-green-700 font-semibold hover:underline transition-colors">
             see more <i class="fa-solid fa-chevron-right text-xs"></i>
         </a>
     </div>
@@ -10,7 +10,7 @@
     {{-- Horizontal scroll cards --}}
     <div class="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
         @forelse($pendingRequirements as $requirement)
-            @php
+            @php    
                 $dueDate = \Carbon\Carbon::parse($requirement->due);
                 $isOverdue = $dueDate->isPast();
                 $isDueSoon = $dueDate->diffInDays() <= 3;
@@ -64,13 +64,13 @@
                 </div>
             </div>
         @empty
-            <div class="flex items-center justify-center w-full py-8 text-center">
+            <div class="flex items-center justify-center w-full text-center">
                 <div class="space-y-2">
-                    <div class="p-3 rounded-full w-fit mx-auto" style="background-color: #DEF4C6;">
-                        <i class="fa-solid fa-check-circle text-2xl" style="color: #1C7C54;"></i>
+                    <div class="rounded-full w-fit mx-auto">
+                        <i class="fa-solid fa-folder-open text-3xl text-gray-300"></i>
                     </div>
-                    <div class="text-slate-600 font-medium">All caught up!</div>
-                    <div class="text-sm text-slate-500">No pending requirements</div>
+                    <div class="text-green-700 font-semibold text-sm">All caught up!</div>
+                    <div class="text-sm text-gray-500">No pending requirements</div>
                 </div>
             </div>
         @endforelse
