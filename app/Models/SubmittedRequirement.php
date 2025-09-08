@@ -353,15 +353,6 @@ class SubmittedRequirement extends Model implements HasMedia
         };
     }
 
-    public static function getPriorityColor($priority)
-    {
-        return [
-            'low' => 'info',
-            'normal' => 'warning',
-            'high' => 'error',
-        ][$priority] ?? 'neutral';
-    }
-
     public function getIsApprovedAttribute()
     {
         return $this->status === self::STATUS_APPROVED;
