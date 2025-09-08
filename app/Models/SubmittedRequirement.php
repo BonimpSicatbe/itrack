@@ -23,6 +23,7 @@ class SubmittedRequirement extends Model implements HasMedia
         'reviewed_by',
         'reviewed_at',
         'submitted_at'
+        // REMOVED: archived_by, is_archived (since they don't exist in DB)
     ];
 
     protected $casts = [
@@ -104,6 +105,21 @@ class SubmittedRequirement extends Model implements HasMedia
             ->where('collection_name', 'submission_files');
     }
 
+    /**
+     * Get the semester this submission belongs to through the requirement
+     */
+    public function semester()
+    {
+        return $this->hasOneThrough(
+            Semester::class,
+            Requirement::class,
+            'id', // Foreign key on requirements table
+            'id', // Foreign key on semesters table
+            'requirement_id', // Local key on submitted_requirements table
+            'semester_id' // Local key on requirements table
+        );
+    }
+
     /* ========== SCOPES ========== */
 
     /**
@@ -138,19 +154,34 @@ class SubmittedRequirement extends Model implements HasMedia
         return $query->where('status', self::STATUS_REJECTED);
     }
 
-    public function scopeForSemester($query, Semester $semester)
+    /**
+     * Scope for submissions in active semester
+     */
+    public function scopeInActiveSemester($query)
     {
-        return $query->whereBetween('created_at', [
-            $semester->start_date,
-            $semester->end_date
-        ]);
+        return $query->whereHas('requirement.semester', function($q) {
+            $q->where('is_active', true);
+        });
     }
 
-    public function getSemesterAttribute()
+    /**
+     * Scope for submissions in archived (inactive) semesters
+     */
+    public function scopeInArchivedSemester($query)
     {
-        return Semester::where('start_date', '<=', $this->created_at)
-            ->where('end_date', '>=', $this->created_at)
-            ->first();
+        return $query->whereHas('requirement.semester', function($q) {
+            $q->where('is_active', false);
+        });
+    }
+
+    /**
+     * Scope for submissions in a specific semester
+     */
+    public function scopeForSemester($query, $semesterId)
+    {
+        return $query->whereHas('requirement', function($q) use ($semesterId) {
+            $q->where('semester_id', $semesterId);
+        });
     }
 
     /* ========== METHODS ========== */
@@ -182,7 +213,6 @@ class SubmittedRequirement extends Model implements HasMedia
         return $this->addMedia($file)->toMediaCollection('submission_files');
     }
 
-    // FIXED: Updated getFileUrl method
     public function getFileUrl()
     {
         $media = $this->getFirstMedia('submission_files');
@@ -191,11 +221,9 @@ class SubmittedRequirement extends Model implements HasMedia
             return null;
         }
         
-        // Use the media's getUrl() method which handles the URL generation correctly
         return $media->getUrl();
     }
 
-    // FIXED: Updated getFilePath method
     public function getFilePath()
     {
         $media = $this->getFirstMedia('submission_files');
@@ -204,7 +232,6 @@ class SubmittedRequirement extends Model implements HasMedia
             return null;
         }
         
-        // Use the media's getPath() method
         return $media->getPath();
     }
 
@@ -281,6 +308,14 @@ class SubmittedRequirement extends Model implements HasMedia
         return in_array(strtolower($extension), $imageExtensions);
     }
 
+    /**
+     * Check if this submission is in an archived semester
+     */
+    public function getIsArchivedAttribute()
+    {
+        return $this->requirement && $this->requirement->semester && !$this->requirement->semester->is_active;
+    }
+
     /* ========== ACCESSORS ========== */
 
     public static function getPriorityColor($priority)
@@ -304,8 +339,27 @@ class SubmittedRequirement extends Model implements HasMedia
             self::STATUS_APPROVED => 'bg-green-100 text-green-800',
             self::STATUS_REJECTED => 'bg-red-100 text-red-800',
             self::STATUS_REVISION_NEEDED => 'bg-yellow-100 text-yellow-800',
-            default => 'bg-blue-100 text-blue-800', // For under_review and any other status
+            default => 'bg-blue-100 text-blue-800',
         };
+    }
+
+    public static function getStatusColor($status)
+    {
+        return match($status) {
+            self::STATUS_APPROVED => 'bg-green-100 text-green-800',
+            self::STATUS_REJECTED => 'bg-red-100 text-red-800',
+            self::STATUS_REVISION_NEEDED => 'bg-yellow-100 text-yellow-800',
+            default => 'bg-blue-100 text-blue-800',
+        };
+    }
+
+    public static function getPriorityColor($priority)
+    {
+        return [
+            'low' => 'info',
+            'normal' => 'warning',
+            'high' => 'error',
+        ][$priority] ?? 'neutral';
     }
 
     public function getIsApprovedAttribute()
@@ -355,7 +409,7 @@ class SubmittedRequirement extends Model implements HasMedia
                         ->log('Status updated');
                 }
 
-                // Send notification (remove the auto-approve logic)
+                // Send notification
                 if ($model->relationLoaded('user') && $model->user) {
                     $model->user->notify(
                         new \App\Notifications\SubmissionStatusChanged(

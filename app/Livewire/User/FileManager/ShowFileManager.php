@@ -19,33 +19,57 @@ class ShowFileManager extends Component
     public $sortDirection = 'desc';
     public $perPage = 12;
     public $viewMode = 'grid';
-    public $activeSemester = null;
+    public $selectedSemesterId = null;
 
     protected $queryString = [
         'search' => ['except' => ''],
         'statusFilter' => ['except' => ''],
         'sortBy' => ['except' => 'created_at'],
         'sortDirection' => ['except' => 'desc'],
+        'selectedSemesterId' => ['except' => null],
     ];
 
     protected $listeners = [
         'refreshFiles' => '$refresh',
+        'searchUpdated' => 'handleSearchUpdate',
+        'statusFilterUpdated' => 'handleStatusFilterUpdate',
+        'viewModeUpdated' => 'handleViewModeUpdate',
         'semesterChanged' => 'handleSemesterChange'
     ];
 
-    public function mount()
+    public function mount($selectedSemesterId = null)
     {
-        $this->loadActiveSemester();
+        if ($selectedSemesterId) {
+            $this->selectedSemesterId = $selectedSemesterId;
+        } else {
+            // Default to active semester
+            $activeSemester = Semester::getActiveSemester();
+            if ($activeSemester) {
+                $this->selectedSemesterId = $activeSemester->id;
+            }
+        }
     }
 
-    public function loadActiveSemester()
+    public function handleSearchUpdate($search)
     {
-        $this->activeSemester = Semester::getActiveSemester();
+        $this->search = $search;
+        $this->resetPage();
     }
 
-    public function handleSemesterChange()
+    public function handleStatusFilterUpdate($statusFilter)
     {
-        $this->loadActiveSemester();
+        $this->statusFilter = $statusFilter;
+        $this->resetPage();
+    }
+
+    public function handleViewModeUpdate($viewMode)
+    {
+        $this->viewMode = $viewMode;
+    }
+
+    public function handleSemesterChange($semesterId)
+    {
+        $this->selectedSemesterId = $semesterId;
         $this->resetPage();
     }
 
@@ -103,14 +127,29 @@ class ShowFileManager extends Component
 
     public function getFilesProperty()
     {
-        $query = SubmittedRequirement::with(['requirement', 'submissionFile'])
-            ->where('user_id', Auth::id())
-            ->whereHas('submissionFile');
+        $query = SubmittedRequirement::where('user_id', Auth::id())
+            ->with(['requirement', 'submissionFile', 'requirement.semester']);
 
-        // Apply search filter - now searches by filename instead of requirement name
+        // Filter by selected semester if one is chosen
+        if ($this->selectedSemesterId) {
+            $query->whereHas('requirement', function($q) {
+                $q->where('semester_id', $this->selectedSemesterId);
+            });
+        } else {
+            // If no semester selected, show only active semester files
+            $query->whereHas('requirement.semester', function($q) {
+                $q->where('is_active', true);
+            });
+        }
+
+        // Apply search filter
         if (!empty($this->search)) {
-            $query->whereHas('submissionFile', function($q) {
-                $q->where('file_name', 'like', '%' . $this->search . '%');
+            $query->where(function($q) {
+                $q->whereHas('submissionFile', function($q2) {
+                    $q2->where('file_name', 'like', '%' . $this->search . '%');
+                })->orWhereHas('requirement', function($q2) {
+                    $q2->where('name', 'like', '%' . $this->search . '%');
+                });
             });
         }
 

@@ -17,22 +17,41 @@ class FileManager extends Component
     public $showFileDetails = false;
     public $selectedFile = null;
     
-    // Add semester properties (matching dashboard)
+    // Semester properties
     public $activeSemester = null;
+    public $selectedSemesterId = null;
+    public $allSemesters = [];
     public $semesterMessage = null;
     public $daysRemaining;
     public $semesterProgress;
+    
+    // New properties for admin-style UI
+    public $showSemesterManager = false;
+    public $viewModeSemester = 'manager'; // manager, user, college, department
+    public $searchTerm = '';
     
     protected $listeners = [
         'refreshFiles' => '$refresh', 
         'fileSelected' => 'handleFileSelected',
         'semesterActivated' => 'refreshSemesterData',
-        'semesterArchived' => 'refreshSemesterData'
+        'semesterArchived' => 'refreshSemesterData',
+        'semesterSelected' => 'handleSemesterSelection'
     ];
 
     public function mount()
     {
         $this->refreshSemesterData();
+        $this->loadAllSemesters();
+        
+        // Set default selected semester to active semester
+        if ($this->activeSemester) {
+            $this->selectedSemesterId = $this->activeSemester->id;
+        }
+    }
+
+    public function loadAllSemesters()
+    {
+        $this->allSemesters = Semester::orderBy('start_date', 'desc')->get();
     }
 
     public function refreshSemesterData()
@@ -70,6 +89,9 @@ class FileManager extends Component
         } else {
             $this->semesterProgress = 0;
         }
+        
+        // Calculate progress color
+        $this->getProgressColorProperty();
     }
 
     private function setSemesterMessage()
@@ -109,6 +131,26 @@ class FileManager extends Component
         }
     }
 
+    // Toggle semester manager view
+    public function toggleSemesterManager()
+    {
+        $this->showSemesterManager = !$this->showSemesterManager;
+    }
+
+    // Change view mode in semester manager
+    public function changeViewMode($mode)
+    {
+        $this->viewModeSemester = $mode;
+    }
+
+    // Handle semester selection from the sidebar
+    public function handleSemesterSelection($semesterId)
+    {
+        $this->selectedSemesterId = $semesterId;
+        $this->showSemesterManager = false; // Close the sidebar after selection
+        $this->dispatch('semesterChanged', $this->selectedSemesterId);
+    }
+
     public function updatedSearch()
     {
         // Pass search to child component
@@ -125,6 +167,12 @@ class FileManager extends Component
     {
         // Pass view mode to child component
         $this->dispatch('viewModeUpdated', $this->viewMode);
+    }
+    
+    public function updatedSelectedSemesterId()
+    {
+        // When semester selection changes, refresh the file list
+        $this->dispatch('semesterChanged', $this->selectedSemesterId);
     }
 
     public function handleFileSelected($submissionId)
@@ -267,21 +315,45 @@ class FileManager extends Component
             'totalFiles' => $this->getTotalFiles(),
             'totalSize' => $this->getTotalSize(),
             'statuses' => SubmittedRequirement::statuses(),
+            'allSemesters' => $this->allSemesters,
+            'archiveRoute' => route('user.archive'),
+            'selectedSemester' => Semester::find($this->selectedSemesterId),
         ]);
     }
 
     protected function getTotalFiles()
-    {
-        return SubmittedRequirement::where('user_id', Auth::id())
-            ->whereHas('submissionFile')
-            ->count();
+{
+    $query = SubmittedRequirement::where('user_id', Auth::id())
+        ->whereHas('submissionFile');
+    
+    if ($this->selectedSemesterId) {
+        $query->whereHas('requirement', function($q) {
+            $q->where('semester_id', $this->selectedSemesterId);
+        });
+    } else {
+        $query->whereHas('requirement.semester', function($q) {
+            $q->where('is_active', true);
+        });
     }
+    
+    return $query->count();
+}
 
     protected function getTotalSize()
     {
-        $submissions = SubmittedRequirement::where('user_id', Auth::id())
-            ->with('submissionFile')
-            ->get();
+        $query = SubmittedRequirement::where('user_id', Auth::id());
+        
+        if ($this->selectedSemesterId) {
+            $query->whereHas('requirement', function($q) {
+                $q->where('semester_id', $this->selectedSemesterId);
+            });
+        } else {
+            $query->whereHas('requirement.semester', function($q) {
+                $q->where('is_active', true);
+            });
+        }
+        
+        $submissions = $query->with('submissionFile')->get();
         
         $totalSize = 0;
         foreach ($submissions as $submission) {
