@@ -1,4 +1,5 @@
 {{-- Wrapper div to contain everything and avoid multiple root elements --}}
+<div class="flex flex-col w-full max-w-7xl mx-auto bg-gray-50 min-h-screen">
 <div>
     {{-- Main Container with Header Inside --}}
     <div class="flex-1 bg-white rounded-lg shadow-sm overflow-hidden">

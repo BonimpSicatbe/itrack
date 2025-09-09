@@ -1,30 +1,26 @@
 {{-- Recent Submission Detail Modal --}}
 <div>
     @if($isOpen && $submission && $requirement)
-        <div class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-            {{-- Background overlay - Reduced opacity to show background better --}}
-            <div class="fixed inset-0 bg-white bg-opacity-20 transition-opacity backdrop-blur-md" wire:click="closeModal"></div>
+        <div class="modal modal-open" wire:click="closeModal">
+           
 
             {{-- Modal panel --}}
             <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
                 <div class="relative inline-block w-full max-w-4xl my-8 overflow-hidden text-left align-middle transition-all transform bg-white shadow-2xl rounded-2xl z-10">
-                    {{-- Header --}}
-                    <div class="relative px-8 py-6" style="background: linear-gradient(148deg,rgba(18, 67, 44, 1) 0%, rgba(30, 119, 77, 1) 54%, rgba(55, 120, 64, 1) 100%);">
+                    {{-- Simplified Header --}}
+                    <div class="px-6 py-4 border-b border-gray-200 bg-white">
                         <div class="flex items-center justify-between">
                             <div class="flex items-center gap-3">
-                                <div class="h-12 w-12 rounded-xl bg-white/20 flex items-center justify-center backdrop-blur-sm">
-                                    <i class="fa-solid fa-file-lines text-white text-xl"></i>
+                                <div class="h-10 w-10 rounded-xl bg-[#1C7C54]/10 flex items-center justify-center">
+                                    <i class="fa-solid fa-file-lines text-[#1C7C54] text-lg"></i>
                                 </div>
-                                <div>
-                                    <h2 class="text-2xl font-bold text-white">Submission Details</h2>
-                                    <p class="text-white/80 text-sm">View your submission information</p>
-                                </div>
+                                <h2 class="text-xl font-semibold text-gray-900">Submission Details</h2>
                             </div>
                             <button 
                                 wire:click="closeModal"
-                                class="h-10 w-10 rounded-xl bg-white/10 hover:bg-white/20 flex items-center justify-center transition-all duration-200 backdrop-blur-sm"
+                                class="h-8 w-8 rounded-lg hover:bg-gray-100 flex items-center justify-center transition-colors duration-200"
                             >
-                                <i class="fa-solid fa-times text-white text-lg"></i>
+                                <i class="fa-solid fa-times text-gray-500 text-sm"></i>
                             </button>
                         </div>
                     </div>
@@ -147,25 +143,16 @@
 
                     {{-- Footer --}}
                     <div class="bg-gray-50 border-t border-gray-200 px-8 py-4">
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center gap-3">
-                                @if($submission->submissionFile)
-                                    <button 
-                                        wire:click="downloadFile"
-                                        class="inline-flex items-center px-4 py-2 bg-[#1C7C54] text-white text-sm font-medium rounded-lg hover:bg-[#1B512D] transition-colors duration-200"
-                                    >
-                                        <i class="fa-solid fa-download text-xs mr-2"></i>
-                                        Download File
-                                    </button>
-                                @endif
+                        <div class="flex items-center justify-end">
+                            @if($submission->submissionFile)
                                 <button 
-                                    wire:click="closeModal"
-                                    class="inline-flex items-center px-4 py-2 bg-gray-600 text-white text-sm font-medium rounded-lg hover:bg-gray-700 transition-colors duration-200"
+                                    wire:click="downloadFile"
+                                    class="inline-flex items-center px-4 py-2 bg-[#1C7C54] text-white text-sm font-medium rounded-lg hover:bg-[#1B512D] transition-colors duration-200"
                                 >
-                                    <i class="fa-solid fa-times text-xs mr-2"></i>
-                                    Close
+                                    <i class="fa-solid fa-download text-xs mr-2"></i>
+                                    Download File
                                 </button>
-                            </div>
+                            @endif
                         </div>
                     </div>
                 </div>
