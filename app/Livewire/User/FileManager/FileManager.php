@@ -25,10 +25,14 @@ class FileManager extends Component
     public $daysRemaining;
     public $semesterProgress;
     
-    // New properties for admin-style UI
+    // New properties for folder view
     public $showSemesterManager = false;
-    public $viewModeSemester = 'manager'; // manager, user, college, department
+    public $viewModeSemester = 'manager';
     public $searchTerm = '';
+    
+    // Folder view properties
+    public $showFolderView = false;
+    public $currentFolder = null;
     
     protected $listeners = [
         'refreshFiles' => '$refresh', 
@@ -137,18 +141,47 @@ class FileManager extends Component
         $this->showSemesterManager = !$this->showSemesterManager;
     }
 
-    // Change view mode in semester manager
-    public function changeViewMode($mode)
-    {
-        $this->viewModeSemester = $mode;
-    }
-
     // Handle semester selection from the sidebar
     public function handleSemesterSelection($semesterId)
     {
         $this->selectedSemesterId = $semesterId;
         $this->showSemesterManager = false; // Close the sidebar after selection
         $this->dispatch('semesterChanged', $this->selectedSemesterId);
+    }
+
+    // Navigate to a specific semester folder
+    public function navigateToFolder($semesterId = null)
+    {
+        $this->currentFolder = $semesterId;
+        $this->showFolderView = true;
+        $this->selectedSemesterId = $semesterId;
+        $this->dispatch('semesterChanged', $this->selectedSemesterId);
+    }
+
+    // Exit folder view and return to current semester
+    public function exitFolderView()
+    {
+        $this->showFolderView = false;
+        $this->currentFolder = null;
+        $this->selectedSemesterId = $this->activeSemester ? $this->activeSemester->id : null;
+        $this->dispatch('semesterChanged', $this->selectedSemesterId);
+    }
+
+    // Determine the current view state
+    public function getCurrentViewProperty()
+    {
+        // If we're in folder view (clicked on an archived semester)
+        if ($this->showFolderView && $this->currentFolder) {
+            return 'folder';
+        }
+        
+        // If we have a selected semester (could be active or archived)
+        if ($this->selectedSemesterId) {
+            return 'files';
+        }
+        
+        // Default view when no semester is selected
+        return 'welcome';
     }
 
     public function updatedSearch()
@@ -322,22 +355,22 @@ class FileManager extends Component
     }
 
     protected function getTotalFiles()
-{
-    $query = SubmittedRequirement::where('user_id', Auth::id())
-        ->whereHas('submissionFile');
-    
-    if ($this->selectedSemesterId) {
-        $query->whereHas('requirement', function($q) {
-            $q->where('semester_id', $this->selectedSemesterId);
-        });
-    } else {
-        $query->whereHas('requirement.semester', function($q) {
-            $q->where('is_active', true);
-        });
+    {
+        $query = SubmittedRequirement::where('user_id', Auth::id())
+            ->whereHas('submissionFile');
+        
+        if ($this->selectedSemesterId) {
+            $query->whereHas('requirement', function($q) {
+                $q->where('semester_id', $this->selectedSemesterId);
+            });
+        } else {
+            $query->whereHas('requirement.semester', function($q) {
+                $q->where('is_active', true);
+            });
+        }
+        
+        return $query->count();
     }
-    
-    return $query->count();
-}
 
     protected function getTotalSize()
     {

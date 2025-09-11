@@ -42,6 +42,22 @@
             </div>
         </div>
 
+        {{-- Breadcrumb Navigation --}}
+        @if($showFolderView && $currentFolder)
+            <div class="bg-gray-50 border-b border-gray-200 px-8 py-3">
+                <div class="flex items-center gap-2 text-sm">
+                    <button wire:click="exitFolderView" class="text-blue-600 hover:text-blue-800 flex items-center gap-1">
+                        <i class="fa-solid fa-arrow-left"></i>
+                        Back to Current Semester
+                    </button>
+                    <span class="text-gray-400">/</span>
+                    <span class="text-gray-600">
+                        {{ \App\Models\Semester::find($currentFolder)->name ?? 'Archived Semester' }}
+                    </span>
+                </div>
+            </div>
+        @endif
+
         <!-- Main Content Area with Sidebar -->
         <div class="flex flex-1 min-h-0">
             <!-- Semester Manager Sidebar (Conditional) -->
@@ -55,32 +71,14 @@
                             </button>
                         </div>
                         
-                        <!-- View Mode Selector -->
+                        <!-- View Mode Selector - Simplified -->
                         <div class="mb-6">
                             <div class="flex bg-gray-100 rounded-lg p-1">
                                 <button 
                                     wire:click="changeViewMode('manager')" 
                                     class="flex-1 py-2 px-3 text-sm font-medium rounded-md {{ $viewModeSemester == 'manager' ? 'bg-white shadow-sm text-green-700' : 'text-gray-600' }}"
                                 >
-                                    Manager
-                                </button>
-                                <button 
-                                    wire:click="changeViewMode('user')" 
-                                    class="flex-1 py-2 px-3 text-sm font-medium rounded-md {{ $viewModeSemester == 'user' ? 'bg-white shadow-sm text-green-700' : 'text-gray-600' }}"
-                                >
-                                    By User
-                                </button>
-                                <button 
-                                    wire:click="changeViewMode('college')" 
-                                    class="flex-1 py-2 px-3 text-sm font-medium rounded-md {{ $viewModeSemester == 'college' ? 'bg-white shadow-sm text-green-700' : 'text-gray-600' }}"
-                                >
-                                    By College
-                                </button>
-                                <button 
-                                    wire:click="changeViewMode('department')" 
-                                    class="flex-1 py-2 px-3 text-sm font-medium rounded-md {{ $viewModeSemester == 'department' ? 'bg-white shadow-sm text-green-700' : 'text-gray-600' }}"
-                                >
-                                    By Department
+                                    Semester Manager
                                 </button>
                             </div>
                         </div>
@@ -147,14 +145,17 @@
                                 @forelse($allSemesters->where('is_active', false) as $semester)
                                     <div 
                                         class="border border-gray-200 rounded-lg p-3 cursor-pointer hover:bg-gray-50 transition-colors"
-                                        wire:click="handleSemesterSelection({{ $semester->id }})"
+                                        wire:click="navigateToFolder({{ $semester->id }})"
                                     >
                                         <div class="flex items-start justify-between">
-                                            <div>
-                                                <h4 class="font-medium text-gray-800 text-sm">{{ $semester->name }}</h4>
-                                                <p class="text-xs text-gray-500 mt-1">
-                                                    {{ $semester->start_date->format('M d, Y') }} - {{ $semester->end_date->format('M d, Y') }}
-                                                </p>
+                                            <div class="flex items-center gap-2">
+                                                <i class="fa-solid fa-folder text-yellow-500"></i>
+                                                <div>
+                                                    <h4 class="font-medium text-gray-800 text-sm">{{ $semester->name }}</h4>
+                                                    <p class="text-xs text-gray-500 mt-1">
+                                                        {{ $semester->start_date->format('M d, Y') }} - {{ $semester->end_date->format('M d, Y') }}
+                                                    </p>
+                                                </div>
                                             </div>
                                             <span class="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">Archived</span>
                                         </div>
@@ -294,9 +295,36 @@
 
                 {{-- File Manager Content --}}
                 <div class="flex-1 min-h-0 p-8">
-                    @livewire('user.file-manager.show-file-manager', ['selectedSemesterId' => $selectedSemesterId], key('show-file-manager-'.$selectedSemesterId))
+                    @if($this->getCurrentViewProperty() === 'folder')
+                        {{-- Show files for the selected archived semester --}}
+                        @livewire('user.file-manager.show-file-manager', 
+                            ['selectedSemesterId' => $selectedSemesterId], 
+                            key('show-file-manager-'.$selectedSemesterId)
+                        )
+                    @elseif($this->getCurrentViewProperty() === 'files')
+                        {{-- Show files for the selected semester --}}
+                        @livewire('user.file-manager.show-file-manager', 
+                            ['selectedSemesterId' => $selectedSemesterId], 
+                            key('show-file-manager-'.$selectedSemesterId)
+                        )
+                    @else
+                        {{-- Show welcome message when no semester is selected --}}
+                        <div class="text-center py-12 bg-gray-50 rounded-lg border border-dashed border-gray-300">
+                            <i class="fa-solid fa-folder-open text-4xl text-gray-400 mb-4"></i>
+                            <h3 class="text-lg font-medium text-gray-600">File Manager</h3>
+                            <p class="text-gray-500 mt-2 mb-4">Select a semester to view your files.</p>
+                            <div class="flex justify-center gap-4">
+                                <button 
+                                    wire:click="toggleSemesterManager"
+                                    class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors"
+                                >
+                                    <i class="fa-solid fa-folder-tree mr-2"></i>
+                                    View Semesters
+                                </button>
+                            </div>
+                        </div>
+                    @endif
                 </div>
-            </div>
 
             {{-- File Details Sidebar --}}
             @if($showFileDetails && $selectedFile)
