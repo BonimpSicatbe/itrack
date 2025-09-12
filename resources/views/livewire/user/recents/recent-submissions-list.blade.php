@@ -1,8 +1,8 @@
 {{-- Wrapper div to contain everything and avoid multiple root elements --}}
-<div class="flex flex-col w-full max-w-7xl mx-auto bg-gray-50 min-h-screen">
-<div>
+<div class="flex flex-col w-full mx-auto bg-gray-50 min-h-screen">
     {{-- Main Container with Header Inside --}}
     <div class="flex-1 bg-white rounded-lg shadow-sm overflow-hidden">
+        {{-- The rest of your code remains exactly the same --}}
         {{-- Recent Submissions Header - Matching Pending Requirements Style --}}
         <div class="flex items-center justify-between px-8 py-6 border-b border-gray-200" style="background: linear-gradient(148deg,rgba(18, 67, 44, 1) 0%, rgba(30, 119, 77, 1) 54%, rgba(55, 120, 64, 1) 100%);">
             <div class="flex items-center gap-2">

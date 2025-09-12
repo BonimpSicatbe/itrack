@@ -1,4 +1,4 @@
-<div class="flex flex-col w-full max-w-7xl mx-auto bg-gray-50 min-h-screen">
+<div class="flex flex-col w-full mx-auto bg-gray-50 min-h-screen">
     <!-- Main Container with Header Inside -->
     <div class="flex-1 bg-white rounded-lg shadow-sm overflow-hidden">
         <!-- File Manager Header - Matching Requirements Header Style -->
@@ -331,74 +331,86 @@
                             </button>
                         </div>
                     @endif
-                </div>
-
-                
+                </div>    
             </div>
 
             {{-- File Details Sidebar --}}
             @if($showFileDetails && $selectedFile)
-                <div class="w-96 bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden flex flex-col">
-                    {{-- Header matching other pages --}}
-                    <div class="flex items-center justify-between px-4 py-3 border-b border-gray-200" style="background: linear-gradient(148deg,rgba(18, 67, 44, 1) 0%, rgba(30, 119, 77, 1) 54%, rgba(55, 120, 64, 1) 100%);">
-                        <div class="flex items-center gap-2">
-                            <div class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
-                                <i class="fa-solid {{ $this->getFileIcon($selectedFile->submissionFile->file_name ?? '') }} text-white text-sm"></i>
+                <div class="w-96 bg-white border-l border-gray-200 shadow-lg overflow-hidden flex flex-col">
+                    {{-- Header --}}
+                    <div class="flex items-center justify-between px-6 py-4 border-b border-gray-200" style="background: linear-gradient(148deg,rgba(18, 67, 44, 1) 0%, rgba(30, 119, 77, 1) 54%, rgba(55, 120, 64, 1) 100%);">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
+                                <i class="fa-solid {{ $this->getFileIcon($selectedFile->submissionFile->file_name ?? '') }} text-white text-base"></i>
                             </div>
-                            <div>
+                            <div class="min-w-0">
                                 <h3 class="text-lg font-bold text-white">File Details</h3>
-                                <p class="text-white/80 text-xs truncate max-w-60" title="{{ $selectedFile->submissionFile->file_name ?? 'Unknown File' }}">{{ $selectedFile->submissionFile->file_name ?? 'Unknown File' }}</p>
+                                <p class="text-white/80 text-sm truncate max-w-48" title="{{ $selectedFile->submissionFile->file_name ?? 'Unknown File' }}">
+                                    {{ $selectedFile->submissionFile->file_name ?? 'Unknown File' }}
+                                </p>
                             </div>
                         </div>
                         <button class="p-2 text-white/70 hover:text-white hover:bg-white/20 rounded-lg transition-all duration-200" wire:click="closeFileDetails">
-                            <i class="fa-solid fa-times text-sm"></i>
+                            <i class="fa-solid fa-times"></i>
                         </button>
                     </div>
 
-                    {{-- Content --}}
-                    <div class="flex-1 overflow-y-auto p-4">
-                        <div class="space-y-4">
+                    {{-- Content - Removed gray backgrounds for proper alignment --}}
+                    <div class="flex-1 overflow-y-auto p-6 bg-white">
+                        <div class="space-y-6">
                             {{-- File Information --}}
                             <div>
-                                <h4 class="font-semibold text-sm mb-2 flex items-center gap-2">
-                                    <i class="fa-solid fa-info-circle text-[#1C7C54] text-xs"></i>
+                                <h4 class="font-semibold text-sm mb-4 flex items-center gap-2 text-gray-700 uppercase tracking-wide">
+                                    <i class="fa-solid fa-info-circle text-[#1C7C54]"></i>
                                     File Information
                                 </h4>
-                                <div class="space-y-2 text-sm">
-                                    <div class="flex justify-between items-start gap-2">
-                                        <span class="text-gray-600">File Name:</span>
-                                        <span class="font-medium text-right break-all max-w-48">{{ $selectedFile->submissionFile->file_name ?? 'N/A' }}</span>
+                                <div class="space-y-4 text-sm">
+                                    <div>
+                                        <span class="text-gray-600 block mb-2 text-xs font-medium">File Name:</span>
+                                        <span class="font-medium text-gray-800 break-words bg-gray-50 rounded-lg p-3 block border border-gray-200">
+                                            {{ $selectedFile->submissionFile->file_name ?? 'N/A' }}
+                                        </span>
                                     </div>
-                                    <div class="flex justify-between gap-2">
-                                        <span class="text-gray-600">File Size:</span>
-                                        <span class="font-medium">{{ $this->formatFileSize($selectedFile->submissionFile->size ?? 0) }}</span>
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <span class="text-gray-600 block mb-2 text-xs font-medium">File Size:</span>
+                                            <span class="font-medium text-gray-800 bg-gray-50 rounded-lg p-3 block border border-gray-200">
+                                                {{ $this->formatFileSize($selectedFile->submissionFile->size ?? 0) }}
+                                            </span>
+                                        </div>
+                                        <div>
+                                            <span class="text-gray-600 block mb-2 text-xs font-medium">File Type:</span>
+                                            <span class="font-medium text-gray-800 bg-gray-50 rounded-lg p-3 block border border-gray-200 uppercase">
+                                                {{ strtoupper(pathinfo($selectedFile->submissionFile->file_name ?? '', PATHINFO_EXTENSION)) }}
+                                            </span>
+                                        </div>
                                     </div>
-                                    <div class="flex justify-between gap-2">
-                                        <span class="text-gray-600">File Type:</span>
-                                        <span class="font-medium uppercase">{{ strtoupper(pathinfo($selectedFile->submissionFile->file_name ?? '', PATHINFO_EXTENSION)) }}</span>
-                                    </div>
-                                    <div class="flex justify-between gap-2">
-                                        <span class="text-gray-600">Uploaded:</span>
-                                        <span class="font-medium">{{ $selectedFile->created_at->format('M d, Y') }}</span>
+                                    <div>
+                                        <span class="text-gray-600 block mb-2 text-xs font-medium">Uploaded:</span>
+                                        <span class="font-medium text-gray-800 bg-gray-50 rounded-lg p-3 block border border-gray-200">
+                                            {{ $selectedFile->created_at->format('M d, Y \a\t H:i') }}
+                                        </span>
                                     </div>
                                 </div>
                             </div>
 
                             {{-- Requirement Information --}}
                             <div>
-                                <h4 class="font-semibold text-sm mb-2 flex items-center gap-2">
-                                    <i class="fa-solid fa-tasks text-[#1C7C54] text-xs"></i>
+                                <h4 class="font-semibold text-sm mb-4 flex items-center gap-2 text-gray-700 uppercase tracking-wide">
+                                    <i class="fa-solid fa-tasks text-[#1C7C54]"></i>
                                     Requirement Details
                                 </h4>
-                                <div class="space-y-2 text-sm">
-                                    <div class="flex justify-between items-start gap-2">
-                                        <span class="text-gray-600">Requirement:</span>
-                                        <span class="font-medium text-right max-w-48">{{ $selectedFile->requirement->name ?? 'N/A' }}</span>
+                                <div class="space-y-4 text-sm">
+                                    <div>
+                                        <span class="text-gray-600 block mb-2 text-xs font-medium">Requirement:</span>
+                                        <span class="font-medium text-gray-800 break-words bg-gray-50 rounded-lg p-3 block border border-gray-200">
+                                            {{ $selectedFile->requirement->name ?? 'N/A' }}
+                                        </span>
                                     </div>
-                                    <div class="flex justify-between items-center gap-2">
-                                        <span class="text-gray-600">Status:</span>
-                                        <span class="px-2 py-1 text-xs rounded-full {{ $selectedFile->getStatusBadgeClass() }}">
-                                            {{ $selectedFile->getStatusText() }}
+                                    <div>
+                                        <span class="text-gray-600 block mb-2 text-xs font-medium">Status:</span>
+                                        <span class="px-4 py-2 text-xs rounded-full {{ $selectedFile->status_badge }} font-medium inline-block">
+                                            {{ $selectedFile->status_text }}
                                         </span>
                                     </div>
                                 </div>
@@ -406,16 +418,28 @@
 
                             {{-- Actions --}}
                             <div>
-                                <h4 class="font-semibold text-sm mb-2 flex items-center gap-2">
-                                    <i class="fa-solid fa-cog text-[#1C7C54] text-xs"></i>
+                                <h4 class="font-semibold text-sm mb-4 flex items-center gap-2 text-gray-700 uppercase tracking-wide">
+                                    <i class="fa-solid fa-cog text-[#1C7C54]"></i>
                                     Actions
                                 </h4>
-                                <div class="space-y-2">
+                                <div class="space-y-3">
+                                    {{-- Open File Button --}}
+                                    @if($this->canOpenFile($selectedFile))
+                                        <a 
+                                            href="{{ route('user.file.preview', $selectedFile->submissionFile->id) }}" 
+                                            target="_blank"
+                                            class="w-full px-4 py-3 bg-white border border-[#73E2A7] text-[#1B512D] text-sm rounded-lg hover:bg-[#DEF4C6] hover:border-[#1C7C54] transition-all duration-200 flex items-center justify-center shadow-sm hover:shadow-md font-medium"
+                                        >
+                                            <i class="fa-solid fa-external-link-alt mr-2"></i>
+                                            <span>Open File</span>
+                                        </a>
+                                    @endif
+
                                     {{-- Download File Button --}}
                                     @if($this->canDownloadFile($selectedFile))
                                         <button 
                                             wire:click="downloadFile({{ $selectedFile->id }})"
-                                            class="w-full px-3 py-2 bg-gradient-to-r from-[#1C7C54] to-[#1B512D] text-white text-sm rounded-lg hover:from-[#1B512D] hover:to-[#1C7C54] transition-all duration-200 flex items-center justify-center"
+                                            class="w-full px-4 py-3 bg-gradient-to-r from-[#1C7C54] to-[#1B512D] text-white text-sm rounded-lg hover:from-[#1B512D] hover:to-[#1C7C54] transition-all duration-200 flex items-center justify-center shadow-sm hover:shadow-md font-medium"
                                             wire:loading.attr="disabled"
                                             wire:target="downloadFile({{ $selectedFile->id }})"
                                         >
@@ -429,18 +453,28 @@
                                             </span>
                                         </button>
                                     @endif
+                                </div>
+                            </div>
 
-                                    {{-- Open File Button --}}
-                                    @if($this->canOpenFile($selectedFile))
-                                        <a 
-                                            href="{{ $this->getFileUrl($selectedFile) }}" 
-                                            target="_blank"
-                                            class="w-full px-3 py-2 bg-[#DEF4C6]/30 border border-[#73E2A7]/40 text-[#1B512D] text-sm rounded-lg hover:bg-[#DEF4C6]/50 hover:border-[#73E2A7]/60 transition-all duration-200 flex items-center justify-center"
-                                        >
-                                            <i class="fa-solid fa-external-link-alt mr-2"></i>
-                                            <span>Open File</span>
-                                        </a>
-                                    @endif
+                            {{-- Semester Information --}}
+                            <div>
+                                <h4 class="font-semibold text-sm mb-4 flex items-center gap-2 text-gray-700 uppercase tracking-wide">
+                                    <i class="fa-solid fa-calendar text-[#1C7C54]"></i>
+                                    Semester Information
+                                </h4>
+                                <div class="space-y-3 text-sm">
+                                    <div class="flex justify-between items-center bg-gray-50 rounded-lg p-3 border border-gray-200">
+                                        <span class="text-gray-600 font-medium">Semester:</span>
+                                        <span class="font-medium text-gray-800">
+                                            {{ $selectedFile->requirement->semester->name ?? 'N/A' }}
+                                        </span>
+                                    </div>
+                                    <div class="flex justify-between items-center bg-gray-50 rounded-lg p-3 border border-gray-200">
+                                        <span class="text-gray-600 font-medium">Status:</span>
+                                        <span class="font-medium {{ $selectedFile->requirement->semester->is_active ?? false ? 'text-green-600' : 'text-gray-600' }}">
+                                            {{ $selectedFile->requirement->semester->is_active ?? false ? 'Active' : 'Archived' }}
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
                         </div>

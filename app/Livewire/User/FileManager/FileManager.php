@@ -309,7 +309,8 @@ class FileManager extends Component
             return null;
         }
 
-        return $file->getFileUrl();
+        // Use the existing route for file preview
+        return route('user.file.preview', $file->submissionFile->id);
     }
 
     public function getFileIcon($filename)
