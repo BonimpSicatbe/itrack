@@ -143,11 +143,8 @@
                             <h3 class="text-sm font-semibold text-gray-700 mb-3">Archived Semesters</h3>
                             <div class="space-y-3">
                                 @forelse($allSemesters->where('is_active', false) as $semester)
-                                    <div 
-                                        class="border border-gray-200 rounded-lg p-3 cursor-pointer hover:bg-gray-50 transition-colors"
-                                        wire:click="navigateToFolder({{ $semester->id }})"
-                                    >
-                                        <div class="flex items-start justify-between">
+                                    <div class="border border-gray-200 rounded-lg p-3">
+                                        <div class="flex items-start justify-between mb-2">
                                             <div class="flex items-center gap-2">
                                                 <i class="fa-solid fa-folder text-yellow-500"></i>
                                                 <div>
@@ -158,6 +155,20 @@
                                                 </div>
                                             </div>
                                             <span class="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full">Archived</span>
+                                        </div>
+                                        <div class="flex gap-2 mt-2">
+                                            <button 
+                                                wire:click="navigateToFolder({{ $semester->id }})"
+                                                class="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-center py-1 px-2 rounded text-xs transition-colors"
+                                            >
+                                                <i class="fa-solid fa-folder-open mr-1"></i> Open
+                                            </button>
+                                            <a 
+                                                href="{{ route('user.archive', ['semester' => $semester->id]) }}"
+                                                class="flex-1 bg-green-600 hover:bg-green-700 text-white text-center py-1 px-2 rounded text-xs transition-colors"
+                                            >
+                                                <i class="fa-solid fa-box-archive mr-1"></i> View in Archive
+                                            </a>
                                         </div>
                                     </div>
                                 @empty

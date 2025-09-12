@@ -8,6 +8,8 @@ use App\Models\Requirement;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
 
 class ArchiveController extends Controller
 {
@@ -22,10 +24,9 @@ class ArchiveController extends Controller
         $semesters = Semester::query()
             ->where('is_active', false)
             ->orderByDesc('end_date')
-            ->withCount(['requirements as total_requirements'])
             ->get();
 
-        // Get files with filters applied - query files from ALL archived semesters
+        // Get files with filters applied
         $filesQuery = SubmittedRequirement::with(['requirement', 'submissionFile', 'requirement.semester'])
             ->where('user_id', Auth::id())
             ->whereHas('requirement.semester', function($query) {
@@ -57,35 +58,13 @@ class ArchiveController extends Controller
         
         $files = $filesQuery->orderBy('created_at', 'desc')->get();
 
-        // Debug information - you can remove this after testing
-        if ($semesters->count() > 0 && $files->count() === 0) {
-            // Check if there are any files in archived semesters
-            $totalArchivedFiles = SubmittedRequirement::with(['requirement', 'submissionFile', 'requirement.semester'])
-                ->where('user_id', Auth::id())
-                ->whereHas('requirement.semester', function($query) {
-                    $query->where('is_active', false);
-                })
-                ->count();
-                
-            // Log debug information
-            \Log::info('Archive debug', [
-                'user_id' => Auth::id(),
-                'archived_semesters_count' => $semesters->count(),
-                'total_archived_files' => $totalArchivedFiles,
-                'filtered_files_count' => $files->count(),
-                'search_filter' => $search,
-                'status_filter' => $statusFilter,
-                'semester_filter' => $semesterFilter
-            ]);
-        }
-
-        // Pass all variables to the view
-        return view('archive', compact(
+        // Pass all variables to the view - MAKE SURE ALL VARIABLES ARE INCLUDED
+        return view('user.archive', compact(
             'semesters', 
             'files', 
             'search', 
             'statusFilter', 
-            'semesterFilter'
+            'semesterFilter' // This was missing!
         ));
     }
     
@@ -106,7 +85,7 @@ class ArchiveController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
             
-        return view('file-manager.archive-semester', compact('semester', 'files'));
+        return view('user.archive-semester', compact('semester', 'files'));
     }
     
     // Archive the current active semester (Admin only)
@@ -148,7 +127,7 @@ class ArchiveController extends Controller
         return response()->json($files);
     }
     
-    // NEW: Debug method to check archive status
+    // Debug method to check archive status
     public function debugArchive()
     {
         if (!auth()->user()->is_admin) {
@@ -176,47 +155,216 @@ class ArchiveController extends Controller
     }
 
     public function organizeArchivedFiles()
-{
-    if (!auth()->user()->is_admin) {
-        return redirect()->route('user.archive')
-            ->with('error', 'Only administrators can organize archived files.');
-    }
-    
-    // Get all archived files
-    $archivedFiles = SubmittedRequirement::whereHas('requirement.semester', function($query) {
-        $query->where('is_active', false);
-    })->get();
-    
-    $organizedCount = 0;
-    
-    foreach ($archivedFiles as $file) {
-        $media = $file->getFirstMedia('submission_files');
+    {
+        if (!auth()->user()->is_admin) {
+            return redirect()->route('user.archive')
+                ->with('error', 'Only administrators can organize archived files.');
+        }
         
-        if ($media) {
-            $desiredDirectory = $file->getMediaDirectory();
+        // Get all archived files
+        $archivedFiles = SubmittedRequirement::whereHas('requirement.semester', function($query) {
+            $query->where('is_active', false);
+        })->get();
+        
+        $organizedCount = 0;
+        
+        foreach ($archivedFiles as $file) {
+            $media = $file->getFirstMedia('submission_files');
             
-            // Check if media needs to be moved
-            if ($media->directory !== $desiredDirectory) {
-                // Update the directory in the database
-                $media->update(['directory' => $desiredDirectory]);
+            if ($media) {
+                // Create directory path based on semester
+                $semester = $file->requirement->semester;
+                $desiredDirectory = 'archived/' . $semester->id;
                 
-                // Physically move the file if it exists
+                // Get current path and new path
                 $currentPath = $media->getPath();
                 $newPath = $desiredDirectory . '/' . $media->file_name;
                 
-                if (Storage::disk('public')->exists($currentPath)) {
-                    // Ensure the destination directory exists
-                    Storage::disk('public')->makeDirectory($desiredDirectory);
-                    
-                    // Move the file
-                    Storage::disk('public')->move($currentPath, $newPath);
-                    $organizedCount++;
+                // Check if file exists and needs to be moved
+                if (Storage::disk('public')->exists($currentPath) && $currentPath !== $newPath) {
+                    try {
+                        // Ensure the destination directory exists
+                        Storage::disk('public')->makeDirectory($desiredDirectory);
+                        
+                        // Move the file
+                        Storage::disk('public')->move($currentPath, $newPath);
+                        
+                        // Update the media record
+                        $media->update([
+                            'directory' => $desiredDirectory,
+                            'file_path' => $newPath
+                        ]);
+                        
+                        $organizedCount++;
+                    } catch (\Exception $e) {
+                        Log::error('Failed to move file: ' . $e->getMessage());
+                    }
                 }
             }
         }
+        
+        return redirect()->route('user.archive')
+            ->with('success', "Organized {$organizedCount} files into semester folders.");
     }
-    
-    return redirect()->route('user.archive')
-        ->with('success', "Organized {$organizedCount} files into semester folders.");
-}
+
+    // Activate a semester (Admin only)
+    public function activateSemester($semesterId)
+    {
+        if (!auth()->user()->is_admin) {
+            return redirect()->route('user.archive')
+                ->with('error', 'Only administrators can activate semesters.');
+        }
+        
+        $semester = Semester::findOrFail($semesterId);
+        
+        // Deactivate all other semesters
+        Semester::where('id', '!=', $semesterId)->update(['is_active' => false]);
+        
+        // Activate the selected semester
+        $semester->update(['is_active' => true]);
+        
+        return redirect()->route('user.archive')
+            ->with('success', 'Semester "' . $semester->name . '" activated successfully!');
+    }
+
+    // Delete an archived semester (Admin only)
+    public function deleteSemester($semesterId)
+    {
+        if (!auth()->user()->is_admin) {
+            return redirect()->route('user.archive')
+                ->with('error', 'Only administrators can delete semesters.');
+        }
+        
+        $semester = Semester::findOrFail($semesterId);
+        
+        // Check if semester is active
+        if ($semester->is_active) {
+            return redirect()->route('user.archive')
+                ->with('error', 'Cannot delete active semester. Please deactivate it first.');
+        }
+        
+        // Check if semester has files
+        $filesCount = SubmittedRequirement::whereHas('requirement', function($q) use ($semesterId) {
+            $q->where('semester_id', $semesterId);
+        })->count();
+        
+        if ($filesCount > 0) {
+            return redirect()->route('user.archive')
+                ->with('error', 'Cannot delete semester with files. Please delete the files first.');
+        }
+        
+        // Delete the semester
+        $semesterName = $semester->name;
+        $semester->delete();
+        
+        return redirect()->route('user.archive')
+            ->with('success', 'Semester "' . $semesterName . '" deleted successfully!');
+    }
+
+    // Export archived files for a semester
+    public function exportSemester($semesterId)
+    {
+        if (!auth()->user()->is_admin) {
+            return redirect()->route('user.archive')
+                ->with('error', 'Only administrators can export semester data.');
+        }
+        
+        $semester = Semester::findOrFail($semesterId);
+        
+        $files = SubmittedRequirement::with(['requirement', 'submissionFile', 'user'])
+            ->whereHas('requirement', function($query) use ($semesterId) {
+                $query->where('semester_id', $semesterId);
+            })
+            ->orderBy('created_at', 'desc')
+            ->get();
+        
+        // Prepare CSV data
+        $csvData = [];
+        $csvData[] = ['File Name', 'Requirement', 'User', 'Status', 'Submitted At', 'Size'];
+        
+        foreach ($files as $file) {
+            $csvData[] = [
+                $file->submissionFile->file_name ?? 'N/A',
+                $file->requirement->name ?? 'N/A',
+                $file->user->name ?? 'N/A',
+                $file->status,
+                $file->created_at->format('Y-m-d H:i:s'),
+                $file->submissionFile->size ?? '0'
+            ];
+        }
+        
+        // Generate CSV file
+        $filename = 'semester_' . $semester->name . '_export_' . date('Y-m-d') . '.csv';
+        $handle = fopen('php://temp', 'w');
+        
+        foreach ($csvData as $row) {
+            fputcsv($handle, $row);
+        }
+        
+        rewind($handle);
+        $csv = stream_get_contents($handle);
+        fclose($handle);
+        
+        return response($csv)
+            ->header('Content-Type', 'text/csv')
+            ->header('Content-Disposition', 'attachment; filename="' . $filename . '"');
+    }
+
+    // Bulk actions for archived files
+    public function bulkAction(Request $request)
+    {
+        if (!auth()->user()->is_admin) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+        
+        $action = $request->input('action');
+        $fileIds = $request->input('file_ids', []);
+        
+        if (empty($fileIds)) {
+            return redirect()->route('user.archive')
+                ->with('error', 'No files selected for bulk action.');
+        }
+        
+        $successCount = 0;
+        $errorCount = 0;
+        
+        foreach ($fileIds as $fileId) {
+            try {
+                $file = SubmittedRequirement::findOrFail($fileId);
+                
+                switch ($action) {
+                    case 'delete':
+                        if ($file->deleteFile()) {
+                            $file->delete();
+                            $successCount++;
+                        } else {
+                            $errorCount++;
+                        }
+                        break;
+                    
+                    case 'change_status':
+                        $newStatus = $request->input('new_status');
+                        if (in_array($newStatus, ['approved', 'rejected', 'revision_needed', 'under_review'])) {
+                            $file->update(['status' => $newStatus]);
+                            $successCount++;
+                        } else {
+                            $errorCount++;
+                        }
+                        break;
+                    
+                    default:
+                        $errorCount++;
+                        break;
+                }
+            } catch (\Exception $e) {
+                $errorCount++;
+                Log::error('Bulk action error: ' . $e->getMessage());
+            }
+        }
+        
+        $message = "Bulk action completed: {$successCount} successful, {$errorCount} failed.";
+        
+        return redirect()->route('user.archive')
+            ->with('success', $message);
+    }
 }
