@@ -1,6 +1,6 @@
 <x-user.app-layout>
-  
-    {{-- Main Submissions List --}}
+    <div class="px-4 py-4 sm:px-6 lg:px-1">
+        {{-- Main Submissions List --}}
         <div>
             @livewire('user.recents.recent-submissions-list')
         </div>

@@ -1,13 +1,13 @@
 {{-- Wrapper div to contain everything and avoid multiple root elements --}}
-<div class="flex flex-col w-full max-w-7xl mx-auto bg-gray-50 min-h-screen">
-<div>
+<div class="flex flex-col w-full mx-auto bg-gray-50 min-h-screen">
     {{-- Main Container with Header Inside --}}
     <div class="flex-1 bg-white rounded-lg shadow-sm overflow-hidden">
+        {{-- The rest of your code remains exactly the same --}}
         {{-- Recent Submissions Header - Matching Pending Requirements Style --}}
         <div class="flex items-center justify-between px-8 py-6 border-b border-gray-200" style="background: linear-gradient(148deg,rgba(18, 67, 44, 1) 0%, rgba(30, 119, 77, 1) 54%, rgba(55, 120, 64, 1) 100%);">
             <div class="flex items-center gap-2">
                 <i class="fa-solid fa-clock-rotate-left text-white text-2xl"></i>
-                <h1 class="text-2xl font-bold text-white">Recent Submissions</h1>
+                <h1 class="text-xl font-bold text-white">Recent Submissions</h1>
             </div>
         </div>
 
@@ -73,7 +73,7 @@
                         @if($search)
                             <div class="flex items-center gap-2 px-3 py-2 bg-[#73E2A7]/20 border border-[#73E2A7]/40 rounded-lg">
                                 <i class="fa-solid fa-magnifying-glass text-[#1C7C54] text-xs"></i>
-                                <span class="text-sm text-[#1B512D] font-medium">"{{ $search }}"</span>
+                                <span class="text-sm text-gray-500 font-medium">"{{ $search }}"</span>
                                 <button wire:click="$set('search', '')" class="ml-1 w-5 h-5 bg-[#73E2A7]/30 hover:bg-[#73E2A7]/50 rounded-full flex items-center justify-center transition-colors duration-200">
                                     <i class="fa-solid fa-xmark text-[#1B512D] text-xs"></i>
                                 </button>
@@ -82,14 +82,14 @@
                         @if($statusFilter)
                             <div class="flex items-center gap-2 px-3 py-2 bg-[#B1CF5F]/20 border border-[#B1CF5F]/40 rounded-lg">
                                 <i class="fa-solid fa-check-circle text-[#1B512D] text-xs"></i>
-                                <span class="text-sm text-[#1B512D] font-medium">{{ ucfirst(str_replace('_', ' ', $statusFilter)) }}</span>
+                                <span class="text-sm text-gray-500 font-medium">{{ ucfirst(str_replace('_', ' ', $statusFilter)) }}</span>
                                 <button wire:click="$set('statusFilter', '')" class="ml-1 w-5 h-5 bg-[#B1CF5F]/30 hover:bg-[#B1CF5F]/50 rounded-full flex items-center justify-center transition-colors duration-200">
                                     <i class="fa-solid fa-xmark text-[#1B512D] text-xs"></i>
                                 </button>
                             </div>
                         @endif
                     </div>
-                    <button wire:click="$set('search', ''); $set('statusFilter', '')" class="text-sm text-[#1C7C54]/70 hover:text-[#1B512D] underline ml-auto">
+                    <button wire:click="$set('search', ''); $set('statusFilter', '')" class="text-sm text-gray-500 hover:text-[#1B512D] underline ml-auto">
                         Clear all filters
                     </button>
                 </div>
@@ -118,7 +118,7 @@
                                     @endif
                                 </div>
                                 <div class="min-w-0 flex-1">
-                                    <p class="text-sm font-medium text-gray-900 truncate">
+                                    <p class="text-lg font-medium text-gray-800 truncate">
                                         {{ $submission->requirement->name }}
                                     </p>
                                     <p class="text-sm text-gray-500">
@@ -131,7 +131,7 @@
                                     {{ $submission->status_text }}
                                 </span>
                                 @if($submission->submissionFile)
-                                    <span class="text-xs text-gray-400 flex items-center">
+                                    <span class="text-xs text-gray-500 flex items-center">
                                         <i class="fa-solid fa-file text-gray-400 text-xs mr-1"></i>
                                         {{ $submission->submissionFile->file_name }}
                                     </span>
@@ -142,16 +142,8 @@
                 @endforeach
             @else
                 <div class="text-center py-12">
-                    <div class="relative mb-8">
-                        <div class="w-24 h-24 bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl flex items-center justify-center shadow-lg">
-                            <i class="fa-regular fa-folder-open text-4xl text-gray-400"></i>
-                        </div>
-                        <div class="absolute -top-2 -right-2 w-8 h-8 bg-gradient-to-br from-[#1C7C54] to-[#1B512D] rounded-full flex items-center justify-center shadow-lg">
-                            <i class="fa-solid fa-search text-white text-sm"></i>
-                        </div>
-                    </div>
                     <h3 class="text-xl font-bold text-gray-800 mb-3">No submissions found</h3>
-                    <p class="text-gray-600 text-center mb-8 max-w-md leading-relaxed mx-auto">
+                    <p class="text-sm text-gray-500 text-center mb-8 max-w-md leading-relaxed mx-auto">
                         @if($statusFilter || $search)
                             We couldn't find any submissions matching your current search criteria. Try adjusting your filters or search terms.
                         @else
@@ -168,29 +160,7 @@
             @endif
         </div>
 
-        {{-- Enhanced Footer/Status Bar --}}
-        <div class="bg-white border-t border-gray-200 px-8 py-4 shadow-sm">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center gap-6 text-sm text-gray-600">
-                    @if($recentSubmissions->count() > 0)
-                        <div class="flex items-center gap-2">
-                            <i class="fa-solid fa-list-check text-gray-400"></i>
-                            <span>Showing <span class="font-semibold text-gray-900">{{ $recentSubmissions->count() }}</span> {{ $recentSubmissions->count() === 1 ? 'submission' : 'submissions' }}</span>
-                        </div>
-                    @endif
-                    <div class="flex items-center gap-2">
-                        <i class="fa-solid fa-clock text-gray-400"></i>
-                        <span>Last updated: <span class="font-medium">{{ now()->format('M j, Y g:i A') }}</span></span>
-                    </div>
-                </div>
-                <div class="flex items-center gap-2 text-xs text-gray-500">
-                    <div class="flex items-center gap-1">
-                        <div class="w-2 h-2 bg-green-500 rounded-full"></div>
-                        <span>System Online</span>
-                    </div>
-                </div>
-            </div>
-        </div>
+        
     </div>
 
     {{-- Include the Recent Submission Detail Modal component --}}

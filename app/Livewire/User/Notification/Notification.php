@@ -26,20 +26,48 @@ class Notification extends Component
 
     public function loadNotifications(): void
     {
-        $this->notifications = Auth::user()
+        // Get all notifications first
+        $allNotifications = Auth::user()
             ->notifications()
             ->latest()
             ->take(100)
             ->get();
+
+        // Filter notifications to only show those related to active semester requirements
+        $this->notifications = $allNotifications->filter(function ($notification) {
+            $requirementId = data_get($notification->data, 'requirement_id')
+                ?? data_get($notification->data, 'requirement.id');
+
+            if (!$requirementId) {
+                // If no requirement ID, keep the notification (might be system notifications)
+                return true;
+            }
+
+            // Check if the requirement belongs to an active semester
+            $requirement = Requirement::where('id', $requirementId)
+                ->whereHas('semester', function ($query) {
+                    $query->where('is_active', true);
+                })
+                ->first();
+
+            return $requirement !== null;
+        })->values(); // Reset array keys
     }
 
     public function markAllAsRead(): void
     {
-        Auth::user()->unreadNotifications->markAsRead();
+        // Only mark notifications related to active semester requirements as read
+        $notificationIds = $this->notifications->pluck('id')->toArray();
+        
+        Auth::user()->notifications()
+            ->whereIn('id', $notificationIds)
+            ->whereNull('read_at')
+            ->update(['read_at' => now()]);
+            
         $this->loadNotifications();
         $this->selectedNotification = null;
         $this->selectedNotificationData = null;
-        session()->flash('message', 'All notifications marked as read.');
+        session()->flash('message', 'All active semester notifications marked as read.');
     }
 
     public function selectNotification(string $id): void
@@ -72,8 +100,13 @@ class Notification extends Component
         // ---------------- REQUIREMENT (details + FILES FROM REQUIREMENT) ----------------
         $requirement = null;
         if ($requirementId) {
-            // Eager load media relationship to get files
-            $requirement = Requirement::with('media')->find($requirementId);
+            // Only get requirement if it belongs to active semester
+            $requirement = Requirement::with('media')
+                ->where('id', $requirementId)
+                ->whereHas('semester', function ($query) {
+                    $query->where('is_active', true);
+                })
+                ->first();
         }
 
         if ($requirement) {
@@ -124,9 +157,15 @@ class Notification extends Component
         $submission = null;
 
         if ($submissionId) {
+            // Only get submission if related requirement is from active semester
             $submission = SubmittedRequirement::query()
                 ->where('id', $submissionId)
                 ->where('user_id', Auth::id())
+                ->whereHas('requirement', function ($query) {
+                    $query->whereHas('semester', function ($semesterQuery) {
+                        $semesterQuery->where('is_active', true);
+                    });
+                })
                 ->first();
         }
 
@@ -134,6 +173,11 @@ class Notification extends Component
             $submission = SubmittedRequirement::query()
                 ->where('requirement_id', $requirementId)
                 ->where('user_id', Auth::id())
+                ->whereHas('requirement', function ($query) {
+                    $query->whereHas('semester', function ($semesterQuery) {
+                        $semesterQuery->where('is_active', true);
+                    });
+                })
                 ->latest()
                 ->first();
         }

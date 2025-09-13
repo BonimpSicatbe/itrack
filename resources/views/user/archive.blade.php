@@ -64,11 +64,12 @@
             <div class="p-8">
                 <div class="flex items-center justify-between mb-6">
                     <h2 class="text-xl font-semibold text-gray-800">Archived Files</h2>
-                    <span class="text-sm text-gray-500">{{ ($files ?? collect())->count() }} files found</span>
+                    <!-- FIXED LINE 67: Added null check for $files -->
+                    <span class="text-sm text-gray-500">{{ isset($files) ? $files->count() : 0 }} files found</span>
                 </div>
                 
                 @if(isset($semesters) && $semesters->count() > 0)
-                    @if(($files ?? collect())->count() > 0)
+                    @if(isset($files) && $files->count() > 0)
                         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             @foreach($files as $file)
                                 <div class="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow">
@@ -142,7 +143,7 @@
                                     </div>
                                     
                                     <div class="mt-4 flex gap-2">
-                                        @if($file->submissionFile)
+                                        @if($file->submissionFile && $file->getFileUrl())
                                             <a href="{{ $file->getFileUrl() }}" 
                                                target="_blank"
                                                class="flex-1 bg-green-600 hover:bg-green-700 text-white text-center py-2 rounded-lg transition-colors flex items-center justify-center">
@@ -169,9 +170,6 @@
                                     Try adjusting your filters to see more results.
                                 @else
                                     No files found in archived semesters.
-                                    @if(auth()->user()->is_admin)
-                                        <br><small class="text-xs">Check the log files for debug information.</small>
-                                    @endif
                                 @endif
                             </p>
                         </div>

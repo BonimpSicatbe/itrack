@@ -8,13 +8,13 @@
             <div class="flex items-center justify-between px-6 py-6 border-b border-gray-200 flex-shrink-0" style="background: linear-gradient(148deg,rgba(18, 67, 44, 1) 0%, rgba(30, 119, 77, 1) 54%, rgba(55, 120, 64, 1) 100%);">
                 <div class="flex items-center gap-3">
                     <i class="fa-solid fa-bell text-white text-2xl"></i>
-                    <h2 class="text-2xl font-bold text-white">Your Notifications</h2>
+                    <h2 class="text-xl text-gray-800 font-bold text-white">Your Notifications</h2>
                 </div>
                 <button 
                     wire:click="markAllAsRead" 
-                    class="inline-flex items-center px-3 py-1.5 bg-white/20 border border-white/30 text-white text-xs font-medium rounded-lg hover:bg-white/30 transition-all duration-200"
+                    class="inline-flex items-center px-3 py-1.5 bg-white/20 border border-white/30 text-white text-sm font-medium rounded-lg hover:bg-white/30 transition-all duration-200"
                 >
-                    <i class="fa-solid fa-check mr-1 text-xs"></i>
+                    <i class="fa-solid fa-check mr-1 text-sm"></i>
                     Mark all read
                 </button>
             </div>
@@ -39,10 +39,10 @@
                         <div wire:click="selectNotification('{{ $notification->id }}')" class="{{ $classes }}">
                             <div class="flex justify-between items-start">
                                 <div class="flex-1 min-w-0">
-                                    <p class="text-sm font-medium text-[#1B512D] line-clamp-2 transition-all duration-200">
+                                    <p class="text-lg text-gray-800 font-medium line-clamp-2 transition-all duration-200">
                                         {{ $notification->data['message'] ?? 'New notification' }}
                                     </p>
-                                    <p class="text-xs text-gray-500 mt-1 flex items-center transition-all duration-200">
+                                    <p class="text-sm text-gray-500 mt-1 flex items-center transition-all duration-200">
                                         <i class="fa-regular fa-clock mr-1"></i>
                                         {{ $notification->created_at->diffForHumans() }}
                                     </p>
@@ -53,12 +53,16 @@
                             </div>
                         </div>
                     @empty
-                        <div class="text-center py-8">
-                            <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                                <i class="fa-regular fa-bell text-gray-400 text-xl"></i>
+                        <div class="flex flex-col items-center justify-center py-8 text-center">
+                            <div class="flex items-center justify-center mb-4">
+                                <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
+                                    <i class="justify-center fa-regular fa-bell text-gray-400 text-xl"></i>
+                                </div>
                             </div>
-                            <h3 class="text-sm font-medium text-gray-900 mb-1">No notifications</h3>
-                            <p class="text-xs text-gray-500">You're all caught up!</p>
+                            <div class="space-y-1">
+                                <h3 class="justify-center text-lg text-gray-800 font-medium">No notifications</h3>
+                                <p class="justify-center text-sm text-gray-500">You're all caught up!</p>
+                            </div>
                         </div>
                     @endforelse
                 </div>
@@ -75,8 +79,8 @@
                         <i class="fa-solid fa-bell text-white text-lg"></i>
                     </div>
                     <div>
-                        <h2 class="text-lg font-bold text-white">{{ $selectedNotificationData['message'] }}</h2>
-                        <p class="text-white/80 text-xs flex items-center">
+                        <h2 class="text-xl text-gray-800 font-bold text-white">{{ $selectedNotificationData['message'] }}</h2>
+                        <p class="text-white/80 text-sm flex items-center">
                             <i class="fa-regular fa-clock mr-1"></i>
                             Received: {{ $selectedNotificationData['created_at']->format('M d, Y g:i A') }}
                         </p>
@@ -104,42 +108,42 @@
                                 <div class="w-8 h-8 bg-gradient-to-br from-[#1C7C54] to-[#1B512D] rounded-lg flex items-center justify-center mr-3">
                                     <i class="fa-solid fa-clipboard-list text-white text-sm"></i>
                                 </div>
-                                <h3 class="font-bold text-[#1B512D]">Requirement Details</h3>
+                                <h3 class="font-bold text-xl text-gray-800">Requirement Details</h3>
                             </div>
                             
                             <div class="p-6">
                                 {{-- Requirement Info --}}
                                 <div class="space-y-4 mb-6">
                                     <div>
-                                        <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">Requirement Name</p>
-                                        <p class="text-[#1B512D] font-bold text-lg">{{ $selectedNotificationData['requirement']['name'] ?? 'N/A' }}</p>
+                                        <p class="text-sm text-gray-500 font-medium uppercase tracking-wide mb-2">Requirement Name</p>
+                                        <p class="text-xl text-gray-800 font-bold">{{ $selectedNotificationData['requirement']['name'] ?? 'N/A' }}</p>
                                     </div>
                                     
                                     @isset($selectedNotificationData['requirement']['description'])
                                     <div>
-                                        <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">Description</p>
+                                        <p class="text-sm text-gray-500 font-medium uppercase tracking-wide mb-2">Description</p>
                                         <div class="bg-gray-50 rounded-lg p-4 border">
-                                            <p class="text-[#1B512D] text-sm leading-relaxed">{{ $selectedNotificationData['requirement']['description'] }}</p>
+                                            <p class="text-sm text-gray-500 leading-relaxed">{{ $selectedNotificationData['requirement']['description'] }}</p>
                                         </div>
                                     </div>
                                     @endisset
                                     
                                     @isset($selectedNotificationData['requirement']['assigned_to'])
                                     <div>
-                                        <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">Assigned To</p>
+                                        <p class="text-sm text-gray-500 font-medium uppercase tracking-wide mb-2">Assigned To</p>
                                         <div class="inline-flex items-center gap-2 bg-[#73E2A7]/20 px-3 py-2 rounded-lg">
                                             <i class="fa-solid fa-user text-[#1C7C54] text-sm"></i>
-                                            <span class="text-[#1B512D] font-medium text-sm">{{ $selectedNotificationData['requirement']['assigned_to'] }}</span>
+                                            <span class="text-lg text-gray-800 font-medium">{{ $selectedNotificationData['requirement']['assigned_to'] }}</span>
                                         </div>
                                     </div>
                                     @endisset
 
                                     @isset($selectedNotificationData['requirement']['due'])
                                     <div>
-                                        <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">Due Date</p>
+                                        <p class="text-sm text-gray-500 font-medium uppercase tracking-wide mb-2">Due Date</p>
                                         <div class="inline-flex items-center gap-2 bg-orange-100 px-3 py-2 rounded-lg">
                                             <i class="fa-solid fa-calendar text-orange-600 text-sm"></i>
-                                            <span class="text-orange-800 font-medium text-sm">
+                                            <span class="text-lg text-gray-800 font-medium">
                                                 {{ $selectedNotificationData['requirement']['due']->format('M d, Y g:i A') }}
                                             </span>
                                         </div>
@@ -156,9 +160,9 @@
                                         <div class="flex-1">
                                             <div class="flex items-center gap-2 mb-2">
                                                 <i class="fa-solid fa-upload text-[#1C7C54]"></i>
-                                                <h4 class="font-bold text-[#1B512D]">Ready to Submit?</h4>
+                                                <h4 class="font-bold text-lg text-gray-800">Ready to Submit?</h4>
                                             </div>
-                                            <p class="text-[#1B512D]/80 text-sm">
+                                            <p class="text-sm text-gray-500">
                                                 Review the requirement details above and proceed to submit your response.
                                             </p>
                                         </div>
@@ -187,9 +191,9 @@
                                     <div class="w-8 h-8 bg-[#DEF4C6]/50 rounded-lg flex items-center justify-center mr-3">
                                         <i class="fa-solid fa-paperclip text-[#1C7C54] text-sm"></i>
                                     </div>
-                                    <h3 class="font-bold text-[#1B512D]">Attached Files</h3>
+                                    <h3 class="font-bold text-xl text-gray-800">Attached Files</h3>
                                 </div>
-                                <span class="px-2 py-1 rounded text-xs font-medium bg-[#1C7C54]/10 text-[#1C7C54]">
+                                <span class="px-2 py-1 rounded text-sm text-gray-500 font-medium bg-[#1C7C54]/10">
                                     {{ count($selectedNotificationData['files']) }} {{ count($selectedNotificationData['files']) === 1 ? 'file' : 'files' }}
                                 </span>
                             </div>
@@ -209,12 +213,12 @@
                                                 @endswitch
                                             </div>
                                             <div class="min-w-0 flex-1">
-                                                <p class="text-sm font-medium text-[#1B512D] truncate">{{ $file['name'] ?? 'Unknown file' }}</p>
+                                                <p class="text-lg text-gray-800 font-medium truncate">{{ $file['name'] ?? 'Unknown file' }}</p>
                                                 <div class="flex items-center gap-2 mt-0.5">
-                                                    <span class="px-1.5 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-700">
+                                                    <span class="px-1.5 py-0.5 rounded text-sm text-gray-500 font-medium bg-gray-100">
                                                         {{ strtoupper($file['extension'] ?? 'FILE') }}
                                                     </span>
-                                                    <span class="text-xs text-gray-500">
+                                                    <span class="text-sm text-gray-500">
                                                         {{ $file['size'] ?? '0 KB' }}
                                                     </span>
                                                 </div>
@@ -251,14 +255,14 @@
                                 <div class="w-8 h-8 bg-[#DEF4C6]/50 rounded-lg flex items-center justify-center mr-3">
                                     <i class="fa-solid fa-clipboard-check text-[#1C7C54] text-sm"></i>
                                 </div>
-                                <h3 class="font-bold text-[#1B512D]">Admin Review</h3>
+                                <h3 class="font-bold text-xl text-gray-800">Admin Review</h3>
                             </div>
                             
                             <div class="p-4">
                                 <div class="space-y-3">
                                     <div class="flex items-center gap-3">
-                                        <span class="text-xs font-medium text-gray-500 uppercase tracking-wide">Status:</span>
-                                        <span class="px-2 py-1 rounded text-xs font-medium 
+                                        <span class="text-sm text-gray-500 font-medium uppercase tracking-wide">Status:</span>
+                                        <span class="px-2 py-1 rounded text-sm text-gray-500 font-medium 
                                             @if($selectedNotificationData['admin_review']['status'] === 'approved') bg-green-100 text-green-800
                                             @elseif($selectedNotificationData['admin_review']['status'] === 'rejected') bg-red-100 text-red-800
                                             @elseif($selectedNotificationData['admin_review']['status'] === 'revision_needed') bg-yellow-100 text-yellow-800
@@ -269,9 +273,9 @@
                                     
                                     @if($selectedNotificationData['admin_review']['admin_notes'])
                                     <div>
-                                        <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">Admin Notes</p>
+                                        <p class="text-sm text-gray-500 font-medium uppercase tracking-wide mb-2">Admin Notes</p>
                                         <div class="bg-gray-50 rounded-lg p-3 border">
-                                            <p class="text-[#1B512D] text-sm">{{ $selectedNotificationData['admin_review']['admin_notes'] }}</p>
+                                            <p class="text-sm text-gray-500">{{ $selectedNotificationData['admin_review']['admin_notes'] }}</p>
                                         </div>
                                     </div>
                                     @endif
