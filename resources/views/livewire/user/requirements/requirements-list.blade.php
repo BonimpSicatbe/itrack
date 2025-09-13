@@ -1,376 +1,371 @@
-<div class="flex flex-col w-full max-w-7xl mx-auto bg-gray-50 min-h-screen">
-    <!-- Main Container with Header Inside -->
-    <div class="flex-1 bg-white rounded-lg shadow-sm overflow-hidden">
-        <!-- Pending Requirements Header - Now Inside Container -->
-        <div class="flex items-center justify-between px-8 py-6 border-b border-gray-200" style="background: linear-gradient(148deg,rgba(18, 67, 44, 1) 0%, rgba(30, 119, 77, 1) 54%, rgba(55, 120, 64, 1) 100%);">
+<div class="flex flex-col w-full mx-auto min-h-screen text-sm overflow-hidden">
+    <!-- Header Container (Fixed) -->
+    <div class="mb-4">
+        <!-- Pending Requirements Header -->
+        <div class="flex items-center justify-between px-6 py-6 border-b border-gray-200 rounded-xl" 
+            style="background: linear-gradient(148deg,rgba(18, 67, 44, 1) 0%, rgba(30, 119, 77, 1) 54%, rgba(55, 120, 64, 1) 100%);">
+            
+            <!-- Left: Title -->    
             <div class="flex items-center gap-2">
                 <i class="fa-solid fa-clipboard-list text-white text-2xl"></i>
-                <h1 class="text-2xl font-bold text-white">Requirements List</h1>
-            </div>
-            <div>
-                @livewire('user.requirements.calendar-button')
+                <h1 class="text-xl font-bold text-white">Requirements List</h1>
             </div>
         </div>
-
-        <!-- Simplified Toolbar -->
-        <div class="bg-white border-b border-[#DEF4C6]/30 px-8 py-4 shadow-sm">
-            <div class="flex items-center justify-between">
-                <!-- Search Only -->
-                <div class="flex items-center gap-4 flex-1">
-                    <div class="relative flex-1 min-w-[300px] max-w-md">
-                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                            <i class="fa-solid fa-magnifying-glass text-[#1B512D] text-sm"></i>
-                        </div>
-                        <input
-                            type="text"
-                            wire:model.live.debounce.300ms="search"
-                            placeholder="Search requirements by name or description..."
-                            class="w-full pl-10 pr-10 py-1 text-sm bg-[#DEF4C6]/20 border border-[#73E2A7]/40 rounded-xl focus:border-[#1C7C54] focus:ring-2 focus:ring-[#1C7C54]/20 focus:bg-white focus:outline-none transition-all duration-200 placeholder-[#1B512D]/60"
-                        >
-                        <div wire:loading wire:target="search" class="absolute inset-y-0 right-0 pr-4 flex items-center">
-                            <div class="animate-spin rounded-full h-4 w-4 border-2 border-[#1C7C54] border-t-transparent"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Flash message -->
-            @if (session()->has('message'))
-                <div class="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mt-4" role="alert">
-                    <p>{{ session('message') }}</p>
-                </div>
-            @endif
-            
-            @if (session()->has('error'))
-                <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mt-4" role="alert">
-                    <p>{{ session('error') }}</p>
-                </div>
-            @endif
-
-            <!-- Active Search Filter Only -->
-            @if($search)
-                <div class="flex items-center gap-3 mt-4 pt-4 border-t border-[#DEF4C6]/30">
-                    <div class="flex items-center gap-2">
-                        <i class="fa-solid fa-filter text-[#1C7C54]"></i>
-                        <span class="text-sm font-semibold text-[#1B512D]">Active filter:</span>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <div class="flex items-center gap-2 px-3 py-2 bg-[#73E2A7]/20 border border-[#73E2A7]/40 rounded-lg">
-                            <i class="fa-solid fa-magnifying-glass text-[#1C7C54] text-xs"></i>
-                            <span class="text-sm text-[#1B512D] font-medium">"{{ $search }}"</span>
-                            <button wire:click="$set('search', '')" class="ml-1 w-5 h-5 bg-[#73E2A7]/30 hover:bg-[#73E2A7]/50 rounded-full flex items-center justify-center transition-colors duration-200">
-                                <i class="fa-solid fa-xmark text-[#1B512D] text-xs"></i>
-                            </button>
-                        </div>
-                    </div>
-                    <button wire:click="$set('search', '')" class="text-sm text-[#1C7C54]/70 hover:text-[#1B512D] underline ml-auto">
-                        Clear filter
-                    </button>
-                </div>
-            @endif
-        </div>
-
-        <!-- Enhanced File List Header -->
-        <div class="bg-gradient-to-r from-[#DEF4C6]/20 to-[#B1CF5F]/10 border-b border-[#73E2A7]/30 px-8 py-3">
-            <div class="grid grid-cols-10 gap-6 text-xs font-semibold text-[#1B512D] uppercase tracking-wider">
-                <div class="col-span-4 flex items-center gap-2">
-                    <button 
-                        type="button"
-                        wire:click="sortBy('name')" 
-                        class="flex items-center gap-2 hover:text-[#1C7C54] transition-colors disabled:opacity-50"
-                    >
-                        <i class="fa-solid fa-file-lines text-[#1C7C54]/70"></i>
-                        <span>Name</span>
-                        @if($sortField === 'name')
-                            @if($sortDirection === 'asc')
-                                <i class="fa-solid fa-sort-up ml-1 text-[#1C7C54]"></i>
-                            @else
-                                <i class="fa-solid fa-sort-down ml-1 text-[#1C7C54]"></i>
-                            @endif
-                        @else
-                            <i class="fa-solid fa-sort ml-1 opacity-50"></i>
-                        @endif
-                    </button>
-                    <div wire:loading wire:target="sortBy" class="ml-1">
-                        <i class="fa-solid fa-spinner fa-spin text-xs text-[#1C7C54]"></i>
-                    </div>
-                </div>
-                <div class="col-span-2 flex items-center gap-2">
-                    <button 
-                        type="button"
-                        wire:click="sortBy('due')" 
-                        class="flex items-center gap-2 hover:text-[#1C7C54] transition-colors disabled:opacity-50"
-                    >
-                        <i class="fa-regular fa-calendar text-[#1C7C54]/70"></i>
-                        <span>Due Date</span>
-                        @if($sortField === 'due')
-                            @if($sortDirection === 'asc')
-                                <i class="fa-solid fa-sort-up ml-1 text-[#1C7C54]"></i>
-                            @else
-                                <i class="fa-solid fa-sort-down ml-1 text-[#1C7C54]"></i>
-                            @endif
-                        @else
-                            <i class="fa-solid fa-sort ml-1 opacity-50"></i>
-                        @endif
-                    </button>
-                    <div wire:loading wire:target="sortBy" class="ml-1">
-                        <i class="fa-solid fa-spinner fa-spin text-xs text-[#1C7C54]"></i>
-                    </div>
-                </div>
-                <div class="col-span-2 flex items-center gap-2">
-                    <button 
-                        type="button"
-                        wire:click="sortBy('priority')" 
-                        class="flex items-center gap-2 hover:text-[#1C7C54] transition-colors disabled:opacity-50"
-                    >
-                        <i class="fa-solid fa-exclamation-triangle text-[#1C7C54]/70"></i>
-                        <span>Priority</span>
-                        @if($sortField === 'priority')
-                            @if($sortDirection === 'asc')
-                                <i class="fa-solid fa-sort-up ml-1 text-[#1C7C54]"></i>
-                            @else
-                                <i class="fa-solid fa-sort-down ml-1 text-[#1C7C54]"></i>
-                            @endif
-                        @else
-                            <i class="fa-solid fa-sort ml-1 opacity-50"></i>
-                        @endif
-                    </button>
-                    <div wire:loading wire:target="sortBy" class="ml-1">
-                        <i class="fa-solid fa-spinner fa-spin text-xs text-[#1C7C54]"></i>
-                    </div>
-                </div>
-                <div class="col-span-2 flex items-center gap-2 justify-end">
-                    <span>Actions</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- Requirements List Content -->
-        @forelse($requirements as $index => $requirement)
-            <div
-                wire:click="$dispatchTo('user.requirement-detail-modal', 'showRequirementDetail', { requirementId: {{ $requirement->id }} })"
-                class="grid grid-cols-10 gap-6 items-center px-8 py-3 border-b border-gray-100 hover:bg-blue-50/50 cursor-pointer group transition-all duration-200 {{ $index % 2 === 1 ? 'bg-gray-50/30' : 'bg-white' }} {{ $highlightedRequirement == $requirement->id ? 'ring-2 ring-[#1C7C54] ring-offset-2 bg-[#DEF4C6]/20' : '' }}"
-            >
-                <!-- Name Column -->
-                <div class="col-span-4 flex items-center gap-4 min-w-0">
-                    <div class="flex-shrink-0 relative">
-                        @php
-                            $extension = pathinfo($requirement->name, PATHINFO_EXTENSION);
-                            $iconData = match(strtolower($extension)) {
-                                'pdf' => [
-                                    'icon' => 'fa-file-pdf', 
-                                    'color' => 'text-[#1C7C54]', 
-                                    'bg' => 'bg-[#DEF4C6]/30', 
-                                    'hover_color' => 'group-hover:text-[#1B512D]', 
-                                    'hover_bg' => 'group-hover:bg-[#DEF4C6]/50'
-                                ],
-                                'doc', 'docx' => [
-                                    'icon' => 'fa-file-word', 
-                                    'color' => 'text-[#1B512D]', 
-                                    'bg' => 'bg-[#73E2A7]/20', 
-                                    'hover_color' => 'group-hover:text-[#1C7C54]', 
-                                    'hover_bg' => 'group-hover:bg-[#73E2A7]/40'
-                                ],
-                                'ppt', 'pptx' => [
-                                    'icon' => 'fa-file-powerpoint', 
-                                    'color' => 'text-[#73E2A7]', 
-                                    'bg' => 'bg-[#B1CF5F]/20', 
-                                    'hover_color' => 'group-hover:text-[#1B512D]', 
-                                    'hover_bg' => 'group-hover:bg-[#B1CF5F]/40'
-                                ],
-                                'xls', 'xlsx' => [
-                                    'icon' => 'fa-file-excel', 
-                                    'color' => 'text-[#B1CF5F]', 
-                                    'bg' => 'bg-[#DEF4C6]/20', 
-                                    'hover_color' => 'group-hover:text-[#1C7C54]', 
-                                    'hover_bg' => 'group-hover:bg-[#DEF4C6]/40'
-                                ],
-                                default => [
-                                    'icon' => 'fa-file', 
-                                    'color' => 'text-[#1C7C54]', 
-                                    'bg' => 'bg-[#DEF4C6]/30', 
-                                    'hover_color' => 'group-hover:text-[#1B512D]', 
-                                    'hover_bg' => 'group-hover:bg-[#DEF4C6]/50'
-                                ]
-                            };
-                        @endphp
-                        <div class="w-10 h-10 {{ $iconData['bg'] }} {{ $iconData['hover_bg'] }} rounded-lg flex items-center justify-center group-hover:scale-105 transition-all duration-200">
-                            <i class="fa-solid {{ $iconData['icon'] }} {{ $iconData['color'] }} {{ $iconData['hover_color'] }} text-lg transition-colors duration-200"></i>
-                        </div>
-                        {{-- Warning sign only shows if requirement is overdue AND not submitted --}}
-                        @if($requirement->due->isPast() && !$this->isRequirementSubmitted($requirement->id))
-                            <div class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full border-2 border-white">
-                                <i class="fa-solid fa-exclamation text-white text-xs absolute top-0 left-0.5"></i>
-                            </div>
-                        @endif
-                    </div>
-                    <div class="min-w-0 flex-1">
-                        <p class="text-sm font-semibold text-gray-900 truncate group-hover:text-blue-700 transition-colors mb-1">
-                            {{ $requirement->name }}
-                        </p>
-                        
-                    </div>
-                </div>
-
-                <!-- Due Date Column -->
-                <div class="col-span-2">
-                    <div class="flex flex-col">
-                        <div class="flex items-center gap-2">
-                            <span class="text-sm font-medium text-gray-900">{{ $requirement->due->format('M j, Y') }}</span>
-                            @if($requirement->due->isToday())
-                                <span class="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs font-medium rounded-full">Today</span>
-                            @endif
-                        </div>
-                        <span class="text-xs mt-1 {{ $requirement->due->isPast() && !$this->isRequirementSubmitted($requirement->id) ? 'text-red-600 font-small' : 'text-gray-500' }}">
-                            {{ $requirement->due->diffForHumans() }}
-                        </span>
-                    </div>
-                </div>
-
-                <!-- Priority Column -->
-                <div class="col-span-2">
-                    @php
-                        $priorityConfig = match($requirement->priority) {
-                            'high' => ['color' => 'red', 'icon' => 'fa-circle-exclamation'],
-                            'medium' => ['color' => 'yellow', 'icon' => 'fa-circle-minus'],
-                            'low' => ['color' => 'green', 'icon' => 'fa-circle-check'],
-                            default => ['color' => 'gray', 'icon' => 'fa-circle']
-                        };
-                    @endphp
-                    <span class="inline-flex items-center text-xs font-semibold text-{{ $priorityConfig['color'] }}-800">
-                        <i class="fa-solid {{ $priorityConfig['icon'] }} mr-2 text-{{ $priorityConfig['color'] }}-600"></i>
-                        {{ ucfirst($requirement->priority) }}
-                    </span>
-                </div>
-
-                <!-- Mark as Done Button for List View -->
-                <div class="col-span-2 flex justify-end" onclick="event.stopPropagation();">
-                    @if($this->isRequirementSubmitted($requirement->id))
-                        <div class="flex justify-end gap-2">
-                            <span class="px-3 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full flex items-center">
-                                <i class="fa-solid fa-check mr-1"></i> Submitted
-                            </span>
-                            <button 
-                                wire:click="markAsUndone({{ $requirement->id }})" 
-                                class="px-3 py-1 bg-gray-100 text-gray-800 text-xs font-medium rounded-full hover:bg-gray-200 transition-colors flex items-center"
-                                wire:loading.attr="disabled"
-                            >
-                                <div wire:loading wire:target="markAsUndone({{ $requirement->id }})" class="mr-1">
-                                    <i class="fa-solid fa-spinner fa-spin"></i>
-                                </div>
-                                <i wire:loading.remove wire:target="markAsUndone({{ $requirement->id }})" class="fa-solid fa-rotate-left mr-1"></i>
-                                <span wire:loading.remove wire:target="markAsUndone({{ $requirement->id }})">Undo</span>
-                                <span wire:loading wire:target="markAsUndone({{ $requirement->id }})">Processing...</span>
-                            </button>
-                        </div>
-                    @else
-                        <!-- Keep the existing "Mark as Done" button -->
-                        <button 
-                            wire:click="markAsDone({{ $requirement->id }})" 
-                            class="px-3 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full hover:bg-blue-200 transition-colors flex items-center"
-                            wire:loading.attr="disabled"
-                        >
-                            <div wire:loading wire:target="markAsDone({{ $requirement->id }})" class="mr-1">
-                                <i class="fa-solid fa-spinner fa-spin"></i>
-                            </div>
-                            <i wire:loading.remove wire:target="markAsDone({{ $requirement->id }})" class="fa-solid fa-check mr-1"></i>
-                            <span wire:loading.remove wire:target="markAsDone({{ $requirement->id }})">Mark as Done</span>
-                            <span wire:loading wire:target="markAsDone({{ $requirement->id }})">Processing...</span>
-                        </button>
-                    @endif
-                </div>
-            </div>
-        @empty
-            <!-- Empty state -->
-            <div class="flex flex-col items-center justify-center py-24 px-8">
-                <div class="relative mb-8">
-                    <div class="w-24 h-24 bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl flex items-center justify-center shadow-lg">
-                        <i class="fa-regular fa-folder-open text-4xl text-gray-400"></i>
-                    </div>
-                    <div class="absolute -top-2 -right-2 w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center shadow-lg">
-                        <i class="fa-solid fa-search text-white text-sm"></i>
-                    </div>
-                </div>
-                <h3 class="text-xl font-bold text-gray-800 mb-3">No requirements found</h3>
-                <p class="text-gray-600 text-center mb-8 max-w-md leading-relaxed">
-                    @if($search)
-                        We couldn't find any requirements matching your current search criteria. Try adjusting your search terms.
-                    @else
-                        You don't have any requirements assigned yet for the current semester. New requirements will appear here when they're created.
-                    @endif
-                </p>
-                @if($search)
-                    <button wire:click="$set('search', '')" class="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white text-sm font-semibold rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-200 shadow-lg hover:shadow-xl">
-                        <i class="fa-solid fa-refresh mr-2"></i>
-                        Clear Search
-                    </button>
-                @endif
-            </div>
-        @endforelse
-
-        <!-- Enhanced Footer/Status Bar -->
-        <div class="bg-white border-t border-gray-200 px-8 py-4 shadow-sm">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center gap-6 text-sm text-gray-600">
-                    @if($requirements->count() > 0)
-                        <div class="flex items-center gap-2">
-                            <i class="fa-solid fa-list-check text-gray-400"></i>
-                            <span>Showing <span class="font-semibold text-gray-900">{{ $requirements->firstItem() }}</span> to <span class="font-semibold text-gray-900">{{ $requirements->lastItem() }}</span> of <span class="font-semibold text-gray-900">{{ $requirements->total() }}</span> {{ $requirements->total() === 1 ? 'requirement' : 'requirements' }}</span>
-                        </div>
-                    @endif
-                    <div class="flex items-center gap-2">
-                        <i class="fa-solid fa-clock text-gray-400"></i>
-                        <span>Last updated: <span class="font-medium">{{ now()->format('M j, Y g:i A') }}</span></span>
-                    </div>
-                </div>
-                <div class="flex items-center gap-2 text-xs text-gray-500">
-                    <div class="flex items-center gap-1">
-                        <div class="w-2 h-2 bg-green-500 rounded-full"></div>
-                        <span>System Online</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Pagination -->
-        @if($requirements->hasPages())
-            <div class="bg-white border-t border-gray-200 px-8 py-4">
-                <div class="flex items-center justify-between">
-                    <div class="text-sm text-gray-700">
-                        Showing {{ $requirements->firstItem() }} to {{ $requirements->lastItem() }} of {{ $requirements->total() }} results
-                    </div>
-                    <div>
-                        {{ $requirements->links() }}
-                    </div>
-                </div>
-            </div>
-        @endif
     </div>
 
-    <!-- Include the reusable modal component -->
-    @livewire('user.requirement-detail-modal')
+    <!-- Requirements Content -->
+    <div class="w-full bg-white rounded-xl p-4 md:p-6 space-y-4 border border-gray-300 flex-grow" style="max-height: calc(100vh - 125px);">
+        <div class="flex flex-col gap-4 w-full h-full">
+            @if($activeSemester)
+                <div class="p-1 rounded-xl flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                    
+                    <!-- Left: Search -->
+                    <div class="relative w-sm">
+                        <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                            <i class="fas fa-search text-sm text-gray-500"></i>
+                        </div>
+                        <input 
+                            type="text" 
+                            wire:model.live.debounce.300ms="search"
+                            class="pl-10 block w-full rounded-xl text-gray-500 border-gray-300 shadow-sm focus:border-green-600 focus:ring-green-600 sm:text-sm" 
+                            placeholder="Search requirements..."
+                        >
+                    </div>
+                    
+                    <!-- Filters -->
+                    <div class="flex flex-col sm:flex-row items-center gap-4">
+                        <!-- Status Filter -->
+                        <div class="flex items-center gap-1 bg-white/80 p-1 rounded-xl font-semibold border border-gray-300 shadow-sm">
+                            <button 
+                                class="px-4 py-1.5 text-sm rounded-lg transition-colors {{ $statusFilter === 'all' ? 'bg-green-600 text-white shadow-sm' : 'hover:bg-green-600/20 text-green-600' }}"
+                                wire:click="$set('statusFilter', 'all')">
+                                All
+                            </button>
+                            <button 
+                                class="px-4 py-1.5 text-sm rounded-lg transition-colors {{ $statusFilter === 'completed' ? 'bg-blue-600 text-white shadow-sm' : 'hover:bg-blue-600/20 text-blue-600' }}"
+                                wire:click="$set('statusFilter', 'completed')">
+                                Done
+                            </button>
+                            <button 
+                                class="px-4 py-1.5 text-sm rounded-lg transition-colors {{ $statusFilter === 'overdue' ? 'bg-red-800 text-white shadow-sm' : 'hover:bg-red-800/20 text-red-800' }}"
+                                wire:click="$set('statusFilter', 'overdue')">
+                                Overdue
+                            </button>
+                        </div>
+                    </div>
+                </div>  
 
-    <!-- Add this script at the bottom of the file -->
-@script
-<script>
-    // Listen for Livewire initialization
-    Livewire.hook('component.initialized', (component) => {
-        if (component.name === 'user.requirements.requirements-list') {
-            // Check if there's a highlighted requirement in the URL
-            const urlParams = new URLSearchParams(window.location.search);
-            const requirementId = urlParams.get('requirement');
-            
-            if (requirementId) {
-                // Wait a bit for the component to fully initialize
-                setTimeout(() => {
-                    // Dispatch event to show the requirement detail modal
-                    window.dispatchEvent(new CustomEvent('showRequirementDetail', {
-                        detail: { requirementId: requirementId }
-                    }));
-                }, 300);
-            }
-        }
-    });
-</script>
-@endscript
+                <!-- Requirements List View -->
+                <div class="space-y-3">
+                   @forelse ($this->requirements() as $requirement)
+                        <div class="border border-gray-300 rounded-xl shadow-sm">
+                            <!-- Requirement Header -->
+                            <div class="flex justify-between items-center w-full text-left font-semibold text-gray-800 p-4 cursor-pointer hover:bg-green-50 rounded-xl"
+                                 wire:click="toggleAccordion({{ $requirement->id }})">
+                                <div class="flex items-center gap-3">
+                                    <div class="flex items-center gap-2 w-full md:w-[200px]">
+                                        <i class="fas fa-clipboard-list text-green-600 text-md"></i>
+                                        <span class="text-sm truncate">{{ $requirement->name }}</span>
+                                    </div>
+                                    
+                                    <div class="flex items-center gap-1 text-xs font-normal">
+                                        @if($requirement->due->isPast() && !$requirement->user_has_submitted)
+                                            <i class="fa-solid fa-circle-exclamation text-red-500 text-xs"></i>
+                                        @endif
+                                        <span class="{{ $requirement->due->isPast() && !$requirement->user_has_submitted ? 'text-red-600' : 'text-gray-600' }}">
+                                            Due: {{ $requirement->due->format('m/d/Y h:i a') }}
+                                        </span>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex items-center gap-3">
+                                    <!-- Mark as Done/Undone Button -->
+                                    @if($requirement->user_has_submitted)
+                                        <button 
+                                            wire:click="toggleMarkAsDone({{ $requirement->id }})"
+                                            wire:loading.attr="disabled"
+                                            wire:target="toggleMarkAsDone({{ $requirement->id }})"
+                                            class="btn btn-sm rounded-full {{ $requirement->user_marked_done ? 'btn-success' : 'bg-white border border-gray-300 hover:bg-success text-gray-800' }}"
+                                            title="{{ $requirement->user_marked_done ? 'Mark as undone' : 'Mark as done' }}"
+                                        >
+                                            <span wire:loading.remove wire:target="toggleMarkAsDone({{ $requirement->id }})">
+                                                <i class="fa-solid {{ $requirement->user_marked_done ? 'fa-check-circle' : 'fa-check-double' }}"></i>
+                                                {{ $requirement->user_marked_done ? 'Done' : 'Mark as Done' }}
+                                            </span>
+                                            <span wire:loading wire:target="toggleMarkAsDone({{ $requirement->id }})">
+                                                <i class="fa-solid fa-spinner animate-spin"></i>
+                                            </span>
+                                        </button>
+                                    @else
+                                        <button 
+                                            class="btn btn-sm btn-outline btn-disabled bg-white rounded-full"
+                                            title="Submit a file first to mark as done"
+                                        >
+                                            <i class="fa-solid fa-check-double"></i>
+                                            Mark as Done
+                                        </button>
+                                    @endif
+                                    
+                                    <i class="fas fa-chevron-down text-gray-400 text-xs transition-transform duration-200 {{ $this->isAccordionOpen($requirement->id) ? 'transform rotate-180' : '' }}"></i>
+                                </div>
+                            </div>
+                            
+                            <!-- Accordion Content -->
+                            @if($this->isAccordionOpen($requirement->id))
+                            <div class="border-t-2 border-gray-300 p-4 bg-gray-50 rounded-b-xl">
+                                <!-- Tabs Navigation -->
+                                <div class="border-b-1 border-gray-300 mb-4">
+                                    <nav class="flex space-x-8">
+                                        <button
+                                            wire:click="setActiveTab({{ $requirement->id }}, 'details')"
+                                            class="py-2 px-1 border-b-2 font-semibold text-sm {{ $this->isTabActive($requirement->id, 'details') ? 'border-green-500 text-green-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-500' }}"
+                                        >
+                                            Requirement Details
+                                        </button>
+                                        <button
+                                            wire:click="setActiveTab({{ $requirement->id }}, 'submit')"
+                                            class="py-2 px-1 border-b-2 font-semibold text-sm {{ $this->isTabActive($requirement->id, 'submit') ? 'border-green-500 text-green-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-500' }}"
+                                        >
+                                            Submit Requirement
+                                        </button>
+                                        <button
+                                            wire:click="setActiveTab({{ $requirement->id }}, 'submissions')"
+                                            class="py-2 px-1 border-b-2 font-semibold text-sm {{ $this->isTabActive($requirement->id, 'submissions') ? 'border-green-500 text-green-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-500' }}"
+                                        >
+                                            Previous Submissions
+                                        </button>
+                                    </nav>
+                                </div>
+
+                                <!-- Tab Content -->
+                                <div>
+                                    <!-- Details Tab -->
+                                    @if($this->isTabActive($requirement->id, 'details'))
+                                    <div class="mb-6">
+                                        <h5 class="mb-2 font-medium">{{ $requirement->name }}</h5>
+                                        <p class="text-gray-600 mb-4">{{ $requirement->description }}</p>
+                                        
+                                        <div class="space-y-3">
+                                            <div class="flex gap-4">
+                                                <span class="text-gray-500 w-32">Due Date:</span>
+                                                <span>{{ $requirement->due->format('M j, Y') }} ({{ $requirement->due->diffForHumans() }})</span>
+                                            </div>
+                                            
+                                            <!-- Guide Files -->
+                                            @if($requirement->guides->count() > 0)
+                                                <div class="mt-4 pt-4 border-t border-gray-300">
+                                                    <h4 class="font-semibold mb-2">Guide Files</h4>
+                                                    <div class="space-y-2">
+                                                        @foreach($requirement->guides as $guide)
+                                                            <div class="flex items-center justify-between gap-2">
+                                                                <div class="flex items-center gap-2">
+                                                                    @php
+                                                                        $extension = strtolower(pathinfo($guide->file_name, PATHINFO_EXTENSION));
+                                                                        $iconInfo = \App\Models\SubmittedRequirement::FILE_ICONS[$extension] ?? \App\Models\SubmittedRequirement::FILE_ICONS['default'];
+                                                                    @endphp
+                                                                    <i class="fa-solid {{ $iconInfo['icon'] }} {{ $iconInfo['color'] }}"></i>
+                                                                    <span class="truncate max-w-xs text-xs font-semibold">{{ $guide->file_name }}</span>
+                                                                </div>
+                                                                <div class="flex gap-2">
+                                                                    <a href="{{ route('guide.download', ['media' => $guide->id]) }}" 
+                                                                    class="text-blue-500 hover:text-blue-700 inline-flex items-center" 
+                                                                    title="Download">
+                                                                        <i class="fa-solid fa-download text-sm"></i>
+                                                                    </a>
+                                                                    @if($this->isPreviewable($guide->mime_type))
+                                                                    <a href="{{ route('guide.preview', ['media' => $guide->id]) }}" 
+                                                                    target="_blank"
+                                                                    class="text-green-500 hover:text-green-700 inline-flex items-center" 
+                                                                    title="View">
+                                                                        <i class="fa-solid fa-eye text-sm"></i>
+                                                                    </a>
+                                                                    @endif
+                                                                </div>
+                                                            </div>
+                                                        @endforeach
+                                                    </div>
+                                                </div>
+                                            @endif
+                                        </div>
+                                    </div>
+                                    @endif
+
+                                    <!-- Submit Tab -->
+                                    @if($this->isTabActive($requirement->id, 'submit'))
+                                    <div class="mb-6">
+                                        @if($requirement->user_marked_done)
+                                            <div class="alert bg-amber-300 border-amber-300">
+                                                <div class="flex items-center gap-2">
+                                                    <i class="fa-solid fa-circle-info"></i>
+                                                    <span>Requirement completed. Click "<b>Done</b>" above to submit additional files.</span>
+                                                </div>
+                                            </div>
+                                        @else
+                                            <form wire:submit.prevent="submitRequirement({{ $requirement->id }})" class="space-y-4">
+                                                <div>
+                                                    <input 
+                                                        type="file" 
+                                                        wire:model="file" 
+                                                        class="file-input file-input-bordered w-full"
+                                                        wire:loading.attr="disabled"
+                                                    >
+                                                    @error('file')
+                                                        <span class="text-error text-sm">{{ $message }}</span>
+                                                    @enderror
+                                                </div>
+                                                
+                                                <!-- Display selected file name -->
+                                                @if($file)
+                                                    <div class="p-3 bg-green-50 rounded-lg border border-gray-400">
+                                                        <div class="flex items-center justify-between">
+                                                            <div class="flex items-center gap-2">
+                                                                @php
+                                                                    $extension = strtolower($file->getClientOriginalExtension());
+                                                                    $iconInfo = \App\Models\SubmittedRequirement::FILE_ICONS[$extension] ?? \App\Models\SubmittedRequirement::FILE_ICONS['default'];
+                                                                @endphp
+                                                                <i class="fa-solid {{ $iconInfo['icon'] }} {{ $iconInfo['color'] }}"></i>
+                                                                <span class="text-sm font-medium truncate max-w-xs">
+                                                                    {{ $file->getClientOriginalName() }}
+                                                                </span>
+                                                            </div>
+                                                            <button 
+                                                                type="button" 
+                                                                class="btn btn-xs btn-ghost text-error"
+                                                                wire:click="$set('file', null)"
+                                                                title="Remove file"
+                                                            >
+                                                                <i class="fa-solid fa-times"></i>
+                                                            </button>
+                                                        </div>
+                                                        <div class="mt-1 text-xs text-gray-500">
+                                                            Size: {{ round($file->getSize() / 1024, 1) }} KB
+                                                        </div>
+                                                    </div>
+                                                @endif
+                                                
+                                                <button 
+                                                    type="submit" 
+                                                    class="btn w-full bg-green-600 text-white hover:bg-green-700"
+                                                    wire:loading.attr="disabled"
+                                                    :disabled="!$file"
+                                                >
+                                                    <span wire:loading.remove>Submit Requirement</span>
+                                                    <span wire:loading>
+                                                        <i class="fa-solid fa-spinner animate-spin"></i> Uploading...
+                                                    </span>
+                                                </button>
+                                            </form>
+                                        @endif
+                                    </div>
+                                    @endif
+
+                                    <!-- Submissions Tab -->
+                                    @if($this->isTabActive($requirement->id, 'submissions'))
+                                    <div>
+                                        @if($requirement->userSubmissions->count() > 0)
+                                            <div class="overflow-x-auto max-h-96 overflow-y-auto">
+                                                <table class="table w-full">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>File</th>
+                                                            <th>Submitted At</th>
+                                                            <th class="text-center">Status</th>
+                                                            <th class="text-center">Actions</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        @foreach($requirement->userSubmissions as $submission)
+                                                            <tr class="text-xs">
+                                                                <td>
+                                                                    <div class="flex items-center gap-2">
+                                                                        @if($submission->submissionFile)
+                                                                            @php
+                                                                                $extension = strtolower(pathinfo($submission->submissionFile->file_name, PATHINFO_EXTENSION));
+                                                                                $iconInfo = \App\Models\SubmittedRequirement::FILE_ICONS[$extension] ?? \App\Models\SubmittedRequirement::FILE_ICONS['default'];
+                                                                            @endphp
+                                                                            <i class="fa-solid {{ $iconInfo['icon'] }} {{ $iconInfo['color'] }}"></i>
+                                                                        @else
+                                                                            <i class="fa-regular fa-file text-gray-400"></i>
+                                                                        @endif
+                                                                        <span class="truncate max-w-xs">
+                                                                            {{ $submission->submissionFile->file_name ?? 'No file' }}
+                                                                        </span>
+                                                                    </div>
+                                                                </td>
+                                                                <td>{{ $submission->submitted_at->format('M j, Y h:i A') }}</td>
+                                                                <td class="text-center">
+                                                                    @php
+                                                                        $statusColor = \App\Models\SubmittedRequirement::getStatusColor($submission->status);
+                                                                        $statusParts = explode(' ', $statusColor);
+                                                                        $bgColor = $statusParts[0];
+                                                                        $textColor = $statusParts[1] ?? '';
+                                                                    @endphp
+                                                                    <span class="badge {{ $bgColor }} {{ $textColor }} text-xs rounded-full font-semibold">
+                                                                        {{ $submission->status_text }}
+                                                                    </span>
+                                                                </td>
+                                                                <td>
+                                                                    <div class="flex gap-2 text-center justify-center gap-3">
+                                                                        @if($submission->submissionFile)
+                                                                            <a href="{{ route('file.download', ['submission' => $submission->id]) }}" 
+                                                                            class="text-sm text-blue-500" 
+                                                                            title="Download">
+                                                                                <i class="fa-solid fa-download"></i>
+                                                                            </a>
+                                                                            @php
+                                                                                $extension = strtolower(pathinfo($submission->submissionFile->file_name, PATHINFO_EXTENSION));
+                                                                                $isPreviewable = in_array($extension, ['jpg', 'jpeg', 'png', 'gif', 'pdf']);
+                                                                            @endphp
+                                                                            @if($isPreviewable)
+                                                                            <a href="{{ route('file.preview', ['submission' => $submission->id]) }}" 
+                                                                            target="_blank"
+                                                                            class="text-sm text-green-500" 
+                                                                            title="View">
+                                                                                <i class="fa-solid fa-eye"></i>
+                                                                            </a>
+                                                                            @endif
+                                                                        @endif
+                                                                        @if($submission->status === 'under_review' || $submission->status === 'rejected' || $submission->status === 'revision_needed')
+                                                                            <button 
+                                                                                wire:click="confirmDelete({{ $submission->id }})"
+                                                                                class="text-sm text-red-500"
+                                                                                title="Delete submission"
+                                                                            >
+                                                                                <i class="fa-solid fa-trash"></i>
+                                                                            </button>
+                                                                        @endif
+                                                                    </div>
+                                                                </td>
+                                                            </tr>
+                                                        @endforeach
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        @else
+                                            <div class="text-center py-8 text-gray-500">
+                                                <i class="fa-regular fa-folder-open text-4xl mb-2"></i>
+                                                <p>No submissions yet</p>
+                                            </div>
+                                        @endif
+                                    </div>
+                                    @endif
+                                </div>
+                            </div>
+                            @endif
+                        </div>
+                    @empty
+                        <div class="text-center py-12 text-gray-500 font-semibold">
+                            <i class="fa-solid fa-folder-open text-4xl mb-2 text-gray-300"></i>
+                            <p>No requirements found</p>
+                        </div>
+                    @endforelse
+                </div>
+            @else
+                <div class="text-center py-12 text-gray-500">
+                    <img src="{{ asset('images/no-active.png') }}" alt="No active semester" class="mx-auto mb-2 max-w-xs">
+                    <p class="text-lg font-semibold">No active semester</p>
+                </div>
+            @endif
+        </div>
+    </div>
 </div>

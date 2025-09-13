@@ -1,4 +1,4 @@
-<div class="flex flex-col gap-2 p-4 bg-white rounded-lg shadow-sm">
+<div class="flex flex-col gap-2 p-4 bg-white rounded-xl shadow-sm">
     {{-- Header --}}
     <div class="flex flex-row items-center justify-between w-full">
         <div class="text-xl font-bold text-gray-800 tracking-wide">Pendings</div>
@@ -16,7 +16,7 @@
                 $isDueSoon = $dueDate->diffInDays() <= 3;
             @endphp
             
-            <div class="flex-shrink-0 w-64 bg-white border border-slate-200 rounded-lg p-4 hover:shadow-md transition-all duration-200 hover:border-slate-300">
+            <div class="flex-shrink-0 w-64 bg-white border border-slate-200 rounded-xl p-4 ">
                 {{-- Header with folder icon and title --}}
                 <div class="flex items-center gap-3 mb-3">
                     <div class>

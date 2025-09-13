@@ -89,18 +89,22 @@ Route::middleware(['auth', 'role:admin|super-admin'])
         });
     });
 
-// File download/preview routes
-Route::middleware('auth')->group(function () {
-    Route::get('/download/file/{submission}', [FileController::class, 'download'])
-        ->name('file.download');
-    Route::get('/preview/file/{submission}', [FileController::class, 'preview'])
-        ->name('file.preview');
-    // Add this new route for guide files
-     Route::get('/download/guide/{media}', [FileController::class, 'downloadGuide'])
-        ->name('guide.download');
-    Route::get('/preview/guide/{media}', [FileController::class, 'previewGuide'])
-        ->name('guide.preview');
-});
+// File download and preview routes
+Route::get('/file/download/{submission}', [FileController::class, 'download'])
+    ->name('file.download')
+    ->middleware('auth');
+
+Route::get('/file/preview/{submission}', [FileController::class, 'preview'])
+    ->name('file.preview')
+    ->middleware('auth');
+
+Route::get('/guide/download/{media}', [FileController::class, 'downloadGuide'])
+    ->name('guide.download')
+    ->middleware('auth');
+
+Route::get('/guide/preview/{media}', [FileController::class, 'previewGuide'])
+    ->name('guide.preview')
+    ->middleware('auth');
 
 // Notification routes
 Route::middleware('auth')->group(function () {

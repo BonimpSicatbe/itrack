@@ -1,4 +1,5 @@
-<div class="bg-white rounded-lg p-4">
+{{-- recent.blade.php --}}
+<div class="bg-white rounded-xl p-4">
     {{-- Header --}}
     <div class="flex items-center justify-between mb-3">
         <h3 class="text-xl font-semibold text-gray-800">Recent Submissions</h3>
@@ -12,13 +13,16 @@
         <div class="space-y-3 max-h-96 overflow-y-auto">
             @foreach($recentSubmissions as $submission)
                 <div wire:click="showRequirementDetail({{ $submission->id }})"
-                     class="flex items-center justify-between p-3 bg-gray-50 rounded-lg cursor-pointer transition-colors"
-                     style="hover:background-color: #f0fdf4;">
+                     class="flex items-center justify-between p-3 bg-gray-50 rounded-xl cursor-pointer transition-colors hover:bg-green-50">
                     
                     <div class="flex items-center gap-3 flex-1 min-w-0">
                         {{-- File Icon --}}
                         @if($submission->submissionFile)
-                            <i class="fas fa-file-alt text-lg" style="color: #1C7C54;"></i>
+                            @php
+                                $fileIcon = $submission->getFileIcon();
+                                $fileColor = $submission->getFileIconColor();
+                            @endphp
+                            <i class="fas {{ $fileIcon }} text-lg {{ $fileColor }}"></i>
                         @else
                             <i class="fas fa-file-times text-gray-400 text-lg"></i>
                         @endif
@@ -32,7 +36,7 @@
                                     No file uploaded
                                 @endif
                             </p>
-                            <p class="text-sm text-gray-500">
+                            <p class="text-xs text-gray-500">
                                 {{ $submission->submitted_at->format('M j, Y') }}
                                 • {{ $submission->requirement?->name ?? 'Deleted Requirement' }}
                             </p>
@@ -41,16 +45,9 @@
 
                     {{-- Status --}}
                     @php
-                        $status = strtolower($submission->status);
-                        $badgeColor = match($status) {
-                            'approved' => '#22c55e',  // Green
-                            'rejected' => '#ef4444',  // Red
-                            'pending' => '#f59e0b',   // Orange/amber
-                            default => '#6b7280'      // Gray
-                        };
+                        $statusBadgeClass = $submission->status_badge;
                     @endphp
-                    <span class="px-2 py-1 text-xs font-medium rounded-full whitespace-nowrap text-white"
-                          style="background-color: {{ $badgeColor }};">
+                    <span class="px-2 py-1 text-xs font-semibold rounded-full whitespace-nowrap {{ $statusBadgeClass }}">
                         {{ $submission->status_text }}
                     </span>
                 </div>
@@ -63,6 +60,6 @@
         </div>
     @endif
 
-    <!-- Include the Requirement Detail Modal component -->
-    @livewire('user.requirement-detail-modal')
+    <!-- Replace with the Recent Submission Detail Modal component -->
+    @livewire('user.recents.recent-submission-detail-modal')
 </div>

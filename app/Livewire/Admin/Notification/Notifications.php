@@ -101,60 +101,71 @@ class Notifications extends Component
             ];
         }
 
-        // Load submission with reviewer information
-        $submission = \App\Models\SubmittedRequirement::with(['reviewer'])
-            ->find($notificationData['submission_id']);
+        // Handle both old (single submission) and new (multiple submissions) formats
+        $submissionIds = [];
+        
+        if (isset($notificationData['submission_ids'])) {
+            // New format with multiple submissions
+            $submissionIds = $notificationData['submission_ids'];
+        } elseif (isset($notificationData['submission_id'])) {
+            // Old format with single submission
+            $submissionIds = [$notificationData['submission_id']];
+        }
 
-        if ($submission) {
-            $statusLabel = match($submission->status) {
-                SubmittedRequirement::STATUS_UNDER_REVIEW => 'Under Review',
-                SubmittedRequirement::STATUS_REVISION_NEEDED => 'Revision Needed',
-                SubmittedRequirement::STATUS_REJECTED => 'Rejected',
-                SubmittedRequirement::STATUS_APPROVED => 'Approved',
-                default => ucfirst($submission->status),
-            };
+        // Load submissions
+        $submissions = \App\Models\SubmittedRequirement::with(['reviewer'])
+            ->whereIn('id', $submissionIds)
+            ->get();
 
-            $this->selectedNotificationData['submission'] = [
-                'id' => $submission->id,
-                'status' => $submission->status,
-                'status_label' => $statusLabel,
-                'admin_notes' => $submission->admin_notes,
-                'submitted_at' => $submission->submitted_at,
-                'reviewed_at' => $submission->reviewed_at,
-                'reviewer' => $submission->reviewer ? [
-                    'id' => $submission->reviewer->id,
-                    'name' => $submission->reviewer->name,
-                    'email' => $submission->reviewer->email,
-                ] : null,
-                'needs_review' => $submission->status === SubmittedRequirement::STATUS_UNDER_REVIEW,
-            ];
+        if ($submissions->count() > 0) {
+            $this->selectedNotificationData['submissions'] = $submissions->map(function ($submission) {
+                $statusLabel = match($submission->status) {
+                    SubmittedRequirement::STATUS_UNDER_REVIEW => 'Under Review',
+                    SubmittedRequirement::STATUS_REVISION_NEEDED => 'Revision Needed',
+                    SubmittedRequirement::STATUS_REJECTED => 'Rejected',
+                    SubmittedRequirement::STATUS_APPROVED => 'Approved',
+                    default => ucfirst($submission->status),
+                };
 
-            $this->loadFiles($submission);
+                return [
+                    'id' => $submission->id,
+                    'status' => $submission->status,
+                    'status_label' => $statusLabel,
+                    'admin_notes' => $submission->admin_notes,
+                    'submitted_at' => $submission->submitted_at,
+                    'reviewed_at' => $submission->reviewed_at,
+                    'reviewer' => $submission->reviewer ? [
+                        'id' => $submission->reviewer->id,
+                        'name' => $submission->reviewer->name,
+                        'email' => $submission->reviewer->email,
+                    ] : null,
+                    'needs_review' => $submission->status === SubmittedRequirement::STATUS_UNDER_REVIEW,
+                ];
+            })->toArray();
+
+            $this->loadFiles($submissions);
         }
 
         // Load submitting user
-        $user = \App\Models\User::find($notificationData['user_id']);
-        if ($user) {
-            $this->selectedNotificationData['submitter'] = [
-                'id' => $user->id,
-                'name' => $user->name,
-                'email' => $user->email,
-            ];
+        $userId = $notificationData['user_id'] ?? null;
+        if ($userId) {
+            $user = \App\Models\User::find($userId);
+            if ($user) {
+                $this->selectedNotificationData['submitter'] = [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                ];
+            }
         }
     }
 
-    protected function loadFiles($submission)
+    protected function loadFiles($submissions)
     {
         $files = [];
         
-        // Get all submissions for this requirement by this user
-        $allSubmissions = SubmittedRequirement::where('requirement_id', $submission->requirement_id)
-            ->where('user_id', $submission->user_id)
-            ->with('media')
-            ->get();
-
-        foreach ($allSubmissions as $sub) {
-            foreach ($sub->getMedia('submission_files') as $media) {
+        foreach ($submissions as $submission) {
+            foreach ($submission->getMedia('submission_files') as $media) {
                 $extension = strtolower(pathinfo($media->file_name, PATHINFO_EXTENSION));
                 $isPreviewable = in_array($extension, ['jpg', 'jpeg', 'png', 'gif', 'pdf']);
                 
@@ -168,9 +179,9 @@ class Notifications extends Component
                     'created_at' => $media->created_at,
                     'extension' => $extension,
                     'is_previewable' => $isPreviewable,
-                    'status' => $sub->status,
-                    'admin_notes' => $sub->admin_notes,
-                    'submission_id' => $sub->id,
+                    'status' => $submission->status,
+                    'admin_notes' => $submission->admin_notes,
+                    'submission_id' => $submission->id,
                 ];
             }
         }

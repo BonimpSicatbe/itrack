@@ -1,6 +1,6 @@
 <div x-data="{ collapsed: false }" 
      :class="collapsed ? 'w-16' : 'w-64'" 
-     class="flex flex-col bg-white rounded-lg shadow-sm h-full transition-all duration-300 ease-in-out"
+     class="flex flex-col bg-white rounded-xl shadow-sm h-full transition-all duration-300 ease-in-out"
      x-init="
         // Initialize collapsed state from localStorage if available
         if (localStorage.getItem('sidebar_collapsed') === 'true') {
@@ -61,14 +61,11 @@
                 <li>
                     {{-- Regular navigation links --}}
                     <a href="{{ route($navlink['route']) }}"
-                       x-tooltip="collapsed ? '{{ $navlink['label'] }}' : ''"
-                       class="relative flex items-center px-3 py-2.5 text-sm font-medium rounded-md transition-colors duration-200 group {{ Route::currentRouteName() === $navlink['route'] ? 'bg-green-100' : 'hover:bg-gray-50' }}"
-                       style="color: {{ Route::currentRouteName() === $navlink['route'] ? '#1B512D' : '#1B512D' }};"
+                       class="relative flex items-center px-3 py-2.5 text-sm font-medium rounded-md transition-colors duration-200 group {{ Route::currentRouteName() === $navlink['route'] ? 'bg-green-100 text-gray-900' : 'text-gray-700 hover:bg-gray-300 hover:text-gray-900' }}"
                        :class="collapsed ? 'justify-center space-x-0' : 'space-x-3'">
                         
                         <div class="relative flex-shrink-0">
-                           <i class="fa-solid fa-{{ $navlink['icon'] }} w-5 h-5 text-center transition-colors duration-200" 
-                              style="color: #1B512D;"></i>
+                           <i class="fa-solid fa-{{ $navlink['icon'] }} w-5 h-5 text-center transition-colors duration-200"></i>
                         </div>
                         
                         <div class="flex-1 min-w-0" x-show="!collapsed" x-transition>
@@ -86,12 +83,6 @@
                                   class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-3 h-3 flex items-center justify-center">
                             </span>
                         @endif
-
-                        {{-- Tooltip for collapsed state --}}
-                        <div x-show="collapsed" 
-                             class="absolute left-full ml-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-50">
-                            {{ $navlink['label'] }}
-                        </div>
                     </a>
                 </li>
             @endforeach
@@ -108,20 +99,10 @@
                         <form method="POST" action="{{ route($navlink['route']) }}" class="w-full">
                             @csrf
                             <button type="submit"
-                                    class="w-full flex items-center px-3 py-2.5 text-sm font-medium rounded-md transition-colors duration-200 group hover:bg-red-50 hover:text-red-600"
-                                    style="color: #1B512D;"
+                                    class="w-full flex items-center px-3 py-2.5 text-sm font-medium rounded-md transition-colors duration-200 group text-gray-700 hover:bg-gray-300 hover:text-gray-900"
                                     :class="collapsed ? 'justify-center space-x-0' : 'space-x-3'">
-                                <i class="fa-solid fa-{{ $navlink['icon'] }} w-5 h-5 flex-shrink-0 text-center transition-colors duration-200" 
-                                   style="color: #1B512D;"
-                                   onmouseover="this.style.color='#dc2626'"
-                                   onmouseout="this.style.color='#1B512D'"></i>
+                                <i class="fa-solid fa-{{ $navlink['icon'] }} w-5 h-5 flex-shrink-0 text-center transition-colors duration-200"></i>
                                 <span x-show="!collapsed" x-transition>{{ $navlink['label'] }}</span>
-                                
-                                {{-- Tooltip for collapsed state --}}
-                                <div x-show="collapsed" 
-                                     class="absolute left-full ml-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-50">
-                                    {{ $navlink['label'] }}
-                                </div>
                             </button>
                         </form>
                     </li>
@@ -130,8 +111,7 @@
                         @if (isset($navlink['is_profile']) && $navlink['is_profile'])
                             {{-- Profile link with special styling --}}
                             <a href="{{ route($navlink['route']) }}"
-                               class="relative flex items-center px-3 py-2.5 text-sm font-medium rounded-md transition-colors duration-200 group {{ Route::currentRouteName() === $navlink['route'] ? 'bg-green-100' : 'hover:bg-gray-50' }}"
-                               style="color: {{ Route::currentRouteName() === $navlink['route'] ? '#1B512D' : '#1B512D' }};"
+                               class="relative flex items-center px-3 py-2.5 text-sm font-medium rounded-md transition-colors duration-200 group {{ Route::currentRouteName() === $navlink['route'] ? 'bg-green-100 text-gray-900' : 'text-gray-700 hover:bg-gray-300 hover:text-gray-900' }}"
                                :class="collapsed ? 'justify-center space-x-0' : 'space-x-3'">
                                 
                                 <div class="w-8 h-8 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center flex-shrink-0">
@@ -140,35 +120,21 @@
                                 
                                 <div class="flex-1 min-w-0" x-show="!collapsed" x-transition>
                                     <span class="block truncate font-medium">{{ $navlink['label'] }}</span>
-                                    <span class="block text-xs truncate" style="color: #9ca3af;">{{ Auth::user()->department_name ?? 'Department' }}</span>
-                                </div>
-
-                                {{-- Tooltip for collapsed state --}}
-                                <div x-show="collapsed" 
-                                     class="absolute left-full ml-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-50">
-                                    {{ $navlink['label'] }}
+                                    <span class="block text-xs truncate text-gray-500">{{ Auth::user()->department_name ?? 'Department' }}</span>
                                 </div>
                             </a>
                         @else
                             {{-- Regular navigation links --}}
                             <a href="{{ route($navlink['route']) }}"
-                               class="relative flex items-center px-3 py-2.5 text-sm font-medium rounded-md transition-colors duration-200 group {{ Route::currentRouteName() === $navlink['route'] ? 'bg-green-100' : 'hover:bg-gray-50' }}"
-                               style="color: {{ Route::currentRouteName() === $navlink['route'] ? '#1B512D' : '#1B512D' }};"
+                               class="relative flex items-center px-3 py-2.5 text-sm font-medium rounded-md transition-colors duration-200 group {{ Route::currentRouteName() === $navlink['route'] ? 'bg-green-100 text-gray-900' : 'text-gray-700 hover:bg-gray-300 hover:text-gray-900' }}"
                                :class="collapsed ? 'justify-center space-x-0' : 'space-x-3'">
                                 
                                 <div class="relative flex-shrink-0">
-                                    <i class="fa-solid fa-{{ $navlink['icon'] }} w-5 h-5 text-center transition-colors duration-200" 
-                                       style="color: #1B512D;"></i>
+                                    <i class="fa-solid fa-{{ $navlink['icon'] }} w-5 h-5 text-center transition-colors duration-200"></i>
                                 </div>
                                 
                                 <div class="flex-1 min-w-0" x-show="!collapsed" x-transition>
                                     <span class="block truncate">{{ $navlink['label'] }}</span>
-                                </div>
-
-                                {{-- Tooltip for collapsed state --}}
-                                <div x-show="collapsed" 
-                                     class="absolute left-full ml-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap z-50">
-                                    {{ $navlink['label'] }}
                                 </div>
                             </a>
                         @endif
@@ -189,10 +155,5 @@
 
     nav::-webkit-scrollbar {
         display: none; /* WebKit browsers (Chrome, Safari, Edge) */
-    }
-
-    /* Tooltip positioning */
-    .group:hover .group-hover\:opacity-100 {
-        opacity: 1 !important;
     }
 </style>

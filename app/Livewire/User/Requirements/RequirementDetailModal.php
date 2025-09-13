@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Livewire\user;
+namespace App\Livewire\User\Requirements;
 
 use App\Livewire\User\Notification\Notification;
 use Livewire\Component;
@@ -169,6 +169,6 @@ class RequirementDetailModal extends Component
 
     public function render()
     {
-        return view('livewire.user.requirement-detail-modal');
+        return view('livewire.user.requirements.requirement-detail-modal');
     }
 }

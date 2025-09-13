@@ -59,9 +59,9 @@
                                 Pending
                             </button>
                             <button 
-                                class="px-4 py-1.5 text-sm rounded-lg transition-colors {{ $completionFilter === 'completed' ? 'bg-green-800 text-white shadow-sm' : 'hover:bg-green-800/20 text-green-800' }}"
+                                class="px-4 py-1.5 text-sm rounded-lg transition-colors {{ $completionFilter === 'completed' ? 'bg-red-800 text-white shadow-sm' : 'hover:bg-red-800/20 text-red-800' }}"
                                 wire:click="$set('completionFilter', 'completed')">
-                                Completed
+                                Due
                             </button>
                         </div>
 

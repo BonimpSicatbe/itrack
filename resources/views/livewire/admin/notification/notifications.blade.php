@@ -123,7 +123,7 @@
                 </div>
 
                 {{-- Display error if submission data is missing --}}
-                @if(!isset($selectedNotificationData['submission']))
+                @if(!isset($selectedNotificationData['submissions']) && !isset($selectedNotificationData['submission']))
                     <div class="bg-red-50 border border-red-200 rounded-xl p-8 text-center shadow-sm">
                         <div class="bg-red-100 p-4 rounded-xl inline-block mb-4">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -217,7 +217,8 @@
                         <div class="space-y-4">
                             @foreach($selectedNotificationData['files'] as $file)
                             @php
-                                $fileStatus = $file['status'] ?? $selectedNotificationData['submission']['status'];
+                                // Get the submission status for this file
+                                $fileStatus = $file['status'];
                                 $fileStatusLabel = match($fileStatus) {
                                     'under_review' => 'Under Review',
                                     'revision_needed' => 'Revision Needed',
@@ -231,6 +232,9 @@
                                     'revision_needed' => 'bg-yellow-100 text-yellow-700',
                                     default => 'bg-blue-100 text-blue-700',
                                 };
+                                
+                                // Get submission details
+                                $submission = collect($selectedNotificationData['submissions'] ?? [])->firstWhere('id', $file['submission_id']);
                             @endphp
                             
                             <div class="border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200">
@@ -241,15 +245,15 @@
                                             <p class="text-sm font-semibold text-gray-700">Submitted At</p>
                                             <p class="text-sm text-gray-900 flex items-center mt-1">
                                                 <i class="fa-regular fa-calendar-check mr-2 text-gray-500"></i>
-                                                {{ $selectedNotificationData['submission']['submitted_at']->format('M d, Y g:i A') }}
+                                                {{ $submission['submitted_at']->format('M d, Y g:i A') ?? 'N/A' }}
                                             </p>
                                         </div>
-                                        @if($selectedNotificationData['submission']['reviewed_at'])
+                                        @if($submission['reviewed_at'] ?? null)
                                         <div>
                                             <p class="text-sm font-semibold text-gray-700">Reviewed At</p>
                                             <p class="text-sm text-gray-900 flex items-center mt-1">
                                                 <i class="fa-regular fa-eye mr-2 text-gray-500"></i>
-                                                {{ $selectedNotificationData['submission']['reviewed_at']->format('M d, Y g:i A') }}
+                                                {{ $submission['reviewed_at']->format('M d, Y g:i A') }}
                                             </p>
                                         </div>
                                         @endif

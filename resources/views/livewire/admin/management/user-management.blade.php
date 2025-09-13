@@ -38,7 +38,7 @@
                 <input 
                     type="text" 
                     wire:model.live.debounce.300ms="search"
-                    class="pl-10 block w-full rounded-xl border-gray-300 shadow-sm focus:border-1C7C54 focus:ring-1C7C54 sm:text-sm" 
+                    class="pl-10 block w-full rounded-xl border-gray-300 shadow-sm focus:border-green-600 focus:ring-green-600 sm:text-sm" 
                     placeholder="Search by name or email"
                 >
             </div>
@@ -49,7 +49,7 @@
             <label class="block text-sm font-semibold text-gray-700 mb-1">College</label>
             <select 
                 wire:model.live="collegeFilter" 
-                class="block w-full rounded-xl border-gray-300 shadow-sm focus:border-1C7C54 focus:ring-1C7C54 sm:text-sm"
+                class="block w-full rounded-xl border-gray-300 shadow-sm focus:border-green-600 focus:ring-green-600 sm:text-sm"
             >
                 <option value="">All Colleges</option>
                 @foreach($colleges as $college)
@@ -63,7 +63,7 @@
             <label class="block text-sm font-semibold text-gray-700 mb-1">Department</label>
             <select 
                 wire:model.live="departmentFilter" 
-                class="block w-full rounded-xl border-gray-300 shadow-sm focus:border-1C7C54 focus:ring-1C7C54 sm:text-sm"
+                class="block w-full rounded-xl border-gray-300 shadow-sm focus:border-green-600 focus:ring-green-600 sm:text-sm"
             >
                 <option value="">All Departments</option>
                 @foreach($departments as $department)
@@ -320,7 +320,7 @@
     @if($showAddUserModal)
         <x-modal name="add-user-modal" :show="$showAddUserModal" maxWidth="2xl">
             <!-- Header -->
-            <div class="bg-1C7C54 text-white rounded-t-xl px-6 py-4 flex items-center space-x-3">
+            <div class=" text-white rounded-t-xl px-6 py-4 flex items-center space-x-3" style="background: linear-gradient(148deg,rgba(18, 67, 44, 1) 0%, rgba(30, 119, 77, 1) 54%, rgba(55, 120, 64, 1) 100%);">
                 <i class="fa-solid fa-user-plus text-lg"></i>
                 <h3 class="text-xl font-semibold">Add New User</h3>
             </div>
@@ -333,14 +333,14 @@
                         <div>
                             <label class="block text-sm font-semibold text-gray-700">First Name *</label>
                             <input type="text" wire:model="newUser.firstname"
-                                class="mt-2 block w-full rounded-xl border-gray-300 focus:border-1C7C54 focus:ring-1C7C54 sm:text-sm"
+                                class="mt-2 block w-full rounded-xl border-gray-300 sm:text-sm"
                                 placeholder="Enter first name">
                             @error('newUser.firstname') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                         </div>
                         <div>
                             <label class="block text-sm font-semibold text-gray-700">Last Name *</label>
                             <input type="text" wire:model="newUser.lastname"
-                                class="mt-2 block w-full rounded-xl border-gray-300 focus:border-1C7C54 focus:ring-1C7C54 sm:text-sm"
+                                class="mt-2 block w-full rounded-xl border-gray-300 sm:text-sm"
                                 placeholder="Enter last name">
                             @error('newUser.lastname') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                         </div>
@@ -351,13 +351,13 @@
                         <div>
                             <label class="block text-sm font-semibold text-gray-700">Middle Name</label>
                             <input type="text" wire:model="newUser.middlename"
-                                class="mt-2 block w-full rounded-xl border-gray-300 focus:border-1C7C54 focus:ring-1C7C54 sm:text-sm"
+                                class="mt-2 block w-full rounded-xl border-gray-300 sm:text-sm"
                                 placeholder="Enter middle name">
                         </div>
                         <div>
                             <label class="block text-sm font-semibold text-gray-700">Extension Name</label>
                             <input type="text" wire:model="newUser.extensionname"
-                                class="mt-2 block w-full rounded-xl border-gray-300 focus:border-1C7C54 focus:ring-1C7C54 sm:text-sm"
+                                class="mt-2 block w-full rounded-xl border-gray-300 sm:text-sm"
                                 placeholder="e.g., Jr., Sr., III">
                         </div>
                     </div>
@@ -366,7 +366,7 @@
                     <div>
                         <label class="block text-sm font-semibold text-gray-700">Email Address *</label>
                         <input type="email" wire:model="newUser.email"
-                            class="mt-2 block w-full rounded-xl border-gray-300 focus:border-1C7C54 focus:ring-1C7C54 sm:text-sm"
+                            class="mt-2 block w-full rounded-xl border-gray-300 sm:text-sm"
                             placeholder="Enter email address">
                     </div>
 
@@ -375,7 +375,7 @@
                         <div>
                             <label class="block text-sm font-semibold text-gray-700">College</label>
                             <select wire:model="newUser.college_id"
-                                class="mt-2 block w-full rounded-xl border-gray-300 focus:border-1C7C54 focus:ring-1C7C54 sm:text-sm">
+                                class="mt-2 block w-full rounded-xl border-gray-300 sm:text-sm">
                                 <option value="">Select College</option>
                                 @foreach($colleges as $college)
                                     <option value="{{ $college->id }}">{{ $college->name }}</option>
@@ -385,7 +385,7 @@
                         <div>
                             <label class="block text-sm font-semibold text-gray-700">Department</label>
                             <select wire:model="newUser.department_id"
-                                class="mt-2 block w-full rounded-xl border-gray-300 focus:border-1C7C54 focus:ring-1C7C54 sm:text-sm">
+                                class="mt-2 block w-full rounded-xl border-gray-300 sm:text-sm">
                                 <option value="">Select Department</option>
                                 @foreach($departments as $department)
                                     <option value="{{ $department->id }}">{{ $department->name }}</option>
@@ -397,7 +397,7 @@
                     <div>
                         <label class="block text-sm font-semibold text-gray-700">Role *</label>
                         <select wire:model="newUser.role"
-                            class="mt-2 block w-full rounded-xl border-gray-300 focus:border-1C7C54 focus:ring-1C7C54 sm:text-sm">
+                            class="mt-2 block w-full rounded-xl border-gray-300 sm:text-sm">
                             <option value="">Select Role</option>
                             @foreach($roles as $role)
                                 <option value="{{ $role->id }}">{{ ucfirst($role->name) }}</option>
@@ -410,13 +410,13 @@
                         <div>
                             <label class="block text-sm font-semibold text-gray-700">Password *</label>
                             <input type="password" wire:model="newUser.password"
-                                class="mt-2 block w-full rounded-xl border-gray-300 focus:border-1C7C54 focus:ring-1C7C54 sm:text-sm"
+                                class="mt-2 block w-full rounded-xl border-gray-300 sm:text-sm"
                                 placeholder="Enter password">
                         </div>
                         <div>
                             <label class="block text-sm font-semibold text-gray-700">Confirm Password *</label>
                             <input type="password" wire:model="newUser.password_confirmation"
-                                class="mt-2 block w-full rounded-xl border-gray-300 focus:border-1C7C54 focus:ring-1C7C54 sm:text-sm"
+                                class="mt-2 block w-full rounded-xl border-gray-300 sm:text-sm"
                                 placeholder="Confirm password">
                         </div>
                     </div>
@@ -428,7 +428,7 @@
                     <button type="button" wire:click="closeAddUserModal" class="bg-white py-2 px-4 border border-gray-300 rounded-full shadow-sm text-sm font-medium text-gray-500 cursor-pointer">
                         Cancel
                     </button>
-                    <button type="button" wire:click="addUser" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-full shadow-sm text-white bg-1C7C54 hover:bg-1B512D focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-73E2A7 cursor-pointer">
+                    <button type="button" wire:click="addUser" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-full shadow-sm text-white bg-green-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-73E2A7 cursor-pointer">
                         <i class="fa-solid fa-user-plus mr-2"></i> Add User
                     </button>
                 </div>
@@ -440,7 +440,7 @@
     @if($showEditUserModal)
         <x-modal name="edit-user-modal" :show="$showEditUserModal" maxWidth="2xl">
             <!-- Header -->
-            <div class="bg-1C7C54 text-white rounded-t-xl px-6 py-4 flex items-center space-x-3">
+            <div class=" text-white rounded-t-xl px-6 py-4 flex items-center space-x-3" style="background: linear-gradient(148deg,rgba(18, 67, 44, 1) 0%, rgba(30, 119, 77, 1) 54%, rgba(55, 120, 64, 1) 100%);">
                 <i class="fa-solid fa-user-edit text-lg"></i>
                 <h3 class="text-xl font-semibold">Edit User</h3>
             </div>
@@ -453,14 +453,14 @@
                         <div>
                             <label class="block text-sm font-semibold text-gray-700">First Name *</label>
                             <input type="text" wire:model="editingUser.firstname"
-                                class="mt-2 block w-full rounded-xl border-gray-300 focus:border-1C7C54 focus:ring-1C7C54 sm:text-sm"
+                                class="mt-2 block w-full rounded-xl border-gray-300 sm:text-sm"
                                 placeholder="Enter first name">
                             @error('editingUser.firstname') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                         </div>
                         <div>
                             <label class="block text-sm font-semibold text-gray-700">Last Name *</label>
                             <input type="text" wire:model="editingUser.lastname"
-                                class="mt-2 block w-full rounded-xl border-gray-300 focus:border-1C7C54 focus:ring-1C7C54 sm:text-sm"
+                                class="mt-2 block w-full rounded-xl border-gray-300 sm:text-sm"
                                 placeholder="Enter last name">
                             @error('editingUser.lastname') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                         </div>
@@ -471,13 +471,13 @@
                         <div>
                             <label class="block text-sm font-semibold text-gray-700">Middle Name</label>
                             <input type="text" wire:model="editingUser.middlename"
-                                class="mt-2 block w-full rounded-xl border-gray-300 focus:border-1C7C54 focus:ring-1C7C54 sm:text-sm"
+                                class="mt-2 block w-full rounded-xl border-gray-300 sm:text-sm"
                                 placeholder="Enter middle name">
                         </div>
                         <div>
                             <label class="block text-sm font-semibold text-gray-700">Extension Name</label>
                             <input type="text" wire:model="editingUser.extensionname"
-                                class="mt-2 block w-full rounded-xl border-gray-300 focus:border-1C7C54 focus:ring-1C7C54 sm:text-sm"
+                                class="mt-2 block w-full rounded-xl border-gray-300 sm:text-sm"
                                 placeholder="e.g., Jr., Sr., III">
                         </div>
                     </div>
@@ -486,7 +486,7 @@
                     <div>
                         <label class="block text-sm font-semibold text-gray-700">Email Address *</label>
                             <input type="email" wire:model="editingUser.email"
-                                class="mt-2 block w-full rounded-xl border-gray-300 focus:border-1C7C54 focus:ring-1C7C54 sm:text-sm"
+                                class="mt-2 block w-full rounded-xl border-gray-300 sm:text-sm"
                                 placeholder="Enter email address">
                         @error('editingUser.email') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                     </div>
@@ -496,7 +496,7 @@
                         <div>
                             <label class="block text-sm font-semibold text-gray-700">College</label>
                             <select wire:model="editingUser.college_id"
-                                class="mt-2 block w-full rounded-xl border-gray-300 focus:border-1C7C54 focus:ring-1C7C54 sm:text-sm">
+                                class="mt-2 block w-full rounded-xl border-gray-300 sm:text-sm">
                                 <option value="">Select College</option>
                                 @foreach($colleges as $college)
                                     <option value="{{ $college->id }}">{{ $college->name }}</option>
@@ -506,7 +506,7 @@
                         <div>
                             <label class="block text-sm font-semibold text-gray-700">Department</label>
                             <select wire:model="editingUser.department_id"
-                                class="mt-2 block w-full rounded-xl border-gray-300 focus:border-1C7C54 focus:ring-1C7C54 sm:text-sm">
+                                class="mt-2 block w-full rounded-xl border-gray-300 sm:text-sm">
                                 <option value="">Select Department</option>
                                 @foreach($departments as $department)
                                     <option value="{{ $department->id }}">{{ $department->name }}</option>
@@ -518,7 +518,7 @@
                     <div>
                         <label class="block text-sm font-semibold text-gray-700">Role *</label>
                         <select wire:model="editingUser.role"
-                            class="mt-2 block w-full rounded-xl border-gray-300 focus:border-1C7C54 focus:ring-1C7C54 sm:text-sm">
+                            class="mt-2 block w-full rounded-xl border-gray-300 sm:text-sm">
                             <option value="">Select Role</option>
                             @foreach($roles as $role)
                                 <option value="{{ $role->id }}">{{ ucfirst($role->name) }}</option>
@@ -532,13 +532,13 @@
                         <div>
                             <label class="block text-sm font-semibold text-gray-700">New Password (Optional)</label>
                             <input type="password" wire:model="editingUser.password"
-                                class="mt-2 block w-full rounded-xl border-gray-300 focus:border-1C7C54 focus:ring-1C7C54 sm:text-sm"
+                                class="mt-2 block w-full rounded-xl border-gray-300 sm:text-sm"
                                 placeholder="Enter new password">
                         </div>
                         <div>
                             <label class="block text-sm font-semibold text-gray-700">Confirm Password</label>
                             <input type="password" wire:model="editingUser.password_confirmation"
-                                class="mt-2 block w-full rounded-xl border-gray-300 focus:border-1C7C54 focus:ring-1C7C54 sm:text-sm"
+                                class="mt-2 block w-full rounded-xl border-gray-300 sm:text-sm"
                                 placeholder="Confirm new password">
                         </div>
                     </div>
@@ -550,7 +550,7 @@
                     <button type="button" wire:click="closeEditUserModal" class="bg-white py-2 px-4 border border-gray-300 rounded-full shadow-sm text-sm font-medium text-gray-500 cursor-pointer">
                         Cancel
                     </button>
-                    <button type="button" wire:click="updateUser" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-full shadow-sm text-white bg-1C7C54 hover:bg-1B512D focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-73E2A7 cursor-pointer">
+                    <button type="button" wire:click="updateUser" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-full shadow-sm text-white bg-green-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-73E2A7 cursor-pointer">
                         <i class="fa-solid fa-user-check mr-2"></i> Update User
                     </button>
                 </div>

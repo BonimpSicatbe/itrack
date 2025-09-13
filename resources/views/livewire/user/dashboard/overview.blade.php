@@ -1,4 +1,4 @@
-<div class="bg-white rounded-lg shadow-sm p-4">
+<div class="bg-white rounded-xl shadow-sm p-4">
     <div class="flex divide-x divide-gray-200">
         @foreach ($stats as $stat)
             <div class="flex-1 px-4 first:pl-0 last:pr-0">

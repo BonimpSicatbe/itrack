@@ -32,9 +32,7 @@ class Recent extends Component
 
     public function showRequirementDetail($submissionId)
     {
-        $submission = SubmittedRequirement::find($submissionId);
-        $this->selectedRequirementId = $submission->requirement_id;
-        $this->dispatch('showRequirementDetail', requirementId: $this->selectedRequirementId);
+        $this->dispatch('showRecentSubmissionDetail', submissionId: $submissionId);
     }
 
     public function render()

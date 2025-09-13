@@ -1,378 +1,375 @@
 <?php
 
-namespace App\Livewire\user\Requirements;
+namespace App\Livewire\User\Requirements;
 
-use Livewire\Component;
+use App\Models\College;
+use App\Models\Department;
 use App\Models\Requirement;
 use App\Models\Semester;
-use Livewire\WithPagination;
+use App\Models\User;
+use App\Models\SubmittedRequirement;
 use App\Models\RequirementSubmissionIndicator;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
+use Livewire\Component;
+use Livewire\Attributes\Computed;
+use Livewire\WithFileUploads;
 
 class RequirementsList extends Component
 {
-    use WithPagination;
+    use WithFileUploads;
 
-    public $perPage = 10;
     public $search = '';
+    public $statusFilter = 'all';
     public $sortField = 'due';
-    public $sortDirection = 'asc';
+    public $sortDirection = 'desc';
+    public $file;
+    public $confirmingDeletion = null;
+    public $submissionNotes = '';
+    public $currentRequirementId = null;
+    public $openAccordions = [];
+    public $activeSemester;
+    public $activeTabs = [];
     
-    // Track submitted requirements in real-time
-    public $submittedRequirements = [];
-    
-    // New properties for direct navigation from notifications
-    public $highlightedRequirement = null;
-    public $selectedRequirement = null;
-    public $selectedRequirementData = null;
+    // Add these properties for delete modal
+    public $showDeleteModal = false;
+    public $submissionToDelete = null;
 
     protected $queryString = [
         'search' => ['except' => ''],
+        'statusFilter' => ['except' => 'all'],
         'sortField' => ['except' => 'due'],
-        'sortDirection' => ['except' => 'asc'],
-        'requirement' => ['except' => '', 'as' => 'req'], // Add query string support for requirement ID
-    ];
-
-    protected $listeners = [
-        'requirementUpdated' => '$refresh',
-        'showRequirementDetail' => 'showRequirementDetail',
+        'sortDirection' => ['except' => 'desc'],
     ];
 
     public function mount()
     {
-        // Check if a specific requirement should be highlighted from URL parameter
-        $this->highlightedRequirement = request()->get('requirement');
-        
-        // Initialize submitted requirements on mount
-        $this->loadSubmittedRequirements();
-        
-        // If there's a highlighted requirement from URL, auto-select it
-        if ($this->highlightedRequirement) {
-            $this->selectRequirement($this->highlightedRequirement);
-        }
+        $this->activeSemester = Semester::getActiveSemester();
     }
 
-    // New method to handle requirement selection from notifications
-    public function selectRequirement($requirementId)
+    public function isPreviewable($mimeType)
     {
-        $this->selectedRequirement = $requirementId;
+        $previewableMimes = [
+            'image/jpeg',
+            'image/png',
+            'image/gif',
+            'application/pdf',
+            'text/plain',
+        ];
         
-        // Load the requirement details
-        $requirement = Requirement::with(['media', 'userSubmissions'])
-            ->where('id', $requirementId)
-            ->first();
-            
-        if ($requirement) {
-            $this->selectedRequirementData = $requirement;
-            
-            // Clear the highlight after selection
-            $this->highlightedRequirement = null;
-            
-            // Update the URL without the requirement parameter
-            $this->js('window.history.replaceState({}, "", "/user/requirements")');
-            
-            // Dispatch event to show requirement detail modal
-            $this->dispatch('showRequirementDetail', requirementId: $requirementId);
-        }
+        return in_array($mimeType, $previewableMimes);
     }
 
-    // Method to handle requirement detail display
-    public function showRequirementDetail($requirementId)
+    public function toggleAccordion($requirementId)
     {
-        $this->selectedRequirement = $requirementId;
-        
-        // Load the requirement details
-        $requirement = Requirement::with(['media', 'userSubmissions'])
-            ->where('id', $requirementId)
-            ->first();
-            
-        if ($requirement) {
-            $this->selectedRequirementData = $requirement;
-            
-            // Clear the highlight after selection
-            $this->highlightedRequirement = null;
-            
-            // Update the URL without the requirement parameter
-            $this->js('window.history.replaceState({}, "", "/user/requirements")');
-            
-            // Dispatch event to show requirement detail modal - FIXED THIS LINE
-            $this->dispatch('showRequirementDetail', requirementId: $requirementId)->to('user.requirement-detail-modal');
-        }
-    }
-
-    public function updatedHighlightedRequirement()
-    {
-        if ($this->highlightedRequirement) {
-            // Automatically open the modal for the highlighted requirement
-            $this->dispatch('showRequirementDetail', requirementId: $this->highlightedRequirement);
-        }
-    }
-    
-    public function loadSubmittedRequirements()
-    {
-        $user = Auth::user();
-        if ($user) {
-            $this->submittedRequirements = RequirementSubmissionIndicator::where('user_id', $user->id)
-                ->pluck('requirement_id')
-                ->toArray();
-        }
-    }
-
-    public function loadMore()
-    {
-        $this->perPage += 10;
-        $this->resetPage();
-    }
-
-    public function sortBy($field)
-    {
-        Log::info('Sort button clicked', ['field' => $field, 'current_sort' => $this->sortField]);
-        
-        if ($this->sortField === $field) {
-            $this->sortDirection = $this->sortDirection === 'asc' ? 'desc' : 'asc';
+        if (isset($this->openAccordions[$requirementId])) {
+            unset($this->openAccordions[$requirementId]);
         } else {
-            $this->sortDirection = 'asc';
-        }
-        $this->sortField = $field;
-        
-        Log::info('Sort updated', ['new_field' => $this->sortField, 'direction' => $this->sortDirection]);
-        
-        // Reset pagination to first page when sorting
-        $this->resetPage();
-    }
-
-    public function markAsDone($requirementId)
-    {
-        try {
-            $user = Auth::user();
-            
-            if (!$user) {
-                session()->flash('error', 'You must be logged in to perform this action.');
-                return;
-            }
-
-            // Use DB transaction for data integrity
-            DB::beginTransaction();
-            
-            // Validate the requirement exists and belongs to the user
-            $requirement = $user->requirements()->find($requirementId);
-            
-            if (!$requirement) {
-                DB::rollBack();
-                session()->flash('error', 'Requirement not found or you do not have permission to modify it.');
-                return;
-            }
-
-            // Check if already submitted to prevent duplicates
-            $existingSubmission = RequirementSubmissionIndicator::where('requirement_id', $requirementId)
-                ->where('user_id', $user->id)
-                ->first();
-
-            if ($existingSubmission) {
-                DB::rollBack();
-                session()->flash('error', 'This requirement has already been marked as done.');
-                return;
-            }
-            
-            // Create a submission indicator
-            $submission = RequirementSubmissionIndicator::create([
-                'requirement_id' => $requirementId,
-                'user_id' => $user->id,
-                'submitted_at' => now(),
-            ]);
-
-            if ($submission) {
-                DB::commit();
-                
-                // Update the local submitted requirements array immediately
-                $this->submittedRequirements[] = $requirementId;
-                
-                session()->flash('message', 'Requirement marked as done successfully!');
-                
-                Log::info('Requirement marked as done', [
-                    'requirement_id' => $requirementId,
-                    'user_id' => $user->id,
-                    'submission_id' => $submission->id
-                ]);
-                
-                // Refresh the component to update the UI
-                $this->dispatch('$refresh');
-            } else {
-                DB::rollBack();
-                session()->flash('error', 'Failed to mark requirement as done. Please try again.');
-            }
-            
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('Error marking requirement as done', [
-                'requirement_id' => $requirementId,
-                'user_id' => Auth::id(),
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-            
-            session()->flash('error', 'An error occurred while marking the requirement as done. Please try again.');
+            $this->openAccordions[$requirementId] = true;
+            $this->setActiveTab($requirementId, 'details');
         }
     }
 
-    public function markAsUndone($requirementId)
+    public function isAccordionOpen($requirementId)
     {
-        try {
-            $user = Auth::user();
-            
-            if (!$user) {
-                session()->flash('error', 'You must be logged in to perform this action.');
-                return;
-            }
-
-            // Use DB transaction for data integrity
-            DB::beginTransaction();
-            
-            // Validate the requirement exists and belongs to the user
-            $requirement = $user->requirements()->find($requirementId);
-            
-            if (!$requirement) {
-                DB::rollBack();
-                session()->flash('error', 'Requirement not found or you do not have permission to modify it.');
-                return;
-            }
-            
-            // Delete the submission indicator
-            $deleted = RequirementSubmissionIndicator::where('requirement_id', $requirementId)
-                ->where('user_id', $user->id)
-                ->delete();
-            
-            if ($deleted > 0) {
-                DB::commit();
-                
-                // Remove from local submitted requirements array immediately
-                $this->submittedRequirements = array_values(
-                    array_diff($this->submittedRequirements, [$requirementId])
-                );
-                
-                session()->flash('message', 'Requirement marked as undone successfully!');
-                
-                Log::info('Requirement marked as undone', [
-                    'requirement_id' => $requirementId,
-                    'user_id' => $user->id,
-                    'deleted_count' => $deleted
-                ]);
-                
-                // Refresh the component to update the UI
-                $this->dispatch('$refresh');
-            } else {
-                DB::rollBack();
-                session()->flash('error', 'No submission record found to undo.');
-            }
-            
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('Error marking requirement as undone', [
-                'requirement_id' => $requirementId,
-                'user_id' => Auth::id(),
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-            
-            session()->flash('error', 'An error occurred while marking the requirement as undone. Please try again.');
-        }
+        return isset($this->openAccordions[$requirementId]);
     }
 
-    public function isRequirementSubmitted($requirementId)
+    public function setActiveTab($requirementId, $tabName)
     {
-        // Check both the local array and database to ensure accuracy
-        if (in_array($requirementId, $this->submittedRequirements)) {
-            return true;
-        }
-        
+        $this->activeTabs[$requirementId] = $tabName;
+    }
+
+    public function isTabActive($requirementId, $tabName)
+    {
+        return isset($this->activeTabs[$requirementId]) && $this->activeTabs[$requirementId] === $tabName;
+    }
+
+    #[Computed]
+    public function requirements()
+    {
         $user = Auth::user();
+        $activeSemester = $this->activeSemester;
         
-        if (!$user) {
+        if (!$activeSemester) {
+            return collect();
+        }
+
+        // Get requirements assigned to user's college or department using assigned_to column
+        $requirements = Requirement::where('semester_id', $activeSemester->id)
+            ->where(function($query) use ($user) {
+                if ($user->college) {
+                    $query->orWhere('assigned_to', $user->college->name);
+                }
+                if ($user->department) {
+                    $query->orWhere('assigned_to', $user->department->name);
+                }
+            })
+            ->with(['userSubmissions' => function($query) use ($user) {
+                $query->where('user_id', $user->id);
+            }])
+            ->with('guides')
+            ->when($this->search, fn($q) => $q->where('name', 'like', '%' . $this->search . '%'))
+            ->orderBy($this->sortField, $this->sortDirection)
+            ->get();
+
+        return $requirements->map(function ($requirement) use ($user) {
+            $count = 0;
+            
+            if (College::where('name', $requirement->assigned_to)->exists()) {
+                $college = College::where('name', $requirement->assigned_to)->first();
+                $count = User::where('college_id', $college->id)->count();
+            } elseif (Department::where('name', $requirement->assigned_to)->exists()) {
+                $department = Department::where('name', $requirement->assigned_to)->first();
+                $count = User::where('department_id', $department->id)->count();
+            }
+            
+            // Check if current user has submitted this requirement
+            $userSubmitted = SubmittedRequirement::where('requirement_id', $requirement->id)
+                ->where('user_id', $user->id)
+                ->exists();
+            
+            $userMarkedDone = RequirementSubmissionIndicator::where('requirement_id', $requirement->id)
+                ->where('user_id', $user->id)
+                ->exists();
+            
+            $requirement->assigned_users_count = $count;
+            $requirement->user_has_submitted = $userSubmitted || $userMarkedDone;
+            $requirement->user_marked_done = $userMarkedDone;
+            
+            return $requirement;
+        })
+        ->filter(function ($requirement) {
+            // Apply status filter
+            if ($this->statusFilter === 'completed') {
+                return $requirement->user_marked_done;
+            } elseif ($this->statusFilter === 'overdue') {
+                return $requirement->due->isPast() && !$requirement->user_has_submitted;
+            }
+            return true; // 'all' filter or no filter
+        });
+    }
+
+    public function submitRequirement($requirementId)
+    {
+        $this->validate([
+            'file' => 'required|file|max:10240',
+            'submissionNotes' => 'nullable|string|max:500',
+        ]);
+
+        try {
+            $requirement = Requirement::findOrFail($requirementId);
+            
+            // Create the submission
+            $submittedRequirement = SubmittedRequirement::create([
+                'requirement_id' => $requirementId,
+                'user_id' => Auth::id(),
+                'submitted_at' => now(),
+                'admin_notes' => $this->submissionNotes,
+                'status' => SubmittedRequirement::STATUS_UNDER_REVIEW,
+            ]);
+
+            // Add the file
+            $submittedRequirement
+                ->addMedia($this->file->getRealPath())
+                ->usingName($this->file->getClientOriginalName())
+                ->usingFileName($this->file->getClientOriginalName())
+                ->toMediaCollection('submission_files');
+
+            // Reset form
+            $this->reset(['file', 'submissionNotes']);
+            
+            // Switch to submissions tab
+            $this->setActiveTab($requirementId, 'submissions');
+            
+            // Show success message
+            $this->dispatch('showNotification', 
+                type: 'success',
+                content: 'Requirement submitted successfully!'
+            );
+            
+        } catch (\Exception $e) {
+            $this->dispatch('showNotification',
+                type: 'error',
+                content: 'Failed to submit requirement: ' . $e->getMessage()
+            );
+        }
+    }
+
+    public function confirmDelete($submissionId)
+    {
+        $this->submissionToDelete = $submissionId;
+        $this->showDeleteModal = true;
+    }
+
+    public function cancelDelete()
+    {
+        $this->showDeleteModal = false;
+        $this->submissionToDelete = null;
+    }
+
+    public function deleteSubmission()
+    {
+        try {
+            if (!$this->submissionToDelete) {
+                return;
+            }
+            
+            $submission = SubmittedRequirement::findOrFail($this->submissionToDelete);
+            
+            // Check if user can delete this submission
+            if ($submission->user_id !== Auth::id()) {
+                $this->dispatch('showNotification',
+                    type: 'error',
+                    content: 'You are not authorized to delete this submission.'
+                );
+                return;
+            }
+            
+            // Check if submission can be deleted (not approved)
+            if ($submission->status === SubmittedRequirement::STATUS_APPROVED) {
+                $this->dispatch('showNotification',
+                    type: 'error',
+                    content: 'Approved submissions cannot be deleted.'
+                );
+                return;
+            }
+            
+            // Delete associated file
+            if ($submission->submissionFile) {
+                $submission->submissionFile->delete();
+            }
+            
+            // Delete the submission
+            $submission->delete();
+            
+            $this->showDeleteModal = false;
+            $this->submissionToDelete = null;
+            
+            $this->dispatch('showNotification',
+                type: 'success',
+                content: 'Submission deleted successfully.'
+            );
+            
+        } catch (\Exception $e) {
+            $this->dispatch('showNotification',
+                type: 'error',
+                content: 'Failed to delete submission: ' . $e->getMessage()
+            );
+        }
+    }
+
+    protected function deleteNotificationForRequirement($requirementId, $userId)
+    {
+        try {
+            // Get all admin users
+            $admins = User::role('admin')->get();
+            
+            foreach ($admins as $admin) {
+                // Get all notifications for this admin
+                $notifications = $admin->notifications()
+                    ->where('type', 'App\Notifications\NewSubmissionNotification')
+                    ->get();
+                
+                // Find notifications that match this requirement and user
+                foreach ($notifications as $notification) {
+                    $data = $notification->data;
+                    
+                    // Check if this notification is for the same requirement and user
+                    if (isset($data['requirement_id']) && 
+                        $data['requirement_id'] == $requirementId &&
+                        isset($data['user_id']) && 
+                        $data['user_id'] == $userId) {
+                        
+                        // Delete the notification
+                        $notification->delete();
+                    }
+                }
+            }
+            
+            return true;
+        } catch (\Exception $e) {
+            \Log::error('Failed to delete notification: ' . $e->getMessage());
             return false;
         }
-        
-        $exists = RequirementSubmissionIndicator::where('requirement_id', $requirementId)
-            ->where('user_id', $user->id)
-            ->exists();
-            
-        // If it exists in DB but not in local array, add it
-        if ($exists && !in_array($requirementId, $this->submittedRequirements)) {
-            $this->submittedRequirements[] = $requirementId;
-        }
-        
-        return $exists;
     }
 
-    public function updatedSearch()
+    // Modify the toggleMarkAsDone method
+    public function toggleMarkAsDone($requirementId)
     {
-        $this->resetPage();
+        try {
+            $user = Auth::user();
+            
+            // Check if user has submitted this requirement
+            $submissionExists = SubmittedRequirement::where('requirement_id', $requirementId)
+                ->where('user_id', $user->id)
+                ->exists();
+                
+            if (!$submissionExists) {
+                $this->dispatch('showNotification',
+                    type: 'error',
+                    content: 'You need to submit a file first before marking as done.'
+                );
+                return;
+            }
+            
+            // Check if already marked as done
+            $existingIndicator = RequirementSubmissionIndicator::where('requirement_id', $requirementId)
+                ->where('user_id', $user->id)
+                ->first();
+            
+            if ($existingIndicator) {
+                // Toggle off - mark as undone
+                $existingIndicator->delete();
+                $message = 'Requirement marked as undone!';
+                
+                // DELETE THE NOTIFICATION FOR ADMINS
+                $this->deleteNotificationForRequirement($requirementId, $user->id);
+                
+            } else {
+                // Toggle on - mark as done (existing code remains the same)
+                $indicator = RequirementSubmissionIndicator::create([
+                    'requirement_id' => $requirementId,
+                    'user_id' => $user->id,
+                    'submitted_at' => now(),
+                ]);
+                $message = 'Requirement marked as done!';
+                
+                // Get the requirement
+                $requirement = Requirement::findOrFail($requirementId);
+                
+                // Get ALL submissions for this requirement by this user
+                $submissions = SubmittedRequirement::where('requirement_id', $requirementId)
+                    ->where('user_id', $user->id)
+                    ->with('media')
+                    ->get();
+                
+                if ($submissions->count() > 0) {
+                    // Notify all admins with ALL submissions
+                    $admins = User::role('admin')->get();
+                    foreach ($admins as $admin) {
+                        $admin->notify(new \App\Notifications\NewSubmissionNotification($requirement, $submissions));
+                    }
+                }
+            }
+            
+            $this->dispatch('showNotification',
+                type: 'success',
+                content: $message
+            );
+            
+        } catch (\Exception $e) {
+            $this->dispatch('showNotification',
+                type: 'error',
+                content: 'Failed to update status: ' . $e->getMessage()
+            );
+        }
     }
 
     public function render()
     {
-        $user = Auth::user();
-        
-        if (!$user) {
-            return view('livewire.user.requirements.requirements-list', [
-                'requirements' => collect()->paginate($this->perPage),
-            ]);
-        }
-
-        $userId = $user->id;
-
-        // Get active semester
-        $activeSemester = Semester::getActiveSemester();
-        
-        if (!$activeSemester) {
-            return view('livewire.user.requirements.requirements-list', [
-                'requirements' => collect()->paginate($this->perPage),
-            ]);
-        }
-
-        // Refresh submitted requirements to ensure accuracy
-        $this->loadSubmittedRequirements();
-
-        $query = $user->requirements()
-            ->where('semester_id', $activeSemester->id); // Only requirements from active semester
-
-        // Apply search filter
-        if (!empty($this->search)) {
-            $searchTerm = '%' . $this->search . '%';
-            $query->where(function ($q) use ($searchTerm) {
-                $q->where('name', 'like', $searchTerm)
-                    ->orWhere('description', 'like', $searchTerm);
-            });
-        }
-
-        // Apply sorting with proper validation
-        $allowedSortFields = ['name', 'due', 'priority', 'created_at'];
-        $sortField = in_array($this->sortField, $allowedSortFields) ? $this->sortField : 'due';
-        $sortDirection = in_array($this->sortDirection, ['asc', 'desc']) ? $this->sortDirection : 'asc';
-
-        if ($sortField === 'priority') {
-            // Custom sorting for priority field
-            $query->orderByRaw("FIELD(priority, 'high', 'medium', 'low') " . ($sortDirection === 'asc' ? 'ASC' : 'DESC'));
-        } else {
-            // Default sorting for other fields
-            $query->orderBy($sortField, $sortDirection);
-        }
-
-        // Use pagination instead of get()
-        $requirements = $query->paginate($this->perPage);
-
-        Log::info('Render requirements', [
-            'submitted_count' => count($this->submittedRequirements),
-            'total_requirements' => $requirements->total(),
-            'search' => $this->search,
-            'sort_field' => $this->sortField,
-            'sort_direction' => $this->sortDirection,
-            'highlighted_requirement' => $this->highlightedRequirement
-        ]);
-
         return view('livewire.user.requirements.requirements-list', [
-            'requirements' => $requirements,
+            'activeSemester' => $this->activeSemester,
         ]);
     }
 }

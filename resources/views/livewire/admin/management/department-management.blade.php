@@ -42,7 +42,7 @@
                     <input 
                         type="text" 
                         wire:model.live.debounce.300ms="search"
-                        class="pl-10 block w-full rounded-xl border-gray-300 shadow-sm focus:border-1C7C54 focus:ring-1C7C54 sm:text-sm" 
+                        class="pl-10 block w-full rounded-xl border-gray-300 shadow-sm focus:border-green-600 focus:ring-green-600 sm:text-sm" 
                         placeholder="Search by name or college"
                     >
                 </div>
@@ -116,7 +116,7 @@
     @if($showAddDepartmentModal)
         <x-modal name="add-department-modal" :show="$showAddDepartmentModal" maxWidth="2xl">
             <!-- Header -->
-            <div class="bg-1C7C54 text-white rounded-t-xl px-6 py-4 flex items-center space-x-3">
+            <div class=" text-white rounded-t-xl px-6 py-4 flex items-center space-x-3" style="background: linear-gradient(148deg,rgba(18, 67, 44, 1) 0%, rgba(30, 119, 77, 1) 54%, rgba(55, 120, 64, 1) 100%);">
                 <i class="fa-solid fa-building text-lg"></i>
                 <h3 class="text-xl font-semibold">Add New Department</h3>
             </div>
@@ -128,7 +128,7 @@
                     <div>
                         <label class="block text-sm font-semibold text-gray-700">Department Name *</label>
                         <input type="text" wire:model="newDepartment.name"
-                            class="mt-2 block w-full rounded-xl border-gray-300 focus:border-1C7C54 focus:ring-1C7C54 sm:text-sm"
+                            class="mt-2 block w-full rounded-xl border-gray-300 sm:text-sm"
                             placeholder="Enter department name">
                         @error('newDepartment.name') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                     </div>
@@ -137,7 +137,7 @@
                     <div>
                         <label class="block text-sm font-semibold text-gray-700">College *</label>
                         <select wire:model="newDepartment.college_id"
-                            class="mt-2 block w-full rounded-xl border-gray-300 focus:border-1C7C54 focus:ring-1C7C54 sm:text-sm">
+                            class="mt-2 block w-full rounded-xl border-gray-300 sm:text-sm">
                             <option value="">Select a College</option>
                             @foreach($colleges as $college)
                                 <option value="{{ $college->id }}">{{ $college->name }} ({{ $college->acronym }})</option>
@@ -154,7 +154,7 @@
                         Cancel
                     </button>
                     <button type="button" wire:click="addDepartment" wire:loading.attr="disabled"
-                        class="px-5 py-2 rounded-full bg-1C7C54 text-white font-semibold text-sm shadow hover:bg-1B512D cursor-pointer">
+                        class="px-5 py-2 rounded-full bg-green-600 text-white font-semibold text-sm shadow  cursor-pointer">
                         <span wire:loading.remove wire:target="addDepartment">Add Department</span>
                         <span wire:loading wire:target="addDepartment">
                             <i class="fa-solid fa-spinner fa-spin mr-2"></i> Adding...
@@ -169,7 +169,7 @@
     @if($showEditDepartmentModal)
         <x-modal name="edit-department-modal" :show="$showEditDepartmentModal" maxWidth="2xl">
             <!-- Header -->
-            <div class="bg-1C7C54 text-white rounded-t-xl px-6 py-4 flex items-center space-x-3">
+            <div class=" text-white rounded-t-xl px-6 py-4 flex items-center space-x-3" style="background: linear-gradient(148deg,rgba(18, 67, 44, 1) 0%, rgba(30, 119, 77, 1) 54%, rgba(55, 120, 64, 1) 100%);">
                 <i class="fa-solid fa-building text-lg"></i>
                 <h3 class="text-xl font-semibold">Edit Department</h3>
             </div>
@@ -181,7 +181,7 @@
                     <div>
                         <label class="block text-sm font-semibold text-gray-700">Department Name *</label>
                         <input type="text" wire:model="editingDepartment.name"
-                            class="mt-2 block w-full rounded-xl border-gray-300 focus:border-1C7C54 focus:ring-1C7C54 sm:text-sm"
+                            class="mt-2 block w-full rounded-xl border-gray-300 sm:text-sm"
                             placeholder="Enter department name">
                         @error('editingDepartment.name') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                     </div>
@@ -190,7 +190,7 @@
                     <div>
                         <label class="block text-sm font-semibold text-gray-700">College *</label>
                         <select wire:model="editingDepartment.college_id"
-                            class="mt-2 block w-full rounded-xl border-gray-300 focus:border-1C7C54 focus:ring-1C7C54 sm:text-sm">
+                            class="mt-2 block w-full rounded-xl border-gray-300 sm:text-sm">
                             <option value="">Select a College</option>
                             @foreach($colleges as $college)
                                 <option value="{{ $college->id }}">{{ $college->name }} ({{ $college->acronym }})</option>
@@ -207,7 +207,7 @@
                         Cancel
                     </button>
                     <button type="button" wire:click="updateDepartment" wire:loading.attr="disabled"
-                        class="px-5 py-2 rounded-full bg-1C7C54 text-white font-semibold text-sm shadow hover:bg-1B512D cursor-pointer">
+                        class="px-5 py-2 rounded-full bg-green-600 text-white font-semibold text-sm shadow cursor-pointer">
                         <span wire:loading.remove wire:target="updateDepartment">Update Department</span>
                         <span wire:loading wire:target="updateDepartment">
                             <i class="fa-solid fa-spinner fa-spin mr-2"></i> Updating...

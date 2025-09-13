@@ -3,7 +3,7 @@
 namespace App\Notifications;
 
 use App\Models\Requirement;
-use App\Models\SubmittedRequirement;
+use Illuminate\Support\Collection;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
 
@@ -12,12 +12,12 @@ class NewSubmissionNotification extends Notification
     use Queueable;
 
     public $requirement;
-    public $submission;
+    public $submissions;
 
-    public function __construct(Requirement $requirement, SubmittedRequirement $submission)
+    public function __construct(Requirement $requirement, Collection $submissions)
     {
         $this->requirement = $requirement;
-        $this->submission = $submission;
+        $this->submissions = $submissions;
     }
 
     public function via($notifiable)
@@ -27,12 +27,15 @@ class NewSubmissionNotification extends Notification
 
     public function toDatabase($notifiable)
     {
+        // Get the first submission to get user info
+        $firstSubmission = $this->submissions->first();
+        
         return [
             'type' => 'new_submission',
             'message' => 'New submission for requirement: ' . $this->requirement->name,
             'requirement_id' => $this->requirement->id,
-            'submission_id' => $this->submission->id,
-            'user_id' => $this->submission->user_id,
+            'submission_ids' => $this->submissions->pluck('id')->toArray(),
+            'user_id' => $firstSubmission ? $firstSubmission->user_id : null,
             'created_at' => now()->toDateTimeString(),
         ];
     }

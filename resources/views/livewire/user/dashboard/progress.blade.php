@@ -1,4 +1,4 @@
-<div class="flex flex-col p-4 overflow-hidden bg-white rounded-lg">
+<div class="flex flex-col p-4 overflow-hidden bg-white rounded-xl">
     
     {{-- Progress Bar --}}
     @if($totalSubmissions > 0)

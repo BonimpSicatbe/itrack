@@ -37,7 +37,7 @@
                 <input 
                     type="text" 
                     wire:model.live.debounce.300ms="search"
-                    class="pl-10 block w-full rounded-xl border-gray-300 shadow-sm focus:border-1C7C54 focus:ring-1C7C54 sm:text-sm" 
+                    class="pl-10 block w-full rounded-xl border-gray-300 shadow-sm focus:border-green-600 focus:ring-green-600 sm:text-sm" 
                     placeholder="Search by name or acronym"
                 >
             </div>
@@ -174,7 +174,7 @@
     @if($showCreateModal)
         <x-modal name="create-semester-modal" :show="$showCreateModal" maxWidth="md">
             <!-- Header -->
-            <div class="bg-1C7C54 text-white rounded-t-xl px-6 py-4 flex items-center space-x-3">
+            <div class="text-white rounded-t-xl px-6 py-4 flex items-center space-x-3" style="background: linear-gradient(148deg,rgba(18, 67, 44, 1) 0%, rgba(30, 119, 77, 1) 54%, rgba(55, 120, 64, 1) 100%);">
                 <i class="fa-solid fa-calendar-plus text-lg"></i>
                 <h3 class="text-xl font-semibold">Add New Semester</h3>
             </div>
@@ -185,7 +185,7 @@
                     <div>
                         <label class="block text-sm font-semibold text-gray-700">Semester Name *</label>
                         <input type="text" wire:model="name" 
-                            class="mt-1 block w-full rounded-xl border-gray-300 focus:border-1C7C54 focus:ring-1C7C54 sm:text-sm"
+                            class="mt-1 block w-full rounded-xl border-gray-300 sm:text-sm"
                             placeholder="e.g., 1st Semester 2023-2024">
                         @error('name') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                     </div>
@@ -193,14 +193,14 @@
                     <div>
                         <label class="block text-sm font-semibold text-gray-700">Start Date *</label>
                         <input type="date" wire:model="start_date" 
-                            class="mt-1 block w-full rounded-xl border-gray-300 focus:border-1C7C54 focus:ring-1C7C54 sm:text-sm">
+                            class="mt-1 block w-full rounded-xl border-gray-300 sm:text-sm">
                         @error('start_date') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                     </div>
 
                     <div>
                         <label class="block text-sm font-semibold text-gray-700">End Date *</label>
                         <input type="date" wire:model="end_date" 
-                            class="mt-1 block w-full rounded-xl border-gray-300 focus:border-1C7C54 focus:ring-1C7C54 sm:text-sm">
+                            class="mt-1 block w-full rounded-xl border-gray-300 sm:text-sm">
                         @error('end_date') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                     </div>
 
@@ -218,7 +218,7 @@
                         Cancel
                     </button>
                     <button type="button" wire:click="createSemester" wire:loading.attr="disabled"
-                            class="px-5 py-2 rounded-full bg-1C7C54 text-white font-semibold text-sm shadow hover:bg-1B512D cursor-pointer">
+                            class="px-5 py-2 rounded-full bg-green-600 text-white font-semibold text-sm shadow hover:bg-1B512D cursor-pointer">
                         <span wire:loading.remove wire:target="createSemester">Create Semester</span>
                         <span wire:loading wire:target="createSemester">
                             <i class="fa-solid fa-spinner fa-spin mr-2"></i> Creating...
@@ -233,8 +233,8 @@
     @if($showEditModal && $editingSemester)
         <x-modal name="edit-semester-modal" :show="$showEditModal" maxWidth="md">
             <!-- Header -->
-            <div class="bg-1C7C54 text-white rounded-t-xl px-6 py-4 flex items-center space-x-3">
-                <i class="fa-solid fa-calendar-edit text-lg"></i>
+            <div class=" text-white rounded-t-xl px-6 py-4 flex items-center space-x-3" style="background: linear-gradient(148deg,rgba(18, 67, 44, 1) 0%, rgba(30, 119, 77, 1) 54%, rgba(55, 120, 64, 1) 100%);">
+                <i class="fa-solid fa-calendar text-lg"></i>
                 <h3 class="text-xl font-semibold">Edit Semester</h3>
             </div>
 
@@ -244,21 +244,21 @@
                     <div>
                         <label class="block text-sm font-semibold text-gray-700">Semester Name *</label>
                         <input type="text" wire:model="name" 
-                            class="mt-1 block w-full rounded-xl border-gray-300 focus:border-1C7C54 focus:ring-1C7C54 sm:text-sm">
+                            class="mt-1 block w-full rounded-xl border-gray-300 sm:text-sm">
                         @error('name') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                     </div>
 
                     <div>
                         <label class="block text-sm font-semibold text-gray-700">Start Date *</label>
                         <input type="date" wire:model="start_date" 
-                            class="mt-1 block w-full rounded-xl border-gray-300 focus:border-1C7C54 focus:ring-1C7C54 sm:text-sm">
+                            class="mt-1 block w-full rounded-xl border-gray-300 sm:text-sm">
                         @error('start_date') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                     </div>
 
                     <div>
                         <label class="block text-sm font-semibold text-gray-700">End Date *</label>
                         <input type="date" wire:model="end_date" 
-                            class="mt-1 block w-full rounded-xl border-gray-300 focus:border-1C7C54 focus:ring-1C7C54 sm:text-sm">
+                            class="mt-1 block w-full rounded-xl border-gray-300 sm:text-sm">
                         @error('end_date') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                     </div>
 
@@ -276,7 +276,7 @@
                         Cancel
                     </button>
                     <button type="button" wire:click="updateSemester" wire:loading.attr="disabled"
-                            class="px-5 py-2 rounded-full bg-1C7C54 text-white font-semibold text-sm shadow hover:bg-1B512D cursor-pointer">
+                            class="px-5 py-2 rounded-full bg-green-600 text-white font-semibold text-sm shadow hover:bg-1B512D cursor-pointer">
                         <span wire:loading.remove wire:target="updateSemester">Update Semester</span>
                         <span wire:loading wire:target="updateSemester">
                             <i class="fa-solid fa-spinner fa-spin mr-2"></i> Updating...
