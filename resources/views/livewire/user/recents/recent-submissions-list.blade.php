@@ -142,14 +142,6 @@
                 @endforeach
             @else
                 <div class="text-center py-12">
-                    <div class="relative mb-8">
-                        <div class="w-24 h-24 bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl flex items-center justify-center shadow-lg">
-                            <i class="fa-regular fa-folder-open text-4xl text-gray-400"></i>
-                        </div>
-                        <div class="absolute -top-2 -right-2 w-8 h-8 bg-gradient-to-br from-[#1C7C54] to-[#1B512D] rounded-full flex items-center justify-center shadow-lg">
-                            <i class="fa-solid fa-search text-white text-sm"></i>
-                        </div>
-                    </div>
                     <h3 class="text-xl font-bold text-gray-800 mb-3">No submissions found</h3>
                     <p class="text-sm text-gray-500 text-center mb-8 max-w-md leading-relaxed mx-auto">
                         @if($statusFilter || $search)
@@ -168,29 +160,7 @@
             @endif
         </div>
 
-        {{-- Enhanced Footer/Status Bar --}}
-        <div class="bg-white border-t border-gray-200 px-8 py-4 shadow-sm">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center gap-6 text-sm text-gray-500">
-                    @if($recentSubmissions->count() > 0)
-                        <div class="flex items-center gap-2">
-                            <i class="fa-solid fa-list-check text-gray-400"></i>
-                            <span>Showing <span class="font-semibold text-gray-800">{{ $recentSubmissions->count() }}</span> {{ $recentSubmissions->count() === 1 ? 'submission' : 'submissions' }}</span>
-                        </div>
-                    @endif
-                    <div class="flex items-center gap-2">
-                        <i class="fa-solid fa-clock text-gray-400"></i>
-                        <span>Last updated: <span class="font-medium text-gray-800">{{ now()->format('M j, Y g:i A') }}</span></span>
-                    </div>
-                </div>
-                <div class="flex items-center gap-2 text-xs text-gray-500">
-                    <div class="flex items-center gap-1">
-                        <div class="w-2 h-2 bg-green-500 rounded-full"></div>
-                        <span>System Online</span>
-                    </div>
-                </div>
-            </div>
-        </div>
+        
     </div>
 
     {{-- Include the Recent Submission Detail Modal component --}}

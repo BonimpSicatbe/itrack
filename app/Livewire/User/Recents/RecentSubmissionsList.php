@@ -5,6 +5,7 @@ namespace App\Livewire\User\Recents;
 use Livewire\Component;
 use Illuminate\Support\Facades\Auth;
 use App\Models\SubmittedRequirement;
+use App\Models\Semester; // Add this import if you have a Semester model
 
 class RecentSubmissionsList extends Component
 {
@@ -47,6 +48,14 @@ class RecentSubmissionsList extends Component
         $query = SubmittedRequirement::where('user_id', Auth::id())
             ->with(['requirement', 'submissionFile', 'reviewer'])
             ->whereNotNull('submitted_at')
+            ->whereHas('requirement', function ($q) {
+                // Filter by active semester - adjust this based on your database structure
+                $q->whereHas('semester', function ($semesterQuery) {
+                    $semesterQuery->where('is_active', true);
+                });
+                // Alternative approach if you have different relationship structure:
+                // $q->where('semester_id', $this->getActiveSemesterId());
+            })
             ->orderBy('submitted_at', 'desc');
 
         // Apply status filter if selected
@@ -68,6 +77,15 @@ class RecentSubmissionsList extends Component
 
         $this->recentSubmissions = $query->get();
     }
+
+    /**
+     * Helper method to get active semester ID if you need it
+     * Uncomment and use this if your relationship structure is different
+     */
+    // private function getActiveSemesterId()
+    // {
+    //     return Semester::where('is_active', true)->first()?->id;
+    // }
 
     public function showSubmissionDetail($submissionId)
     {
