@@ -53,12 +53,16 @@
                             </div>
                         </div>
                     @empty
-                        <div class="text-center py-8">
-                            <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                                <i class="fa-regular fa-bell text-gray-400 text-xl"></i>
+                        <div class="flex flex-col items-center justify-center py-8 text-center">
+                            <div class="flex items-center justify-center mb-4">
+                                <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
+                                    <i class="justify-center fa-regular fa-bell text-gray-400 text-xl"></i>
+                                </div>
                             </div>
-                            <h3 class="text-lg text-gray-800 font-medium mb-1">No notifications</h3>
-                            <p class="text-sm text-gray-500">You're all caught up!</p>
+                            <div class="space-y-1">
+                                <h3 class="justify-center text-lg text-gray-800 font-medium">No notifications</h3>
+                                <p class="justify-center text-sm text-gray-500">You're all caught up!</p>
+                            </div>
                         </div>
                     @endforelse
                 </div>
