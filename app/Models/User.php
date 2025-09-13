@@ -65,6 +65,10 @@ class User extends Authenticatable implements HasMedia
 
     // ==================== RELATIONSHIPS ====================
 
+    public function semester() {
+        return $this->belongsToMany(Semester::class, 'user_semester', 'user_id', 'semester_id');
+    }
+
     public function department(): BelongsTo
     {
         return $this->belongsTo(Department::class)->withDefault([
@@ -118,7 +122,7 @@ class User extends Authenticatable implements HasMedia
     {
         return $this->full_name; // or any other logic you prefer
     }
-    
+
     public function getFullNameAttribute(): string
     {
         $nameParts = [

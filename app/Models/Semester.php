@@ -69,10 +69,10 @@ class Semester extends Model
     {
         // Deactivate all semesters first
         self::query()->update(['is_active' => false]);
-        
+
         // Activate this semester
         $this->update(['is_active' => true]);
-        
+
         return $this;
     }
 
@@ -105,8 +105,8 @@ class Semester extends Model
     {
         // lets you jump Semester -> SubmittedRequirement (through Requirement)
         return $this->hasManyThrough(
-            \App\Models\SubmittedRequirement::class,  // final model
-            \App\Models\Requirement::class,           // through model
+            SubmittedRequirement::class,  // final model
+            Requirement::class,           // through model
             'semester_id',    // FK on requirements → semesters.id
             'requirement_id', // FK on submitted_requirements → requirements.id
             'id',             // local key on semesters

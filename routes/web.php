@@ -86,6 +86,9 @@ Route::middleware(['auth', 'role:admin|super-admin'])
             // Main management dashboard
             Route::get('/', [ManagementController::class, 'index'])
                 ->name('management.index');
+            // Semester management (archive)
+            Route::get('/semesters/{semester}/download', [SemesterController::class, 'downloadZippedSemester'])
+                ->name('semesters.download');
         });
     });
 
@@ -96,7 +99,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/preview/file/{submission}', [FileController::class, 'preview'])
         ->name('file.preview');
     // Add this new route for guide files
-     Route::get('/download/guide/{media}', [FileController::class, 'downloadGuide'])
+    Route::get('/download/guide/{media}', [FileController::class, 'downloadGuide'])
         ->name('guide.download');
     Route::get('/preview/guide/{media}', [FileController::class, 'previewGuide'])
         ->name('guide.preview');
@@ -117,12 +120,12 @@ Route::middleware('auth')->group(function () {
 });
 
 Route::get('/user/files/{media}/preview', [UserController::class, 'preview'])
-        ->whereNumber('media')
-        ->name('user.file.preview');
+    ->whereNumber('media')
+    ->name('user.file.preview');
 
 Route::get('/user/files/{media}/download', [UserController::class, 'download'])
-        ->whereNumber('media')
-        ->name('user.file.download');
+    ->whereNumber('media')
+    ->name('user.file.download');
 
 // Profile routes
 Route::middleware('auth')->group(function () {
@@ -130,7 +133,7 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     Route::put('/password', [ProfileController::class, 'updatePassword'])->name('password.update');
-    
+
     // Email verification
     Route::post('/email/verification-notification', function (Request $request) {
         $request->user()->sendEmailVerificationNotification();

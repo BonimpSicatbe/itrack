@@ -5,6 +5,7 @@ namespace App\Http\Controllers\admin;
 use App\Http\Controllers\Controller;
 use App\Models\Semester;
 use Illuminate\Http\Request;
+use ZipArchive;
 
 class SemesterController extends Controller
 {
@@ -61,5 +62,87 @@ class SemesterController extends Controller
         $semester = Semester::findOrFail($id);
         $semester->update(['is_active' => true]);
         session()->flash('success', 'Semester activated successfully');
+    }
+
+    public function downloadZippedSemester(Semester $semester)
+    {
+        $zipFileName = preg_replace('/[^A-Za-z0-9_\- ]/', '_', $semester->name) . '_requirements.zip';
+        $zipFilePath = storage_path('app/temp/semesters/' . $zipFileName);
+
+        // Ensure directory exists
+        $directory = storage_path('app/temp/semesters');
+        if (!file_exists($directory)) {
+            mkdir($directory, 0755, true);
+        }
+
+        $zip = new ZipArchive();
+        $result = $zip->open($zipFilePath, ZipArchive::CREATE | ZipArchive::OVERWRITE);
+
+        if ($result !== TRUE) {
+            abort(500, 'Failed to create zip file. Error code: ' . $result);
+        }
+
+        $fileCount = 0;
+
+        // Add requirement files to zip
+        foreach ($semester->requirements as $requirement) {
+            // Create a folder for each requirement
+            $requirementFolder = 'Requirements/' . $requirement->name;
+
+            $requirement->media->each(function ($media) use ($zip, $requirement, &$fileCount, $requirementFolder) {
+                // Use the direct path from Spatie Media Library
+                $filePath = $media->getPath(); // Remove storage_path prefix!
+
+                if (file_exists($filePath)) {
+                    $archivePath = $requirementFolder . '/' . $media->file_name;
+                    if ($zip->addFile($filePath, $archivePath)) {
+                        $fileCount++;
+                    }
+                }
+            });
+        }
+
+        // Add submitted requirement files to zip
+        foreach ($semester->requirements as $requirement) {
+            // Get all submissions for this requirement
+            $submissions = $requirement->submissions()->with(['media', 'user'])->get();
+
+            foreach ($submissions as $submission) {
+                foreach ($submission->media as $media) {
+                    // Use the direct path from Spatie Media Library
+                    $filePath = $media->getPath(); // Remove storage_path prefix!
+
+                    if (file_exists($filePath)) {
+                        // Structure: Submissions/RequirementName/UserName/filename
+                        $archivePath = 'Submissions/' . $requirement->name . '/' . $submission->user->name . '/' . $media->file_name;
+                        if ($zip->addFile($filePath, $archivePath)) {
+                            $fileCount++;
+                        }
+                    }
+                }
+            }
+        }
+
+        // Close the zip file
+        if (!$zip->close()) {
+            abort(500, 'Failed to close zip file');
+        }
+
+        // Check if zip file was actually created
+        if (!file_exists($zipFilePath)) {
+            abort(500, 'Zip file was not created successfully');
+        }
+
+        // If no files were added, create a simple info file
+        if ($fileCount === 0) {
+            $zip = new ZipArchive();
+            $zip->open($zipFilePath, ZipArchive::CREATE | ZipArchive::OVERWRITE);
+            $zip->addFromString('no_files_found.txt', 'No files were found for this semester.');
+            $zip->close();
+        }
+
+        $semester->update(['is_active' => false]);
+
+        return response()->download($zipFilePath)->deleteFileAfterSend(true);
     }
 }

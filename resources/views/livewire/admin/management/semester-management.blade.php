@@ -18,7 +18,7 @@
 
     <!-- Search and Total Semesters -->
     <div class="flex flex-col sm:flex-row items-center justify-between gap-4 mb-4">
-        
+
         <!-- Total Semesters Badge -->
         <div class="flex items-center gap-2 bg-green-50 border border-green-600 px-4 py-2 rounded-xl shadow-sm">
             <i class="fa-solid fa-calendar-check text-green-700"></i>
@@ -34,10 +34,10 @@
                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <i class="fa-solid fa-magnifying-glass text-gray-400"></i>
                 </div>
-                <input 
-                    type="text" 
+                <input
+                    type="text"
                     wire:model.live.debounce.300ms="search"
-                    class="pl-10 block w-full rounded-xl border-gray-300 shadow-sm focus:border-1C7C54 focus:ring-1C7C54 sm:text-sm" 
+                    class="pl-10 block w-full rounded-xl border-gray-300 shadow-sm focus:border-1C7C54 focus:ring-1C7C54 sm:text-sm"
                     placeholder="Search by name or acronym"
                 >
             </div>
@@ -125,31 +125,30 @@
                             <div class="flex justify-center space-x-2 text-base">
                                 @if($semester->is_active)
                                     <!-- Archive button (deactivate) for active semester -->
-                                    <button class="text-orange-600 hover:bg-orange-100 rounded-xl p-2 tooltip cursor-pointer" 
-                                            data-tip="Archive Semester" 
-                                            wire:click="setInactive({{ $semester->id }})">
+                                    <a href="{{ route('admin.semesters.download', $semester) }}" class="text-orange-600 hover:bg-orange-100 rounded-xl p-2 tooltip cursor-pointer"
+                                            data-tip="Archive Semester" wire:click="setInactive({{ $semester->id }})">
                                         <i class="fa-solid fa-box-archive"></i>
-                                    </button>
+                                    </a>
                                 @else
                                     <!-- Activate button for inactive semester -->
-                                    <button class="text-green-600 hover:bg-green-100 rounded-xl p-2 tooltip cursor-pointer" 
-                                            data-tip="Activate Semester" 
+                                    <button class="text-green-600 hover:bg-green-100 rounded-xl p-2 tooltip cursor-pointer"
+                                            data-tip="Activate Semester"
                                             wire:click="setActive({{ $semester->id }})">
                                         <i class="fa-solid fa-square-check"></i>
                                     </button>
                                 @endif
-                                
+
                                 <!-- Edit button (always enabled) -->
-                                <button class="text-amber-500 hover:bg-blue-100 rounded-xl p-2 tooltip cursor-pointer" 
-                                        data-tip="Edit" 
+                                <button class="text-amber-500 hover:bg-blue-100 rounded-xl p-2 tooltip cursor-pointer"
+                                        data-tip="Edit"
                                         wire:click="openEditModal({{ $semester->id }})">
                                     <i class="fa-solid fa-pen-to-square"></i>
                                 </button>
-                                
+
                                 <!-- Delete button (disabled for active semester) -->
                                 @if(!$semester->is_active)
                                     <button class="text-red-600 hover:bg-red-100 rounded-xl p-2 tooltip cursor-pointer"
-                                            data-tip="Delete" 
+                                            data-tip="Delete"
                                             wire:click="openDeleteConfirmationModal({{ $semester->id }})">
                                         <i class="fa-solid fa-trash"></i>
                                     </button>
@@ -184,7 +183,7 @@
                 <div class="space-y-4">
                     <div>
                         <label class="block text-sm font-semibold text-gray-700">Semester Name *</label>
-                        <input type="text" wire:model="name" 
+                        <input type="text" wire:model="name"
                             class="mt-1 block w-full rounded-xl border-gray-300 focus:border-1C7C54 focus:ring-1C7C54 sm:text-sm"
                             placeholder="e.g., 1st Semester 2023-2024">
                         @error('name') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
@@ -192,20 +191,20 @@
 
                     <div>
                         <label class="block text-sm font-semibold text-gray-700">Start Date *</label>
-                        <input type="date" wire:model="start_date" 
+                        <input type="date" wire:model="start_date"
                             class="mt-1 block w-full rounded-xl border-gray-300 focus:border-1C7C54 focus:ring-1C7C54 sm:text-sm">
                         @error('start_date') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                     </div>
 
                     <div>
                         <label class="block text-sm font-semibold text-gray-700">End Date *</label>
-                        <input type="date" wire:model="end_date" 
+                        <input type="date" wire:model="end_date"
                             class="mt-1 block w-full rounded-xl border-gray-300 focus:border-1C7C54 focus:ring-1C7C54 sm:text-sm">
                         @error('end_date') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                     </div>
 
                     <div class="flex items-center">
-                        <input type="checkbox" wire:model="isActive" id="isActive" 
+                        <input type="checkbox" wire:model="isActive" id="isActive"
                             class="rounded border-gray-300 text-1C7C54 focus:ring-1C7C54">
                         <label for="isActive" class="ml-2 text-sm text-gray-700">Set as active semester</label>
                     </div>
@@ -243,27 +242,27 @@
                 <div class="space-y-4">
                     <div>
                         <label class="block text-sm font-semibold text-gray-700">Semester Name *</label>
-                        <input type="text" wire:model="name" 
+                        <input type="text" wire:model="name"
                             class="mt-1 block w-full rounded-xl border-gray-300 focus:border-1C7C54 focus:ring-1C7C54 sm:text-sm">
                         @error('name') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                     </div>
 
                     <div>
                         <label class="block text-sm font-semibold text-gray-700">Start Date *</label>
-                        <input type="date" wire:model="start_date" 
+                        <input type="date" wire:model="start_date"
                             class="mt-1 block w-full rounded-xl border-gray-300 focus:border-1C7C54 focus:ring-1C7C54 sm:text-sm">
                         @error('start_date') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                     </div>
 
                     <div>
                         <label class="block text-sm font-semibold text-gray-700">End Date *</label>
-                        <input type="date" wire:model="end_date" 
+                        <input type="date" wire:model="end_date"
                             class="mt-1 block w-full rounded-xl border-gray-300 focus:border-1C7C54 focus:ring-1C7C54 sm:text-sm">
                         @error('end_date') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                     </div>
 
                     <div class="flex items-center">
-                        <input type="checkbox" wire:model="isActive" id="editIsActive" 
+                        <input type="checkbox" wire:model="isActive" id="editIsActive"
                             class="rounded border-gray-300 text-1C7C54 focus:ring-1C7C54">
                         <label for="editIsActive" class="ml-2 text-sm text-gray-700">Set as active semester</label>
                     </div>
@@ -298,7 +297,7 @@
             <div class="bg-white px-6 py-6 rounded-b-xl">
                 <div class="space-y-4">
                     <p class="text-gray-700">
-                        Are you sure you want to delete the semester 
+                        Are you sure you want to delete the semester
                         <span class="font-semibold text-red-600">"{{ $semesterToDelete->name }}"</span>?
                     </p>
                     <p class="text-sm text-gray-600">
@@ -307,11 +306,11 @@
                 </div>
 
                 <div class="mt-6 pt-4 border-t border-gray-200 flex justify-end space-x-3">
-                    <button type="button" wire:click="closeDeleteConfirmationModal" 
+                    <button type="button" wire:click="closeDeleteConfirmationModal"
                             class="px-4 py-2 border border-gray-300 rounded-full text-sm font-medium text-gray-700 cursor-pointer">
                         Cancel
                     </button>
-                    <button type="button" wire:click="deleteSemester" 
+                    <button type="button" wire:click="deleteSemester"
                             class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-full text-sm font-medium cursor-pointer"
                             wire:loading.attr="disabled">
                         <span wire:loading.remove wire:target="deleteSemester">
