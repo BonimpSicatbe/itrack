@@ -18,7 +18,7 @@
     @livewireStyles
     <style>
         body {
-            background: linear-gradient(to top, #74c69d 1%, transparent 90%);
+            background: linear-gradient(to top, #c2f8cb 0%, #e9ecef 100%);
             background-attachment: fixed;
             min-height: 100vh;
         }
@@ -32,7 +32,7 @@
             <x-user.navigation />
         </div>
         <!-- Page Content -->
-        <div class="flex-1 h-full overflow-hidden transition-all duration-300 ease-in-out text-gray-800">
+        <div class="flex-1 h-full overflow-hidden transition-all duration-300 ease-in-out text-gray-800 ">
             {{ $slot }}
         </div>
     </div>

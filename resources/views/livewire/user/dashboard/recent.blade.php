@@ -1,5 +1,5 @@
 {{-- recent.blade.php --}}
-<div class="bg-white rounded-xl p-4">
+<div class="bg-white rounded-xl px-6 py-4">
     {{-- Header --}}
     <div class="flex items-center justify-between mb-3">
         <h3 class="text-xl font-semibold text-gray-800">Recent Submissions</h3>
@@ -56,7 +56,7 @@
     @else
         <div class="text-center py-8 text-gray-300">
             <i class="fas fa-folder-open text-3xl mb-2"></i>
-            <p class="text-gray-500 text-sm ">No recent submissions</p>
+            <p class="text-gray-500 text-sm font-semibold">No recent submissions</p>
         </div>
     @endif
 

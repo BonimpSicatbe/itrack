@@ -11,7 +11,6 @@ class Progress extends Component
     public $statusCounts = [];
     public $totalSubmissions = 0;
     public $statusPercentages = [];
-    public $statusPercentagesRaw = []; // For precise calculations
 
     public function mount()
     {
@@ -26,12 +25,10 @@ class Progress extends Component
 
         $this->totalSubmissions = array_sum($this->statusCounts);
         
-        // Calculate percentages with decimals
+        // Calculate percentages
         if ($this->totalSubmissions > 0) {
             foreach ($this->statusCounts as $status => $count) {
-                $percentage = ($count / $this->totalSubmissions) * 100;
-                $this->statusPercentagesRaw[$status] = $percentage;
-                $this->statusPercentages[$status] = number_format($percentage, 1); // One decimal place
+                $this->statusPercentages[$status] = number_format(($count / $this->totalSubmissions) * 100, 1);
             }
         }
     }
@@ -43,7 +40,7 @@ class Progress extends Component
             SubmittedRequirement::STATUS_REJECTED => 'bg-red-500',
             SubmittedRequirement::STATUS_REVISION_NEEDED => 'bg-yellow-500',
             SubmittedRequirement::STATUS_UNDER_REVIEW => 'bg-blue-500',
-            default => 'bg-gray-500'
+            default => 'bg-gray-300'
         };
     }
 

@@ -1,4 +1,4 @@
-<div class="flex flex-col gap-2 p-4 bg-white rounded-xl shadow-sm">
+<div class="flex flex-col gap-2 px-6 py-4 bg-white rounded-xl shadow-sm">
     {{-- Header --}}
     <div class="flex flex-row items-center justify-between w-full">
         <div class="text-xl font-bold text-gray-800 tracking-wide">Pendings</div>
@@ -64,8 +64,7 @@
                     <div class="rounded-full w-fit mx-auto">
                         <i class="fa-solid fa-folder-open text-3xl text-gray-300"></i>
                     </div>
-                    <div class="text-green-700 font-semibold text-sm">All caught up!</div>
-                    <div class="text-sm text-gray-500">No pending requirements</div>
+                    <div class="text-sm font-semibold text-gray-500">No pending requirements</div>
                 </div>
             </div>
         @endforelse

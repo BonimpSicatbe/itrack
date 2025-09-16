@@ -1,4 +1,5 @@
 @import 'tailwindcss';
+@import "@fortawesome/fontawesome-free/css/all.min.css";
 
 @plugin '@tailwindcss/forms';
 
@@ -72,31 +73,6 @@
         border-collapse: separate;
         border-spacing: 0;
         width: 100%;
-    }
-    
-    thead tr th:first-child {
-        border-top-left-radius: 12px;
-    }
-    
-    thead tr th:last-child {
-        border-top-right-radius: 12px;
-    }
-    
-    tbody tr:last-child td:first-child {
-        border-bottom-left-radius: 12px;
-    }
-    
-    tbody tr:last-child td:last-child {
-        border-bottom-right-radius: 12px;
-    }
-    
-    /* Custom utility classes */
-    .first\:pl-6:first-child {
-        padding-left: 1.5rem;
-    }
-    
-    .last\:pr-6:last-child {
-        padding-right: 1.5rem;
     }
 
     /* Custom styles for amber warning notifications */

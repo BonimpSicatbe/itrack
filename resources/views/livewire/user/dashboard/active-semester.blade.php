@@ -1,4 +1,4 @@
-<div class="rounded-xl shadow-sm border border-gray-200 p-4" style="background: linear-gradient(148deg,rgba(18, 67, 44, 1) 0%, rgba(30, 119, 77, 1) 54%, rgba(55, 120, 64, 1) 100%);">
+<div class="rounded-xl shadow-sm px-6 py-4" style="background: linear-gradient(148deg,rgba(18, 67, 44, 1) 0%, rgba(30, 119, 77, 1) 54%, rgba(55, 120, 64, 1) 100%);">
     @if($currentSemester)
         <div class="flex items-center justify-between">
             {{-- Left side: Semester info --}}
@@ -61,12 +61,12 @@
     @else
         {{-- No Active Semester - Compact version --}}
         <div class="flex items-center gap-3">
-            <div class="flex items-center justify-center w-10 h-10 bg-gray-100 rounded-xl">
-                <i class="fas fa-calendar-times text-gray-500"></i>
+            <div class="flex items-center justify-center">
+                <i class="fas fa-triangle-exclamation text-amber-400 text-2xl"></i>
             </div>
             <div>
                 <h3 class="font-semibold text-white">No Active Semester</h3>
-                <p class="text-sm text-gray-100">Contact administrator to set up semester</p>
+                <p class="text-sm text-gray-100">Progress, pending, and recent data will be displayed here once a semester is active.</p>
             </div>
         </div>
     @endif

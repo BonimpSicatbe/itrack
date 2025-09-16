@@ -101,6 +101,15 @@ class Requirement extends Model implements HasMedia
         return $this->hasMany(SubmittedRequirement::class);
     }
 
+    public function getSubmittedRequirementsCountAttribute()
+    {
+        if (!$this->relationLoaded('submittedRequirements')) {
+            return $this->submittedRequirements()->count();
+        }
+        
+        return $this->submittedRequirements->count();
+    }
+
     public function media(): MorphMany
     {
         return $this->morphMany(Media::class, 'model');

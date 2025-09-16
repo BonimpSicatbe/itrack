@@ -14,7 +14,7 @@
     </div>
 
     <!-- Requirements Content -->
-    <div class="w-full bg-white rounded-xl p-4 md:p-6 space-y-4 border border-gray-300 flex-grow" style="max-height: calc(100vh - 125px);">
+    <div class="w-full bg-white rounded-xl p-6 space-y-4 flex-grow" style="max-height: calc(100vh - 125px);">
         <div class="flex flex-col gap-4 w-full h-full">
             @if($activeSemester)
                 <div class="p-1 rounded-xl flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -361,11 +361,52 @@
                     @endforelse
                 </div>
             @else
-                <div class="text-center py-12 text-gray-500">
-                    <img src="{{ asset('images/no-active.png') }}" alt="No active semester" class="mx-auto mb-2 max-w-xs">
-                    <p class="text-lg font-semibold">No active semester</p>
+                <div class="flex items-center p-4 bg-[#DEF4C6] text-[#1B512D] rounded-lg shadow-lg">
+                    <i class="fa-solid fa-triangle-exclamation text-lg mr-3"></i>
+                    <div>
+                        <h3 class="font-bold">No active semester</h3>
+                        <div class="text-xs">Requirements will be available once you have an active semester.</div>
+                    </div>
                 </div>
             @endif
         </div>
     </div>
+
+    <!-- Delete Confirmation Modal -->
+    @if($showDeleteModal)
+        <x-modal name="delete-submission-confirmation-modal" :show="$showDeleteModal" maxWidth="md">
+            <div class="bg-red-600 text-white rounded-t-xl px-6 py-4 flex items-center space-x-3">
+                <i class="fa-solid fa-triangle-exclamation text-lg"></i>
+                <h3 class="text-xl font-semibold">Confirm Deletion</h3>
+            </div>
+
+            <div class="bg-white px-6 py-6 rounded-b-xl">
+                <div class="space-y-4">
+                    <p class="text-gray-700">
+                        Are you sure you want to delete this submission?
+                    </p>
+                    <p class="text-sm text-gray-600">
+                        This action cannot be undone. The submitted file will be permanently removed.
+                    </p>
+                </div>
+
+                <div class="mt-6 pt-4 border-t border-gray-200 flex justify-end space-x-3">
+                    <button type="button" wire:click="cancelDelete" 
+                            class="px-4 py-2 border border-gray-300 rounded-full text-sm font-medium text-gray-700 hover:bg-gray-50 cursor-pointer">
+                        Cancel
+                    </button>
+                    <button type="button" wire:click="deleteSubmission" 
+                            class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-full text-sm font-medium cursor-pointer"
+                            wire:loading.attr="disabled">
+                        <span wire:loading.remove wire:target="deleteSubmission">
+                            <i class="fa-solid fa-trash mr-2"></i> Delete
+                        </span>
+                        <span wire:loading wire:target="deleteSubmission">
+                            <i class="fa-solid fa-spinner fa-spin mr-2"></i> Deleting...
+                        </span>
+                    </button>
+                </div>
+            </div>
+        </x-modal>
+    @endif
 </div>

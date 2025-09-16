@@ -23,10 +23,10 @@ class Navigation extends Component
         // Main navigation links
         $this->navLink = [
             ['label' => 'Dashboard', 'route' => 'user.dashboard', 'icon' => 'home'],
-            ['label' => 'Requirements', 'route' => 'user.requirements', 'icon' => 'spinner'],
+            ['label' => 'Requirements', 'route' => 'user.requirements', 'icon' => 'clipboard-list'],
             ['label' => 'Recents', 'route' => 'user.recents', 'icon' => 'clock'],
-            ['label' => 'Archive', 'route' => 'user.archive', 'icon' => 'archive'],
             ['label' => 'File Manager', 'icon' => 'folder', 'route' => 'user.file-manager'],
+            ['label' => 'Archive', 'route' => 'user.archive', 'icon' => 'archive'],
             ['label' => 'Notifications', 'icon' => 'bell', 'route' => 'user.notifications'],
         ];
 
