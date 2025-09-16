@@ -67,7 +67,7 @@
                             <div class="grid md:grid-cols-2 gap-6">
                                 {{-- Submission Details --}}
                                 <div class="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
-                                    <h4 class="text-lg text-gray-800 font-bold mb-4 flex items-center gap-2">
+                                    <h4 class="text-xl text-gray-800 font-bold mb-4 flex items-center gap-2">
                                         <i class="fa-solid fa-upload text-[#1C7C54]"></i>
                                         Submission Information
                                     </h4>
@@ -97,7 +97,7 @@
 
                                 {{-- File Information --}}
                                 <div class="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
-                                    <h4 class="text-lg text-gray-800 font-bold mb-4 flex items-center gap-2">
+                                    <h4 class="text-xl text-gray-800 font-bold mb-4 flex items-center gap-2">
                                         <i class="fa-solid fa-file text-[#1C7C54]"></i>
                                         Submitted File
                                     </h4>
