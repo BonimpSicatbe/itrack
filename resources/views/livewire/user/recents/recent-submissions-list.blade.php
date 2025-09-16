@@ -2,7 +2,6 @@
 <div class="flex flex-col w-full mx-auto bg-gray-50 min-h-screen">
     {{-- Main Container with Header Inside --}}
     <div class="flex-1 bg-white rounded-lg shadow-sm overflow-hidden">
-        {{-- The rest of your code remains exactly the same --}}
         {{-- Recent Submissions Header - Matching Pending Requirements Style --}}
         <div class="flex items-center justify-between px-8 py-6 border-b border-gray-200" style="background: linear-gradient(148deg,rgba(18, 67, 44, 1) 0%, rgba(30, 119, 77, 1) 54%, rgba(55, 120, 64, 1) 100%);">
             <div class="flex items-center gap-2">
@@ -25,8 +24,8 @@
                                 type="text" 
                                 wire:model.live.debounce.300ms="search"
                                 placeholder="Search by name or file..."
-                                class="w-full pl-10 pr-10 py-1 text-sm bg-[#DEF4C6]/20 border border-[#73E2A7]/40 rounded-xl focus:border-[#1C7C54] focus:ring-2 focus:ring-[#1C7C54]/20 focus:bg-white focus:outline-none transition-all duration-200 placeholder-[#1B512D]/60"
-                                aria-label="Search submissions">
+                                class="pl-10 block w-full rounded-xl text-gray-500 border-gray-300 shadow-sm focus:border-green-600 focus:ring-green-600 sm:text-sm" 
+                            placeholder="Search requirements...">
                             <div wire:loading wire:target="search" class="absolute inset-y-0 right-0 pr-4 flex items-center">
                                 <div class="animate-spin rounded-full h-4 w-4 border-2 border-[#1C7C54] border-t-transparent"></div>
                             </div>
@@ -37,7 +36,7 @@
                     <div class="min-w-0 sm:min-w-48">
                         <select 
                             wire:model.live="statusFilter"
-                            class="block w-full pl-10 pr-10 py-1 text-sm bg-[#DEF4C6]/20 border border-[#73E2A7]/40 rounded-xl focus:border-[#1C7C54] focus:ring-2 focus:ring-[#1C7C54]/20 focus:bg-white focus:outline-none transition-all duration-200"
+                            class="pl-10 block w-full rounded-xl text-gray-500 border-gray-300 shadow-sm focus:border-green-600 focus:ring-green-600 sm:text-sm"
                         >
                             <option value="">All Statuses</option>
                             <option value="under_review">Under Review</option>
@@ -73,7 +72,7 @@
                         @if($search)
                             <div class="flex items-center gap-2 px-3 py-2 bg-[#73E2A7]/20 border border-[#73E2A7]/40 rounded-lg">
                                 <i class="fa-solid fa-magnifying-glass text-[#1C7C54] text-xs"></i>
-                                <span class="text-sm text-gray-500 font-medium">"{{ $search }}"</span>
+                                <span class="text-xs text-gray-500 font-medium">"{{ $search }}"</span>
                                 <button wire:click="$set('search', '')" class="ml-1 w-5 h-5 bg-[#73E2A7]/30 hover:bg-[#73E2A7]/50 rounded-full flex items-center justify-center transition-colors duration-200">
                                     <i class="fa-solid fa-xmark text-[#1B512D] text-xs"></i>
                                 </button>
@@ -108,8 +107,8 @@
                             <div class="flex items-center space-x-4">
                                 <div class="flex-shrink-0">
                                     @if($submission->submissionFile)
-                                        <div class="h-10 w-10 rounded-md bg-[#DEF4C6]/30 flex items-center justify-center">
-                                            <i class="fa-solid fa-file text-[#1C7C54] text-lg"></i>
+                                        <div class="h-10 w-10 rounded-md bg-gray-50 flex items-center justify-center border border-gray-200">
+                                            <i class="fas {{ $submission->getFileIcon() }} {{ $submission->getFileIconColor() }} text-lg"></i>
                                         </div>
                                     @else
                                         <div class="h-10 w-10 rounded-md bg-gray-100 flex items-center justify-center">
@@ -119,10 +118,16 @@
                                 </div>
                                 <div class="min-w-0 flex-1">
                                     <p class="text-lg font-medium text-gray-800 truncate">
-                                        {{ $submission->requirement->name }}
+                                        {{-- Changed to show file name as primary display --}}
+                                        @if($submission->submissionFile)
+                                            {{ $submission->submissionFile->file_name }}
+                                        @else
+                                            {{ $submission->requirement->name }} <span class="text-gray-400 text-xs">(No file)</span>
+                                        @endif
                                     </p>
-                                    <p class="text-sm text-gray-500">
-                                        Submitted {{ $submission->submitted_at->diffForHumans() }}
+                                    <p class="text-xs text-gray-500">
+                                        {{-- Show requirement name as subtitle and submission time --}}
+                                        {{ $submission->requirement->name }} • Submitted {{ $submission->submitted_at->diffForHumans() }}
                                     </p>
                                 </div>
                             </div>
@@ -130,10 +135,10 @@
                                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $submission->status_badge }}">
                                     {{ $submission->status_text }}
                                 </span>
-                                @if($submission->submissionFile)
-                                    <span class="text-xs text-gray-500 flex items-center">
-                                        <i class="fa-solid fa-file text-gray-400 text-xs mr-1"></i>
-                                        {{ $submission->submissionFile->file_name }}
+                                {{-- Show file extension if file exists --}}
+                                @if($submission->submissionFile && $submission->getFileExtension())
+                                    <span class="text-xs text-gray-400 uppercase tracking-wider font-medium">
+                                        {{ $submission->getFileExtension() }}
                                     </span>
                                 @endif
                             </div>
@@ -159,8 +164,6 @@
                 </div>
             @endif
         </div>
-
-        
     </div>
 
     {{-- Include the Recent Submission Detail Modal component --}}
