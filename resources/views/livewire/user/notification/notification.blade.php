@@ -65,7 +65,7 @@
     {{-- Notification Detail (Right) --}}
     <div class="w-2/3 p-6 overflow-y-auto bg-white">
         @if ($selectedNotification && $selectedNotificationData)
-            <div class="max-w-3xl mx-auto space-y-6">
+            <div class="max-w-3xl mx-auto space-y-4">
                 {{-- Header --}}
                 <div class="flex justify-between items-start p-4 rounded-lg" style="background: linear-gradient(148deg,rgba(18, 67, 44, 1) 0%, rgba(30, 119, 77, 1) 54%, rgba(55, 120, 64, 1) 100%);">
                     <div>
