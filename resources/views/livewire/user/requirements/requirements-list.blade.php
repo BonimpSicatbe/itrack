@@ -20,16 +20,29 @@
                 <div class="p-1 rounded-xl flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                     
                     <!-- Left: Search -->
-                    <div class="relative w-sm">
-                        <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                            <i class="fas fa-search text-sm text-gray-500"></i>
+                    <div class="flex items-center gap-2">
+                        <div class="relative w-sm">
+                            <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                                <i class="fas fa-search text-sm text-gray-500"></i>
+                            </div>
+                            <input 
+                                id="searchInput"
+                                type="text" 
+                                wire:model.live.debounce.300ms="search"
+                                class="pl-10 block w-full rounded-xl text-gray-500 border-gray-300 shadow-sm focus:border-green-600 focus:ring-green-600 text-sm" 
+                                placeholder="Search requirements..."
+                            >
+                            <button 
+                                wire:click="$set('search', '')" 
+                                onclick="document.getElementById('searchInput').value = ''"
+                                class="absolute inset-y-0 right-0 flex items-center pr-3 cursor-pointer text-gray-500 hover:text-gray-700"
+                                title="Clear search"
+                                x-show="$wire.search.length > 0"
+                                x-transition
+                            >
+                                <i class="fa-solid fa-times text-sm"></i>
+                            </button>
                         </div>
-                        <input 
-                            type="text" 
-                            wire:model.live.debounce.300ms="search"
-                            class="pl-10 block w-full rounded-xl text-gray-500 border-gray-300 shadow-sm focus:border-green-600 focus:ring-green-600 sm:text-sm" 
-                            placeholder="Search requirements..."
-                        >
                     </div>
                     
                     <!-- Filters -->
@@ -58,9 +71,9 @@
                 <!-- Requirements List View -->
                 <div class="space-y-3">
                    @forelse ($this->requirements() as $requirement)
-                        <div class="border border-gray-300 rounded-xl shadow-sm">
+                        <div class="border border-gray-300 hover:border-green-600 hover:border-2 rounded-xl shadow-sm">
                             <!-- Requirement Header -->
-                            <div class="flex justify-between items-center w-full text-left font-semibold text-gray-800 p-4 cursor-pointer hover:bg-green-50 rounded-xl"
+                            <div class="flex justify-between items-center w-full text-left font-semibold text-gray-800 p-4 cursor-pointer rounded-xl"
                                  wire:click="toggleAccordion({{ $requirement->id }})">
                                 <div class="flex items-center gap-3">
                                     <div class="flex items-center gap-2 w-full md:w-[200px]">
@@ -197,7 +210,7 @@
                                             <div class="alert bg-amber-300 border-amber-300">
                                                 <div class="flex items-center gap-2">
                                                     <i class="fa-solid fa-circle-info"></i>
-                                                    <span>Requirement completed. Click "<b>Done</b>" above to submit additional files.</span>
+                                                    <span>Requirement completed. Click "<b>Done</b>" above to undone the requirement and submit additional files.</span>
                                                 </div>
                                             </div>
                                         @else
@@ -343,8 +356,8 @@
                                             </div>
                                         @else
                                             <div class="text-center py-8 text-gray-500">
-                                                <i class="fa-regular fa-folder-open text-4xl mb-2"></i>
-                                                <p>No submissions yet</p>
+                                                <i class="fa-solid fa-folder-open text-gray-300 text-4xl mb-2"></i>
+                                                <p class="text-sm font-semibold">No submissions yet</p>
                                             </div>
                                         @endif
                                     </div>
@@ -357,6 +370,9 @@
                         <div class="text-center py-12 text-gray-500 font-semibold">
                             <i class="fa-solid fa-folder-open text-4xl mb-2 text-gray-300"></i>
                             <p>No requirements found</p>
+                            @if($search)
+                                <p class="text-sm font-semibold text-amber-500 mt-1">Try adjusting your search term</p>
+                            @endif
                         </div>
                     @endforelse
                 </div>

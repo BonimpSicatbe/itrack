@@ -5,13 +5,14 @@ namespace App\Livewire\User\Recents;
 use Livewire\Component;
 use Illuminate\Support\Facades\Auth;
 use App\Models\SubmittedRequirement;
-use App\Models\Semester; // Add this import if you have a Semester model
+use App\Models\Semester;
 
 class RecentSubmissionsList extends Component
 {
     public $recentSubmissions;
     public $statusFilter = '';
     public $search = '';
+    public $viewMode = 'list'; // New property for the view mode
     public $statuses = [
         'under_review' => 'Under Review',
         'revision_needed' => 'Revision Needed',
@@ -21,7 +22,8 @@ class RecentSubmissionsList extends Component
 
     protected $queryString = [
         'statusFilter',
-        'search' => ['except' => '', 'as' => 'q'] // Optional: makes URL cleaner
+        'search' => ['except' => '', 'as' => 'q'],
+        'viewMode' => ['except' => 'list'] // New: Add viewMode to the query string
     ];
 
     public function mount()
@@ -31,7 +33,6 @@ class RecentSubmissionsList extends Component
 
     public function updated($property)
     {
-        // Trigger reload when either search or filter changes
         if (in_array($property, ['search', 'statusFilter'])) {
             $this->loadRecentSubmissions();
         }
@@ -42,6 +43,12 @@ class RecentSubmissionsList extends Component
         $this->reset(['search', 'statusFilter']);
         $this->loadRecentSubmissions();
     }
+    
+    // New method to change the view mode
+    public function changeViewMode($mode)
+    {
+        $this->viewMode = $mode;
+    }
 
     public function loadRecentSubmissions()
     {
@@ -49,21 +56,16 @@ class RecentSubmissionsList extends Component
             ->with(['requirement', 'submissionFile', 'reviewer'])
             ->whereNotNull('submitted_at')
             ->whereHas('requirement', function ($q) {
-                // Filter by active semester - adjust this based on your database structure
                 $q->whereHas('semester', function ($semesterQuery) {
                     $semesterQuery->where('is_active', true);
                 });
-                // Alternative approach if you have different relationship structure:
-                // $q->where('semester_id', $this->getActiveSemesterId());
             })
             ->orderBy('submitted_at', 'desc');
 
-        // Apply status filter if selected
         if ($this->statusFilter) {
             $query->where('status', $this->statusFilter);
         }
 
-        // Apply search filter if text entered
         if ($this->search) {
             $query->where(function($q) {
                 $q->whereHas('requirement', function($q) {
@@ -77,15 +79,6 @@ class RecentSubmissionsList extends Component
 
         $this->recentSubmissions = $query->get();
     }
-
-    /**
-     * Helper method to get active semester ID if you need it
-     * Uncomment and use this if your relationship structure is different
-     */
-    // private function getActiveSemesterId()
-    // {
-    //     return Semester::where('is_active', true)->first()?->id;
-    // }
 
     public function showSubmissionDetail($submissionId)
     {

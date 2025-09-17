@@ -39,11 +39,12 @@ class FileManager extends Component
     
     protected $listeners = [
         'refreshFiles' => '$refresh', 
-        'fileSelected' => 'handleFileSelected',
         'semesterActivated' => 'refreshSemesterData',
         'semesterArchived' => 'refreshSemesterData',
         'navigateTo' => 'handleNavigation',
-        'updateBreadcrumb' => 'updateBreadcrumb'
+        'updateBreadcrumb' => 'updateBreadcrumb',
+        'navigateAfterSearch' => 'handleNavigateAfterSearch',
+        'navigateToFileAfterSearch' => 'handleNavigateToFileAfterSearch'
     ];
 
     public function mount()
@@ -172,6 +173,7 @@ class FileManager extends Component
 
     public function handleNavigation($level, $id = null)
     {
+        $this->statusFilter = ''; // Reset the status filter
         if ($this->isNavigating) return;
 
         $this->isNavigating = true; 
@@ -260,12 +262,16 @@ class FileManager extends Component
     public function selectFile($submissionId)
     {
         try {
+            // Find and set the selected file directly
             $this->selectedFile = SubmittedRequirement::where('user_id', Auth::id())
                 ->with(['requirement', 'submissionFile', 'user'])
                 ->findOrFail($submissionId);
-                
-            // Dispatch event to potentially update UI
-            $this->dispatch('fileSelected', $submissionId);
+
+            // The file has been selected, no need to dispatch an event back to self.
+            // Dispatch a general event if other components need to know.
+            // For example:
+            $this->dispatch('fileSelected'); // Dispatch a generic 'file selected' event
+
         } catch (\Exception $e) {
             \Log::error('Error selecting file: ' . $e->getMessage());
             $this->selectedFile = null;
@@ -277,9 +283,10 @@ class FileManager extends Component
         $this->selectedFile = null;
     }
 
-    public function handleFileSelected($submissionId)
+    public function closeFileDetails()
     {
-        $this->selectFile($submissionId);
+        $this->selectedFile = null;
+        $this->dispatch('fileDetailsClosed');
     }
 
     public function getDownloadRoute($submissionId)
@@ -339,12 +346,33 @@ class FileManager extends Component
     public function render()
     {
         $this->ensureNavigationData();
+
+        $allSemesters = $this->allSemesters;
+        $currentSemester = $this->currentSemester;
+        $currentRequirement = $this->currentRequirement;
+
+        if ($this->currentLevel === 'files' && $currentRequirement) {
+            $submittedRequirementsQuery = SubmittedRequirement::query()
+                ->where('requirement_id', $currentRequirement->id)
+                ->where('user_id', Auth::id())
+                ->with(['submissionFile', 'user', 'requirement.semester']);
+
+            // Apply status filter if it's set
+            if (!empty($this->statusFilter)) {
+                $submittedRequirementsQuery->where('status', $this->statusFilter);
+            }
+
+            // Replace the collection on the currentRequirement object
+            $currentRequirement->setRelation('submittedRequirements', $submittedRequirementsQuery->get());
+        }
         
         return view('livewire.user.file-manager.file-manager', [
             'totalFiles' => $this->getTotalFiles(),
             'totalSize' => $this->getTotalSize(),
             'statuses' => SubmittedRequirement::statuses(),
-            'allSemesters' => $this->allSemesters,
+            'allSemesters' => $allSemesters,
+            'currentSemester' => $currentSemester,
+            'currentRequirement' => $currentRequirement,
             'archiveRoute' => route('user.archive'),
         ]);
     }
@@ -443,13 +471,13 @@ class FileManager extends Component
         foreach ($requirements as $requirement) {
             $results[] = [
                 'type' => 'requirement',
-                'id' => $requirement->id, // This should be the requirement ID
+                'id' => $requirement->id,
                 'name' => $requirement->name,
                 'description' => 'In ' . ($requirement->semester->name ?? 'Unknown Semester'),
                 'icon' => 'fa-folder',
-                'icon_color' => 'text-blue-700',
-                'semester_id' => $requirement->semester_id,
-                'requirement_id' => $requirement->id // Add this
+                'icon_color' => 'text-green-700',
+                'semester_id' => $requirement->semester_id, 
+                'requirement_id' => $requirement->id
             ];
         }
         
@@ -494,14 +522,17 @@ class FileManager extends Component
         if ($type === 'semester') {
             $this->handleNavigation('requirements', $id);
         } elseif ($type === 'requirement' && $semesterId) {
-            // Navigate to the files level for this requirement
-            $this->handleNavigation('files', $id);
-        } elseif ($type === 'file' && $requirementId) {
-            // Navigate to files level but don't select the file (just highlight it)
-            $this->handleNavigation('files', $requirementId);
+            // First navigate to the requirements level of the correct semester
+            $this->handleNavigation('requirements', $semesterId);
             
-            // Store the file ID to highlight after navigation completes
-            $this->dispatch('navigateToFileAfterSearch', fileId: $id);
+            // Then navigate to the files level for this requirement
+            $this->dispatch('navigateAfterSearch', requirementId: $id);
+        } elseif ($type === 'file' && $requirementId && $semesterId) {
+            // First navigate to the requirements level of the correct semester
+            $this->handleNavigation('requirements', $semesterId);
+            
+            // Then navigate to files level and select the file
+            $this->dispatch('navigateAfterSearch', requirementId: $requirementId, fileId: $id);
         }
     }
 
@@ -553,27 +584,34 @@ class FileManager extends Component
         }
     }
 
-    public function highlightFile($submissionId)
+    public function handleNavigateAfterSearch($requirementId, $fileId = null)
     {
-        try {
-            $this->selectedFile = null; // Don't set the selected file to prevent right panel from opening
-                    
-            // Dispatch event to update UI and highlight the file
-            $this->dispatch('fileHighlighted', $submissionId);
-        } catch (\Exception $e) {
-            \Log::error('Error highlighting file: ' . $e->getMessage());
+        // Small delay to ensure the requirements level is loaded first
+        usleep(300000); // 300ms delay
+        
+        // Navigate to the files level
+        $this->handleNavigation('files', $requirementId);
+        
+        // If a specific file was requested, select it
+        if ($fileId) {
+            $this->dispatch('navigateToFileAfterSearch', fileId: $fileId);
         }
     }
 
-    public function highlightFileAfterSearch($fileId)
+    public function handleNavigateToFileAfterSearch($fileId)
     {
-        // Small delay to ensure the navigation is complete
+        // Small delay to ensure navigation is complete
         usleep(300000); // 300ms delay
         
-        // Highlight the file without selecting it (which would open the right panel)
-        $this->dispatch('fileHighlighted', $fileId);
+        // Select the file
+        $this->selectFile($fileId);
         
-        // Scroll to the highlighted file
+        // Scroll to the selected file
         $this->dispatch('scrollToFile', $fileId);
+    }
+
+    public function clearFilters()
+    {
+        $this->reset(['searchQuery', 'statusFilter']);
     }
 }

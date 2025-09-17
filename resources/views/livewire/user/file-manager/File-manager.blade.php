@@ -91,6 +91,7 @@
                                         <i class="fas fa-search text-gray-500 text-sm"></i>
                                     </div>
                                     <input
+                                        id="fileManagerSearch"
                                         type="text"
                                         wire:model.live.debounce.300ms="searchQuery"
                                         wire:keydown.escape="closeSearchResults"
@@ -99,12 +100,11 @@
                                         aria-label="Search files"
                                         autocomplete="off"
                                     >
-                                    <div wire:loading wire:target="searchQuery" class="absolute inset-y-0 right-0 pr-4 flex items-center">
+                                    <div wire:loading wire:target="searchQuery" class="absolute inset-y-2 right-0 pr-4 flex items-center">
                                         <i class="fas fa-spinner fa-spin text-gray-400"></i>
                                     </div>
                                 </div>
-                                
-                                <!-- Search Results Dropdown -->
+
                                 @if($showSearchResults && count($searchResults) > 0)
                                     <div class="absolute z-50 w-full mt-1 bg-white rounded-md shadow-lg border border-gray-200 max-h-96 overflow-y-auto">
                                         <div class="py-2">
@@ -134,10 +134,10 @@
                                     </div>
                                 @endif
                             </div>
-                            
+
                             {{-- Status Filter --}}
                             @if($currentLevel === 'files')
-                                <div class="min-w-0 sm:min-w-48">
+                                <div class="min-w-0">
                                     <select
                                         wire:model.live="statusFilter"
                                         class="block p-2 w-[150px] text-sm text-gray-500 border border-gray-300 shadow-sm focus:border-green-600 focus:ring-green-600 rounded-xl"
@@ -148,6 +148,20 @@
                                             <option value="{{ $key }}">{{ $status }}</option>
                                         @endforeach
                                     </select>
+                                </div>
+                            @endif
+
+                            {{-- Clear Filters Button --}}
+                            @if($searchQuery || $statusFilter)
+                                <div class="flex items-center">
+                                    <button
+                                        wire:click="clearFilters"
+                                        onclick="document.getElementById('fileManagerSearch').value = ''"
+                                        class="inline-flex items-center px-4 py-2 bg-white border-2 border-green-600 text-sm font-medium rounded-xl text-gray-500 hover:bg-green-50 h-10 shadow-md"
+                                    >
+                                        <i class="fa-solid fa-xmark text-sm mr-2"></i>
+                                        Clear Filters
+                                    </button>
                                 </div>
                             @endif
                         </div>
@@ -349,11 +363,11 @@
                         @else
                             <!-- No Requirements Available -->
                             <div class="text-center py-16 px-6">
-                                <div class="mx-auto w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                                    <i class="fa-solid fa-list-check text-gray-400 text-2xl"></i>
+                                <div class="flex items-center justify-center mb-4">
+                                    <i class="fa-solid fa-folder-open text-gray-300 text-4xl"></i>
                                 </div>
-                                <h3 class="text-lg font-medium text-gray-800 mb-1">No requirements available</h3>
-                                <p class="text-gray-500">This semester doesn't have any requirements yet.</p>
+                                <h3 class="text-sm font-semibold text-gray-800 mb-1">No requirements available</h3>
+                                <p class="text-gray-500 text-sm">This semester doesn't have any requirements yet.</p>
                             </div>
                         @endif
 
@@ -448,11 +462,9 @@
                         @else
                             <!-- No Files Available -->
                             <div class="text-center py-16 px-6">
-                                <div class="mx-auto w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                                    <i class="fa-solid fa-file text-gray-400 text-2xl"></i>
-                                </div>
-                                <h3 class="text-lg font-medium text-gray-800 mb-1">No files submitted</h3>
-                                <p class="text-gray-500">No files have been submitted for this requirement yet.</p>
+                                <i class="fa-solid fa-folder-open text-4xl mb-2 text-gray-300"></i>
+                                <p class="font-semibold text-sm text-gray-500">No submissions found</p>
+                                <p class="text-sm font-semibold text-amber-500 mt-1">Try adjusting your search or filter</p>
                             </div>
                         @endif
                     @endif
@@ -461,7 +473,7 @@
         </div>
 
         <!-- Right Panel -->
-        @if($selectedFile)
+       @if($currentLevel === 'files' && $selectedFile)
             <div class="bg-white rounded-xl overflow-hidden lg:w-96 flex flex-col">
                 <!-- File Details Header -->
                 <div class="px-6 py-4" style="background: linear-gradient(148deg,rgba(18, 67, 44, 1) 0%, rgba(30, 119, 77, 1) 54%, rgba(55, 120, 64, 1) 100%);">
@@ -471,14 +483,6 @@
                             <i class="fa-solid fa-circle-info text-white text-xl"></i>
                             <h2 class="text-lg font-semibold text-white">File Details</h2>
                         </div>
-
-                        <button 
-                            wire:click="deselectFile"
-                            class="text-white/80 hover:text-white transition-colors"
-                            aria-label="Close details"
-                        >
-                            <i class="fa-solid fa-xmark"></i>
-                        </button>
                     </div>
                 </div>
 
@@ -564,25 +568,6 @@
 
     <script>
         document.addEventListener('livewire:initialized', () => {
-            // Handle file highlighting (without opening right panel)
-            Livewire.on('fileHighlighted', (fileId) => {
-                // Remove highlight from all files
-                document.querySelectorAll('.file-item').forEach(item => {
-                    item.classList.remove('ring-2', 'ring-green-600', 'rounded-xl', 'bg-green-50');
-                });
-                
-                // Add highlight to the selected file
-                const element = document.querySelector(`[wire\\:click="selectFile(${fileId})"]`);
-                if (element) {
-                    element.classList.add('ring-2', 'ring-green-600', 'rounded-xl', 'bg-green-50');
-                    
-                    // Remove highlight after 5 seconds
-                    setTimeout(() => {
-                        element.classList.remove('ring-2', 'ring-green-600', 'rounded-xl', 'bg-green-50');
-                    }, 5000);
-                }
-            });
-
             Livewire.on('scrollToFile', (fileId) => {
                 // Wait for Livewire to update the DOM
                 setTimeout(() => {
@@ -591,14 +576,6 @@
                         element.scrollIntoView({ behavior: 'smooth', block: 'center' });
                     }
                 }, 100);
-            });
-
-            // Handle search result selection
-            Livewire.on('navigateToFileAfterSearch', (fileId) => {
-                // Wait for navigation to complete, then highlight the file
-                setTimeout(() => {
-                    @this.highlightFileAfterSearch(fileId);
-                }, 500);
             });
         });
 
@@ -629,5 +606,5 @@
                 }
             }
         });
-        </script>
+    </script>
 </div>
