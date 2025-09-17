@@ -15,14 +15,14 @@
                 class="p-2 rounded-lg transition-colors {{ $viewMode === 'list' ? 'bg-white text-green-600 shadow-sm' : 'hover:bg-white/20 text-white' }}"
                 title="List view"
             >
-                <i class="fas fa-list"></i>
+                <i class="fas fa-bars"></i>
             </button>
             <button 
                 wire:click="changeViewMode('grid')" 
                 class="p-2 rounded-lg transition-colors {{ $viewMode === 'grid' ? 'bg-white text-green-600 shadow-sm' : 'hover:bg-white/20 text-white' }}"
                 title="Grid view"
             >
-                <i class="fas fa-th"></i>
+                <i class="fas fa-border-all"></i>
             </button>
         </div>
     </div>

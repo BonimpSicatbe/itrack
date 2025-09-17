@@ -36,6 +36,9 @@ class FileManager extends Component
     public $semesterMessage = null;
     public $daysRemaining;
     public $semesterProgress;
+
+    public $showDeleteModal = false;
+    public $fileToDelete = null;
     
     protected $listeners = [
         'refreshFiles' => '$refresh', 
@@ -613,5 +616,70 @@ class FileManager extends Component
     public function clearFilters()
     {
         $this->reset(['searchQuery', 'statusFilter']);
+    }
+
+    public function confirmDelete($submissionId)
+    {
+        $this->fileToDelete = $submissionId;
+        $this->showDeleteModal = true;
+    }
+
+    public function cancelDelete()
+    {
+        $this->showDeleteModal = false;
+        $this->fileToDelete = null;
+    }
+
+    public function deleteSubmission()
+    {
+        if (!$this->fileToDelete) {
+            $this->showDeleteModal = false;
+            return;
+        }
+
+        // Find the submission and ensure it belongs to the authenticated user
+        $submission = SubmittedRequirement::where('id', $this->fileToDelete)
+            ->where('user_id', Auth::id())
+            ->with(['submissionFile', 'requirement.semester']) // Eager load semester
+            ->first();
+
+        if (!$submission) {
+            $this->dispatch('notify', ['type' => 'error', 'message' => 'File not found or access denied.']);
+            $this->showDeleteModal = false;
+            return;
+        }
+
+        // Check if the associated semester is active.
+        if ($submission->requirement->semester && !$submission->requirement->semester->is_active) {
+            $this->dispatch('notify', ['type' => 'error', 'message' => 'Cannot delete files from an archived semester.']);
+            $this->showDeleteModal = false;
+            return;
+        }
+
+        // Check if a file is associated and has a valid path before attempting deletion
+        if ($submission->submissionFile && $submission->submissionFile->path) {
+            try {
+                // Delete the physical file from storage
+                Storage::disk('public')->delete($submission->submissionFile->path);
+
+                // Delete the file record from the database
+                $submission->submissionFile->delete();
+            } catch (\Exception $e) {
+                \Log::error('Error deleting file from storage: ' . $e->getMessage());
+                $this->dispatch('notify', ['type' => 'error', 'message' => 'Failed to delete the file from storage.']);
+            }
+        } else {
+            \Log::warning('Attempted to delete a submission without a valid file path. Submission ID: ' . $this->fileToDelete);
+        }
+
+        // Delete the submitted requirement record
+        $submission->delete();
+
+        // Close the modal and reset state
+        $this->showDeleteModal = false;
+        $this->fileToDelete = null;
+        $this->selectedFile = null;
+        $this->dispatch('refreshFiles');
+        $this->dispatch('notify', ['type' => 'success', 'message' => 'File deleted successfully.']);
     }
 }

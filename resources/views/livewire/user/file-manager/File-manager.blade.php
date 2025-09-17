@@ -4,7 +4,7 @@
         <div class="p-6">
             <div class="flex items-center justify-between">
                 <div class="flex items-center gap-3">
-                    <i class="fa-solid fa-folder-open text-white text-2xl"></i>
+                    <i class="fa-solid fa-folder text-white text-2xl"></i>
                     <h1 class="text-xl font-bold text-white">File Manager</h1>
                 </div>
                 <div class="flex items-center gap-3">
@@ -62,18 +62,18 @@
                 @if($currentLevel === 'semesters' || $currentLevel === 'requirements' || $currentLevel === 'files')
                     <div class="flex gap-1 bg-green-700/15 p-1 rounded-xl">
                         <button
-                            wire:click="changeViewMode('grid')"
-                            class="p-2 rounded-lg transition-colors {{ $viewMode === 'grid' ? 'bg-green-600 text-white shadow-sm' : 'hover:bg-white text-green-600' }}"
-                            aria-label="Grid view"
-                        >
-                            <i class="fa-solid fa-border-all"></i>
-                        </button>
-                        <button
                             wire:click="changeViewMode('list')"
                             class="p-2 rounded-lg transition-colors {{ $viewMode === 'list' ? 'bg-green-600 text-white shadow-sm' : 'hover:bg-white text-green-600' }}"
                             aria-label="List view"
                         >
                             <i class="fa-solid fa-bars"></i>
+                        </button>
+                        <button
+                            wire:click="changeViewMode('grid')"
+                            class="p-2 rounded-lg transition-colors {{ $viewMode === 'grid' ? 'bg-green-600 text-white shadow-sm' : 'hover:bg-white text-green-600' }}"
+                            aria-label="Grid view"
+                        >
+                            <i class="fa-solid fa-border-all"></i>
                         </button>
                     </div>
                 @endif
@@ -202,9 +202,9 @@
                                                     </div>
 
                                                     @if($semester->is_active)
-                                                        <span class="px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full flex-shrink-0 ml-2">
-                                                            Active
-                                                        </span>
+                                                        <span class="px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full flex-shrink-0 ml-2"> Active </span>
+                                                    @else
+                                                        <span class="px-2 py-1 bg-gray-200 text-gray-700 text-xs font-medium rounded-full flex-shrink-0 ml-2"> Archived </span>
                                                     @endif
                                                 </div>
                                             </div>
@@ -260,7 +260,7 @@
                                                             </span>
                                                         @else
                                                             <span class="px-2 py-1 bg-gray-100 text-gray-800 text-xs font-medium rounded-full">
-                                                                Inactive
+                                                                Archived
                                                             </span>
                                                         @endif
                                                     </td>
@@ -538,12 +538,12 @@
                     </div>
                 </div>
 
-                <!-- Fixed Action Buttons -->
+                <!-- Action Buttons -->
                 <div class="px-6 py-4 border-t bg-white flex gap-3">
                     @if($selectedFile->submissionFile)
                         <a 
                             href="{{ $this->getDownloadRoute($selectedFile->id) }}"
-                            class="flex-1 flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white rounded-full transition-colors shadow-sm"
+                            class="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-full transition-colors shadow-sm"
                             target="_blank"
                         >
                             <i class="fa-solid fa-download"></i>
@@ -554,17 +554,72 @@
                     @if($selectedFile->submissionFile && $this->canPreview($selectedFile->submissionFile->file_name))
                         <a 
                             href="{{ $this->getPreviewRoute($selectedFile->id) }}"
-                            class="flex-1 flex items-center justify-center gap-2 px-2 py-2 border-2 border-green-600 text-green-700 hover:bg-green-50 rounded-full transition-colors"
+                            class="flex-1 flex items-center justify-center gap-2 px-4 py-2 border-2 border-green-600 text-green-700 hover:bg-green-50 rounded-full transition-colors"
                             target="_blank"
                         >
                             <i class="fa-solid fa-eye"></i>
                             <span class="font-semibold text-sm">Preview</span>
                         </a>
                     @endif
+
+                    {{-- Delete Button (Conditionally disable) --}}
+                    @if(isset($selectedFile->requirement->semester) && $selectedFile->requirement->semester->is_active)
+                        <button
+                            wire:click="confirmDelete({{ $selectedFile->id }})"
+                            class="flex-1 flex items-center justify-center gap-2 px-4 py-2 border-2 border-red-600 text-red-700 hover:bg-red-50 rounded-full transition-colors"
+                        >
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    @else
+                        <button
+                            disabled
+                            class="flex-1 flex items-center justify-center gap-2 px-4 py-2 border-2 border-gray-300 text-gray-500 rounded-full cursor-not-allowed"
+                        >
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    @endif
                 </div>
             </div>
         @endif
     </div>
+
+    <!-- Delete Confirmation Modal -->
+    @if($showDeleteModal)
+        <x-modal name="delete-submission-confirmation-modal" :show="$showDeleteModal" maxWidth="md">
+            <div class="bg-red-600 text-white rounded-t-xl px-6 py-4 flex items-center space-x-3">
+                <i class="fa-solid fa-triangle-exclamation text-lg"></i>
+                <h3 class="text-xl font-semibold">Confirm Deletion</h3>
+            </div>
+
+            <div class="bg-white px-6 py-6 rounded-b-xl">
+                <div class="space-y-4">
+                    <p class="text-gray-700">
+                        Are you sure you want to delete this submission?
+                    </p>
+                    <p class="text-sm text-gray-600">
+                        This action cannot be undone. The submitted file will be permanently removed.
+                    </p>
+                </div>
+
+                <div class="mt-6 pt-4 border-t border-gray-200 flex justify-end space-x-3">
+                    <button type="button" wire:click="cancelDelete" 
+                            class="px-4 py-2 border border-gray-300 rounded-full text-sm font-medium text-gray-700 hover:bg-gray-50 cursor-pointer">
+                        Cancel
+                    </button>
+                    <button type="button" wire:click="deleteSubmission" 
+                            class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-full text-sm font-medium cursor-pointer"
+                            wire:loading.attr="disabled">
+                        <span wire:loading.remove wire:target="deleteSubmission">
+                            <i class="fa-solid fa-trash mr-2"></i> Delete
+                        </span>
+                        <span wire:loading wire:target="deleteSubmission">
+                            <i class="fa-solid fa-spinner fa-spin mr-2"></i> Deleting...
+                        </span>
+                    </button>
+                </div>
+            </div>
+        </x-modal>
+    @endif
 
     <script>
         document.addEventListener('livewire:initialized', () => {

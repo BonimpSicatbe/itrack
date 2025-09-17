@@ -26,7 +26,6 @@ class Navigation extends Component
             ['label' => 'Requirements', 'route' => 'user.requirements', 'icon' => 'clipboard-list'],
             ['label' => 'Recents', 'route' => 'user.recents', 'icon' => 'clock-rotate-left'],
             ['label' => 'File Manager', 'icon' => 'folder', 'route' => 'user.file-manager'],
-            ['label' => 'Archive', 'route' => 'user.archive', 'icon' => 'archive'],
             ['label' => 'Notifications', 'icon' => 'bell', 'route' => 'user.notifications'],
         ];
 

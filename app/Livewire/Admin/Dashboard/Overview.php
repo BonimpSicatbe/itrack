@@ -5,6 +5,7 @@ namespace App\Livewire\Admin\Dashboard;
 use App\Models\Requirement;
 use App\Models\User;
 use App\Models\Semester;
+use Illuminate\Support\Str; 
 use Livewire\Component;
 
 class Overview extends Component
@@ -15,14 +16,14 @@ class Overview extends Component
     public function mount()
     {
         $currentSemester = Semester::getActiveSemester();
-        $semesterDescription = $currentSemester 
+        $semesterDescription = $currentSemester
             ? $currentSemester->start_date->format('M d, Y') . ' - ' . $currentSemester->end_date->format('M d, Y')
             : 'No active semester';
 
         $this->stats = [
             [
                 'title' => 'Current Semester',
-                'count' => $currentSemester ? $currentSemester->name : 'None',
+                'count' => $currentSemester ? Str::limit($currentSemester->name, 15) : 'None', // Truncate the name
                 'description' => $semesterDescription,
                 'icon' => 'fa-calendar-days',
                 'color' => 'primary',
@@ -44,7 +45,7 @@ class Overview extends Component
                     'title' => 'Pending Requirements',
                     'count' => Requirement::where('semester_id', $currentSemester->id)
                         ->where('status', 'pending')
-                        ->where('due', '>=', now()) // Exclude due/overdue requirements
+                        ->where('due', '>=', now())
                         ->count(),
                     'icon' => 'fa-clock',
                     'color' => 'warning',
@@ -52,8 +53,8 @@ class Overview extends Component
                 [
                     'title' => 'Completed',
                     'count' => Requirement::where('semester_id', $currentSemester->id)
-                        ->where('due', '<', now()) // Requirements that are due (overdue)
-                        ->where('status', '!=', 'completed') // Exclude already completed ones if needed
+                        ->where('due', '<', now())
+                        ->where('status', '!=', 'completed')
                         ->count(),
                     'icon' => 'fa-circle-check',
                     'color' => 'success',

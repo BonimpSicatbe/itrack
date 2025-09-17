@@ -12,22 +12,24 @@ class RecentSubmissionsList extends Component
     public $recentSubmissions;
     public $statusFilter = '';
     public $search = '';
-    public $viewMode = 'list'; // New property for the view mode
+    public $viewMode = 'list';
     public $statuses = [
         'under_review' => 'Under Review',
         'revision_needed' => 'Revision Needed',
         'rejected' => 'Rejected',
         'approved' => 'Approved'
     ];
+    public $activeSemester; // NEW PROPERTY
 
     protected $queryString = [
         'statusFilter',
         'search' => ['except' => '', 'as' => 'q'],
-        'viewMode' => ['except' => 'list'] // New: Add viewMode to the query string
+        'viewMode' => ['except' => 'list']
     ];
 
     public function mount()
     {
+        $this->activeSemester = Semester::getActiveSemester(); // CHECK FOR ACTIVE SEMESTER
         $this->loadRecentSubmissions();
     }
 
@@ -43,8 +45,7 @@ class RecentSubmissionsList extends Component
         $this->reset(['search', 'statusFilter']);
         $this->loadRecentSubmissions();
     }
-    
-    // New method to change the view mode
+
     public function changeViewMode($mode)
     {
         $this->viewMode = $mode;
@@ -52,6 +53,12 @@ class RecentSubmissionsList extends Component
 
     public function loadRecentSubmissions()
     {
+        // Only load submissions if an active semester exists
+        if (!$this->activeSemester) {
+            $this->recentSubmissions = collect(); // Set to empty collection
+            return;
+        }
+
         $query = SubmittedRequirement::where('user_id', Auth::id())
             ->with(['requirement', 'submissionFile', 'reviewer'])
             ->whereNotNull('submitted_at')

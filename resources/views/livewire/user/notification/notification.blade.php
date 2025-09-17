@@ -235,39 +235,7 @@
                 </div>
                 @endif
 
-                {{-- Admin Review Section --}}
-                @isset($selectedNotificationData['admin_review'])
-                <div class="bg-white p-5 rounded-lg border border-gray-200 shadow-sm">
-                    <div class="flex items-center mb-4 p-3 rounded-lg" style="background: linear-gradient(to right, #DEF4C6/20, #73E2A7/10);">
-                        <div class="w-8 h-8 bg-[#DEF4C6]/50 rounded-lg flex items-center justify-center mr-3">
-                            <i class="fa-solid fa-clipboard-check text-[#1C7C54] text-sm"></i>
-                        </div>
-                        <h3 class="text-lg font-semibold text-gray-800">Admin Review</h3>
-                    </div>
-                    
-                    <div class="space-y-4">
-                        <div class="flex items-center gap-3">
-                            <span class="font-medium text-gray-500 text-sm">Status:</span>
-                            <span class="px-3 py-1 rounded-full text-xs font-medium 
-                                @if($selectedNotificationData['admin_review']['status'] === 'approved') bg-green-100 text-green-800
-                                @elseif($selectedNotificationData['admin_review']['status'] === 'rejected') bg-red-100 text-red-800
-                                @elseif($selectedNotificationData['admin_review']['status'] === 'revision_needed') bg-yellow-100 text-yellow-800
-                                @else bg-blue-100 text-blue-800 @endif">
-                                {{ $selectedNotificationData['admin_review']['status_label'] }}
-                            </span>
-                        </div>
-                        
-                        @if($selectedNotificationData['admin_review']['admin_notes'])
-                        <div>
-                            <p class="font-medium text-gray-500 text-sm mb-1">Admin Notes</p>
-                            <div class="bg-gray-50 rounded-md p-3 border border-gray-200">
-                                <p class="text-sm text-gray-600">{{ $selectedNotificationData['admin_review']['admin_notes'] }}</p>
-                            </div>
-                        </div>
-                        @endif
-                    </div>
-                </div>
-                @endisset
+                
             </div>
         @else
             <div class="h-full flex flex-col items-center justify-center text-center py-12">

@@ -37,7 +37,7 @@
                             class="p-2 rounded-lg transition-colors {{ $viewMode === 'list' ? 'bg-white text-1C7C54 shadow-sm' : 'hover:bg-white/20 text-white' }}"
                             title="List view"
                         >
-                            <i class="fas fa-list"></i>
+                            <i class="fas fa-bars"></i>
                         </button>
                         <!-- Grid Toggle -->
                         <button 
@@ -45,7 +45,7 @@
                             class="p-2 rounded-lg transition-colors {{ $viewMode === 'grid' ? 'bg-white text-1C7C54 shadow-sm' : 'hover:bg-white/20 text-white' }}"
                             title="Grid view"
                         >
-                            <i class="fas fa-th"></i>
+                            <i class="fas fa-border-all"></i>
                         </button>
                     </div>
 
