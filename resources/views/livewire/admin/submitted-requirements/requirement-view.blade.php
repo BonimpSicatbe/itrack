@@ -4,7 +4,7 @@
         <!-- Requirement Details -->
         <div class="bg-white rounded-xl shadow-md hover:shadow-lg transition p-0 overflow-hidden">
             <!-- Header -->
-            <div class="bg-green-700 text-white px-6 py-3 flex items-center rounded-t-xl">
+            <div class="text-gray-800 px-6 py-3 flex items-center rounded-t-xl border-b border-gray-300">
                 <i class="fa-solid fa-circle-info mr-2 text-2xl"></i>
                 <h2 class="text-xl font-semibold">Requirement Details</h2>
             </div>
@@ -51,12 +51,12 @@
         <!-- Submitted Files -->
         <div class="bg-white rounded-xl shadow-md hover:shadow-lg transition flex-1 flex flex-col overflow-hidden">
             <!-- Header -->
-            <div class="bg-green-700 text-white px-6 py-3 flex items-center justify-between rounded-t-xl">
+            <div class=" text-gray-800 px-6 py-3 flex items-center justify-between rounded-t-xl border-b border-gray-300">
                 <div class="flex items-center">
                     <i class="fa-solid fa-folder-open mr-2 text-2xl"></i>
                     <h2 class="text-xl font-semibold">Submitted Files</h2>
                 </div>
-                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-white text-green-700">
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-white text-gray-800">
                     {{ count($allFiles) }} file(s)
                 </span>
             </div>
@@ -66,7 +66,6 @@
                 @if(count($allFiles) > 0)
                     <div class="space-y-5">
                         @php
-                            // Group files by user name using collection method
                             $groupedFiles = $allFiles->groupBy(function($file) {
                                 return $file['user']['full_name'] ?? 'Unknown User';
                             });
@@ -75,8 +74,8 @@
                         @foreach($groupedFiles as $userName => $userFiles)
                             <div>
                                 <!-- User Name -->
-                                <p class="text-md font-semibold text-gray-500 mb-2 flex items-center">
-                                    <i class="fa-solid fa-user mr-2 text-sm text-gray-600"></i> {{ $userName }}
+                                <p class="text-sm font-semibold text-gray-800 mb-2 flex items-center">
+                                    <i class="fa-solid fa-user mr-2 text-sm text-gray-800"></i> {{ $userName }}
                                 </p>
 
                                 <!-- User Files -->
@@ -92,7 +91,7 @@
                                             class="w-full text-left p-3 rounded-xl transition-all duration-200 flex items-center gap-3
                                                 {{ ($selectedFile && $selectedFile['id'] === $file['id']) ? 
                                                     'bg-green-600 text-white shadow-sm' : 
-                                                    'border border-gray-200 hover:border-green-700 hover:bg-green-700/5' }}">
+                                                    'border-1 border-gray-300 hover:border-green-700 hover:border-2' }}">
                                             <!-- File Icon -->
                                             <div class="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center bg-white">
                                                 <i class="fa-solid {{ $fileIcon['icon'] }} text-lg {{ $fileIcon['color'] }}"></i>
@@ -159,7 +158,7 @@
             </div>
 
             <!-- File Display -->
-            <div class="flex-1 rounded-b-xl bg-green-700/5 border-t border-green-700/20 flex flex-col items-center justify-center overflow-hidden">
+            <div class="flex-1 rounded-b-xl bg-white border-t border-green-700/20 flex flex-col items-center justify-center overflow-hidden">
                 @if($selectedFile)
                     @if($isImage)
                         <div class="p-4 w-full h-full flex items-center justify-center">

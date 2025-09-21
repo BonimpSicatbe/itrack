@@ -23,9 +23,8 @@ class Navigation extends Component
         // Main navigation links
         $this->navLink = [
             ['label' => 'Dashboard', 'route' => 'user.dashboard', 'icon' => 'home'],
-            ['label' => 'Requirements', 'route' => 'user.requirements', 'icon' => 'spinner'],
-            ['label' => 'Recents', 'route' => 'user.recents', 'icon' => 'clock'],
-            ['label' => 'Archive', 'route' => 'user.archive', 'icon' => 'archive'],
+            ['label' => 'Requirements', 'route' => 'user.requirements', 'icon' => 'clipboard-list'],
+            ['label' => 'Recents', 'route' => 'user.recents', 'icon' => 'clock-rotate-left'],
             ['label' => 'File Manager', 'icon' => 'folder', 'route' => 'user.file-manager'],
             ['label' => 'Notifications', 'icon' => 'bell', 'route' => 'user.notifications'],
         ];
@@ -35,7 +34,7 @@ class Navigation extends Component
             ['label' => Auth::user()->firstname . ' ' . Auth::user()->lastname, 'route' => 'profile.edit', 'icon' => 'user', 'is_profile' => true],
             ['label' => 'Logout', 'route' => 'logout', 'icon' => 'right-from-bracket'],
         ];
-        
+
         // Add logo configuration - different logos for each state
         $this->logos = [
             'collapsed' => asset('images/logo-1.png'),

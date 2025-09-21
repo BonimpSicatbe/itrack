@@ -2,6 +2,7 @@
 
 namespace App\Livewire\User\Recents;
 
+use App\Models\Semester;
 use Livewire\Component;
 use Illuminate\Support\Facades\Auth;
 use App\Models\SubmittedRequirement;
@@ -11,20 +12,24 @@ class RecentSubmissionsList extends Component
     public $recentSubmissions;
     public $statusFilter = '';
     public $search = '';
+    public $viewMode = 'list';
     public $statuses = [
         'under_review' => 'Under Review',
         'revision_needed' => 'Revision Needed',
         'rejected' => 'Rejected',
         'approved' => 'Approved'
     ];
+    public $activeSemester; // NEW PROPERTY
 
     protected $queryString = [
         'statusFilter',
-        'search' => ['except' => '', 'as' => 'q'] // Optional: makes URL cleaner
+        'search' => ['except' => '', 'as' => 'q'],
+        'viewMode' => ['except' => 'list']
     ];
 
     public function mount()
     {
+        $this->activeSemester = Semester::getActiveSemester(); // CHECK FOR ACTIVE SEMESTER
         $this->loadRecentSubmissions();
     }
 
@@ -42,8 +47,19 @@ class RecentSubmissionsList extends Component
         $this->loadRecentSubmissions();
     }
 
+    public function changeViewMode($mode)
+    {
+        $this->viewMode = $mode;
+    }
+
     public function loadRecentSubmissions()
     {
+        // Only load submissions if an active semester exists
+        if (!$this->activeSemester) {
+            $this->recentSubmissions = collect(); // Set to empty collection
+            return;
+        }
+
         $query = SubmittedRequirement::where('user_id', Auth::id())
             ->with(['requirement', 'submissionFile', 'reviewer'])
             ->whereNotNull('submitted_at')
@@ -56,13 +72,13 @@ class RecentSubmissionsList extends Component
 
         // Apply search filter if text entered
         if ($this->search) {
-            $query->where(function($q) {
-                $q->whereHas('requirement', function($q) {
-                    $q->where('name', 'like', '%'.$this->search.'%');
+            $query->where(function ($q) {
+                $q->whereHas('requirement', function ($q) {
+                    $q->where('name', 'like', '%' . $this->search . '%');
                 })
-                ->orWhereHas('submissionFile', function($q) {
-                    $q->where('file_name', 'like', '%'.$this->search.'%');
-                });
+                    ->orWhereHas('submissionFile', function ($q) {
+                        $q->where('file_name', 'like', '%' . $this->search . '%');
+                    });
             });
         }
 

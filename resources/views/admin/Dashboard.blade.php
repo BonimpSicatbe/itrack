@@ -16,7 +16,7 @@
                         <div class="collapse-title font-semibold text-xl px-6 py-4 hover:bg-base-200 text-gray-800">
                             Requirements
                         </div>
-                        <div class="collapse-content px-6 pb-4">
+                        <div class="collapse-content p-0">
                             @livewire('admin.dashboard.requirement')
                         </div>
                     </div>

@@ -16,7 +16,7 @@ class FileManager extends Component
     public $viewMode = 'grid';
     public $showFileDetails = false;
     public $selectedFile = null;
-    
+
     // Semester properties
     public $activeSemester = null;
     public $selectedSemesterId = null;
@@ -24,15 +24,12 @@ class FileManager extends Component
     public $semesterMessage = null;
     public $daysRemaining;
     public $semesterProgress;
-    
-    // New properties for admin-style UI
-    public $showSemesterManager = false;
-    public $viewModeSemester = 'manager'; // manager, user, college, department
-    public $searchTerm = '';
-    
+
+    public $showDeleteModal = false;
+    public $fileToDelete = null;
+
     protected $listeners = [
-        'refreshFiles' => '$refresh', 
-        'fileSelected' => 'handleFileSelected',
+        'refreshFiles' => '$refresh',
         'semesterActivated' => 'refreshSemesterData',
         'semesterArchived' => 'refreshSemesterData',
         'semesterSelected' => 'handleSemesterSelection'
@@ -42,7 +39,10 @@ class FileManager extends Component
     {
         $this->refreshSemesterData();
         $this->loadAllSemesters();
-        
+
+        // Retrieve view mode preference from session if exists
+        $this->viewMode = session()->get('fileManagerViewMode', 'grid');
+
         // Set default selected semester to active semester
         if ($this->activeSemester) {
             $this->selectedSemesterId = $this->activeSemester->id;
@@ -57,7 +57,7 @@ class FileManager extends Component
     public function refreshSemesterData()
     {
         $this->activeSemester = Semester::getActiveSemester();
-        
+
         if ($this->activeSemester) {
             $this->calculateSemesterStats();
             $this->setSemesterMessage();
@@ -74,7 +74,7 @@ class FileManager extends Component
 
         // Calculate days remaining
         $this->daysRemaining = $now->diffInDays($endDate, false);
-        
+
         // If semester has ended, set days remaining to 0
         if ($this->daysRemaining < 0) {
             $this->daysRemaining = 0;
@@ -83,15 +83,12 @@ class FileManager extends Component
         // Calculate semester progress percentage
         $totalDays = $startDate->diffInDays($endDate);
         $daysPassed = $startDate->diffInDays($now);
-        
+
         if ($totalDays > 0) {
             $this->semesterProgress = min(100, max(0, ($daysPassed / $totalDays) * 100));
         } else {
             $this->semesterProgress = 0;
         }
-        
-        // Calculate progress color
-        $this->getProgressColorProperty();
     }
 
     private function setSemesterMessage()
@@ -131,181 +128,175 @@ class FileManager extends Component
         }
     }
 
-    // Toggle semester manager view
-    public function toggleSemesterManager()
+    public function handleNavigation($level, $id = null)
     {
-        $this->showSemesterManager = !$this->showSemesterManager;
+        $this->statusFilter = ''; // Reset the status filter
+        if ($this->isNavigating) return;
+
+        $this->isNavigating = true;
+
+        try {
+            $this->currentLevel = $level;
+
+            if ($level === 'semesters') {
+                $this->currentSemester = null;
+                $this->currentRequirement = null;
+                $this->selectedSemesterId = null;
+                $this->deselectFile();
+                $this->breadcrumb = [['name' => 'File Manager', 'level' => 'semesters', 'id' => null]];
+            } elseif ($level === 'requirements' && $id) {
+                // Load semester with requirements and their submission counts
+                $this->currentSemester = Semester::with(['requirements' => function($query) {
+                    $query->withCount(['submittedRequirements' => function($query) {
+                        $query->where('user_id', Auth::id());
+                    }]);
+                }])->find($id);
+
+                if (!$this->currentSemester) {
+                    $this->currentLevel = 'semesters';
+                    return;
+                }
+
+                $this->selectedSemesterId = $id;
+                $this->currentRequirement = null;
+                $this->deselectFile();
+
+                // Update breadcrumb
+                $this->breadcrumb = [
+                    ['name' => 'File Manager', 'level' => 'semesters', 'id' => null],
+                    ['name' => $this->currentSemester->name, 'level' => 'requirements', 'id' => $id]
+                ];
+            } elseif ($level === 'files' && $id) {
+                // Load requirement with user's submissions and related data
+                $this->currentRequirement = Requirement::with([
+                    'submittedRequirements' => function($query) {
+                        $query->where('user_id', Auth::id())
+                            ->with(['submissionFile', 'user', 'requirement.semester']);
+                    }
+                ])->find($id);
+
+                if (!$this->currentRequirement) {
+                    // Fall back to requirements level if requirement doesn't exist
+                    if ($this->currentSemester) {
+                        $this->currentLevel = 'requirements';
+                    } else {
+                        $this->currentLevel = 'semesters';
+                    }
+                    return;
+                }
+
+                // Make sure we have the current semester set
+                if (!$this->currentSemester && $this->currentRequirement->semester) {
+                    $this->currentSemester = $this->currentRequirement->semester;
+                    $this->selectedSemesterId = $this->currentSemester->id;
+                }
+
+                // Update breadcrumb
+                $this->breadcrumb = [
+                    ['name' => 'File Manager', 'level' => 'semesters', 'id' => null],
+                    ['name' => $this->currentSemester->name, 'level' => 'requirements', 'id' => $this->currentSemester->id],
+                    ['name' => $this->currentRequirement->name, 'level' => 'files', 'id' => $id]
+                ];
+            }
+
+            $this->dispatch('levelChanged', $level, $id);
+        } catch (\Exception $e) {
+            \Log::error('Navigation error: ' . $e->getMessage());
+            $this->currentLevel = 'semesters';
+            $this->currentSemester = null;
+            $this->currentRequirement = null;
+            $this->breadcrumb = [['name' => 'File Manager', 'level' => 'semesters', 'id' => null]];
+        } finally {
+            $this->isNavigating = false;
+        }
     }
 
-    // Change view mode in semester manager
-    public function changeViewMode($mode)
+    public function updateBreadcrumb($breadcrumb)
     {
-        $this->viewModeSemester = $mode;
-    }
-
-    // Handle semester selection from the sidebar
-    public function handleSemesterSelection($semesterId)
-    {
-        $this->selectedSemesterId = $semesterId;
-        $this->showSemesterManager = false; // Close the sidebar after selection
-        $this->dispatch('semesterChanged', $this->selectedSemesterId);
-    }
-
-    public function updatedSearch()
-    {
-        // Pass search to child component
-        $this->dispatch('searchUpdated', $this->search);
-    }
-
-    public function updatedStatusFilter()
-    {
-        // Pass filter to child component
-        $this->dispatch('statusFilterUpdated', $this->statusFilter);
-    }
-
-    public function updatedViewMode()
-    {
-        // Pass view mode to child component
-        $this->dispatch('viewModeUpdated', $this->viewMode);
-    }
-    
-    public function updatedSelectedSemesterId()
-    {
-        // When semester selection changes, refresh the file list
-        $this->dispatch('semesterChanged', $this->selectedSemesterId);
+        $this->breadcrumb = $breadcrumb;
     }
 
     public function handleFileSelected($submissionId)
     {
-        $this->selectedFile = SubmittedRequirement::where('user_id', Auth::id())
-            ->with(['requirement', 'submissionFile', 'user'])
-            ->findOrFail($submissionId);
-        
-        $this->showFileDetails = true;
+        try {
+            // Find and set the selected file directly
+            $this->selectedFile = SubmittedRequirement::where('user_id', Auth::id())
+                ->with(['requirement', 'submissionFile', 'user'])
+                ->findOrFail($submissionId);
+
+            // The file has been selected, no need to dispatch an event back to self.
+            // Dispatch a general event if other components need to know.
+            // For example:
+            $this->dispatch('fileSelected'); // Dispatch a generic 'file selected' event
+
+        } catch (\Exception $e) {
+            \Log::error('Error selecting file: ' . $e->getMessage());
+            $this->selectedFile = null;
+        }
+    }
+
+    public function deselectFile()
+    {
+        $this->selectedFile = null;
     }
 
     public function closeFileDetails()
     {
         $this->showFileDetails = false;
         $this->selectedFile = null;
+        $this->dispatch('fileDetailsClosed');
     }
 
-    public function downloadFile($submissionId)
+    public function getDownloadRoute($submissionId)
     {
-        try {
-            $submission = SubmittedRequirement::where('user_id', Auth::id())
-                ->with('submissionFile')
-                ->findOrFail($submissionId);
-
-            if (!$submission->submissionFile) {
-                session()->flash('error', 'File record not found.');
-                return;
-            }
-
-            $file = $submission->submissionFile;
-            
-            if (!$file->file_path) {
-                session()->flash('error', 'File path is missing.');
-                return;
-            }
-
-            $filePath = $file->file_path;
-            
-            // Check if file exists in storage
-            if (!Storage::exists($filePath)) {
-                session()->flash('error', 'File not found in storage: ' . $filePath);
-                return;
-            }
-
-            // Get file contents
-            $fileContents = Storage::get($filePath);
-            $fileName = $file->file_name ?: 'download';
-            
-            // Try to get mime type, fallback to application/octet-stream
-            try {
-                $mimeType = Storage::mimeType($filePath);
-            } catch (\Exception $e) {
-                $mimeType = 'application/octet-stream';
-            }
-
-            // Create a streamed response for download
-            return response()->streamDownload(function () use ($fileContents) {
-                echo $fileContents;
-            }, $fileName, [
-                'Content-Type' => $mimeType,
-                'Content-Disposition' => 'attachment; filename="' . $fileName . '"',
-            ]);
-
-        } catch (\Exception $e) {
-            session()->flash('error', 'Download failed: ' . $e->getMessage());
-            return;
-        }
+        return route('file.download', $submissionId);
     }
 
-    public function canOpenFile($file)
+    public function getPreviewRoute($submissionId)
     {
-        if (!$file || !$file->submissionFile) {
-            return false;
-        }
-
-        $extension = strtolower(pathinfo($file->submissionFile->file_name, PATHINFO_EXTENSION));
-        $excludedTypes = ['xls', 'xlsx']; // Excel files cannot be opened directly in browser
-        
-        return !in_array($extension, $excludedTypes);
+        return route('file.preview', $submissionId);
     }
 
-    public function canDownloadFile($file)
+    public function canPreview($filename)
     {
-        if (!$file || !$file->submissionFile) {
-            return false;
-        }
+        $extension = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+        $previewableTypes = ['pdf', 'jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'];
 
-        // If there's no file_path, we can't download
-        if (!$file->submissionFile->file_path) {
-            return false;
-        }
-
-        // For now, let's be more permissive - if we have a file record, allow download attempt
-        // The actual file existence check will be done during download
-        return true;
-    }
-
-    public function getFileUrl($file)
-    {
-        if (!$file || !$file->submissionFile) {
-            return null;
-        }
-
-        return $file->getFileUrl();
+        return in_array($extension, $previewableTypes);
     }
 
     public function getFileIcon($filename)
     {
         $extension = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
-        
-        return match($extension) {
-            'pdf' => 'fa-file-pdf text-red-500',
-            'doc', 'docx' => 'fa-file-word text-blue-500',
-            'xls', 'xlsx' => 'fa-file-excel text-green-500',
-            'ppt', 'pptx' => 'fa-file-powerpoint text-orange-500',
-            'jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp' => 'fa-file-image text-purple-500',
-            'zip', 'rar', '7z' => 'fa-file-zipper text-yellow-500',
-            'txt' => 'fa-file-lines text-gray-500',
-            default => 'fa-file text-gray-500',
-        };
+
+        // Use the FILE_ICONS constant from SubmittedRequirement model
+        $icons = SubmittedRequirement::FILE_ICONS;
+
+        return $icons[$extension]['icon'] ?? $icons['default']['icon'];
+    }
+
+    public function getFileIconColor($filename)
+    {
+        // Get the extension
+        $extension = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+
+        // Use the FILE_ICONS constant from SubmittedRequirement model
+        $icons = SubmittedRequirement::FILE_ICONS;
+
+        return $icons[$extension]['color'] ?? $icons['default']['color'];
     }
 
     public function formatFileSize($bytes)
     {
         if ($bytes == 0) return '0 B';
-        
+
         $units = ['B', 'KB', 'MB', 'GB', 'TB'];
         $bytes = max($bytes, 0);
         $pow = floor(($bytes ? log($bytes) : 0) / log(1024));
         $pow = min($pow, count($units) - 1);
-        
+
         $bytes /= pow(1024, $pow);
-        
+
         return round($bytes, 2) . ' ' . $units[$pow];
     }
 
@@ -322,27 +313,10 @@ class FileManager extends Component
     }
 
     protected function getTotalFiles()
-{
-    $query = SubmittedRequirement::where('user_id', Auth::id())
-        ->whereHas('submissionFile');
-    
-    if ($this->selectedSemesterId) {
-        $query->whereHas('requirement', function($q) {
-            $q->where('semester_id', $this->selectedSemesterId);
-        });
-    } else {
-        $query->whereHas('requirement.semester', function($q) {
-            $q->where('is_active', true);
-        });
-    }
-    
-    return $query->count();
-}
-
-    protected function getTotalSize()
     {
-        $query = SubmittedRequirement::where('user_id', Auth::id());
-        
+        $query = SubmittedRequirement::where('user_id', Auth::id())
+            ->whereHas('submissionFile');
+
         if ($this->selectedSemesterId) {
             $query->whereHas('requirement', function($q) {
                 $q->where('semester_id', $this->selectedSemesterId);
@@ -352,16 +326,292 @@ class FileManager extends Component
                 $q->where('is_active', true);
             });
         }
-        
+
+        return $query->count();
+    }
+
+    protected function getTotalSize()
+    {
+        $query = SubmittedRequirement::where('user_id', Auth::id());
+
+        if ($this->selectedSemesterId) {
+            $query->whereHas('requirement', function ($q) {
+                $q->where('semester_id', $this->selectedSemesterId);
+            });
+        } else {
+            $query->whereHas('requirement.semester', function ($q) {
+                $q->where('is_active', true);
+            });
+        }
+
         $submissions = $query->with('submissionFile')->get();
-        
+
         $totalSize = 0;
         foreach ($submissions as $submission) {
             if ($submission->submissionFile) {
                 $totalSize += $submission->submissionFile->size ?? 0;
             }
         }
-        
+
         return $this->formatFileSize($totalSize);
+    }
+
+    public function changeViewMode($mode)
+    {
+        $this->viewMode = $mode;
+
+        // Store the view preference in session for persistence
+        session()->put('fileManagerViewMode', $mode);
+    }
+
+    public function updatedSearchQuery($value)
+    {
+        if (empty($value)) {
+            $this->searchResults = [];
+            $this->showSearchResults = false;
+            return;
+        }
+
+        $this->searchResults = $this->performSearch($value);
+        $this->showSearchResults = !empty($this->searchResults);
+    }
+
+    protected function performSearch($query)
+    {
+        $results = [];
+        $userId = Auth::id();
+
+        // Search semesters
+        $semesters = Semester::where('name', 'like', "%{$query}%")
+            ->orderBy('start_date', 'desc')
+            ->get();
+
+        foreach ($semesters as $semester) {
+            $results[] = [
+                'type' => 'semester',
+                'id' => $semester->id,
+                'name' => $semester->name,
+                'description' => $semester->start_date->format('M Y') . ' - ' . $semester->end_date->format('M Y'),
+                'icon' => 'fa-folder',
+                'icon_color' => 'text-green-700',
+                'semester_id' => $semester->id
+            ];
+        }
+
+        // Search requirements
+        $requirements = Requirement::where('name', 'like', "%{$query}%")
+            ->with('semester')
+            ->get();
+
+        foreach ($requirements as $requirement) {
+            $results[] = [
+                'type' => 'requirement',
+                'id' => $requirement->id,
+                'name' => $requirement->name,
+                'description' => 'In ' . ($requirement->semester->name ?? 'Unknown Semester'),
+                'icon' => 'fa-folder',
+                'icon_color' => 'text-green-700',
+                'semester_id' => $requirement->semester_id,
+                'requirement_id' => $requirement->id
+            ];
+        }
+
+        // Search files
+        $files = SubmittedRequirement::where('user_id', $userId)
+            ->whereHas('submissionFile', function($q) use ($query) {
+                $q->where('file_name', 'like', "%{$query}%");
+            })
+            ->with(['submissionFile', 'requirement.semester'])
+            ->get();
+
+        foreach ($files as $file) {
+            // Safely access nested relationships with null coalescing
+            $fileName = $file->submissionFile->file_name ?? 'Untitled';
+            $fileSize = $file->submissionFile->size ?? 0;
+            $requirementName = $file->requirement->name ?? 'Unknown Requirement';
+            $semesterId = $file->requirement->semester_id ?? null;
+            $requirementId = $file->requirement_id ?? null;
+
+            $results[] = [
+                'type' => 'file',
+                'id' => $file->id,
+                'name' => $fileName,
+                'description' => 'In ' . $requirementName . ' • ' . $this->formatFileSize($fileSize),
+                'icon' => $this->getFileIcon($fileName),
+                'icon_color' => $this->getFileIconColor($fileName),
+                'requirement_id' => $requirementId, // Make sure this is included
+                'semester_id' => $semesterId
+            ];
+        }
+
+        return $results;
+    }
+
+    public function selectSearchResult($type, $id, $semesterId = null, $requirementId = null)
+    {
+        if ($this->isNavigating) return;
+
+        $this->showSearchResults = false;
+        $this->searchQuery = '';
+
+        if ($type === 'semester') {
+            $this->handleNavigation('requirements', $id);
+        } elseif ($type === 'requirement' && $semesterId) {
+            // First navigate to the requirements level of the correct semester
+            $this->handleNavigation('requirements', $semesterId);
+
+            // Then navigate to the files level for this requirement
+            $this->dispatch('navigateAfterSearch', requirementId: $id);
+        } elseif ($type === 'file' && $requirementId && $semesterId) {
+            // First navigate to the requirements level of the correct semester
+            $this->handleNavigation('requirements', $semesterId);
+
+            // Then navigate to files level and select the file
+            $this->dispatch('navigateAfterSearch', requirementId: $requirementId, fileId: $id);
+        }
+    }
+
+    public function navigateToFilesAfterSearch($requirementId)
+    {
+        // Small delay to ensure the requirements level is loaded first
+        usleep(300000); // 300ms delay
+        $this->handleNavigation('files', $requirementId);
+    }
+
+    public function navigateToFileAfterSearch($fileId)
+    {
+        // Small delay to ensure the navigation is complete
+        usleep(300000); // 300ms delay
+
+        // Select the file
+        $this->selectFile($fileId);
+
+        // Scroll to the selected file
+        $this->dispatch('scrollToFile', $fileId);
+    }
+
+    public function closeSearchResults()
+    {
+        $this->showSearchResults = false;
+    }
+
+    public function ensureNavigationData()
+    {
+        // If we're at the files level but currentRequirement is null, try to load it
+        if ($this->currentLevel === 'files' && !$this->currentRequirement && $this->currentSemester) {
+            // Try to get the first requirement of the current semester
+            $firstRequirement = $this->currentSemester->requirements->first();
+            if ($firstRequirement) {
+                $this->currentRequirement = $firstRequirement;
+            } else {
+                // Fall back to requirements level if no requirements exist
+                $this->handleNavigation('requirements', $this->currentSemester->id);
+            }
+        }
+
+        // If we're at the requirements level but currentSemester is null, try to load it
+        if ($this->currentLevel === 'requirements' && !$this->currentSemester && $this->selectedSemesterId) {
+            $this->currentSemester = Semester::find($this->selectedSemesterId);
+            if (!$this->currentSemester) {
+                // Fall back to semesters level if semester doesn't exist
+                $this->handleNavigation('semesters');
+            }
+        }
+    }
+
+    public function handleNavigateAfterSearch($requirementId, $fileId = null)
+    {
+        // Small delay to ensure the requirements level is loaded first
+        usleep(300000); // 300ms delay
+
+        // Navigate to the files level
+        $this->handleNavigation('files', $requirementId);
+
+        // If a specific file was requested, select it
+        if ($fileId) {
+            $this->dispatch('navigateToFileAfterSearch', fileId: $fileId);
+        }
+    }
+
+    public function handleNavigateToFileAfterSearch($fileId)
+    {
+        // Small delay to ensure navigation is complete
+        usleep(300000); // 300ms delay
+
+        // Select the file
+        $this->selectFile($fileId);
+
+        // Scroll to the selected file
+        $this->dispatch('scrollToFile', $fileId);
+    }
+
+    public function clearFilters()
+    {
+        $this->reset(['searchQuery', 'statusFilter']);
+    }
+
+    public function confirmDelete($submissionId)
+    {
+        $this->fileToDelete = $submissionId;
+        $this->showDeleteModal = true;
+    }
+
+    public function cancelDelete()
+    {
+        $this->showDeleteModal = false;
+        $this->fileToDelete = null;
+    }
+
+    public function deleteSubmission()
+    {
+        if (!$this->fileToDelete) {
+            $this->showDeleteModal = false;
+            return;
+        }
+
+        // Find the submission and ensure it belongs to the authenticated user
+        $submission = SubmittedRequirement::where('id', $this->fileToDelete)
+            ->where('user_id', Auth::id())
+            ->with(['submissionFile', 'requirement.semester']) // Eager load semester
+            ->first();
+
+        if (!$submission) {
+            $this->dispatch('notify', ['type' => 'error', 'message' => 'File not found or access denied.']);
+            $this->showDeleteModal = false;
+            return;
+        }
+
+        // Check if the associated semester is active.
+        if ($submission->requirement->semester && !$submission->requirement->semester->is_active) {
+            $this->dispatch('notify', ['type' => 'error', 'message' => 'Cannot delete files from an archived semester.']);
+            $this->showDeleteModal = false;
+            return;
+        }
+
+        // Check if a file is associated and has a valid path before attempting deletion
+        if ($submission->submissionFile && $submission->submissionFile->path) {
+            try {
+                // Delete the physical file from storage
+                Storage::disk('public')->delete($submission->submissionFile->path);
+
+                // Delete the file record from the database
+                $submission->submissionFile->delete();
+            } catch (\Exception $e) {
+                \Log::error('Error deleting file from storage: ' . $e->getMessage());
+                $this->dispatch('notify', ['type' => 'error', 'message' => 'Failed to delete the file from storage.']);
+            }
+        } else {
+            \Log::warning('Attempted to delete a submission without a valid file path. Submission ID: ' . $this->fileToDelete);
+        }
+
+        // Delete the submitted requirement record
+        $submission->delete();
+
+        // Close the modal and reset state
+        $this->showDeleteModal = false;
+        $this->fileToDelete = null;
+        $this->selectedFile = null;
+        $this->dispatch('refreshFiles');
+        $this->dispatch('notify', ['type' => 'success', 'message' => 'File deleted successfully.']);
     }
 }

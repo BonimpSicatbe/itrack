@@ -116,6 +116,7 @@
 </style>
     </head>
     <body>
+    <!-- <body class="bg-[#F5F5F5]"> -->
         <!-- Papercut Background -->
         <div class="papercut-background">
             <div class="wave-layer"></div>

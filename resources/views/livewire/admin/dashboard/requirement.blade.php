@@ -1,6 +1,6 @@
 <div class="flex flex-col w-full gap-6 rounded-xl">
     @if($activeSemester)
-        <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div class="flex flex-col sm:flex-row items-center justify-between gap-4 px-6">
             <!-- Search Box -->
             <div class="w-full sm:w-1/3">
                 <div class="relative">
@@ -11,7 +11,7 @@
                         type="text" 
                         wire:model.live.debounce.300ms="search" 
                         id="search"
-                        class="pl-10 block w-sm rounded-xl border-gray-300 shadow-sm focus:border-1C7C54 focus:ring-1C7C54 sm:text-sm" 
+                        class="pl-10 block w-sm rounded-xl border-gray-300 shadow-sm focus:border-green-600 focus:ring-green-600 sm:text-sm" 
                         placeholder="Search requirements..."
                     >
                 </div>
@@ -22,13 +22,13 @@
                 <a href="{{ route('admin.requirements.index') }}" 
                    class="px-4 py-1.5 bg-green-600 text-white font-semibold rounded-full hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-73E2A7 focus:ring-offset-2 transition text-sm cursor-pointer flex items-center gap-2">
                     Requirements Page
-                    <i class="fa-solid fa-arrow-right"></i>
+                    <i class="fa-solid fa-chevron-right text-xs"></i>
                 </a>
             </div>
         </div>
 
         {{-- Table Content --}}
-        <div class="max-h-[500px] overflow-x-auto rounded-xl border border-gray-200 shadow-sm">
+        <div class="max-h-[500px] overflow-x-auto shadow-sm mb-4">
             <table class="min-w-full divide-y divide-gray-200 rounded-lg"> 
                 <thead>
                     <tr class="bg-green-700">
@@ -104,10 +104,6 @@
                     @endforelse
                 </tbody>
             </table>
-        </div>
-
-        <div class="w-full flex justify-center py-2">
-            {{ $requirements->links() }}
         </div>
     @else
         <div class="flex items-center p-4 bg-[#DEF4C6] text-[#1B512D] rounded-lg shadow-lg">
