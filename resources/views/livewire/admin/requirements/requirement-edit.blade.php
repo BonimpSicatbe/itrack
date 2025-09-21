@@ -8,7 +8,7 @@
                 <i class="text-2xl fa-solid fa-circle-info"></i> Edit Requirement Details
             </h2>
             <button type="button" onclick="history.back()" class="bg-white text-green-700 px-4 py-1.5 rounded-full shadow font-semibold text-sm transition-all duration-200 flex items-center gap-2">
-                <i class="fa-solid fa-arrow-left text-green-700"></i> Back
+                <i class="fa-solid fa-chevron-left text-green-700"></i> Back
             </button>
         </div>
 
@@ -58,7 +58,7 @@
             <!-- Required Files -->
             <div class="px-6 py-3 bg-gray-100 border-t border-gray-100 flex items-center justify-between">
                 <div class="flex items-center gap-2">
-                    <i class="text-xl fa-solid fa-folder-open text-1C7C54"></i>
+                    <i class="text-xl fa-solid fa-folder-open text-green-700"></i>
                     <h3 class="text-lg font-semibold text-gray-800">Required Files</h3>
                 </div>
                 <button type="button" 
@@ -69,8 +69,8 @@
                 </button>
             </div>
 
-            <div class="p-4">
-                <div class="overflow-hidden rounded-xl border border-gray-200">
+            <div class="pb-10">
+                <div class="overflow-hidden">
                     <table class="min-w-full divide-y divide-gray-100">
                         <thead class="bg-green-700">
                             <tr>
@@ -84,26 +84,26 @@
                         <tbody class="bg-white divide-y divide-gray-100">
                             @forelse ($requiredFiles as $file)
                                 <tr class="hover:bg-73E2A7/10 transition duration-200">
-                                    <td class="px-6 py-4 text-sm font-medium text-gray-900 truncate max-w-xs">{{ $file->file_name }}</td>
-                                    <td class="px-6 py-4 text-sm text-gray-700">{{ strtoupper($file->extension) }}</td>
-                                    <td class="px-6 py-4 text-sm text-gray-700">{{ $file->humanReadableSize }}</td>
-                                    <td class="px-6 py-4 text-sm text-gray-700">{{ $file->updated_at->format('M d, Y h:i A') }}</td>
-                                    <td class="px-6 py-4 text-right text-sm font-medium space-x-3">
+                                    <td class="px-6 py-4 text-sm font-medium text-gray-900 truncate max-w-xs border-b border-gray-300">{{ $file->file_name }}</td>
+                                    <td class="px-6 py-4 text-sm text-gray-700 border-b border-gray-300">{{ strtoupper($file->extension) }}</td>
+                                    <td class="px-6 py-4 text-sm text-gray-700 border-b border-gray-300">{{ $file->humanReadableSize }}</td>
+                                    <td class="px-6 py-4 text-sm text-gray-700 border-b border-gray-300">{{ $file->updated_at->format('M d, Y h:i A') }}</td>
+                                    <td class="px-6 py-4 text-right text-sm font-medium space-x-3 border-b border-gray-300">
                                         <a href="{{ route('guide.download', $file->id) }}" 
-                                           class="text-1C7C54 hover:text-1B512D transition">
+                                           class="text-blue-500">
                                             <i class="fa-solid fa-download"></i>
                                         </a>
                                         @if($this->isPreviewable($file->mime_type))
                                         <a href="{{ route('guide.preview', $file->id) }}" 
                                            target="_blank"
-                                           class="text-B1CF5F hover:text-1B512D transition">
+                                           class="text-green-500">
                                             <i class="fa-solid fa-eye"></i>
                                         </a>
                                         @endif
                                         <button wire:click.prevent="confirmFileRemoval({{ $file->id }})" 
                                                 wire:loading.attr="disabled"
                                                 type="button"
-                                                class="text-red-600 hover:text-red-800 transition" 
+                                                class="text-red-500" 
                                                 >
                                             <span wire:loading.remove wire:target="removeFile">
                                                 <i class="fa-solid fa-trash"></i>
@@ -116,7 +116,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="5" class="px-6 py-4 text-center text-xs text-gray-500">No required files attached.</td>
+                                    <td colspan="5" class="px-6 py-4 text-center text-xs text-gray-500 border-b border-gray-300">No required files attached.</td>
                                 </tr>
                             @endforelse
                         </tbody>
@@ -126,12 +126,12 @@
 
             <!-- Assigned Users -->
             <div class="px-6 py-3 bg-gray-100 border-t border-gray-100 flex items-center gap-2">
-                <i class="fa-solid text-xl fa-users text-1C7C54"></i>
+                <i class="fa-solid text-xl fa-users text-green-700"></i>
                 <h3 class="font-semibold text-lg text-gray-800">Assigned Users</h3>
             </div>
             
-            <div class="p-4">
-                <div class="overflow-hidden rounded-xl border border-gray-200">
+            <div class="pb-10">
+                <div class="overflow-hidden">
                     <table class="min-w-full divide-y divide-gray-100">
                         <thead class="bg-green-700">
                             <tr>
@@ -142,9 +142,9 @@
                         <tbody class="bg-white divide-y divide-gray-100">
                             @forelse ($assignedUsers as $user)
                                 <tr class="hover:bg-73E2A7/10 transition cursor-pointer" wire:click="showUser({{ $user->id }})">
-                                    <td class="px-6 py-4">
+                                    <td class="px-6 py-3 border-b border-gray-300">
                                         <div class="flex items-center gap-3">
-                                            <div class="h-10 w-10 rounded-full flex items-center justify-center bg-73E2A7 text-1B512D font-bold shadow">
+                                            <div class="h-10 w-10 rounded-full flex items-center justify-center bg-gradient-to-br from-green-400 to-green-600 text-white font-bold shadow">
                                                 {{ substr($user->full_name, 0, 1) }}
                                             </div>
                                             <div class="min-w-0">
@@ -153,11 +153,11 @@
                                             </div>
                                         </div>
                                     </td>
-                                    <td class="px-6 py-4 text-sm text-gray-700 truncate">{{ $user->email }}</td>
+                                    <td class="px-6 py-3 text-sm text-gray-700 truncate border-b border-gray-300">{{ $user->email }}</td>
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="2" class="px-6 py-4 text-center text-xs text-gray-500">No users assigned.</td>
+                                    <td colspan="2" class="px-6 py-3 text-center text-xs text-gray-500 border-b border-gray-300">No users assigned.</td>
                                 </tr>
                             @endforelse
                         </tbody>

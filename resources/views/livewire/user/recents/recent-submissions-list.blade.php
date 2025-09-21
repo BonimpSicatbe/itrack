@@ -138,7 +138,8 @@
                                     </div>
                                 </div>
                             </div>
-                        @else {{-- Grid View --}}
+                        @else 
+                        {{-- Grid View --}}
                             <div
                                 wire:click="showSubmissionDetail({{ $submission->id }})"
                                 class="rounded-xl border-2 border-gray-200 bg-white shadow-md hover:border-2 hover:border-green-600 p-4 flex flex-col justify-between h-full cursor-pointer"

@@ -64,22 +64,6 @@
                             </tbody>
                         </table>
                     </div>
-                    
-                    <!-- Summary Stats -->
-                    <div class="mt-6 grid grid-cols-3 gap-4 p-4 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg">
-                        <div class="text-center">
-                            <div class="text-2xl font-bold text-green-600">{{ collect($userActivityStats)->avg('completion_rate') ? number_format(collect($userActivityStats)->avg('completion_rate'), 1) : '0' }}%</div>
-                            <div class="text-xs text-gray-600">Avg Completion</div>
-                        </div>
-                        <div class="text-center">
-                            <div class="text-2xl font-bold text-blue-600">{{ collect($userActivityStats)->sum('submitted') }}</div>
-                            <div class="text-xs text-gray-600">Total Submitted</div>
-                        </div>
-                        <div class="text-center">
-                            <div class="text-2xl font-bold text-purple-600">{{ collect($userActivityStats)->sum('approved') }}</div>
-                            <div class="text-xs text-gray-600">Total Approved</div>
-                        </div>
-                    </div>
                 @else
                     <div class="flex flex-col items-center justify-center py-12 text-center">
                         <div class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-4">

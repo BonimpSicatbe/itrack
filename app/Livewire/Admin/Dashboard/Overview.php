@@ -23,9 +23,9 @@ class Overview extends Component
         $this->stats = [
             [
                 'title' => 'Current Semester',
-                'count' => $currentSemester ? Str::limit($currentSemester->name, 15) : 'None', // Truncate the name
+                'count' => $currentSemester ? Str::limit($currentSemester->name, 25) : 'None', 
                 'description' => $semesterDescription,
-                'icon' => 'fa-calendar-days',
+                'icon' => '',
                 'color' => 'primary',
             ],
         ];

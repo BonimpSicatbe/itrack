@@ -27,10 +27,10 @@
         </div>
     </div>
 
-    <div class="w-full bg-white shadow-lg rounded-xl p-4 md:p-6 space-y-4">
-        <div class="flex flex-col gap-4 w-full h-full">
+    <div class="w-full min-h-[calc(100vh_-_195px)] bg-white shadow-lg rounded-xl space-y-4" >
+        <div class="flex flex-col w-full h-full">
             @if($activeSemester)
-                <div class="p-1 rounded-xl flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div class="p-6 rounded-xl flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                     <!-- Search -->
                     <div class="relative max-w-md w-full md:w-[300px]">
                         <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
@@ -75,9 +75,9 @@
 
                 <!-- Grid View -->
                 @if($viewMode === 'grid')
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-3">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-3 p-6 pt-0">
                         @forelse ($requirements as $requirement)
-                            <div class="bg-white rounded-xl shadow-md hover:shadow-lg transition p-4 flex flex-col gap-2 cursor-pointer group"
+                            <div class="bg-white rounded-xl shadow-md border border-gray-300 hover:border-2 hover:border-green-600 p-4 flex flex-col gap-2 cursor-pointer group"
                                  onclick="window.location.href='{{ route('admin.requirements.show', $requirement) }}'">
                                 <!-- Requirement Name -->
                                 <div class="flex items-center gap-2">
@@ -124,7 +124,7 @@
                                             <i class="fa-solid fa-edit"></i>
                                         </a>
                                         <button wire:click="confirmDelete({{ $requirement->id }})"
-                                            class="p-1.5 hover:bg-red-100 rounded-lg text-red-600 text-sm"
+                                            class="p-1.5 hover:bg-red-100 rounded-lg text-red-500 text-sm"
                                             title="Delete">
                                             <i class="fa-solid fa-trash"></i>
                                         </button>
@@ -143,7 +143,7 @@
                     </div>
                 @else
                     <!-- List View -->
-                    <div class="rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+                    <div class="overflow-hidden border-b-1 border-gray-300">
                         <div class="overflow-x-auto">
                             <table class="min-w-full divide-y divide-gray-200">
                                 <thead class="bg-green-700">
@@ -207,7 +207,7 @@
                                             onclick="window.location.href='{{ route('admin.requirements.show', $requirement) }}'">
                                             <td class="px-4 py-3 whitespace-nowrap">
                                                 <div class="flex items-center gap-2">
-                                                    <i class="fas fa-clipboard-list text-green-600 text-sm"></i>
+                                                    <i class="fas fa-clipboard-list text-green-600 text-2xl"></i>
                                                     <span class="text-sm font-semibold text-gray-800 truncate max-w-xs">
                                                         {{ $requirement->name }}
                                                     </span>

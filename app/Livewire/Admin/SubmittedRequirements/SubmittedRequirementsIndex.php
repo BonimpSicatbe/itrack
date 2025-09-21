@@ -116,9 +116,14 @@ class SubmittedRequirementsIndex extends Component
 
     protected function getGroupedRequirements($activeSemester)
     {
-        $requirements = Requirement::where('semester_id', $activeSemester->id)
-            ->orderBy('name')
-            ->get();
+        $query = Requirement::where('semester_id', $activeSemester->id)
+            ->orderBy('name');
+
+        if ($this->search) {
+            $query->where('name', 'like', '%' . $this->search . '%');
+        }
+
+        $requirements = $query->get();
 
         $groupedItems = [];
 

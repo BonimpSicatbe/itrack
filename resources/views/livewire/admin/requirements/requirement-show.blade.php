@@ -17,7 +17,7 @@
         <div class="border-b border-gray-100 max-h-[625px] overflow-y-auto">
 
             <!-- Details -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 w-[90%] mx-auto">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 pb-9 w-[90%] mx-auto">
                 <!-- Name -->
                 <div class="space-y-2">
                     <p class="text-xs font-semibold text-gray-800 uppercase tracking-wide">Name</p>
@@ -73,8 +73,8 @@
                 <h3 class="text-lg font-semibold text-gray-800">Required Files</h3>
             </div>
 
-            <div class="p-4">
-                <div class="overflow-hidden rounded-xl border border-gray-200">
+            <div class="pb-10">
+                <div class="overflow-hidden">
                     <table class="min-w-full divide-y divide-gray-100">
                         <thead class="bg-green-700">
                             <tr>
@@ -88,16 +88,16 @@
                         <tbody class="bg-white divide-y divide-gray-100">
                             @forelse ($requiredFiles as $file)
                                 <tr class="hover:bg-73E2A7/10 transition duration-200">
-                                    <td class="px-6 py-4 text-sm font-medium text-gray-900 truncate max-w-xs">{{ $file->file_name }}</td>
-                                    <td class="px-6 py-4 text-sm text-gray-700">{{ strtoupper($file->extension) }}</td>
-                                    <td class="px-6 py-4 text-sm text-gray-700">{{ $file->humanReadableSize }}</td>
-                                    <td class="px-6 py-4 text-sm text-gray-700">{{ $file->updated_at->format('M d, Y h:i A') }}</td>
-                                    <td class="px-6 py-4 text-right text-sm font-medium space-x-3">
-                                        <a href="{{ route('guide.download', $file->id) }}" class="text-green-700 hover:text-green-800 transition">
+                                    <td class="px-6 py-4 text-sm font-medium text-gray-900 truncate max-w-xs border-b border-gray-300">{{ $file->file_name }}</td>
+                                    <td class="px-6 py-4 text-sm text-gray-700 border-b border-gray-300">{{ strtoupper($file->extension) }}</td>
+                                    <td class="px-6 py-4 text-sm text-gray-700 border-b border-gray-300">{{ $file->humanReadableSize }}</td>
+                                    <td class="px-6 py-4 text-sm text-gray-700 border-b border-gray-300">{{ $file->updated_at->format('M d, Y h:i A') }}</td>
+                                    <td class="px-6 py-4 text-right text-sm font-medium space-x-3 border-b border-gray-300">
+                                        <a href="{{ route('guide.download', $file->id) }}" class="text-blue-500">
                                             <i class="fa-solid fa-download"></i>
                                         </a>
                                         @if($this->isPreviewable($file->mime_type))
-                                        <a href="{{ route('guide.preview', $file->id) }}" target="_blank" class="text-amber-500 hover:text-1B512D transition">
+                                        <a href="{{ route('guide.preview', $file->id) }}" target="_blank" class="text-green-500 hover:text-1B512D transition">
                                             <i class="fa-solid fa-eye"></i>
                                         </a>
                                         @endif
@@ -105,7 +105,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="5" class="px-6 py-4 text-center text-xs text-gray-500">No required files attached.</td>
+                                    <td colspan="5" class="px-6 py-4 text-center text-xs text-gray-500 border-b border-gray-300">No required files attached.</td>
                                 </tr>
                             @endforelse
                         </tbody>
@@ -119,8 +119,8 @@
                 <h3 class="font-semibold text-lg text-gray-800">Assigned Users</h3>
             </div>
             
-            <div class="p-4">
-                <div class="overflow-hidden rounded-xl border border-gray-200">
+            <div class="pb-10">
+                <div class="overflow-hidden">
                     <table class="min-w-full divide-y divide-gray-100">
                         <thead class="bg-green-700">
                             <tr>
@@ -130,9 +130,9 @@
                         </thead>
                         <tbody class="bg-white divide-y divide-gray-100">
                             @forelse ($assignedUsers as $user)
-                                <tr class="hover:bg-73E2A7/10 transition cursor-pointer" wire:click="showUser({{ $user->id }})">
-                                    <td class="px-6 py-4 flex items-center gap-3">
-                                        <div class="h-10 w-10 rounded-full flex items-center justify-center bg-73E2A7 text-1B512D font-bold shadow">
+                                <tr wire:click="showUser({{ $user->id }})">
+                                    <td class="px-6 py-3 flex items-center gap-3 border-b border-gray-300">
+                                        <div class="h-10 w-10 rounded-full flex items-center justify-center bg-gradient-to-br from-green-400 to-green-600 text-white font-bold shadow">
                                             {{ substr($user->full_name, 0, 1) }}
                                         </div>
                                         <div class="min-w-0">
@@ -140,11 +140,11 @@
                                             <div class="text-xs text-gray-500 truncate">{{ $user->department->name ?? 'N/A' }}</div>
                                         </div>
                                     </td>
-                                    <td class="px-6 py-4 text-sm text-gray-700 truncate">{{ $user->email }}</td>
+                                    <td class="px-6 py-3 text-sm text-gray-700 truncate border-b border-gray-300">{{ $user->email }}</td>
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="2" class="px-6 py-4 text-center text-xs text-gray-500">No users assigned.</td>
+                                    <td colspan="2" class="px-6 py-3 text-center text-xs text-gray-500">No users assigned.</td>
                                 </tr>
                             @endforelse
                         </tbody>

@@ -162,7 +162,7 @@
                                 <button wire:click="selectGroup('{{ $groupId }}')" 
                                 class="grid grid-cols-12 gap-4 p-4 bg-white rounded-xl border border-gray-300 hover:bg-green-50 cursor-pointer">
                                     <div class="col-span-10 flex items-center gap-3">
-                                        <i class="fas fa-folder-open text-green-700 text-xl"></i>
+                                        <i class="fas fa-folder text-green-700 text-xl"></i>
                                         <span class="text-sm font-semibold text-1B512D truncate" title="{{ $group['name'] }}">
                                             {{ $group['name'] }}
                                         </span>
@@ -185,31 +185,27 @@
                         </div>
                     @else
                         <!-- Grid View for Groups -->
-                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-9 gap-8 mb-6 mt-2">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-6 mt-2">
                             @forelse ($groupedItems as $groupId => $group)
                                 <button wire:click="selectGroup('{{ $groupId }}')" 
-                                class="flex flex-col items-center text-center gap-3 group transition-all cursor-pointer">
-                                
-                                    <!-- Folder Icon with Count -->
-                                    <div class="relative">
-                                        <i class="fas fa-folder-open text-8xl text-green-700 hover:text-green-800"></i>
-
-                                        <!-- Count Badge -->
-                                        <span class="absolute -top-0.5 -right-3 bg-DEF4C6 text-gray-800 text-sm font-bold 
-                                                    rounded-full w-8 h-8 flex items-center justify-center shadow-md 
-                                                    group-hover:bg-2A7F3F">
-                                            {{ $group['count'] }}
-                                        </span>
+                                class="bg-white border border-gray-300 rounded-xl p-2 hover:border-green-600 hover:border-2 h-auto flex flex-col">
+                                    <div class="flex items-center justify-between flex-1"> 
+                                        <div class="flex items-start gap-3 min-w-0 flex-1">
+                                            <div class="flex-shrink-0">
+                                                <i class="fa-solid fa-folder text-green-700 text-4xl"></i>
+                                            </div>
+                                            <div class="min-w-0 flex-1 text-left">
+                                                <h3 class="font-semibold text-gray-800 text-md truncate" title="{{ $group['name'] }}">
+                                                    {{ $group['name'] }}
+                                                </h3>
+                                                <p class="text-xs text-gray-500 mt-1">
+                                                    {{ $group['count'] }} {{ $group['count'] == 1 ? 'item' : 'items' }}
+                                                </p>
+                                            </div>
+                                        </div>
                                     </div>
-
-                                    <!-- Group Name -->
-                                    <h3 class="font-semibold text-1B512D truncate text-sm max-w-[115px] group-hover:text-2A7F3F" 
-                                        title="{{ $group['name'] }}">
-                                        {{ $group['name'] }}
-                                    </h3>
                                 </button>
                             @empty
-                                <!-- Empty State -->
                                 <div class="flex flex-col items-center justify-center py-10 text-gray-500 col-span-full">
                                     <i class="fas fa-folder-open text-3xl text-gray-300 mb-2"></i>
                                     <p class="text-sm font-semibold text-gray-500">No {{ $groupBy }}s found.</p>
@@ -335,7 +331,7 @@
                                     <div class="w-8 h-8 flex items-center justify-center">
                                         <i class="fas {{ $fileIcon }} {{ $fileColor }} text-xl"></i>
                                     </div>
-                                    <span class="text-sm font-semibold text-gray-500 truncate" title="{{ $media->file_name }}">
+                                    <span class="text-sm font-semibold text-gray-800 truncate" title="{{ $media->file_name }}">
                                         {{ $media->file_name }}
                                     </span>
                                 </div>
