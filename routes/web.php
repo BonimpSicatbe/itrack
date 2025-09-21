@@ -10,6 +10,7 @@ use App\Http\Controllers\FileManagerController;
 use App\Http\Controllers\FileUploadController;
 use App\Http\Controllers\admin\SemesterController;
 use App\Http\Controllers\Admin\ManagementController;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
@@ -86,6 +87,9 @@ Route::middleware(['auth', 'role:admin|super-admin'])
             // Main management dashboard
             Route::get('/', [ManagementController::class, 'index'])
                 ->name('management.index');
+            // Semester management (archive)
+            Route::get('/semesters/{semester}/download', [SemesterController::class, 'downloadZippedSemester'])
+                ->name('semesters.download');
         });
     });
 
@@ -109,24 +113,24 @@ Route::get('/guide/preview/{media}', [FileController::class, 'previewGuide'])
 // Notification routes
 Route::middleware('auth')->group(function () {
     Route::post('/notifications/mark-all-read', function () {
-        auth()->user()->unreadNotifications->markAsRead();
+        Auth::user()->unreadNotifications->markAsRead();
         return back()->with('success', 'All notifications marked as read');
     })->name('notifications.markAllRead');
 
     Route::post('/notifications/{notification}/mark-as-read', function ($notificationId) {
-        $notification = auth()->user()->notifications()->findOrFail($notificationId);
+        $notification = Auth::user()->notifications()->findOrFail($notificationId);
         $notification->markAsRead();
         return response()->json(['success' => true]);
     })->name('notifications.markAsRead');
 });
 
 Route::get('/user/files/{media}/preview', [UserController::class, 'preview'])
-        ->whereNumber('media')
-        ->name('user.file.preview');
+    ->whereNumber('media')
+    ->name('user.file.preview');
 
 Route::get('/user/files/{media}/download', [UserController::class, 'download'])
-        ->whereNumber('media')
-        ->name('user.file.download');
+    ->whereNumber('media')
+    ->name('user.file.download');
 
 // Profile routes
 Route::middleware('auth')->group(function () {
@@ -134,7 +138,7 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     Route::put('/password', [ProfileController::class, 'updatePassword'])->name('password.update');
-    
+
     // Email verification
     Route::post('/email/verification-notification', function (Request $request) {
         $request->user()->sendEmailVerificationNotification();
