@@ -106,7 +106,7 @@
             </table>
         </div>
     @else
-        <div class="flex items-center p-4 bg-[#DEF4C6] text-[#1B512D] rounded-lg shadow-lg">
+        <div class="flex items-center p-4 bg-[#DEF4C6] text-[#1B512D] rounded-lg shadow-lg mx-6">
             <i class="fa-solid fa-triangle-exclamation text-lg mr-3"></i>
             <div>
                 <h3 class="font-bold">No Active Semester</h3>

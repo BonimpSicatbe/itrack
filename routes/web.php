@@ -145,5 +145,5 @@ Route::middleware('auth')->group(function () {
         return back()->with('status', 'verification-link-sent');
     })->middleware(['throttle:6,1'])->name('verification.send');
 });
-
+    
 require __DIR__ . '/auth.php';

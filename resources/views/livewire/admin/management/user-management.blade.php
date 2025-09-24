@@ -1,7 +1,7 @@
 <!-- user-management.blade.php -->
 <div>
     <!-- Header -->
-    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-2 gap-4">
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-2 gap-4 px-6 pt-6">
         <div>
             <div class="flex items-center gap-2">
                 <h3 class="text-xl font-semibold text-green-700">User Management</h3>
@@ -18,7 +18,7 @@
     <div class="border-b border-gray-200 mb-4"></div>
 
     <!-- Search, Total Users, and Filters -->
-    <div class="flex flex-col sm:flex-row items-center justify-between gap-4 mb-4">
+    <div class="flex flex-col sm:flex-row items-center justify-between gap-4 mb-4 px-6">
         
         <!-- Total Users Badge -->
         <div class="flex items-center gap-2 bg-green-50 border border-green-600 px-4 py-2 rounded-xl shadow-sm">
@@ -74,7 +74,7 @@
     </div>
 
     <!-- Users Table -->
-    <div class="max-h-[500px] overflow-x-auto rounded-xl border border-gray-200 shadow-sm">
+    <div class="max-h-[500px] overflow-auto border border-gray-200 shadow-sm">
         <table class="table table-auto table-striped table-pin-rows table-sm w-full rounded-xl">
             <thead>
                 <tr class="bg-base-300 font-bold uppercase">
@@ -125,8 +125,8 @@
                                     Verified
                                 </span>
                             @else
-                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
-                                    Unverified
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                                    Unverified - Setup Required
                                 </span>
                             @endif
                         </td>
@@ -304,13 +304,27 @@
                 </div>
                 
                 <!-- Action buttons -->
-                <div class="mt-6 pt-4 border-t border-gray-200 flex justify-end space-x-3">
-                    <button type="button" wire:click="closeUserDetail" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 cursor-pointer">
-                        Close
-                    </button>
-                    <button type="button" wire:click="openEditUserModal({{ $selectedUser->id }})" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 cursor-pointer">
-                        <i class="fa-solid fa-pen-to-square mr-2"></i> Edit User
-                    </button>
+                <div class="mt-6 pt-4 border-t border-gray-200 flex justify-between items-center">
+                    <!-- Left side: Resend button for unverified users -->
+                    @if(!$selectedUser->email_verified_at)
+                        <button type="button" 
+                                wire:click="resendSetupInstructions({{ $selectedUser->id }})" 
+                                class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 cursor-pointer">
+                            <i class="fa-solid fa-paper-plane mr-2"></i> Resend Setup Instructions
+                        </button>
+                    @else
+                        <div></div> <!-- Empty div for spacing -->
+                    @endif
+                    
+                    <!-- Right side: Close and Edit buttons -->
+                    <div class="flex space-x-3">
+                        <button type="button" wire:click="closeUserDetail" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 cursor-pointer">
+                            Close
+                        </button>
+                        <button type="button" wire:click="openEditUserModal({{ $selectedUser->id }})" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 cursor-pointer">
+                            <i class="fa-solid fa-pen-to-square mr-2"></i> Edit User
+                        </button>
+                    </div>
                 </div>
             </div>
         </x-modal>
@@ -405,22 +419,19 @@
                         </select>
                     </div>
 
-                    <!-- Password -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700">Password *</label>
-                            <input type="password" wire:model="newUser.password"
-                                class="mt-2 block w-full rounded-xl border-gray-300 sm:text-sm"
-                                placeholder="Enter password">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700">Confirm Password *</label>
-                            <input type="password" wire:model="newUser.password_confirmation"
-                                class="mt-2 block w-full rounded-xl border-gray-300 sm:text-sm"
-                                placeholder="Confirm password">
+                    <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-4">
+                        <div class="flex items-start">
+                            <div class="flex-shrink-0">
+                                <i class="fa-solid fa-info-circle text-blue-500 mt-1"></i>
+                            </div>
+                            <div class="ml-3">
+                                <h3 class="text-sm font-medium text-blue-800">Auto-generated Password</h3>
+                                <div class="mt-1 text-sm text-blue-700">
+                                    <p>A secure password will be automatically generated and should be sent to the user's email address.</p>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    @error('newUser.password') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                 </div>
 
                 <!-- Action buttons -->

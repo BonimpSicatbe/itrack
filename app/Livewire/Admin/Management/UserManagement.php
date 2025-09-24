@@ -9,6 +9,12 @@ use App\Models\Department;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
 use Spatie\Permission\Models\Role;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\UserCredentialsMail;
+use App\Mail\AccountSetupMail;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Facades\URL;
 
 class UserManagement extends Component
 {
@@ -29,8 +35,6 @@ class UserManagement extends Component
         'email' => '',
         'college_id' => '',
         'department_id' => '',
-        'password' => '',
-        'password_confirmation' => '',
         'role' => ''
     ];
 
@@ -45,7 +49,9 @@ class UserManagement extends Component
         'email' => '',
         'college_id' => '',
         'department_id' => '',
-        'role' => ''
+        'role' => '',
+        'password' => '',
+        'password_confirmation' => ''
     ];
 
     // Delete Confirmation Properties
@@ -90,7 +96,9 @@ class UserManagement extends Component
             'email' => $user->email,
             'college_id' => $user->college_id,
             'department_id' => $user->department_id,
-            'role' => $user->roles->first() ? $user->roles->first()->id : ''
+            'role' => $user->roles->first() ? $user->roles->first()->id : '',
+            'password' => '',
+            'password_confirmation' => ''
         ];
         
         $this->showEditUserModal = true;
@@ -125,7 +133,6 @@ class UserManagement extends Component
             $this->userToDelete->delete();
             
             $this->closeDeleteConfirmationModal();
-            // Dispatch notification instead of custom event
             $this->dispatch('showNotification', 
                 type: 'success', 
                 content: "User '{$userName}' deleted successfully!"
@@ -235,15 +242,12 @@ class UserManagement extends Component
                 'newUser.email' => 'required|string|email|max:255|unique:users,email',
                 'newUser.college_id' => 'nullable|exists:colleges,id',
                 'newUser.department_id' => 'nullable|exists:departments,id',
-                'newUser.password' => ['required', 'confirmed', Rules\Password::defaults()],
                 'newUser.role' => 'required|exists:roles,id',
             ], [
                 'newUser.firstname.required' => 'First name is required.',
                 'newUser.lastname.required' => 'Last name is required.',
                 'newUser.email.required' => 'Email is required.',
                 'newUser.email.unique' => 'This email is already in use.',
-                'newUser.password.required' => 'Password is required.',
-                'newUser.password.confirmed' => 'Password confirmation does not match.',
                 'newUser.role.required' => 'Role is required.',
             ]);
 
@@ -260,6 +264,9 @@ class UserManagement extends Component
                 return;
             }
 
+            // Create user with temporary password and unverified email
+            $temporaryPassword = Str::random(40); // Long random string, not sent to user
+            
             $user = User::create([
                 'firstname' => $this->newUser['firstname'],
                 'middlename' => $this->newUser['middlename'],
@@ -268,17 +275,31 @@ class UserManagement extends Component
                 'email' => $this->newUser['email'],
                 'college_id' => $this->newUser['college_id'] ?: null,
                 'department_id' => $this->newUser['department_id'] ?: null,
-                'password' => Hash::make($this->newUser['password']),
+                'password' => Hash::make($temporaryPassword), // Temporary password
+                'email_verified_at' => null // Ensure email is not verified yet
             ]);
 
             $role = Role::find($this->newUser['role']);
             $user->assignRole($role->name);
 
+            // Generate password reset token and URL - UPDATED ROUTE
+            $token = Password::createToken($user);
+            $setupUrl = URL::temporarySignedRoute(
+                'account.setup', // Changed from 'password.reset'
+                now()->addHours(24), 
+                ['token' => $token, 
+                'email' => $user->email]
+            );
+
+            // Send account setup email instead of credentials
+            Mail::to($user->email)->queue(new AccountSetupMail($user, $setupUrl));
+
             $userName = $user->firstname . ' ' . $user->lastname;
             $this->closeAddUserModal();
+            
             $this->dispatch('showNotification', 
                 type: 'success', 
-                content: "User '{$userName}' added successfully!"
+                content: "User '{$userName}' added successfully! Account setup instructions have been sent to their email."
             );
             
         } catch (\Illuminate\Validation\ValidationException $e) {
@@ -296,6 +317,41 @@ class UserManagement extends Component
             );
         }
     }
+
+    public function resendSetupInstructions($userId)
+    {
+        try {
+            $user = User::find($userId);
+            
+            if (!$user->email_verified_at) {
+                $token = Password::createToken($user);
+                $setupUrl = URL::temporarySignedRoute(
+                    'account.setup', // Changed from 'password.reset'
+                    now()->addHours(24), 
+                    ['token' => $token, 
+                    'email' => $user->email]
+                );
+
+                Mail::to($user->email)->queue(new AccountSetupMail($user, $setupUrl));
+                
+                $this->dispatch('showNotification', 
+                    type: 'success', 
+                    content: "Setup instructions resent to {$user->email}"
+                );
+            } else {
+                $this->dispatch('showNotification', 
+                    type: 'info', 
+                    content: "User has already verified their email."
+                );
+            }
+        } catch (\Exception $e) {
+            $this->dispatch('showNotification', 
+                type: 'error', 
+                content: 'Failed to resend setup instructions: ' . $e->getMessage()
+            );
+        }
+    }
+
 
     public function sortBy($field)
     {
