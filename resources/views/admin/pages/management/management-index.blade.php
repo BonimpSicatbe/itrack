@@ -31,7 +31,7 @@
         </div>
 
         <!-- Scrollable Content -->
-        <div class="flex-1 overflow-y-auto bg-white rounded-xl shadow p-6 mt-4">
+        <div class="flex-1 overflow-y-auto bg-white rounded-xl shadow mt-4">
             @switch($activeTab)
                 @case('semesters')
                     <div>

@@ -9,6 +9,7 @@ use App\Http\Controllers\Auth\PasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\Auth\VerifyEmailController;
+use App\Http\Controllers\Auth\CustomResetPasswordController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('guest')->group(function () {
@@ -22,6 +23,7 @@ Route::middleware('guest')->group(function () {
 
     Route::post('login', [AuthenticatedSessionController::class, 'store']);
 
+    // Standard Password Reset Routes (for existing users who forgot password)
     Route::get('forgot-password', [PasswordResetLinkController::class, 'create'])
         ->name('password.request');
 
@@ -33,6 +35,17 @@ Route::middleware('guest')->group(function () {
 
     Route::post('reset-password', [NewPasswordController::class, 'store'])
         ->name('password.store');
+
+    // Account Setup Routes (for new users created by admin)
+    Route::get('setup-account/{token}/{email}', [NewPasswordController::class, 'create'])
+        ->name('account.setup');
+
+    Route::post('setup-account', [CustomResetPasswordController::class, 'reset'])
+        ->name('password.update');
+
+    // User Management Routes
+    Route::post('/users/{user}/resend-setup', [App\Livewire\Admin\Management\UserManagement::class, 'resendSetupInstructions'])
+        ->name('users.resend-setup');
 });
 
 Route::middleware('auth')->group(function () {

@@ -20,7 +20,27 @@ class NewPasswordController extends Controller
      */
     public function create(Request $request): View
     {
-        return view('auth.reset-password', ['request' => $request]);
+        // Determine if this is an account setup or standard password reset
+        $isAccountSetup = $request->routeIs('account.setup');
+        
+        // Get email from route parameter for account setup
+        if ($isAccountSetup && $request->route('email')) {
+            // Use the email from the route parameter
+            $email = $request->route('email');
+        } else {
+            // Use the email from the request (standard password reset)
+            $email = $request->email;
+        }
+        
+        // Ensure the request has the email for the view
+        if ($email && !$request->email) {
+            $request->merge(['email' => $email]);
+        }
+        
+        return view('auth.reset-password', [
+            'request' => $request,
+            'isAccountSetup' => $isAccountSetup
+        ]);
     }
 
     /**

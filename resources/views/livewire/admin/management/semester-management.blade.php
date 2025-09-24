@@ -1,6 +1,6 @@
 <div>
     <!-- Header -->
-    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-2 gap-4">
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-2 gap-4 px-6 pt-6">
         <div>
             <div class="flex items-center gap-2">
                 <h3 class="text-xl font-semibold text-green-700">Semester Management</h3>
@@ -17,7 +17,7 @@
     <div class="border-b border-gray-200 mb-4"></div>
 
     <!-- Search and Total Semesters -->
-    <div class="flex flex-col sm:flex-row items-center justify-between gap-4 mb-4">
+    <div class="flex flex-col sm:flex-row items-center justify-between gap-4 mb-4 px-6">
 
         <!-- Total Semesters Badge -->
         <div class="flex items-center gap-2 bg-green-50 border border-green-600 px-4 py-2 rounded-xl shadow-sm">
@@ -41,11 +41,8 @@
         </div>
     </div>
 
-
-
-
     <!-- Semesters Table -->
-    <div class="max-h-[500px] overflow-x-auto rounded-xl border border-gray-200 shadow-sm">
+    <div class="max-h-[500px] overflow-x-auto border border-gray-200 shadow-sm">
         <table class="table table-auto table-striped table-pin-rows table-sm w-full rounded-xl">
             <thead>
                 <tr class="bg-base-300 font-bold uppercase">
