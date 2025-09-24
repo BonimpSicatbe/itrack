@@ -4,12 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use Illuminate\Http\Request;
-
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\Response;
 use App\Models\SubmittedRequirement;
 use App\Models\Requirement;
-
+use App\Models\Semester;
 use Spatie\MediaLibrary\MediaCollections\Models\Media as MediaModel;
 
 class UserController extends Controller
@@ -48,11 +48,11 @@ class UserController extends Controller
             $html = view('livewire.admin.users.user-show', compact('user'))->render();
             return response()->json(['html' => $html]);
         }
-        
+
         // For regular requests, return the full view
         return view('admin.pages.users.show', compact('user'));
     }
-    
+
 
     /**
      * Show the form for editing the specified resource.
@@ -108,7 +108,7 @@ class UserController extends Controller
 
         $mime    = $media->mime_type ?? '';
         $inline  = (function_exists('str_starts_with') ? str_starts_with($mime, 'image/') : strpos($mime, 'image/') === 0)
-                   || $mime === 'application/pdf';
+            || $mime === 'application/pdf';
 
         $path    = $media->getPath();     // absolute local path
         $fullUrl = $media->getFullUrl();  // public URL
@@ -117,7 +117,7 @@ class UserController extends Controller
             if ($path && file_exists($path)) {
                 return response()->file($path, [
                     'Content-Type'        => $mime ?: 'application/octet-stream',
-                    'Content-Disposition' => 'inline; filename="'.$media->file_name.'"',
+                    'Content-Disposition' => 'inline; filename="' . $media->file_name . '"',
                 ]);
             }
             return redirect()->away($fullUrl);
@@ -145,5 +145,21 @@ class UserController extends Controller
             return response()->download($path, $media->file_name);
         }
         return redirect()->away($fullUrl);
+    }
+
+    public function downloadUserReport(User $user)
+    {
+        $submittedRequirements = SubmittedRequirement::where('user_id', $user->id)->get();
+        $requirements = $user->requirements()->get();
+        $semester = Semester::getActiveSemester();
+
+        $pdf = Pdf::loadView('testPage', [
+            'requirements' => $requirements,
+            'submittedRequirements' => $submittedRequirements,
+            'user' => $user,
+            'semester' => $semester,
+        ]);
+
+        return $pdf->download("User_Report_{$user->name}_" . now()->format('F_d_Y_hia') . ".pdf");
     }
 }

@@ -10,6 +10,7 @@ use App\Http\Controllers\FileManagerController;
 use App\Http\Controllers\FileUploadController;
 use App\Http\Controllers\admin\SemesterController;
 use App\Http\Controllers\Admin\ManagementController;
+use App\Models\SubmittedRequirement;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -90,7 +91,30 @@ Route::middleware(['auth', 'role:admin|super-admin'])
             // Semester management (archive)
             Route::get('/semesters/{semester}/download', [SemesterController::class, 'downloadZippedSemester'])
                 ->name('semesters.download');
+            Route::get('/users/{user}/report', [UserController::class, 'downloadUserReport'])->name('users.report');
         });
+
+        Route::get('/test', function () {
+            $user = App\Models\User::where('id', 1)->with('college', 'department')->first();
+            $semester = App\Models\Semester::where('is_active', true)->first();
+
+            $submittedRequirements = App\Models\SubmittedRequirement::where('user_id', 1)
+                ->with([
+                    'requirement',
+                    'user.college',
+                    'user.department',
+                    'semester',
+                ])->get();
+
+            $requirements = App\Models\User::where('id', 1)->first()->requirements()->get();
+
+            return view('testPage', [
+                'submittedRequirements' => $submittedRequirements,
+                'requirements' => $requirements,
+                'user' => $user,
+                'semester' => $semester,
+            ]);
+        })->name('test');
     });
 
 // File download and preview routes

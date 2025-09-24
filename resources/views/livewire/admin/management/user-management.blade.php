@@ -19,7 +19,7 @@
 
     <!-- Search, Total Users, and Filters -->
     <div class="flex flex-col sm:flex-row items-center justify-between gap-4 mb-4">
-        
+
         <!-- Total Users Badge -->
         <div class="flex items-center gap-2 bg-green-50 border border-green-600 px-4 py-2 rounded-xl shadow-sm">
             <i class="fa-solid fa-users text-green-700"></i>
@@ -35,24 +35,19 @@
                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <i class="fa-solid fa-magnifying-glass text-gray-400"></i>
                 </div>
-                <input 
-                    type="text" 
-                    wire:model.live.debounce.300ms="search"
-                    class="pl-10 block w-full rounded-xl border-gray-300 shadow-sm focus:border-green-600 focus:ring-green-600 sm:text-sm" 
-                    placeholder="Search by name or email"
-                >
+                <input type="text" wire:model.live.debounce.300ms="search"
+                    class="pl-10 block w-full rounded-xl border-gray-300 shadow-sm focus:border-green-600 focus:ring-green-600 sm:text-sm"
+                    placeholder="Search by name or email">
             </div>
         </div>
 
         <!-- College Filter -->
         <div class="w-full sm:w-1/4">
             <label class="block text-sm font-semibold text-gray-700 mb-1">College</label>
-            <select 
-                wire:model.live="collegeFilter" 
-                class="block w-full rounded-xl border-gray-300 shadow-sm focus:border-green-600 focus:ring-green-600 sm:text-sm"
-            >
+            <select wire:model.live="collegeFilter"
+                class="block w-full rounded-xl border-gray-300 shadow-sm focus:border-green-600 focus:ring-green-600 sm:text-sm">
                 <option value="">All Colleges</option>
-                @foreach($colleges as $college)
+                @foreach ($colleges as $college)
                     <option value="{{ $college->id }}">{{ $college->name }}</option>
                 @endforeach
             </select>
@@ -61,12 +56,10 @@
         <!-- Department Filter -->
         <div class="w-full sm:w-1/4">
             <label class="block text-sm font-semibold text-gray-700 mb-1">Department</label>
-            <select 
-                wire:model.live="departmentFilter" 
-                class="block w-full rounded-xl border-gray-300 shadow-sm focus:border-green-600 focus:ring-green-600 sm:text-sm"
-            >
+            <select wire:model.live="departmentFilter"
+                class="block w-full rounded-xl border-gray-300 shadow-sm focus:border-green-600 focus:ring-green-600 sm:text-sm">
                 <option value="">All Departments</option>
-                @foreach($departments as $department)
+                @foreach ($departments as $department)
                     <option value="{{ $department->id }}">{{ $department->name }}</option>
                 @endforeach
             </select>
@@ -78,11 +71,12 @@
         <table class="table table-auto table-striped table-pin-rows table-sm w-full rounded-xl">
             <thead>
                 <tr class="bg-base-300 font-bold uppercase">
-                    <th class="cursor-pointer hover:bg-green-800 bg-green-700 p-4 text-left" wire:click="sortBy('lastname')" style="color: white; width: 25%;">
+                    <th class="cursor-pointer hover:bg-green-800 bg-green-700 p-4 text-left"
+                        wire:click="sortBy('lastname')" style="color: white; width: 25%;">
                         <div class="flex items-center pt-2 pb-2">
                             Name
                             <div class="ml-1">
-                                @if($sortField === 'lastname')
+                                @if ($sortField === 'lastname')
                                     <i class="fas fa-sort-{{ $sortDirection === 'asc' ? 'up' : 'down' }}"></i>
                                 @else
                                     <i class="fas fa-sort opacity-30"></i>
@@ -99,18 +93,19 @@
             </thead>
             <tbody>
                 @forelse($users as $user)
-                    <tr class="hover:bg-green-50 transition-colors duration-150 cursor-pointer" 
+                    <tr class="hover:bg-green-50 transition-colors duration-150 cursor-pointer"
                         wire:click="showUser({{ $user->id }})">
                         <td class="whitespace-nowrap p-4">
                             <div class="flex items-center">
                                 <div class="h-10 w-10 flex-shrink-0">
                                     <div class="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center">
-                                        <span class="font-semibold text-green-800">{{ substr($user->firstname, 0, 1) }}{{ substr($user->lastname, 0, 1) }}</span>
+                                        <span
+                                            class="font-semibold text-green-800">{{ substr($user->firstname, 0, 1) }}{{ substr($user->lastname, 0, 1) }}</span>
                                     </div>
                                 </div>
                                 <div class="ml-4">
                                     <div class="text-sm font-semibold text-gray-900">
-                                        {{ $user->firstname }} 
+                                        {{ $user->firstname }}
                                         {{ $user->middlename ? $user->middlename . ' ' : '' }}
                                         {{ $user->lastname }}
                                         {{ $user->extensionname ? $user->extensionname : '' }}
@@ -120,12 +115,14 @@
                         </td>
                         <td class="whitespace-nowrap p-4">
                             <div class="text-sm text-gray-900 mb-3">{{ $user->email }}</div>
-                            @if($user->email_verified_at)
-                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                            @if ($user->email_verified_at)
+                                <span
+                                    class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
                                     Verified
                                 </span>
                             @else
-                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                                <span
+                                    class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
                                     Unverified
                                 </span>
                             @endif
@@ -137,26 +134,29 @@
                             {{ $user->department->name ?? 'N/A' }}
                         </td>
                         <td class="whitespace-nowrap p-4">
-                            @foreach($user->roles as $role)
-                                <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full 
-                                    @if($role->name === 'super-admin') bg-purple-100 text-purple-800
+                            @foreach ($user->roles as $role)
+                                <span
+                                    class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full
+                                    @if ($role->name === 'super-admin') bg-purple-100 text-purple-800
                                     @elseif($role->name === 'admin') bg-blue-100 text-blue-800
-                                    @else bg-green-100 text-green-800
-                                    @endif">
+                                    @else bg-green-100 text-green-800 @endif">
                                     {{ ucfirst($role->name) }}
                                 </span>
                             @endforeach
                         </td>
                         <td class="whitespace-nowrap p-4">
                             <div class="flex justify-center space-x-2 text-base" onclick="event.stopPropagation()">
-                                <button class="text-amber-500 hover:bg-amber-100 rounded-xl p-2 tooltip cursor-pointer" 
-                                        data-tip="Edit" 
-                                        wire:click="openEditUserModal({{ $user->id }})">
+                                <a href="{{ route('admin.users.report', $user) }}"
+                                    class="text-green-500 hover:bg-green-100 rounded-xl p-2 tooltip cursor-pointer"
+                                    data-tip="Generate Report">
+                                    <i class="fa-solid fa-file-chart-column"></i>
+                                </a>
+                                <button class="text-amber-500 hover:bg-amber-100 rounded-xl p-2 tooltip cursor-pointer"
+                                    data-tip="Edit" wire:click="openEditUserModal({{ $user->id }})">
                                     <i class="fa-solid fa-pen-to-square"></i>
                                 </button>
                                 <button class="text-red-600 hover:bg-red-100 rounded-xl p-2 tooltip cursor-pointer"
-                                        data-tip="Delete" 
-                                        wire:click="openDeleteConfirmationModal({{ $user->id }})">
+                                    data-tip="Delete" wire:click="openDeleteConfirmationModal({{ $user->id }})">
                                     <i class="fa-solid fa-trash"></i>
                                 </button>
                             </div>
@@ -172,7 +172,7 @@
     </div>
 
     <!-- User Detail Sidebar -->
-    @if($selectedUser)
+    @if ($selectedUser)
         <x-modal name="user-details-modal" :show="!!$selectedUser" maxWidth="2xl">
             <!-- Header -->
             <div class="bg-1C7C54 text-white rounded-t-xl px-6 py-4 flex items-center justify-between">
@@ -180,11 +180,12 @@
                     <i class="fa-solid fa-user text-lg"></i>
                     <h3 class="text-xl font-semibold">User Details</h3>
                 </div>
-                <button wire:click="closeUserDetail" class="text-white hover:text-gray-200 focus:outline-none cursor-pointer">
+                <button wire:click="closeUserDetail"
+                    class="text-white hover:text-gray-200 focus:outline-none cursor-pointer">
                     <i class="fa-solid fa-xmark h-5 w-5"></i>
                 </button>
             </div>
-            
+
             <!-- Body -->
             <div class="bg-white px-6 py-6 rounded-b-xl">
                 <!-- User profile header -->
@@ -192,13 +193,14 @@
                     <div class="flex items-center justify-between">
                         <div class="flex items-center">
                             <div class="h-16 w-16 flex-shrink-0">
-                                <div class="h-16 w-16 rounded-full bg-green-100 flex items-center justify-center text-xl font-medium text-green-800">
+                                <div
+                                    class="h-16 w-16 rounded-full bg-green-100 flex items-center justify-center text-xl font-medium text-green-800">
                                     {{ substr($selectedUser->firstname, 0, 1) }}{{ substr($selectedUser->lastname, 0, 1) }}
                                 </div>
                             </div>
                             <div class="ml-4">
                                 <h3 class="text-lg font-medium text-gray-900">
-                                    {{ $selectedUser->firstname }} 
+                                    {{ $selectedUser->firstname }}
                                     {{ $selectedUser->middlename ? $selectedUser->middlename . ' ' : '' }}
                                     {{ $selectedUser->lastname }}
                                     {{ $selectedUser->extensionname ? $selectedUser->extensionname : '' }}
@@ -206,28 +208,29 @@
                                 <p class="text-sm text-gray-500">{{ $selectedUser->email }}</p>
                             </div>
                         </div>
-                        
+
                         <!-- Role badge positioned on the far right -->
                         <div class="flex-shrink-0">
-                            @if($selectedUser->roles->count() > 0)
-                                @foreach($selectedUser->roles as $role)
-                                    <span class="px-3 py-1 inline-flex text-sm leading-5 font-semibold rounded-full 
-                                        @if($role->name === 'super-admin') bg-purple-100 text-purple-800
+                            @if ($selectedUser->roles->count() > 0)
+                                @foreach ($selectedUser->roles as $role)
+                                    <span
+                                        class="px-3 py-1 inline-flex text-sm leading-5 font-semibold rounded-full
+                                        @if ($role->name === 'super-admin') bg-purple-100 text-purple-800
                                         @elseif($role->name === 'admin') bg-blue-100 text-blue-800
-                                        @else bg-green-100 text-green-800
-                                        @endif">
+                                        @else bg-green-100 text-green-800 @endif">
                                         {{ ucfirst($role->name) }}
                                     </span>
                                 @endforeach
                             @else
-                                <span class="px-3 py-1 inline-flex text-sm leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
+                                <span
+                                    class="px-3 py-1 inline-flex text-sm leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
                                     No Role
                                 </span>
                             @endif
                         </div>
                     </div>
                 </div>
-                
+
                 <!-- User details -->
                 <div class="space-y-6">
                     <!-- Personal Information -->
@@ -235,9 +238,10 @@
                         <h4 class="text-sm font-medium text-gray-900 mb-2">Personal Information</h4>
                         <dl class="space-y-2">
                             <div class="sm:flex sm:items-center">
-                                <dt class="text-sm text-gray-500 font-medium sm:w-32 sm:flex-none sm:pr-4">Full Name</dt>
+                                <dt class="text-sm text-gray-500 font-medium sm:w-32 sm:flex-none sm:pr-4">Full Name
+                                </dt>
                                 <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                                    {{ $selectedUser->firstname }} 
+                                    {{ $selectedUser->firstname }}
                                     {{ $selectedUser->middlename ? $selectedUser->middlename . ' ' : '' }}
                                     {{ $selectedUser->lastname }}
                                     {{ $selectedUser->extensionname ? $selectedUser->extensionname : '' }}
@@ -245,17 +249,21 @@
                             </div>
                             <div class="sm:flex sm:items-center">
                                 <dt class="text-sm text-gray-500 font-medium sm:w-32 sm:flex-none sm:pr-4">Email</dt>
-                                <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">{{ $selectedUser->email }}</dd>
+                                <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                                    {{ $selectedUser->email }}</dd>
                             </div>
                             <div class="sm:flex sm:items-center">
-                                <dt class="text-sm text-gray-500 font-medium sm:w-32 sm:flex-none sm:pr-4">Email Status</dt>
+                                <dt class="text-sm text-gray-500 font-medium sm:w-32 sm:flex-none sm:pr-4">Email Status
+                                </dt>
                                 <dd class="mt-1 text-sm sm:mt-0 sm:col-span-2">
-                                    @if($selectedUser->email_verified_at)
-                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                    @if ($selectedUser->email_verified_at)
+                                        <span
+                                            class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
                                             Verified
                                         </span>
                                     @else
-                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                                        <span
+                                            class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
                                             Unverified
                                         </span>
                                     @endif
@@ -263,7 +271,7 @@
                             </div>
                         </dl>
                     </div>
-                    
+
                     <!-- Institutional Information -->
                     <div>
                         <h4 class="text-sm font-medium text-gray-900 mb-2">Institutional Information</h4>
@@ -275,26 +283,29 @@
                                 </dd>
                             </div>
                             <div class="sm:flex sm:items-center">
-                                <dt class="text-sm text-gray-500 font-medium sm:w-32 sm:flex-none sm:pr-4">Department</dt>
+                                <dt class="text-sm text-gray-500 font-medium sm:w-32 sm:flex-none sm:pr-4">Department
+                                </dt>
                                 <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
                                     {{ $selectedUser->department->name ?? 'N/A' }}
                                 </dd>
                             </div>
                         </dl>
                     </div>
-                    
+
                     <!-- Account Information -->
                     <div>
                         <h4 class="text-sm font-medium text-gray-900 mb-2">Account Information</h4>
                         <dl class="space-y-2">
                             <div class="sm:flex sm:items-center">
-                                <dt class="text-sm text-gray-500 font-medium sm:w-32 sm:flex-none sm:pr-4">Member Since</dt>
+                                <dt class="text-sm text-gray-500 font-medium sm:w-32 sm:flex-none sm:pr-4">Member Since
+                                </dt>
                                 <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
                                     {{ $selectedUser->created_at->format('M d, Y') }}
                                 </dd>
                             </div>
                             <div class="sm:flex sm:items-center">
-                                <dt class="text-sm text-gray-500 font-medium sm:w-32 sm:flex-none sm:pr-4">Last Updated</dt>
+                                <dt class="text-sm text-gray-500 font-medium sm:w-32 sm:flex-none sm:pr-4">Last Updated
+                                </dt>
                                 <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
                                     {{ $selectedUser->updated_at->format('M d, Y') }}
                                 </dd>
@@ -302,13 +313,15 @@
                         </dl>
                     </div>
                 </div>
-                
+
                 <!-- Action buttons -->
                 <div class="mt-6 pt-4 border-t border-gray-200 flex justify-end space-x-3">
-                    <button type="button" wire:click="closeUserDetail" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 cursor-pointer">
+                    <button type="button" wire:click="closeUserDetail"
+                        class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 cursor-pointer">
                         Close
                     </button>
-                    <button type="button" wire:click="openEditUserModal({{ $selectedUser->id }})" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 cursor-pointer">
+                    <button type="button" wire:click="openEditUserModal({{ $selectedUser->id }})"
+                        class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 cursor-pointer">
                         <i class="fa-solid fa-pen-to-square mr-2"></i> Edit User
                     </button>
                 </div>
@@ -317,10 +330,11 @@
     @endif
 
     <!-- Add User Modal -->
-    @if($showAddUserModal)
+    @if ($showAddUserModal)
         <x-modal name="add-user-modal" :show="$showAddUserModal" maxWidth="2xl">
             <!-- Header -->
-            <div class=" text-white rounded-t-xl px-6 py-4 flex items-center space-x-3" style="background: linear-gradient(148deg,rgba(18, 67, 44, 1) 0%, rgba(30, 119, 77, 1) 54%, rgba(55, 120, 64, 1) 100%);">
+            <div class=" text-white rounded-t-xl px-6 py-4 flex items-center space-x-3"
+                style="background: linear-gradient(148deg,rgba(18, 67, 44, 1) 0%, rgba(30, 119, 77, 1) 54%, rgba(55, 120, 64, 1) 100%);">
                 <i class="fa-solid fa-user-plus text-lg"></i>
                 <h3 class="text-xl font-semibold">Add New User</h3>
             </div>
@@ -335,14 +349,18 @@
                             <input type="text" wire:model="newUser.firstname"
                                 class="mt-2 block w-full rounded-xl border-gray-300 sm:text-sm"
                                 placeholder="Enter first name">
-                            @error('newUser.firstname') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
+                            @error('newUser.firstname')
+                                <span class="text-red-500 text-xs">{{ $message }}</span>
+                            @enderror
                         </div>
                         <div>
                             <label class="block text-sm font-semibold text-gray-700">Last Name *</label>
                             <input type="text" wire:model="newUser.lastname"
                                 class="mt-2 block w-full rounded-xl border-gray-300 sm:text-sm"
                                 placeholder="Enter last name">
-                            @error('newUser.lastname') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
+                            @error('newUser.lastname')
+                                <span class="text-red-500 text-xs">{{ $message }}</span>
+                            @enderror
                         </div>
                     </div>
 
@@ -377,7 +395,7 @@
                             <select wire:model="newUser.college_id"
                                 class="mt-2 block w-full rounded-xl border-gray-300 sm:text-sm">
                                 <option value="">Select College</option>
-                                @foreach($colleges as $college)
+                                @foreach ($colleges as $college)
                                     <option value="{{ $college->id }}">{{ $college->name }}</option>
                                 @endforeach
                             </select>
@@ -387,7 +405,7 @@
                             <select wire:model="newUser.department_id"
                                 class="mt-2 block w-full rounded-xl border-gray-300 sm:text-sm">
                                 <option value="">Select Department</option>
-                                @foreach($departments as $department)
+                                @foreach ($departments as $department)
                                     <option value="{{ $department->id }}">{{ $department->name }}</option>
                                 @endforeach
                             </select>
@@ -399,7 +417,7 @@
                         <select wire:model="newUser.role"
                             class="mt-2 block w-full rounded-xl border-gray-300 sm:text-sm">
                             <option value="">Select Role</option>
-                            @foreach($roles as $role)
+                            @foreach ($roles as $role)
                                 <option value="{{ $role->id }}">{{ ucfirst($role->name) }}</option>
                             @endforeach
                         </select>
@@ -420,15 +438,19 @@
                                 placeholder="Confirm password">
                         </div>
                     </div>
-                    @error('newUser.password') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
+                    @error('newUser.password')
+                        <span class="text-red-500 text-xs">{{ $message }}</span>
+                    @enderror
                 </div>
 
                 <!-- Action buttons -->
                 <div class="mt-6 pt-4 border-t border-gray-200 flex justify-end space-x-3">
-                    <button type="button" wire:click="closeAddUserModal" class="bg-white py-2 px-4 border border-gray-300 rounded-full shadow-sm text-sm font-medium text-gray-500 cursor-pointer">
+                    <button type="button" wire:click="closeAddUserModal"
+                        class="bg-white py-2 px-4 border border-gray-300 rounded-full shadow-sm text-sm font-medium text-gray-500 cursor-pointer">
                         Cancel
                     </button>
-                    <button type="button" wire:click="addUser" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-full shadow-sm text-white bg-green-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-73E2A7 cursor-pointer">
+                    <button type="button" wire:click="addUser"
+                        class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-full shadow-sm text-white bg-green-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-73E2A7 cursor-pointer">
                         <i class="fa-solid fa-user-plus mr-2"></i> Add User
                     </button>
                 </div>
@@ -437,10 +459,11 @@
     @endif
 
     <!-- Edit User Modal -->
-    @if($showEditUserModal)
+    @if ($showEditUserModal)
         <x-modal name="edit-user-modal" :show="$showEditUserModal" maxWidth="2xl">
             <!-- Header -->
-            <div class=" text-white rounded-t-xl px-6 py-4 flex items-center space-x-3" style="background: linear-gradient(148deg,rgba(18, 67, 44, 1) 0%, rgba(30, 119, 77, 1) 54%, rgba(55, 120, 64, 1) 100%);">
+            <div class=" text-white rounded-t-xl px-6 py-4 flex items-center space-x-3"
+                style="background: linear-gradient(148deg,rgba(18, 67, 44, 1) 0%, rgba(30, 119, 77, 1) 54%, rgba(55, 120, 64, 1) 100%);">
                 <i class="fa-solid fa-user-edit text-lg"></i>
                 <h3 class="text-xl font-semibold">Edit User</h3>
             </div>
@@ -455,14 +478,18 @@
                             <input type="text" wire:model="editingUser.firstname"
                                 class="mt-2 block w-full rounded-xl border-gray-300 sm:text-sm"
                                 placeholder="Enter first name">
-                            @error('editingUser.firstname') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
+                            @error('editingUser.firstname')
+                                <span class="text-red-500 text-xs">{{ $message }}</span>
+                            @enderror
                         </div>
                         <div>
                             <label class="block text-sm font-semibold text-gray-700">Last Name *</label>
                             <input type="text" wire:model="editingUser.lastname"
                                 class="mt-2 block w-full rounded-xl border-gray-300 sm:text-sm"
                                 placeholder="Enter last name">
-                            @error('editingUser.lastname') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
+                            @error('editingUser.lastname')
+                                <span class="text-red-500 text-xs">{{ $message }}</span>
+                            @enderror
                         </div>
                     </div>
 
@@ -485,10 +512,12 @@
                     <!-- Email -->
                     <div>
                         <label class="block text-sm font-semibold text-gray-700">Email Address *</label>
-                            <input type="email" wire:model="editingUser.email"
-                                class="mt-2 block w-full rounded-xl border-gray-300 sm:text-sm"
-                                placeholder="Enter email address">
-                        @error('editingUser.email') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
+                        <input type="email" wire:model="editingUser.email"
+                            class="mt-2 block w-full rounded-xl border-gray-300 sm:text-sm"
+                            placeholder="Enter email address">
+                        @error('editingUser.email')
+                            <span class="text-red-500 text-xs">{{ $message }}</span>
+                        @enderror
                     </div>
 
                     <!-- College/Department -->
@@ -498,7 +527,7 @@
                             <select wire:model="editingUser.college_id"
                                 class="mt-2 block w-full rounded-xl border-gray-300 sm:text-sm">
                                 <option value="">Select College</option>
-                                @foreach($colleges as $college)
+                                @foreach ($colleges as $college)
                                     <option value="{{ $college->id }}">{{ $college->name }}</option>
                                 @endforeach
                             </select>
@@ -508,7 +537,7 @@
                             <select wire:model="editingUser.department_id"
                                 class="mt-2 block w-full rounded-xl border-gray-300 sm:text-sm">
                                 <option value="">Select Department</option>
-                                @foreach($departments as $department)
+                                @foreach ($departments as $department)
                                     <option value="{{ $department->id }}">{{ $department->name }}</option>
                                 @endforeach
                             </select>
@@ -520,11 +549,13 @@
                         <select wire:model="editingUser.role"
                             class="mt-2 block w-full rounded-xl border-gray-300 sm:text-sm">
                             <option value="">Select Role</option>
-                            @foreach($roles as $role)
+                            @foreach ($roles as $role)
                                 <option value="{{ $role->id }}">{{ ucfirst($role->name) }}</option>
                             @endforeach
                         </select>
-                        @error('editingUser.role') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
+                        @error('editingUser.role')
+                            <span class="text-red-500 text-xs">{{ $message }}</span>
+                        @enderror
                     </div>
 
                     <!-- Password (Optional) -->
@@ -542,15 +573,19 @@
                                 placeholder="Confirm new password">
                         </div>
                     </div>
-                    @error('editingUser.password') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
+                    @error('editingUser.password')
+                        <span class="text-red-500 text-xs">{{ $message }}</span>
+                    @enderror
                 </div>
 
                 <!-- Action buttons -->
                 <div class="mt-6 pt-4 border-t border-gray-200 flex justify-end space-x-3">
-                    <button type="button" wire:click="closeEditUserModal" class="bg-white py-2 px-4 border border-gray-300 rounded-full shadow-sm text-sm font-medium text-gray-500 cursor-pointer">
+                    <button type="button" wire:click="closeEditUserModal"
+                        class="bg-white py-2 px-4 border border-gray-300 rounded-full shadow-sm text-sm font-medium text-gray-500 cursor-pointer">
                         Cancel
                     </button>
-                    <button type="button" wire:click="updateUser" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-full shadow-sm text-white bg-green-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-73E2A7 cursor-pointer">
+                    <button type="button" wire:click="updateUser"
+                        class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-full shadow-sm text-white bg-green-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-73E2A7 cursor-pointer">
                         <i class="fa-solid fa-user-check mr-2"></i> Update User
                     </button>
                 </div>
@@ -559,7 +594,7 @@
     @endif
 
     <!-- Delete Confirmation Modal -->
-    @if($showDeleteConfirmationModal && $userToDelete)
+    @if ($showDeleteConfirmationModal && $userToDelete)
         <x-modal name="delete-user-confirmation-modal" :show="$showDeleteConfirmationModal" maxWidth="md">
             <!-- Header -->
             <div class="bg-red-600 text-white rounded-t-xl px-6 py-4 flex items-center space-x-3">
@@ -571,8 +606,9 @@
             <div class="bg-white px-6 py-6 rounded-b-xl">
                 <div class="space-y-4">
                     <p class="text-gray-700">
-                        Are you sure you want to delete the user 
-                        <span class="font-semibold text-red-600">{{ $userToDelete->firstname }} {{ $userToDelete->lastname }}</span>?
+                        Are you sure you want to delete the user
+                        <span class="font-semibold text-red-600">{{ $userToDelete->firstname }}
+                            {{ $userToDelete->lastname }}</span>?
                     </p>
                     <p class="text-sm text-gray-600">
                         This action cannot be undone. All data associated with this user will be permanently removed.
@@ -581,10 +617,12 @@
 
                 <!-- Action buttons -->
                 <div class="mt-6 pt-4 border-t border-gray-200 flex justify-end space-x-3">
-                    <button type="button" wire:click="closeDeleteConfirmationModal" class="bg-white py-2 px-4 border border-gray-300 rounded-full shadow-sm text-sm font-medium text-gray-500 cursor-pointer">
+                    <button type="button" wire:click="closeDeleteConfirmationModal"
+                        class="bg-white py-2 px-4 border border-gray-300 rounded-full shadow-sm text-sm font-medium text-gray-500 cursor-pointer">
                         Cancel
                     </button>
-                    <button type="button" wire:click="deleteUser" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-full shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 cursor-pointer">
+                    <button type="button" wire:click="deleteUser"
+                        class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-full shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 cursor-pointer">
                         <i class="fa-solid fa-trash mr-2"></i> Delete User
                     </button>
                 </div>

@@ -24,10 +24,6 @@ class RequirementShow extends Component
         $this->assignedUsers = $requirement->assignedTargets();
     }
 
-    public function showUser($user) {
-        return redirect()->route('admin.users.show', $user);
-    }
-
     public function uploadRequiredFiles()
     {
         $this->validate([
@@ -58,7 +54,7 @@ class RequirementShow extends Component
 
     public function isPreviewable($mimeType)
     {
-        return Str::startsWith($mimeType, 'image/') || 
+        return Str::startsWith($mimeType, 'image/') ||
                Str::startsWith($mimeType, 'application/pdf') ||
                Str::startsWith($mimeType, 'text/');
     }

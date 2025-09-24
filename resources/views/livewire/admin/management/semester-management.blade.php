@@ -127,12 +127,11 @@
                             <div class="flex justify-center space-x-2 text-base">
                                 @if ($semester->is_active)
                                     <!-- Archive button (deactivate) for active semester -->
-                                    <a href="{{ route('admin.semesters.download', $semester) }}"
+                                    <button
                                         class="text-orange-600 hover:bg-orange-100 rounded-xl p-2 tooltip cursor-pointer"
                                         data-tip="Archive Semester" wire:click="setInactive({{ $semester->id }})">
-
                                         <i class="fa-solid fa-box-archive"></i>
-                                    </a>
+                                    </button>
                                 @else
                                     <!-- Activate button for inactive semester -->
                                     <button
@@ -150,6 +149,13 @@
 
                                 <!-- Delete button (disabled for active semester) -->
                                 @if (!$semester->is_active)
+                                <a href="{{ route('admin.semesters.download', $semester) }}"
+                                    class="text-blue-600 hover:bg-blue-100 rounded-xl p-2 tooltip cursor-pointer"
+                                    data-tip="Archive Semester" wire:click="setInactive({{ $semester->id }})">
+
+                                    <i class="fa-solid fa-download"></i>
+                                </a>
+
                                     <button class="text-red-600 hover:bg-red-100 rounded-xl p-2 tooltip cursor-pointer"
                                         data-tip="Delete"
                                         wire:click="openDeleteConfirmationModal({{ $semester->id }})">

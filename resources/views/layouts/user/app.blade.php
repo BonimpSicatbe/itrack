@@ -10,8 +10,13 @@
     <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
     <!-- Scripts -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-    <script src="https://kit.fontawesome.com/a10f8182c0.js" crossorigin="anonymous"></script>
-    
+
+    <link rel="stylesheet" href="https://site-assets.fontawesome.com/releases/v7.0.0/css/all.css" />
+    <link rel="stylesheet" href="https://site-assets.fontawesome.com/releases/v7.0.0/css/sharp-solid.css" />
+    <link rel="stylesheet" href="https://site-assets.fontawesome.com/releases/v7.0.0/css/sharp-regular.css" />
+    <link rel="stylesheet" href="https://site-assets.fontawesome.com/releases/v7.0.0/css/sharp-light.css" />
+    <link rel="stylesheet" href="https://site-assets.fontawesome.com/releases/v7.0.0/css/duotone.css" />
+
     <!-- Alpine.js Core and Persist Plugin -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/persist@3.x.x/dist/cdn.min.js"></script>
@@ -24,7 +29,7 @@
         }
     </style>
 </head>
-<body wire:poll.500ms 
+<body wire:poll.500ms
       class="flex font-sans antialiased w-screen h-screen">
     <div class="flex flex-row gap-3 p-4 w-full h-full">
         <!-- Sidebar Navigation -->
@@ -38,7 +43,7 @@
     </div>
     <x-session-alert-messages />
     @livewireScripts
-    
+
     <!-- Custom Scripts for Enhanced Functionality -->
     <script>
         document.addEventListener('alpine:init', () => {
@@ -52,10 +57,10 @@
                     }
                 }
             }
-            
+
             window.addEventListener('resize', handleResize);
             handleResize(); // Check on load
-            
+
             // Keyboard shortcut to toggle sidebar (Ctrl+B or Cmd+B)
             document.addEventListener('keydown', function(e) {
                 if ((e.ctrlKey || e.metaKey) && e.key === 'b') {

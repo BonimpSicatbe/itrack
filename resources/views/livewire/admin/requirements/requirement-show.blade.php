@@ -118,7 +118,7 @@
                 <i class="fa-solid text-xl fa-users text-green-700"></i>
                 <h3 class="font-semibold text-lg text-gray-800">Assigned Users</h3>
             </div>
-            
+
             <div class="pb-10">
                 <div class="overflow-hidden">
                     <table class="min-w-full divide-y divide-gray-100">
@@ -130,7 +130,7 @@
                         </thead>
                         <tbody class="bg-white divide-y divide-gray-100">
                             @forelse ($assignedUsers as $user)
-                                <tr wire:click="showUser({{ $user->id }})">
+                                <tr>
                                     <td class="px-6 py-3 flex items-center gap-3 border-b border-gray-300">
                                         <div class="h-10 w-10 rounded-full flex items-center justify-center bg-gradient-to-br from-green-400 to-green-600 text-white font-bold shadow">
                                             {{ substr($user->full_name, 0, 1) }}
