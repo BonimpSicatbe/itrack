@@ -41,7 +41,7 @@ Route::middleware('guest')->group(function () {
         ->name('account.setup');
 
     Route::post('setup-account', [CustomResetPasswordController::class, 'reset'])
-        ->name('password.update');
+        ->name('account.update');
 
     // User Management Routes
     Route::post('/users/{user}/resend-setup', [App\Livewire\Admin\Management\UserManagement::class, 'resendSetupInstructions'])

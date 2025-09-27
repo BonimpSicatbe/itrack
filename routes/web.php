@@ -161,7 +161,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
-    Route::put('/password', [ProfileController::class, 'updatePassword'])->name('password.update');
+    // Route::put('/password', [ProfileController::class, 'updatePassword'])->name('password.update');
 
     // Email verification
     Route::post('/email/verification-notification', function (Request $request) {
@@ -169,5 +169,5 @@ Route::middleware('auth')->group(function () {
         return back()->with('status', 'verification-link-sent');
     })->middleware(['throttle:6,1'])->name('verification.send');
 });
-    
+
 require __DIR__ . '/auth.php';
