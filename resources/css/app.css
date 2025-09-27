@@ -1,5 +1,4 @@
 @import 'tailwindcss';
-@import "@fortawesome/fontawesome-free/css/all.min.css";
 
 @plugin '@tailwindcss/forms';
 
@@ -52,22 +51,22 @@
     .bg-DEF4C6 { background-color: #DEF4C6; }
     .bg-1B512D { background-color: #1B512D; }
     .bg-B1CF5F { background-color: #B1CF5F; }
-    
+
     .text-1C7C54 { color: #1C7C54; }
     .text-73E2A7 { color: #73E2A7; }
     .text-DEF4C6 { color: #DEF4C6; }
     .text-1B512D { color: #1B512D; }
     .text-B1CF5F { color: #B1CF5F; }
-    
+
     .border-1C7C54 { border-color: #1C7C54; }
     .border-73E2A7 { border-color: #73E2A7; }
     .border-DEF4C6 { border-color: #DEF4C6; }
     .border-1B512D { border-color: #1B512D; }
     .border-B1CF5F { border-color: #B1CF5F; }
-    
+
     .focus\:ring-1B512D:focus { --tw-ring-color: #1B512D; }
     .focus\:border-1B512D:focus { border-color: #1B512D; }
-    
+
     /* Table styling */
     table {
         border-collapse: separate;
@@ -81,11 +80,11 @@
         border-color: rgb(251 191 36) !important; /* Amber-500 */
         color: rgb(120 53 15) !important; /* Amber-900 */
     }
-    
+
     .alert-warning .stroke-current {
         color: rgb(120 53 15) !important; /* Amber-900 */
     }
-    
+
     .alert-warning button {
         color: rgb(120 53 15) !important; /* Amber-900 */
     }
