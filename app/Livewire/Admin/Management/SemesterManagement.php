@@ -4,15 +4,17 @@ namespace App\Livewire\Admin\Management;
 
 use Livewire\Component;
 use App\Models\Semester;
+use Illuminate\Support\Facades\Log;
 
 class SemesterManagement extends Component
 {
     public $search = '';
-    
+
     public $sortField = 'start_date';
     public $sortDirection = 'desc';
-    
+
     public $name = '';
+    public $semester = '';
     public $start_date = '';
     public $end_date = '';
     public $isActive = false;
@@ -38,7 +40,8 @@ class SemesterManagement extends Component
 
     public function mount()
     {
-        // Initialization if needed
+        $this->start_date = now()->format('Y-m-d');
+        $this->end_date = now()->format('Y-m-d');
     }
 
     public function sortBy($field)
@@ -89,22 +92,92 @@ class SemesterManagement extends Component
 
     public function createSemester()
     {
-        $this->validate();
-
-        // Deactivate any currently active semester if this one is being set as active
-        if ($this->isActive) {
-            Semester::where('is_active', true)->update(['is_active' => false]);
-        }
-
-        Semester::create([
-            'name' => $this->name,
-            'start_date' => $this->start_date,
-            'end_date' => $this->end_date,
-            'is_active' => $this->isActive,
+        $validated = $this->validate([
+            'semester' => 'required|in:first,second,midyear',
+            'start_date' => [
+                'required',
+                'date',
+            ],
+            'end_date' => [
+                'required',
+                'date',
+                'after:start_date',
+                function ($attribute, $value, $fail) {
+                    $startYear = date('Y', strtotime($this->start_date));
+                    $endYear = date('Y', strtotime($value));
+                    if ($startYear === $endYear) {
+                        $fail('End date must be in a different year than start date.');
+                    }
+                },
+            ],
         ]);
 
-        $this->closeCreateModal();
-        $this->dispatch('showNotification', 'success', 'Semester created successfully!');
+        Log::info($validated);
+
+        try {
+            $startYear = date('Y', strtotime($this->start_date));
+            $endYear = date('Y', strtotime($this->end_date));
+            $yearRange = $startYear . '-' . $endYear;
+
+            // Check for duplicate semester in the same year range
+            $existingSemester = Semester::whereRaw("DATE_FORMAT(start_date, '%Y') = ?", [$startYear])
+                ->whereRaw("DATE_FORMAT(end_date, '%Y') = ?", [$endYear])
+                ->where(function ($query) {
+                    $query->where('name', 'like', '%First Semester%')
+                        ->orWhere('name', 'like', '%Second Semester%');
+                })
+                ->first();
+
+            if ($existingSemester && $this->semester !== 'midyear') {
+                $this->dispatch('showNotification', 'error', 'A semester with the same year range already exists.');
+                return;
+            }
+
+            // For midyear, allow only one per year range
+            if ($this->semester === 'midyear') {
+                $existingMidyear = Semester::whereRaw("DATE_FORMAT(start_date, '%Y') = ?", [$startYear])
+                    ->whereRaw("DATE_FORMAT(end_date, '%Y') = ?", [$endYear])
+                    ->where('name', 'like', '%Midyear%')
+                    ->first();
+
+                if ($existingMidyear) {
+                    $this->dispatch('showNotification', 'error', 'A midyear semester with the same year range already exists.');
+                    return;
+                }
+            }
+
+            $semesterName = $this->semester . ($this->semester == 'midyear' ? '' : ' Semester') . ' | ' . $yearRange;
+
+            // If isActive is true, deactivate all other semesters first
+            $setPrevSemester = Semester::where('is_active', true)->update(['is_active' => false]);
+
+            Log::info('Previous active semesters deactivated', [
+                'updated_rows' => $setPrevSemester,
+            ]);
+
+            $semester = Semester::create([
+                'name' => ucwords($semesterName),
+                'start_date' => $this->start_date,
+                'end_date' => $this->end_date,
+                'is_active' => true,
+            ]);
+
+            Log::info('Semester created', [
+                'id' => $semester->id,
+                'name' => $semesterName,
+                'user_id' => auth()->id() ?? null,
+            ]);
+
+            $this->reset(['semester', 'start_date', 'end_date']); // clears inputs
+            $this->dispatch('closeModal', modalId: 'create_semester_modal');
+            $this->dispatch('showNotification', 'success', 'Semester created successfully!');
+        } catch (\Exception $e) {
+            Log::error('Failed to create semester', [
+                'error' => $e->getMessage(),
+                'user_id' => auth()->id() ?? null,
+            ]);
+            $this->dispatch('showNotification', 'error', 'Failed to create semester. Please try again.');
+        }
     }
 
     public function editSemester($id)
@@ -145,7 +218,7 @@ class SemesterManagement extends Component
         if ($this->semesterToDelete) {
             $semesterName = $this->semesterToDelete->name;
             $this->semesterToDelete->delete();
-            
+
             $this->closeDeleteConfirmationModal();
             $this->dispatch('showNotification', 'success', "Semester '{$semesterName}' deleted successfully!");
         }
@@ -154,13 +227,13 @@ class SemesterManagement extends Component
     public function openDeleteConfirmationModal($id)
     {
         $this->semesterToDelete = Semester::find($id);
-        
+
         // Prevent deletion of active semester
         if ($this->semesterToDelete->is_active) {
             $this->dispatch('showNotification', 'error', 'Cannot delete active semester!');
             return;
         }
-        
+
         $this->showDeleteConfirmationModal = true;
     }
 
@@ -173,7 +246,7 @@ class SemesterManagement extends Component
     public function deleteSemesterDirect($id)
     {
         $semester = Semester::find($id);
-        
+
         // Prevent deletion of active semester
         if ($semester->is_active) {
             $this->dispatch('showNotification', 'error', 'Cannot delete active semester!');
@@ -189,11 +262,11 @@ class SemesterManagement extends Component
     {
         // Deactivate all other semesters
         Semester::where('is_active', true)->update(['is_active' => false]);
-        
+
         // Activate the selected semester
         $semester = Semester::find($id);
         $semester->update(['is_active' => true]);
-        
+
         $this->dispatch('showNotification', 'success', 'Semester activated successfully!');
     }
 
@@ -202,7 +275,7 @@ class SemesterManagement extends Component
         // Deactivate the selected semester
         $semester = Semester::find($id);
         $semester->update(['is_active' => false]);
-        
+
         $this->dispatch('showNotification', 'success', 'Semester archived successfully!');
     }
 
