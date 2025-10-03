@@ -25,7 +25,7 @@ class Semester extends Model
 
     public static function getActiveSemester()
     {
-        return self::where('is_active', true)->first();
+        return self::latest()->first();
     }
 
     public static function getArchivedSemester()
@@ -69,10 +69,10 @@ class Semester extends Model
     {
         // Deactivate all semesters first
         self::query()->update(['is_active' => false]);
-        
+
         // Activate this semester
         $this->update(['is_active' => true]);
-        
+
         return $this;
     }
 

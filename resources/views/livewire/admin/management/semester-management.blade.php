@@ -7,10 +7,9 @@
                 <p class="text-sm text-gray-600">| Manage academic semesters and set active semester.</p>
             </div>
         </div>
-        <button wire:click="openCreateModal"
-            class="px-5 py-2 bg-green-600 text-white font-semibold rounded-full hover:bg-green-700 text-sm cursor-pointer">
-            <i class="fa-solid fa-plus mr-2"></i>Add Semester
-        </button>
+        <label for="create_semester_modal" class="btn btn-md btn-success rounded-full text-gray-50"><i
+                class="fa-solid fa-plus min-w-[20px] text-center"></i> Add Semester</label>
+
     </div>
 
     <!-- Divider -->
@@ -122,7 +121,7 @@
                         </td>
                         <td class="whitespace-nowrap p-4">
                             <div class="flex justify-center space-x-2 text-base">
-                                @if ($semester->is_active)
+                                {{-- @if ($semester->is_active)
                                     <!-- Archive button (deactivate) for active semester -->
                                     <button
                                         class="text-orange-600 hover:bg-orange-100 rounded-xl p-2 tooltip cursor-pointer"
@@ -136,7 +135,7 @@
                                         data-tip="Activate Semester" wire:click="setActive({{ $semester->id }})">
                                         <i class="fa-solid fa-square-check"></i>
                                     </button>
-                                @endif
+                                @endif --}}
 
                                 <!-- Edit button (always enabled) -->
                                 <button class="text-amber-500 hover:bg-blue-100 rounded-xl p-2 tooltip cursor-pointer"
@@ -146,22 +145,20 @@
 
                                 <!-- Delete button (disabled for active semester) -->
                                 @if (!$semester->is_active)
-                                <a href="{{ route('admin.semesters.download', $semester) }}"
-                                    class="text-blue-600 hover:bg-blue-100 rounded-xl p-2 tooltip cursor-pointer"
-                                    data-tip="Archive Semester" wire:click="setInactive({{ $semester->id }})">
+                                    <a href="{{ route('admin.semesters.download', $semester) }}"
+                                        class="text-blue-600 hover:bg-blue-100 rounded-xl p-2 tooltip cursor-pointer"
+                                        data-tip="Archive Semester" wire:click="setInactive({{ $semester->id }})">
 
-                                    <i class="fa-solid fa-download"></i>
-                                </a>
-
-                                    <button class="text-red-600 hover:bg-red-100 rounded-xl p-2 tooltip cursor-pointer"
-                                        data-tip="Delete"
-                                        wire:click="openDeleteConfirmationModal({{ $semester->id }})">
-                                        <i class="fa-solid fa-trash"></i>
-                                    </button>
+                                        <i class="fa-solid fa-download"></i>
+                                    </a>
                                 @else
-                                    <button class="text-gray-400 rounded-xl p-2 cursor-default" disabled>
-                                        <i class="fa-solid fa-trash"></i>
-                                    </button>
+                                    <a href="{{ route('admin.semesters.download', $semester) }}"
+                                        class="text-blue-600 hover:bg-blue-100 rounded-xl p-2 tooltip cursor-pointer"
+                                        data-tip="Archive Semester" wire:click="setInactive({{ $semester->id }})"
+                                        disabled>
+
+                                        <i class="fa-solid fa-download"></i>
+                                    </a>
                                 @endif
                             </div>
                         </td>
@@ -176,70 +173,55 @@
     </div>
 
     <!-- Create Semester Modal -->
-    @if ($showCreateModal)
-        <x-modal name="create-semester-modal" :show="$showCreateModal" maxWidth="md">
-            <!-- Header -->
-            <div class="text-white rounded-t-xl px-6 py-4 flex items-center space-x-3"
+    <input type="checkbox" id="create_semester_modal" class="modal-toggle" checked />
+    <div class="modal" role="dialog">
+        <div class="modal-box p-0 m-0">
+            {{-- header --}}
+            <div class="text-white px-6 py-4 flex items-center space-x-3"
                 style="background: linear-gradient(148deg,rgba(18, 67, 44, 1) 0%, rgba(30, 119, 77, 1) 54%, rgba(55, 120, 64, 1) 100%);">
                 <i class="fa-solid fa-calendar-plus text-lg"></i>
                 <h3 class="text-xl font-semibold">Add New Semester</h3>
             </div>
 
-            <!-- Body -->
-            <div class="bg-white px-6 py-6 rounded-b-xl">
-                <div class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700">Semester Name *</label>
-                        <input type="text" wire:model="name"
-                            class="mt-1 block w-full rounded-xl border-gray-300 focus:border-1C7C54 focus:ring-1C7C54 sm:text-sm"
-                            placeholder="e.g., 1st Semester 2023-2024">
-                        @error('name')
-                            <span class="text-red-500 text-xs">{{ $message }}</span>
-                        @enderror
-                    </div>
+            {{-- body --}}
+            <div class="flex flex-col p-4">
+                <x-select-fieldset label="semester" name="semester" wire:model="semester">
+                    <option value="first">First Semester</option>
+                    <option value="second">Second Semester</option>
+                    <option value="midyear">Midyear</option>
+                </x-select-fieldset>
 
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700">Start Date *</label>
-                        <input type="date" wire:model="start_date"
-                            class="mt-1 block w-full rounded-xl border-gray-300 focus:border-1C7C54 focus:ring-1C7C54 sm:text-sm">
-                        @error('start_date')
-                            <span class="text-red-500 text-xs">{{ $message }}</span>
-                        @enderror
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700">End Date *</label>
-                        <input type="date" wire:model="end_date"
-                            class="mt-1 block w-full rounded-xl border-gray-300 focus:border-1C7C54 focus:ring-1C7C54 sm:text-sm">
-                        @error('end_date')
-                            <span class="text-red-500 text-xs">{{ $message }}</span>
-                        @enderror
-                    </div>
-
-                    <div class="flex items-center">
-                        <input type="checkbox" wire:model="isActive" id="isActive"
-                            class="rounded border-gray-300 text-1C7C54 focus:ring-1C7C54">
-                        <label for="isActive" class="ml-2 text-sm text-gray-700">Set as active semester</label>
-                    </div>
-                </div>
+                <x-text-fieldset type="date" name="start_date" wire:model="start_date" label="Starting Date" :min="now()->format('Y-m-d')" required />
+                <x-text-fieldset type="date" name="end_date" wire:model="end_date" label="Ending Date" :min="now()->format('Y-m-d')" required />
 
                 <!-- Footer -->
-                <div class="mt-6 flex justify-end space-x-3">
-                    <button type="button" wire:click="closeCreateModal"
-                        class="px-5 py-2 rounded-full border border-gray-300 text-gray-500 bg-white font-semibold text-sm cursor-pointer">
-                        Cancel
-                    </button>
-                    <button type="button" wire:click="createSemester" wire:loading.attr="disabled"
-                        class="px-5 py-2 rounded-full bg-green-600 text-white font-semibold text-sm shadow hover:bg-1B512D cursor-pointer">
+                <div class="flex flex-row items-center gap-4 justify-end w-full">
+                    <label for="create_semester_modal" class="btn btn-md btn-default rounded-full">Cancel</label>
+                    <button wire:click='createSemester' type="button"
+                        class="btn btn-md bg-green-600 hover:bg-green-700 text-white rounded-full">
                         <span wire:loading.remove wire:target="createSemester">Create Semester</span>
-                        <span wire:loading wire:target="createSemester">
-                            <i class="fa-solid fa-spinner fa-spin mr-2"></i> Creating...
-                        </span>
+                        <span wire:loading wire:target="createSemester"><i
+                                class="fa-solid fa-spinner fa-spin mr-2"></i> Creating...</span>
                     </button>
                 </div>
             </div>
-        </x-modal>
-    @endif
+        </div>
+        <label class="modal-backdrop" for="create_semester_modal">Close</label>
+    </div>
+
+    {{-- js for closing of modal --}}
+    <script>
+        document.addEventListener('livewire:init', () => {
+            Livewire.on('closeModal', ({
+                modalId
+            }) => {
+                const modal = document.getElementById(modalId);
+                if (modal) {
+                    modal.checked = false; // closes the daisyUI modal
+                }
+            });
+        });
+    </script>
 
     <!-- Edit Semester Modal -->
     @if ($showEditModal && $editingSemester)
