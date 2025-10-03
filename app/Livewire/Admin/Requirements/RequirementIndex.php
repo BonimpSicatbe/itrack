@@ -16,7 +16,6 @@ class RequirementIndex extends Component
 {
     public $search = '';
     public $sortStatus = '';
-    public $sortAssignedTo = '';
     public $completionFilter = 'all';
     public $sortField = 'due';
     public $sortDirection = 'desc';
@@ -28,7 +27,6 @@ class RequirementIndex extends Component
     protected $queryString = [
         'search' => ['except' => ''],
         'sortStatus' => ['except' => ''],
-        'sortAssignedTo' => ['except' => ''],
         'completionFilter' => ['except' => 'all'],
         'sortField' => ['except' => 'due'],
         'sortDirection' => ['except' => 'desc'],
@@ -59,6 +57,11 @@ class RequirementIndex extends Component
     public function showRequirement($requirementId)
     {
         return redirect()->route('admin.requirements.show', ['requirement' => $requirementId]);
+    }
+
+    public function createRequirement()
+    {
+        return redirect()->route('admin.requirements.create');
     }
 
     public function confirmDelete($requirementId)
@@ -124,21 +127,55 @@ class RequirementIndex extends Component
         $requirements = Requirement::where('semester_id', $activeSemester->id)
             ->when($this->search, fn($q) => $q->where('name', 'like', '%' . $this->search . '%'))
             ->when($this->sortStatus, fn($q) => $q->where('status', $this->sortStatus))
-            ->when($this->sortAssignedTo, fn($q) => $q->where('assigned_to', $this->sortAssignedTo))
             ->when($this->completionFilter === 'pending', fn($q) => $q->where('due', '>', Carbon::now()))
             ->when($this->completionFilter === 'completed', fn($q) => $q->where('due', '<=', Carbon::now()))
             ->orderBy($this->sortField, $this->sortDirection)
             ->get();
 
         return $requirements->map(function ($requirement) {
-            $count = 0;
+            $assignedTo = json_decode($requirement->assigned_to, true) ?? [];
+            $userQuery = User::query();
             
-            if (College::where('name', $requirement->assigned_to)->exists()) {
-                $college = College::where('name', $requirement->assigned_to)->first();
-                $count = User::where('college_id', $college->id)->count();
-            } elseif (Department::where('name', $requirement->assigned_to)->exists()) {
-                $department = Department::where('name', $requirement->assigned_to)->first();
-                $count = User::where('department_id', $department->id)->count();
+            $hasConditions = false;
+            
+            // Specific colleges AND departments combination
+            if (isset($assignedTo['colleges']) && is_array($assignedTo['colleges']) && 
+                isset($assignedTo['departments']) && is_array($assignedTo['departments'])) {
+                
+                $userQuery->where(function ($query) use ($assignedTo) {
+                    // Users in assigned colleges
+                    $query->whereIn('college_id', $assignedTo['colleges'])
+                          // AND in assigned departments
+                          ->whereIn('department_id', $assignedTo['departments']);
+                });
+                $hasConditions = true;
+            }
+            // Only colleges assigned
+            elseif (isset($assignedTo['colleges']) && is_array($assignedTo['colleges'])) {
+                $userQuery->whereIn('college_id', $assignedTo['colleges']);
+                $hasConditions = true;
+            }
+            // Only departments assigned  
+            elseif (isset($assignedTo['departments']) && is_array($assignedTo['departments'])) {
+                $userQuery->whereIn('department_id', $assignedTo['departments']);
+                $hasConditions = true;
+            }
+            
+            // Handle "select all" cases
+            if (isset($assignedTo['selectAllColleges']) && $assignedTo['selectAllColleges']) {
+                $userQuery->orWhereNotNull('college_id');
+                $hasConditions = true;
+            }
+            
+            if (isset($assignedTo['selectAllDepartments']) && $assignedTo['selectAllDepartments']) {
+                $userQuery->orWhereNotNull('department_id');
+                $hasConditions = true;
+            }
+            
+            if (!$hasConditions) {
+                $count = 0;
+            } else {
+                $count = $userQuery->count();
             }
             
             $requirement->assigned_users_count = $count;

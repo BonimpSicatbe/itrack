@@ -7,14 +7,17 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany; // <-- NEW: Added for many-to-many relationship
 use Spatie\Permission\Traits\HasRoles;
-use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\HasMedia;   
 use Spatie\MediaLibrary\InteractsWithMedia;
 
 class User extends Authenticatable implements HasMedia
 {
     use HasFactory, Notifiable, HasRoles, InteractsWithMedia;
 
+    // ... (Your existing properties: fillable, hidden, casts, appends) ...
+    
     /**
      * The attributes that are mass assignable.
      *
@@ -60,10 +63,36 @@ class User extends Authenticatable implements HasMedia
     protected $appends = [
         'full_name',
         'formatted_name',
-        'name', // Added from incoming
+        'name',
     ];
 
-    // ==================== RELATIONSHIPS ====================
+    // ==================== NEW COURSE RELATIONSHIPS ====================
+
+    /**
+     * Get all the individual course assignment records (historical and current).
+     * The foreign key is 'professor_id' in the course_assignments table.
+     */
+    public function assignments(): HasMany
+    {
+        return $this->hasMany(CourseAssignment::class, 'professor_id');
+    }
+
+    /**
+     * Get all the courses the professor has taught (historical and current).
+     * This uses the many-to-many relationship with the custom pivot model.
+     */
+    public function courses(): BelongsToMany
+    {
+        return $this->belongsToMany(Course::class, 'course_assignments', 'id', 'course_id')
+                    ->as('assignment') // Rename pivot relationship for clarity
+                    ->using(CourseAssignment::class) // Specify the custom pivot model
+                    // Include the historical/semester fields from the pivot table
+                    ->withPivot('assignment_id', 'year', 'semester', 'assignment_date')
+                    ->withTimestamps();
+    }
+
+
+    // ==================== EXISTING RELATIONSHIPS ====================
 
     public function semester() {
         return $this->belongsToMany(Semester::class, 'user_semester', 'user_id', 'semester_id');

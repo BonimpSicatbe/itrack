@@ -35,23 +35,24 @@
                         @php
                             $columns = [
                                 'name' => 'Name',
-                                'description' => 'Description',
                                 'due' => 'Due Date',
-                                'assigned_to' => 'Assigned To',
                                 'created_at' => 'Created At',
+                                'users' => 'Users',
                                 'created_by' => 'Created By'
                             ];
                         @endphp
                         
                         @foreach($columns as $field => $label)
-                            <th class="px-4 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider cursor-pointer hover:bg-green-800 transition-colors"
-                                wire:click="sortBy('{{ $field }}')">
-                                <div class="flex items-center">
+                            <th class="px-4 py-3 text-xs font-semibold text-white uppercase tracking-wider {{ $field !== 'users' ? 'cursor-pointer hover:bg-green-800 transition-colors' : '' }} {{ $field === 'users' ? 'text-center' : 'text-left' }}"
+                                @if($field !== 'users') wire:click="sortBy('{{ $field }}')" @endif>
+                                <div class="flex items-center {{ $field === 'users' ? 'justify-center' : '' }}">
                                     <span>{{ $label }}</span>
-                                    @if($sortField === $field)
-                                        <i class="fas fa-sort-{{ $sortDirection === 'asc' ? 'up' : 'down' }} ml-1 text-green-300"></i>
-                                    @else
-                                        <i class="fas fa-sort ml-1 opacity-70"></i>
+                                    @if($field !== 'users')
+                                        @if($sortField === $field)
+                                            <i class="fas fa-sort-{{ $sortDirection === 'asc' ? 'up' : 'down' }} ml-1 text-green-300"></i>
+                                        @else
+                                            <i class="fas fa-sort ml-1 opacity-70"></i>
+                                        @endif
                                     @endif
                                 </div>
                             </th>
@@ -64,9 +65,6 @@
                         <tr class="hover:bg-green-50 transition-colors duration-150 cursor-pointer" 
                             wire:click="showRequirement({{ $requirement->id }})">
                             <td class="px-4 py-3 font-semibold text-gray-800">{{ $requirement->name }}</td>
-                            <td class="px-4 py-3 whitespace-normal max-w-[300px]">
-                                {{ Str::limit($requirement->description, 50) }}
-                            </td>
                             <td class="px-4 py-3">
                                 @php
                                     $dueDate = \Carbon\Carbon::parse($requirement->due);
@@ -81,11 +79,13 @@
                                     </span>
                                 </div>
                             </td>
-                            <td class="px-4 py-3 whitespace-normal min-w-[150px] max-w-[200px]">
-                                {{ $requirement->assigned_to }}
-                            </td>
                             <td class="px-4 py-3">
                                 {{ \Carbon\Carbon::parse($requirement->created_at)->format('m/d/Y h:i a') }}
+                            </td>
+                            <td class="px-4 py-3 text-center">
+                                <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-green-100 text-green-800 font-semibold text-sm mx-auto">
+                                    {{ $requirement->assigned_users_count ?? 0 }}
+                                </span>
                             </td>
                             <td class="px-4 py-3">
                                 {{ $requirement->creator?->firstname }} {{ $requirement->creator?->lastname }}
@@ -93,7 +93,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="px-4 py-8 text-center text-gray-500">
+                            <td colspan="5" class="px-4 py-8 text-center text-gray-500">
                                 <i class="fa-solid fa-folder-open text-4xl text-gray-300 mb-2 block mx-auto"></i>
                                 <p class="text-sm font-semibold">No requirements found.</p>
                                 @if($search)

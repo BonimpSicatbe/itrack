@@ -22,6 +22,8 @@ class DatabaseSeeder extends Seeder
         Role::firstOrCreate(['name' => 'super-admin']);
 
         $this->call(CollegesAndDepartmentsSeeder::class);
+        $this->call(CourseSeeder::class);
+        $this->call(RequirementTypeSeeder::class);
 
         // random users
         // User::factory(150)->create()->each(function ($user) {

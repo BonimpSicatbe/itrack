@@ -43,6 +43,11 @@
                         @livewire('admin.management.user-management')
                     </div>
                 @break
+                @case('courses')
+                    <div>
+                        @livewire('admin.management.course-management')
+                    </div>
+                @break
                 @case('colleges')
                     <div>
                         @livewire('admin.management.college-management')
@@ -53,11 +58,6 @@
                         @livewire('admin.management.department-management')
                     </div>
                 @break
-                @default
-                    <div>
-                        <h3 class="text-xl font-semibold text-1C7C54 mb-2">Welcome</h3>
-                        <p class="text-sm text-gray-500">Select a tab to manage different aspects of the system.</p>
-                    </div>
             @endswitch
         </div>
     </div>

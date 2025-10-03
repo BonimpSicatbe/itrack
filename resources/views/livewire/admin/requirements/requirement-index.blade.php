@@ -66,10 +66,10 @@
                         </div>
 
                         <!-- Create Button -->
-                        <label for="createRequirement" class="btn bg-green-600 hover:bg-green-700 text-white text-sm flex items-center gap-2 border-0 rounded-full shadow-md px-4 py-1.5">
+                        <button wire:click="createRequirement" class="btn bg-green-600 hover:bg-green-700 text-white text-sm flex items-center gap-2 border-0 rounded-full shadow-md px-4 py-1.5">
                             <i class="fa-solid fa-plus"></i>
                             <span>Create</span>
-                        </label>
+                        </button>
                     </div>
                 </div>
 
@@ -99,11 +99,6 @@
                                 <div class="text-xs text-gray-500">
                                     Created: {{ $requirement->created_at->format('m/d/Y') }}
                                 </div>
-                                
-                                <!-- Assigned To -->
-                                <p class="text-xs text-gray-600 truncate">
-                                    To: {{ $requirement->assigned_to }}
-                                </p>
                                 
                                 <!-- Users Count -->
                                 <div class="flex items-center justify-between mt-2">
@@ -170,20 +165,6 @@
                                                 @endif
                                             </div>
                                         </th>
-                                        <th class="px-4 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider cursor-pointer hover:bg-green-800 transition-colors"
-                                            wire:click="sortBy('assigned_to')">
-                                            <div class="flex items-center">
-                                                <span>Assigned To</span>
-                                                @if($sortField === 'assigned_to')
-                                                    <i class="fas fa-sort-{{ $sortDirection === 'asc' ? 'up' : 'down' }} ml-1 text-green-300"></i>
-                                                @else
-                                                    <i class="fas fa-sort ml-1 opacity-70"></i>
-                                                @endif
-                                            </div>
-                                        </th>
-                                        <th class="px-4 py-3 text-center text-xs font-semibold text-white uppercase tracking-wider">
-                                            Users
-                                        </th>
                                         <!-- Created At Column -->
                                         <th class="px-4 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider cursor-pointer hover:bg-green-800 transition-colors"
                                             wire:click="sortBy('created_at')">
@@ -195,6 +176,9 @@
                                                     <i class="fas fa-sort ml-1 opacity-70"></i>
                                                 @endif
                                             </div>
+                                        </th>
+                                        <th class="px-4 py-3 text-center text-xs font-semibold text-white uppercase tracking-wider">
+                                            Users
                                         </th>
                                         <th class="px-4 py-3 text-center text-xs font-semibold text-white uppercase tracking-wider">
                                             Actions
@@ -223,20 +207,15 @@
                                                     </span>
                                                 </div>
                                             </td>
+                                            <!-- Created At Data -->
                                             <td class="px-4 py-3 whitespace-nowrap">
-                                                <span class="text-sm text-gray-600 truncate max-w-xs">
-                                                    {{ $requirement->assigned_to }}
+                                                <span class="text-sm text-gray-600">
+                                                    {{ $requirement->created_at->format('m/d/Y h:i a') }}
                                                 </span>
                                             </td>
                                             <td class="px-4 py-3 whitespace-nowrap text-center">
                                                 <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-green-100 text-green-800 font-semibold text-sm">
                                                     {{ $requirement->assigned_users_count }}
-                                                </span>
-                                            </td>
-                                            <!-- Created At Data -->
-                                            <td class="px-4 py-3 whitespace-nowrap">
-                                                <span class="text-sm text-gray-600">
-                                                    {{ $requirement->created_at->format('m/d/Y h:i a') }}
                                                 </span>
                                             </td>
                                             <td class="px-4 py-3 whitespace-nowrap text-center" onclick="event.stopPropagation()">
@@ -261,7 +240,7 @@
                                         </tr>
                                     @empty
                                         <tr>
-                                            <td colspan="6" class="px-4 py-8 text-center text-gray-500">
+                                            <td colspan="5" class="px-4 py-8 text-center text-gray-500">
                                                 <i class="fa-solid fa-folder-open text-3xl text-gray-300 mb-2"></i>
                                                 <p class="text-sm font-semibold text-gray-500">No requirements found.</p>
                                                 @if($search)
@@ -324,11 +303,6 @@
                 </div>
             </div>
         </x-modal>
-    @endif
-
-    <!-- Create Modal -->
-    @if($activeSemester)
-        @livewire('admin.requirement-create-modal')
     @endif
 
     <style>

@@ -70,6 +70,8 @@ Route::middleware(['auth', 'role:admin|super-admin'])
         // Requirements
         Route::get('/requirements', [RequirementController::class, 'index'])
             ->name('requirements.index');
+        Route::get('/requirements/create', [RequirementController::class, 'create'])
+            ->name('requirements.create');
         Route::get('/requirements/{requirement}', [RequirementController::class, 'show'])
             ->name('requirements.show');
         Route::get('/requirements/{requirement}/edit', [RequirementController::class, 'edit'])

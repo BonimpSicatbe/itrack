@@ -15,9 +15,10 @@ class RequirementEdit extends Component
 
     public $requirement;
     public $assignedUsers;
+    public $assignedColleges = [];
+    public $assignedDepartments = [];
 
     // Form fields
-    public $assigned_to = '';
     public $name = '';
     public $description = '';
     public $due = '';
@@ -25,23 +26,26 @@ class RequirementEdit extends Component
     public $required_files = [];
     public $showUploadModal = false;
     
+    // Assignment properties (multiple selection)
+    public $selectedColleges = [];
+    public $selectedDepartments = [];
+    public $selectAllColleges = false;
+    public $selectAllDepartments = false;
+    
     // Add these properties for delete confirmation
     public $showDeleteModal = false;
     public $fileToDelete = null;
 
-    #[Validate('required|in:college,department')]
-    public $sector = '';
-    public $search = '';
-
     public function mount($requirement)
     {
         $this->requirement = $requirement;
-        $this->assigned_to = $requirement->assigned_to;
         $this->name = $requirement->name;
         $this->description = $requirement->description;
         $this->due = $requirement->due->format('Y-m-d\TH:i');
         $this->priority = $requirement->priority;
-        $this->sector = College::where('name', $requirement->assigned_to)->exists() ? 'college' : 'department';
+        
+        // Parse assigned data for multiple selection
+        $this->parseAssignedData();
         
         // Load assigned users with their relationships
         $this->assignedUsers = $requirement->assignedTargets()->map(function($user) {
@@ -49,14 +53,39 @@ class RequirementEdit extends Component
         });
     }
 
+    private function parseAssignedData()
+    {
+        $assignedTo = json_decode($this->requirement->assigned_to, true) ?? [];
+        
+        // Get assigned colleges
+        if (isset($assignedTo['colleges']) && is_array($assignedTo['colleges'])) {
+            $this->selectedColleges = $assignedTo['colleges'];
+            $this->assignedColleges = College::whereIn('id', $assignedTo['colleges'])->get();
+        }
+        
+        // Get assigned departments
+        if (isset($assignedTo['departments']) && is_array($assignedTo['departments'])) {
+            $this->selectedDepartments = $assignedTo['departments'];
+            $this->assignedDepartments = Department::whereIn('id', $assignedTo['departments'])
+                ->with('college')
+                ->get();
+        }
+
+        // Handle select all cases
+        $this->selectAllColleges = $assignedTo['selectAllColleges'] ?? false;
+        $this->selectAllDepartments = $assignedTo['selectAllDepartments'] ?? false;
+    }
+
     public function updateRequirement()
     {
         $this->validate([
-            'assigned_to' => 'required|string|max:255',
             'name' => 'required|string|max:255|unique:requirements,name,' . $this->requirement->id,
-            'description' => 'required|string',
             'due' => 'required|date_format:Y-m-d\TH:i|after_or_equal:now',
             'priority' => 'required|in:low,normal,high',
+            'selectedColleges' => ['required', 'array', 'min:1'],
+            'selectedColleges.*' => ['exists:colleges,id'],
+            'selectedDepartments' => ['sometimes', 'array'],
+            'selectedDepartments.*' => ['exists:departments,id'],
         ]);
 
         $due = \DateTime::createFromFormat('Y-m-d\TH:i', $this->due);
@@ -65,20 +94,97 @@ class RequirementEdit extends Component
             return;
         }
 
+        // Prepare assignment data
+        $assignedData = [
+            'colleges' => $this->selectedColleges,
+            'departments' => $this->selectedDepartments,
+            'selectAllColleges' => $this->selectAllColleges,
+            'selectAllDepartments' => $this->selectAllDepartments
+        ];
+
         $this->requirement->update([
             'updated_by' => Auth::id(),
-            'assigned_to' => $this->assigned_to,
+            'assigned_to' => json_encode($assignedData),
             'name' => $this->name,
             'description' => $this->description,
             'due' => $due->format('Y-m-d H:i:s'),
             'priority' => $this->priority,
         ]);
 
+        // Refresh assigned data
+        $this->parseAssignedData();
         $this->assignedUsers = $this->requirement->assignedTargets();
+        
         $this->dispatch('showNotification', 
             type: 'success', 
             content: 'Requirement updated successfully.'
         );
+    }
+
+    // Assignment hooks (same as RequirementCreate)
+    public function updatedSelectAllColleges($value)
+    {
+        if ($value) {
+            $this->selectedColleges = College::all()->pluck('id')->toArray();
+            $this->selectedDepartments = $this->getDepartmentsProperty()->pluck('id')->toArray();
+            $this->selectAllDepartments = true;
+        } else {
+            $this->selectedColleges = [];
+            $this->selectedDepartments = [];
+            $this->selectAllDepartments = false;
+        }
+    }
+
+    public function updatedSelectedColleges()
+    {
+        $this->selectAllColleges = false;
+        $this->selectAllDepartments = false;
+        
+        // Reset departments when colleges change
+        if (empty($this->selectedColleges)) {
+            $this->selectedDepartments = [];
+        } else {
+            // Keep only departments that belong to selected colleges
+            $validDepartments = $this->getDepartmentsProperty()->pluck('id')->toArray();
+            $this->selectedDepartments = array_intersect($this->selectedDepartments, $validDepartments);
+        }
+    }
+
+    public function updatedSelectAllDepartments($value)
+    {
+        if ($value && (!empty($this->selectedColleges) || $this->selectAllColleges)) {
+            $this->selectedDepartments = $this->getDepartmentsProperty()->pluck('id')->toArray();
+        } else {
+            $this->selectedDepartments = [];
+        }
+    }
+
+    public function updatedSelectedDepartments()
+    {
+        $this->selectAllDepartments = false;
+        
+        if (!empty($this->selectedColleges) || $this->selectAllColleges) {
+            $allDepartments = $this->getDepartmentsProperty()->pluck('id')->toArray();
+            $this->selectAllDepartments = !empty($allDepartments) && 
+                                         count($this->selectedDepartments) === count($allDepartments);
+        }
+    }
+
+    // Computed properties for colleges and departments
+    public function getCollegesProperty()
+    {
+        return College::with('departments')->get();
+    }
+
+    public function getDepartmentsProperty()
+    {
+        if ($this->selectAllColleges) {
+            return Department::with('college')->get();
+        }
+        if (!empty($this->selectedColleges)) {
+            return Department::with('college')->whereIn('college_id', $this->selectedColleges)->get();
+        }
+        return collect();
     }
 
     public function uploadRequiredFiles()
@@ -167,8 +273,10 @@ class RequirementEdit extends Component
             'requirement' => $this->requirement,
             'assignedUsers' => $this->assignedUsers,
             'requiredFiles' => $this->requirement->getMedia('guides'),
-            'colleges' => College::all(),
-            'departments' => Department::all(),
+            'colleges' => $this->colleges,
+            'departments' => $this->departments,
+            'assignedColleges' => $this->assignedColleges,
+            'assignedDepartments' => $this->assignedDepartments,
         ]);
     }
 }
