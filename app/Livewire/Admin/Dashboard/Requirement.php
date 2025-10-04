@@ -44,9 +44,11 @@ class Requirement extends Component
         return redirect()->route('admin.requirements.show', ['requirement' => $requirementId]);
     }
 
-    private function getAssignedUsersCount($requirement)
+    public function getAssignedUsersCount($requirement)
     {
-        $assignedTo = json_decode($requirement->assigned_to, true) ?? [];
+        // Remove json_decode since assigned_to is already cast as array in model
+        $assignedTo = $requirement->assigned_to ?? [];
+        
         $userQuery = User::query();
         
         $hasConditions = false;
@@ -58,8 +60,8 @@ class Requirement extends Component
             $userQuery->where(function ($query) use ($assignedTo) {
                 // Users in assigned colleges
                 $query->whereIn('college_id', $assignedTo['colleges'])
-                      // AND in assigned departments
-                      ->whereIn('department_id', $assignedTo['departments']);
+                    // AND in assigned departments
+                    ->whereIn('department_id', $assignedTo['departments']);
             });
             $hasConditions = true;
         }
