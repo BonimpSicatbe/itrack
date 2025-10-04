@@ -12,6 +12,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('requirement_id')->constrained()->onDelete('cascade');
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->foreignId('course_id')->constrained()->onDelete('cascade'); // New column
             $table->string('status')->default('pending'); // pending, under_review, accepted, rejected, etc.
             $table->text('admin_notes')->nullable();
             $table->timestamp('submitted_at')->useCurrent();
@@ -20,6 +21,7 @@ return new class extends Migration
             $table->timestamps();
             
             $table->index('status');
+            $table->index(['user_id', 'course_id']); // Optional: Composite index for better performance
         });
     }
 

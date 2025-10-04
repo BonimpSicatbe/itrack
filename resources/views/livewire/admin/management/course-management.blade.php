@@ -1,8 +1,5 @@
-<!-- course-management.blade.php -->
 <div class="w-full flex">
-    <!-- Main Content Area -->
     <div class="w-full transition-all duration-300 ease-in-out">
-        <!-- Header -->
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-2 gap-4 px-6 pt-6">
             <div>
                 <div class="flex items-center gap-2">
@@ -18,13 +15,10 @@
             </button>
         </div>
 
-        <!-- Divider -->
         <div class="border-b border-gray-200 mb-4"></div>
 
-        <!-- Search and Total Courses -->
         <div class="flex flex-col sm:flex-row items-center justify-between gap-4 mb-4 px-6">
             
-            <!-- Total Courses Badge -->
             <div class="flex items-center gap-2 bg-green-50 border border-green-600 px-4 py-2 rounded-xl shadow-sm">
                 <i class="fa-solid fa-book text-green-700"></i>
                 <span class="text-sm font-semibold text-green-700">
@@ -32,7 +26,6 @@
                 </span>
             </div>
 
-            <!-- Search Box -->
             <div class="w-full sm:w-1/2">
                 <label for="search" class="block text-sm font-semibold text-gray-700 mb-1">Search Courses</label>
                 <div class="relative">
@@ -49,7 +42,6 @@
             </div>
         </div>
 
-        <!-- Courses Table -->
         <div class="rounded-xl border border-gray-200 shadow-sm">
             <table class="table table-auto table-striped table-pin-rows table-sm min-w-[1000px] rounded-xl">
                 <thead>
@@ -105,7 +97,7 @@
                                                         {{ $assignment->professor->firstname }} {{ $assignment->professor->lastname }}
                                                     </div>
                                                     <div class="text-xs text-gray-600">
-                                                        {{ $assignment->semester }} Semester {{ $assignment->year }}
+                                                        {{ $assignment->semester->name ?? 'N/A' }}
                                                     </div>
                                                 </div>
                                                 <button 
@@ -147,19 +139,15 @@
         </div>
     </div>
 
-    <!-- Add Course Modal -->
     @if($showAddCourseModal)
         <x-modal name="add-course-modal" :show="$showAddCourseModal" maxWidth="2xl">
-            <!-- Header -->
             <div class=" text-white rounded-t-xl px-6 py-4 flex items-center space-x-3" style="background: linear-gradient(148deg,rgba(18, 67, 44, 1) 0%, rgba(30, 119, 77, 1) 54%, rgba(55, 120, 64, 1) 100%);">
                 <i class="fa-solid fa-book text-lg"></i>
                 <h3 class="text-xl font-semibold">Add New Course</h3>
             </div>
 
-            <!-- Body -->
             <div class="bg-white px-6 py-6 rounded-b-xl">
                 <div class="space-y-6">
-                    <!-- Course Code -->
                     <div>
                         <label class="block text-sm font-semibold text-gray-700">Course Code *</label>
                         <input type="text" wire:model="newCourse.course_code"
@@ -168,7 +156,6 @@
                         @error('newCourse.course_code') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                     </div>
 
-                    <!-- Course Name -->
                     <div>
                         <label class="block text-sm font-semibold text-gray-700">Course Name *</label>
                         <input type="text" wire:model="newCourse.course_name"
@@ -177,7 +164,6 @@
                         @error('newCourse.course_name') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                     </div>
 
-                    <!-- Description -->
                     <div>
                         <label class="block text-sm font-semibold text-gray-700">Description</label>
                         <textarea wire:model="newCourse.description"
@@ -188,7 +174,6 @@
                     </div>
                 </div>
 
-                <!-- Footer -->
                 <div class="mt-8 flex justify-end space-x-3">
                     <button type="button" wire:click="closeAddCourseModal"
                         class="px-5 py-2 rounded-full border border-gray-300 text-gray-500 bg-white font-semibold text-sm cursor-pointer">
@@ -206,23 +191,18 @@
         </x-modal>
     @endif
 
-    <!-- Edit Course Modal (Now includes professor assignment) -->
     @if($showEditCourseModal)
         <x-modal name="edit-course-modal" :show="$showEditCourseModal" maxWidth="3xl">
-            <!-- Header -->
             <div class=" text-white rounded-t-xl px-6 py-4 flex items-center space-x-3" style="background: linear-gradient(148deg,rgba(18, 67, 44, 1) 0%, rgba(30, 119, 77, 1) 54%, rgba(55, 120, 64, 1) 100%);">
                 <i class="fa-solid fa-book text-lg"></i>
                 <h3 class="text-xl font-semibold">Edit Course & Assign Professors</h3>
             </div>
 
-            <!-- Body -->
             <div class="bg-white px-6 py-6 rounded-b-xl">
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <!-- Left Column: Course Information -->
                     <div class="space-y-6">
                         <h4 class="text-lg font-semibold text-gray-700 border-b pb-2">Course Information</h4>
                         
-                        <!-- Course Code -->
                         <div>
                             <label class="block text-sm font-semibold text-gray-700">Course Code *</label>
                             <input type="text" wire:model="editingCourse.course_code"
@@ -231,7 +211,6 @@
                             @error('editingCourse.course_code') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                         </div>
 
-                        <!-- Course Name -->
                         <div>
                             <label class="block text-sm font-semibold text-gray-700">Course Name *</label>
                             <input type="text" wire:model="editingCourse.course_name"
@@ -240,7 +219,6 @@
                             @error('editingCourse.course_name') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                         </div>
 
-                        <!-- Description -->
                         <div>
                             <label class="block text-sm font-semibold text-gray-700">Description</label>
                             <textarea wire:model="editingCourse.description"
@@ -251,11 +229,9 @@
                         </div>
                     </div>
 
-                    <!-- Right Column: Professor Assignment -->
                     <div class="space-y-6">
                         <h4 class="text-lg font-semibold text-gray-700 border-b pb-2">Assign Professors</h4>
 
-                        <!-- Current Assignments -->
                         <div>
                             <label class="block text-sm font-semibold text-gray-700 mb-2">Current Assignments</label>
                             @if($currentCourseAssignments->count() > 0)
@@ -267,7 +243,7 @@
                                                     {{ $assignment->professor->firstname }} {{ $assignment->professor->lastname }}
                                                 </div>
                                                 <div class="text-xs text-gray-600">
-                                                    {{ $assignment->semester }} Semester {{ $assignment->year }}
+                                                    {{ $assignment->semester->name ?? 'N/A' }}
                                                 </div>
                                             </div>
                                             <button 
@@ -285,11 +261,9 @@
                             @endif
                         </div>
 
-                        <!-- New Assignment Form -->
                         <div class="border-t pt-4">
                             <h5 class="text-md font-semibold text-gray-700 mb-3">Assign New Professor</h5>
                             
-                            <!-- Professor Selection -->
                             <div class="mb-4">
                                 <label class="block text-sm font-semibold text-gray-700">Select Professor *</label>
                                 <select wire:model="assignmentData.professor_id"
@@ -307,32 +281,23 @@
                                 @error('assignmentData.professor_id') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                             </div>
 
-                            <!-- Year and Semester -->
-                            <div class="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label class="block text-sm font-semibold text-gray-700">Year *</label>
-                                    <input type="number" wire:model="assignmentData.year"
-                                        class="mt-2 block w-full rounded-xl border-gray-300 sm:text-sm"
-                                        placeholder="Enter year"
-                                        min="2000"
-                                        max="2030">
-                                    @error('assignmentData.year') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
-                                </div>
-
-                                <div>
-                                    <label class="block text-sm font-semibold text-gray-700">Semester *</label>
-                                    <select wire:model="assignmentData.semester"
-                                        class="mt-2 block w-full rounded-xl border-gray-300 sm:text-sm">
-                                        <option value="">Select Semester</option>
-                                        <option value="1st">1st Semester</option>
-                                        <option value="2nd">2nd Semester</option>
-                                        <option value="Summer">Summer</option>
-                                    </select>
-                                    @error('assignmentData.semester') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
-                                </div>
+                            <div class="mb-4">
+                                <label class="block text-sm font-semibold text-gray-700">Select Semester *</label>
+                                <select wire:model="assignmentData.semester_id"
+                                    class="mt-2 block w-full rounded-xl border-gray-300 sm:text-sm">
+                                    <option value="">Select an Academic Semester</option>
+                                    @foreach($semesters as $semester)
+                                        <option value="{{ $semester->id }}">
+                                            {{ $semester->name }}
+                                            @if($semester->is_active)
+                                                (Active)
+                                            @endif
+                                        </option>
+                                    @endforeach
+                                </select>
+                                @error('assignmentData.semester_id') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                             </div>
 
-                            <!-- Add Assignment Button -->
                             <div class="mt-4">
                                 <button type="button" wire:click="assignProfessor" wire:loading.attr="disabled"
                                     class="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-full text-sm cursor-pointer">
@@ -348,7 +313,6 @@
                     </div>
                 </div>
 
-                <!-- Footer -->
                 <div class="mt-8 flex justify-end space-x-3 border-t pt-4">
                     <button type="button" wire:click="closeEditCourseModal"
                         class="px-5 py-2 rounded-full border border-gray-300 text-gray-500 bg-white font-semibold text-sm cursor-pointer">
@@ -366,7 +330,6 @@
         </x-modal>
     @endif
 
-    <!-- Remove Assignment Confirmation Modal -->
     @if($showRemoveAssignmentModal && $assignmentToRemove)
         <x-modal name="remove-assignment-modal" :show="$showRemoveAssignmentModal" maxWidth="md">
             <div class="bg-orange-600 text-white rounded-t-xl px-6 py-4 flex items-center space-x-3">
@@ -385,7 +348,7 @@
                         <span class="font-semibold text-orange-600">"{{ $assignmentToRemove->course->course_name }}"</span>?
                     </p>
                     <p class="text-sm text-gray-600">
-                        This will remove the assignment for {{ $assignmentToRemove->semester }} Semester {{ $assignmentToRemove->year }}.
+                        This will remove the assignment for <span class="font-semibold text-orange-600">{{ $assignmentToRemove->semester->name ?? 'the selected semester' }}</span>.
                     </p>
                 </div>
 
@@ -409,7 +372,6 @@
         </x-modal>
     @endif
 
-    <!-- Delete Confirmation Modal -->
     @if($showDeleteConfirmationModal && $courseToDelete)
         <x-modal name="delete-course-modal" :show="$showDeleteConfirmationModal" maxWidth="md">
             <div class="bg-red-600 text-white rounded-t-xl px-6 py-4 flex items-center space-x-3">

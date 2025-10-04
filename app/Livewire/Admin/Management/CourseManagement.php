@@ -6,6 +6,7 @@ use Livewire\Component;
 use App\Models\Course;
 use App\Models\User;
 use App\Models\CourseAssignment;
+use App\Models\Semester;
 use Illuminate\Validation\Rule;
 
 class CourseManagement extends Component
@@ -22,7 +23,6 @@ class CourseManagement extends Component
         'description' => ''
     ];
 
-    // Edit Course Modal Properties (now includes professor assignment)
     public $showEditCourseModal = false;
     public $editingCourse = [
         'id' => '',
@@ -32,18 +32,14 @@ class CourseManagement extends Component
     ];
     public $currentCourseAssignments = [];
 
-    // Assignment Data (now used within edit modal)
     public $assignmentData = [
         'professor_id' => '',
-        'year' => '',
-        'semester' => ''
+        'semester_id' => ''
     ];
 
-    // Delete Confirmation Properties
     public $showDeleteConfirmationModal = false;
     public $courseToDelete = null;
 
-    // Remove Assignment Properties
     public $showRemoveAssignmentModal = false;
     public $assignmentToRemove = null;
 
@@ -67,10 +63,9 @@ class CourseManagement extends Component
         $this->resetErrorBag();
     }
 
-    // Edit Course Methods (now includes professor assignment)
     public function openEditCourseModal($courseId)
     {
-        $course = Course::with(['assignments.professor'])->find($courseId);
+        $course = Course::with(['assignments.professor', 'assignments.semester'])->find($courseId);
         
         $this->editingCourse = [
             'id' => $course->id,
@@ -81,11 +76,9 @@ class CourseManagement extends Component
         
         $this->currentCourseAssignments = $course->assignments;
         
-        // Reset assignment data
         $this->assignmentData = [
             'professor_id' => '',
-            'year' => date('Y'),
-            'semester' => '1st'
+            'semester_id' => ''
         ];
         
         $this->showEditCourseModal = true;
@@ -101,30 +94,28 @@ class CourseManagement extends Component
         $this->resetErrorBag();
     }
 
-    // Professor Assignment Methods (now within edit modal)
     public function assignProfessor()
     {
         try {
             $this->validate([
                 'assignmentData.professor_id' => 'required|exists:users,id',
-                'assignmentData.year' => 'required|integer|min:2000|max:2030',
-                'assignmentData.semester' => 'required|in:1st,2nd,Summer',
+                'assignmentData.semester_id' => 'required|exists:semesters,id',
             ], [
                 'assignmentData.professor_id.required' => 'Professor selection is required.',
-                'assignmentData.year.required' => 'Year is required.',
-                'assignmentData.semester.required' => 'Semester is required.',
+                'assignmentData.semester_id.required' => 'Semester selection is required.',
+                'assignmentData.semester_id.exists' => 'Invalid semester selected.',
             ]);
 
-            // Check if this course already has an assignment for the same year and semester
             $existingAssignment = CourseAssignment::where('course_id', $this->editingCourse['id'])
-                ->where('year', $this->assignmentData['year'])
-                ->where('semester', $this->assignmentData['semester'])
+                ->where('semester_id', $this->assignmentData['semester_id'])
                 ->first();
 
             if ($existingAssignment) {
+                $semesterName = Semester::find($this->assignmentData['semester_id'])->name ?? 'Selected Semester';
+                
                 $this->dispatch('showNotification', 
                     type: 'warning', 
-                    content: "This course already has a professor assigned for {$this->assignmentData['semester']} Semester {$this->assignmentData['year']}."
+                    content: "This course already has a professor assigned for {$semesterName}."
                 );
                 return;
             }
@@ -132,23 +123,19 @@ class CourseManagement extends Component
             CourseAssignment::create([
                 'course_id' => $this->editingCourse['id'],
                 'professor_id' => $this->assignmentData['professor_id'],
-                'year' => $this->assignmentData['year'],
-                'semester' => $this->assignmentData['semester'],
+                'semester_id' => $this->assignmentData['semester_id'],
                 'assignment_date' => now(),
             ]);
 
-            // Refresh the current assignments
-            $this->currentCourseAssignments = Course::with(['assignments.professor'])
+            $this->currentCourseAssignments = Course::with(['assignments.professor', 'assignments.semester'])
                 ->find($this->editingCourse['id'])
                 ->assignments;
 
             $professorName = User::find($this->assignmentData['professor_id'])->full_name;
             
-            // Reset assignment form
             $this->assignmentData = [
                 'professor_id' => '',
-                'year' => date('Y'),
-                'semester' => '1st'
+                'semester_id' => ''
             ];
             
             $this->resetErrorBag();
@@ -174,10 +161,9 @@ class CourseManagement extends Component
         }
     }
 
-    // Remove Assignment Methods
     public function openRemoveAssignmentModal($assignmentId)
     {
-        $this->assignmentToRemove = CourseAssignment::with(['course', 'professor'])->find($assignmentId);
+        $this->assignmentToRemove = CourseAssignment::with(['course', 'professor', 'semester'])->find($assignmentId);
         $this->showRemoveAssignmentModal = true;
     }
 
@@ -192,12 +178,12 @@ class CourseManagement extends Component
         if ($this->assignmentToRemove) {
             $courseName = $this->assignmentToRemove->course->course_name;
             $professorName = $this->assignmentToRemove->professor->full_name;
+            $semesterInfo = $this->assignmentToRemove->semester->name ?? 'the selected semester';
             
             $this->assignmentToRemove->delete();
             
-            // Refresh current assignments if we're in edit mode
             if ($this->showEditCourseModal && $this->editingCourse['id']) {
-                $this->currentCourseAssignments = Course::with(['assignments.professor'])
+                $this->currentCourseAssignments = Course::with(['assignments.professor', 'assignments.semester'])
                     ->find($this->editingCourse['id'])
                     ->assignments;
             }
@@ -205,12 +191,11 @@ class CourseManagement extends Component
             $this->closeRemoveAssignmentModal();
             $this->dispatch('showNotification', 
                 type: 'success', 
-                content: "Professor '{$professorName}' removed from '{$courseName}' successfully!"
+                content: "Professor '{$professorName}' removed from '{$courseName}' for {$semesterInfo} successfully!"
             );
         }
     }
 
-    // Delete Course Methods
     public function openDeleteConfirmationModal($courseId)
     {
         $this->courseToDelete = Course::find($courseId);
@@ -341,12 +326,12 @@ class CourseManagement extends Component
 
     public function updatingSearch()
     {
-        // No need to reset page since we removed pagination
+        
     }
 
     public function render()
     {
-        $courses = Course::with(['assignments.professor'])
+        $courses = Course::with(['assignments.professor', 'assignments.semester'])
             ->when($this->search, function ($query) {
                 $query->where(function ($q) {
                     $q->where('course_code', 'like', '%' . $this->search . '%')
@@ -361,14 +346,17 @@ class CourseManagement extends Component
             ->orderBy($this->sortField, $this->sortDirection)
             ->get();
 
-        $professors = User::whereHas('department') // Assuming professors have department assigned
+        $professors = User::whereHas('department')
             ->orderBy('firstname')
             ->orderBy('lastname')
             ->get();
 
+        $semesters = Semester::orderBy('start_date', 'desc')->get();
+
         return view('livewire.admin.management.course-management', [
             'courses' => $courses,
             'professors' => $professors,
+            'semesters' => $semesters,
         ]);
     }
 }

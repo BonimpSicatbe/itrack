@@ -133,9 +133,10 @@ class RequirementIndex extends Component
             ->get();
 
         return $requirements->map(function ($requirement) {
-            $assignedTo = json_decode($requirement->assigned_to, true) ?? [];
-            $userQuery = User::query();
+            // assigned_to is now automatically an array due to the cast
+            $assignedTo = $requirement->assigned_to ?? [];
             
+            $userQuery = User::query();
             $hasConditions = false;
             
             // Specific colleges AND departments combination
@@ -145,8 +146,8 @@ class RequirementIndex extends Component
                 $userQuery->where(function ($query) use ($assignedTo) {
                     // Users in assigned colleges
                     $query->whereIn('college_id', $assignedTo['colleges'])
-                          // AND in assigned departments
-                          ->whereIn('department_id', $assignedTo['departments']);
+                        // AND in assigned departments
+                        ->whereIn('department_id', $assignedTo['departments']);
                 });
                 $hasConditions = true;
             }

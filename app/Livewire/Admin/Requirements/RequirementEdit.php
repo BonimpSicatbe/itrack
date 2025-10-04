@@ -55,7 +55,8 @@ class RequirementEdit extends Component
 
     private function parseAssignedData()
     {
-        $assignedTo = json_decode($this->requirement->assigned_to, true) ?? [];
+        // assigned_to is already an array due to the cast in Requirement model
+        $assignedTo = $this->requirement->assigned_to ?? [];
         
         // Get assigned colleges
         if (isset($assignedTo['colleges']) && is_array($assignedTo['colleges'])) {
@@ -94,7 +95,7 @@ class RequirementEdit extends Component
             return;
         }
 
-        // Prepare assignment data
+        // Prepare assignment data - no need to json_encode() since it's cast to array
         $assignedData = [
             'colleges' => $this->selectedColleges,
             'departments' => $this->selectedDepartments,
@@ -104,7 +105,7 @@ class RequirementEdit extends Component
 
         $this->requirement->update([
             'updated_by' => Auth::id(),
-            'assigned_to' => json_encode($assignedData),
+            'assigned_to' => $assignedData, // No json_encode() needed - cast handles it
             'name' => $this->name,
             'description' => $this->description,
             'due' => $due->format('Y-m-d H:i:s'),
@@ -279,4 +280,4 @@ class RequirementEdit extends Component
             'assignedDepartments' => $this->assignedDepartments,
         ]);
     }
-}
+}   

@@ -18,12 +18,12 @@ class SubmittedRequirement extends Model implements HasMedia
     protected $fillable = [
         'requirement_id',
         'user_id',
+        'course_id',    
         'status',
         'admin_notes',
         'reviewed_by',
         'reviewed_at',
         'submitted_at'
-        // REMOVED: archived_by, is_archived (since they don't exist in DB)
     ];
 
     protected $casts = [

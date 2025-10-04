@@ -2,45 +2,43 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Relations\Pivot;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class CourseAssignment extends Pivot
+class CourseAssignment extends Model
 {
-    /**
-     * The name of the custom pivot table.
-     * @var string
-     */
-    protected $table = 'course_assignments';
-
-    /**
-     * The primary key for the pivot table.
-     * @var string
-     */
-    protected $primaryKey = 'assignment_id';
+    use HasFactory;
     
-    /**
-     * Indicates if the IDs are auto-incrementing.
-     * @var bool
-     */
-    public $incrementing = true;
+    // Assuming your custom primary key is assignment_id
+    protected $primaryKey = 'assignment_id';
 
+    // Assuming you mass assign these fields
+    protected $fillable = [
+        'course_id',
+        'professor_id',
+        'semester_id', // Add the new semester_id field
+        'assignment_date',
+    ];
 
     /**
-     * Get the specific Course associated with this assignment record.
+     * Get the semester associated with the assignment.
      */
+    public function semester(): BelongsTo
+    {
+        // Links the foreign key 'semester_id' on this model to the primary key 'id' on the 'Semester' model
+        return $this->belongsTo(Semester::class);
+    }
+    
+    // Assuming you have these other relationships
     public function course(): BelongsTo
     {
-        // 'course_id' is the foreign key in the course_assignments table
-        return $this->belongsTo(Course::class, 'course_id'); 
+        return $this->belongsTo(Course::class);
     }
 
-    /**
-     * Get the specific Professor associated with this assignment record.
-     */
     public function professor(): BelongsTo
     {
-        // 'professor_id' is the foreign key in the course_assignments table
+        // Assuming 'professor_id' links to the 'User' model
         return $this->belongsTo(User::class, 'professor_id');
     }
 }

@@ -25,16 +25,20 @@ return new class extends Migration
                   ->constrained('users') // Assumes your users table is named 'users'
                   ->onDelete('restrict') // Crucial for retaining historical data on inactive professors
                   ->onUpdate('cascade');
-                  
-            // Historical Tracking Fields
-            $table->integer('year');
-            $table->string('semester', 50); // e.g., 'Fall', 'Spring'
+                    
+            // 🔥 MODIFIED: Foreign Key for the Semester ID
+            $table->foreignId('semester_id')
+                  ->constrained('semesters') // Assumes your semesters table is named 'semesters'
+                  ->onDelete('restrict') // Crucial for retaining historical data
+                  ->onUpdate('cascade');
+
             $table->date('assignment_date'); // Date professor was assigned
 
             $table->timestamps();
 
             // UNIQUE constraint: Ensures a course is taught by only one professor in a specific semester/year
-            $table->unique(['course_id', 'year', 'semester'], 'unique_term_assignment'); 
+            // 🔥 MODIFIED: The unique constraint is updated to use semester_id instead of year and semester string
+            $table->unique(['course_id', 'semester_id'], 'unique_term_assignment'); 
         });
     }
 

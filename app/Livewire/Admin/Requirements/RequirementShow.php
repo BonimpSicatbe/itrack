@@ -30,7 +30,8 @@ class RequirementShow extends Component
 
     private function parseAssignedData()
     {
-        $assignedTo = json_decode($this->requirement->assigned_to, true) ?? [];
+        // assigned_to is already an array due to the cast in Requirement model
+        $assignedTo = $this->requirement->assigned_to ?? [];
         
         // Get assigned colleges
         if (isset($assignedTo['colleges']) && is_array($assignedTo['colleges'])) {
@@ -46,53 +47,54 @@ class RequirementShow extends Component
     }
 
     private function getAssignedUsers()
-{
-    $assignedTo = json_decode($this->requirement->assigned_to, true) ?? [];
-    
-    $userQuery = User::query()->with(['department', 'college']);
-    
-    $hasConditions = false;
-    
-    // Specific colleges AND departments combination
-    if (isset($assignedTo['colleges']) && is_array($assignedTo['colleges']) && 
-        isset($assignedTo['departments']) && is_array($assignedTo['departments'])) {
+    {
+        // assigned_to is already an array due to the cast in Requirement model
+        $assignedTo = $this->requirement->assigned_to ?? [];
         
-        $userQuery->where(function ($query) use ($assignedTo) {
-            // Users in assigned colleges
-            $query->whereIn('college_id', $assignedTo['colleges'])
-                  // AND in assigned departments
-                  ->whereIn('department_id', $assignedTo['departments']);
-        });
-        $hasConditions = true;
+        $userQuery = User::query()->with(['department', 'college']);
+        
+        $hasConditions = false;
+        
+        // Specific colleges AND departments combination
+        if (isset($assignedTo['colleges']) && is_array($assignedTo['colleges']) && 
+            isset($assignedTo['departments']) && is_array($assignedTo['departments'])) {
+            
+            $userQuery->where(function ($query) use ($assignedTo) {
+                // Users in assigned colleges
+                $query->whereIn('college_id', $assignedTo['colleges'])
+                      // AND in assigned departments
+                      ->whereIn('department_id', $assignedTo['departments']);
+            });
+            $hasConditions = true;
+        }
+        // Only colleges assigned
+        elseif (isset($assignedTo['colleges']) && is_array($assignedTo['colleges'])) {
+            $userQuery->whereIn('college_id', $assignedTo['colleges']);
+            $hasConditions = true;
+        }
+        // Only departments assigned  
+        elseif (isset($assignedTo['departments']) && is_array($assignedTo['departments'])) {
+            $userQuery->whereIn('department_id', $assignedTo['departments']);
+            $hasConditions = true;
+        }
+        
+        // Handle "select all" cases
+        if (isset($assignedTo['selectAllColleges']) && $assignedTo['selectAllColleges']) {
+            $userQuery->orWhereNotNull('college_id');
+            $hasConditions = true;
+        }
+        
+        if (isset($assignedTo['selectAllDepartments']) && $assignedTo['selectAllDepartments']) {
+            $userQuery->orWhereNotNull('department_id');
+            $hasConditions = true;
+        }
+        
+        if (!$hasConditions) {
+            return collect();
+        }
+        
+        return $userQuery->get();
     }
-    // Only colleges assigned
-    elseif (isset($assignedTo['colleges']) && is_array($assignedTo['colleges'])) {
-        $userQuery->whereIn('college_id', $assignedTo['colleges']);
-        $hasConditions = true;
-    }
-    // Only departments assigned  
-    elseif (isset($assignedTo['departments']) && is_array($assignedTo['departments'])) {
-        $userQuery->whereIn('department_id', $assignedTo['departments']);
-        $hasConditions = true;
-    }
-    
-    // Handle "select all" cases
-    if (isset($assignedTo['selectAllColleges']) && $assignedTo['selectAllColleges']) {
-        $userQuery->orWhereNotNull('college_id');
-        $hasConditions = true;
-    }
-    
-    if (isset($assignedTo['selectAllDepartments']) && $assignedTo['selectAllDepartments']) {
-        $userQuery->orWhereNotNull('department_id');
-        $hasConditions = true;
-    }
-    
-    if (!$hasConditions) {
-        return collect();
-    }
-    
-    return $userQuery->get();
-}
 
     public function getAssignedToDisplayAttribute()
     {
@@ -118,8 +120,8 @@ class RequirementShow extends Component
             }
         }
         
-        // Handle select all cases
-        $assignedTo = json_decode($this->requirement->assigned_to, true) ?? [];
+        // Handle select all cases - use the array directly
+        $assignedTo = $this->requirement->assigned_to ?? [];
         if (isset($assignedTo['selectAllColleges']) && $assignedTo['selectAllColleges']) {
             $parts[] = 'All Colleges';
         }

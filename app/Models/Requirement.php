@@ -30,12 +30,15 @@ class Requirement extends Model implements HasMedia
         'updated_by',
         'archived_by',
         'semester_id',
+        'requirement_type_ids',
     ];
 
     protected $casts = [
         'due' => 'datetime',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
+        'requirement_type_ids' => 'array',
+        'assigned_to' => 'array', // Add this cast for JSON data
     ];
 
     // Media Collections
@@ -47,6 +50,54 @@ class Requirement extends Model implements HasMedia
 
         $this->addMediaCollection('submissions')
             ->useDisk(config('media-library.disk_name'));
+    }
+
+    // Custom accessor for assigned_to to ensure proper JSON handling
+    public function getAssignedToAttribute($value)
+    {
+        // If it's already an array, return it (this happens due to the cast)
+        if (is_array($value)) {
+            return $value;
+        }
+        
+        // If it's null or empty, return empty array
+        if (empty($value)) {
+            return [];
+        }
+        
+        // Try to decode JSON (for legacy data or when cast is not used)
+        if (is_string($value)) {
+            $decoded = json_decode($value, true);
+            
+            // If JSON decode failed, return empty array
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                logger("Failed to decode assigned_to for requirement {$this->id}: " . $value);
+                return [];
+            }
+            
+            return $decoded ?? [];
+        }
+        
+        // Fallback for any other data type
+        return [];
+    }
+
+    public function requirementTypes()
+    {
+        if (empty($this->requirement_type_ids)) {
+            return collect();
+        }
+        
+        return RequirementType::whereIn('id', $this->requirement_type_ids)->get();
+    }
+
+    public function hasRequirementType($typeId)
+    {
+        if (empty($this->requirement_type_ids)) {
+            return false;
+        }
+        
+        return in_array($typeId, $this->requirement_type_ids);
     }
 
     public function registerMediaConversions(?Media $media = null): void
@@ -88,10 +139,11 @@ class Requirement extends Model implements HasMedia
         return $this->hasMany(SubmittedRequirement::class);
     }
 
-    public function userSubmissions(): HasMany
+    public function userSubmissions($userId = null): HasMany
     {
+        $userId = $userId ?? Auth::id();
         return $this->hasMany(SubmittedRequirement::class)
-            ->where('user_id', Auth::id())
+            ->where('user_id', $userId)
             ->with(['media', 'reviewer'])
             ->latest();
     }
@@ -121,6 +173,66 @@ class Requirement extends Model implements HasMedia
     }
 
     // ========== Methods ==========
+
+    /**
+     * Check if a user belongs to this requirement's assigned colleges AND departments
+     */
+    public function isAssignedToUser(User $user): bool
+    {
+        $assignedTo = $this->assigned_to ?? [];
+        
+        $colleges = $assignedTo['colleges'] ?? [];
+        $departments = $assignedTo['departments'] ?? [];
+        $selectAllColleges = $assignedTo['selectAllColleges'] ?? false;
+        $selectAllDepartments = $assignedTo['selectAllDepartments'] ?? false;
+
+        // Check if user has college and department
+        if (!$user->college_id || !$user->department_id) {
+            return false;
+        }
+
+        // Convert user IDs to string for comparison (since JSON stores them as strings)
+        $userCollegeId = (string)$user->college_id;
+        $userDepartmentId = (string)$user->department_id;
+
+        // Check college assignment - user's college must be in the colleges array OR selectAllColleges is true
+        $collegeAssigned = $selectAllColleges || 
+                          (is_array($colleges) && in_array($userCollegeId, $colleges));
+
+        // Check department assignment - user's department must be in the departments array OR selectAllDepartments is true
+        $departmentAssigned = $selectAllDepartments ||
+                            (is_array($departments) && in_array($userDepartmentId, $departments));
+
+        // User must belong to BOTH assigned college AND assigned department
+        return $collegeAssigned && $departmentAssigned;
+    }
+
+    /**
+     * Get all users assigned to this requirement
+     */
+    public function getAssignedUsers()
+    {
+        $assignedTo = $this->assigned_to ?? [];
+        
+        $colleges = $assignedTo['colleges'] ?? [];
+        $departments = $assignedTo['departments'] ?? [];
+        $selectAllColleges = $assignedTo['selectAllColleges'] ?? false;
+        $selectAllDepartments = $assignedTo['selectAllDepartments'] ?? false;
+
+        $query = User::query();
+
+        if (!$selectAllColleges && !empty($colleges)) {
+            $query->whereIn('college_id', $colleges);
+        }
+
+        if (!$selectAllDepartments && !empty($departments)) {
+            $query->whereIn('department_id', $departments);
+        }
+
+        return $query->get();
+    }
+
+    // Legacy methods (keeping for backward compatibility)
     public function assignedTo()
     {
         return Requirement::where('assigned_to', $this->assigned_to);

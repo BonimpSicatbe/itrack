@@ -301,7 +301,7 @@ class RequirementCreate extends Component
                     
                     $requirementsToCreate[] = [
                         'name' => $fullName, 
-                        'type_id' => $type->id,
+                        'type_ids' => [$type->id], // Store as array for consistency
                     ];
                 }
             }
@@ -310,7 +310,7 @@ class RequirementCreate extends Component
             if ($this->isOtherSelected && !empty($this->otherRequirementName)) {
                 $requirementsToCreate[] = [
                     'name' => $this->otherRequirementName,
-                    'type_id' => null,
+                    'type_ids' => [], // Empty array for custom requirements
                 ];
             }
 
@@ -329,8 +329,8 @@ class RequirementCreate extends Component
                     'name' => $data['name'], 
                     'due' => $this->due,
                     'priority' => $this->priority,
-                    'assigned_to' => json_encode($assignedData), 
-                    'requirement_type_ids' => $data['type_id'] ? json_encode([$data['type_id']]) : null, 
+                    'assigned_to' => $assignedData, 
+                    'requirement_type_ids' => $data['type_ids'], // This will be automatically cast to JSON
                     'created_by' => Auth::id(),
                     'semester_id' => $activeSemester->id,
                     'status' => 'pending'
