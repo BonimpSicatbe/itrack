@@ -54,7 +54,7 @@
             <table class="table table-auto table-striped table-pin-rows table-sm w-full rounded-lg">
                 <thead>
                     <tr class="bg-base-300 font-bold uppercase">
-                        <th class="cursor-pointer hover:bg-green-800 bg-green-700 p-4 text-left" wire:click="sortBy('name')" style="color: white; width: 45%;">
+                        <th class="cursor-pointer hover:bg-green-800 bg-green-700 p-4 text-left" wire:click="sortBy('name')" style="color: white; width: 70%;">
                             <div class="flex items-center pt-2 pb-2">
                                 Name
                                 <div class="ml-1">
@@ -66,7 +66,7 @@
                                 </div>
                             </div>
                         </th>
-                        <th class="cursor-pointer hover:bg-green-800 bg-green-700 p-4 text-left" wire:click="sortBy('acronym')" style="color: white; width: 25%;">
+                        <th class="cursor-pointer hover:bg-green-800 bg-green-700 p-4 text-left" wire:click="sortBy('acronym')" style="color: white; width: 20%;">
                             <div class="flex items-center pt-2 pb-2">
                                 Acronym
                                 <div class="ml-1">
@@ -78,14 +78,14 @@
                                 </div>
                             </div>
                         </th>
-                        <th class="p-4 text-center bg-green-700" style="color: white; width: 30%;">Actions</th>
+                        <th class="p-4 text-right bg-green-700" style="color: white; width: 10%;">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse($colleges as $college)
                         <tr class="hover:bg-green-50">
                             <td class="whitespace-nowrap p-4">
-                                <div class="text-sm font-medium text-gray-900 pl-4">
+                                <div class="text-sm font-medium text-gray-900">
                                     {{ $college->name }}
                                 </div>
                             </td>
@@ -95,21 +95,13 @@
                                 </div>
                             </td>
                             <td class="whitespace-nowrap p-4">
-                                <div class="flex justify-center space-x-2 text-base">
+                                <div class="flex justify-end space-x-2 text-base">
                                     <!-- Edit button -->
                                     <button class="text-amber-500 hover:bg-amber-100 rounded-lg p-2 tooltip cursor-pointer" 
                                             data-tip="Edit" 
                                             wire:click="openEditCollegeModal({{ $college->id }})">
                                         <i class="fa-solid fa-pen-to-square"></i>
                                     </button>
-                                    
-                                    <!-- Delete button -->
-                                    <button class="text-red-600 hover:bg-red-100 rounded-lg p-2 tooltip cursor-pointer"
-                                            data-tip="Delete" 
-                                            wire:click="openDeleteConfirmationModal({{ $college->id }})">
-                                        <i class="fa-solid fa-trash"></i>
-                                    </button>
-                                </div>
                             </td>
                         </tr>
                     @empty

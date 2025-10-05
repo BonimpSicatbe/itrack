@@ -121,11 +121,6 @@
                                             wire:click="openEditCourseModal({{ $course->id }})">
                                         <i class="fa-solid fa-pen-to-square"></i>
                                     </button>
-                                    <button class="text-red-600 hover:bg-red-100 rounded-xl p-2 tooltip cursor-pointer"
-                                            data-tip="Delete" 
-                                            wire:click="openDeleteConfirmationModal({{ $course->id }})">
-                                        <i class="fa-solid fa-trash"></i>
-                                    </button>
                                 </div>
                             </td>
                         </tr>

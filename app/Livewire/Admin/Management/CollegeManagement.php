@@ -67,33 +67,6 @@ class CollegeManagement extends Component
         $this->resetErrorBag();
     }
 
-    // Delete College Methods
-    public function openDeleteConfirmationModal($collegeId)
-    {
-        $this->collegeToDelete = College::find($collegeId);
-        $this->showDeleteConfirmationModal = true;
-    }
-
-    public function closeDeleteConfirmationModal()
-    {
-        $this->showDeleteConfirmationModal = false;
-        $this->collegeToDelete = null;
-    }
-
-    public function deleteCollege()
-    {
-        if ($this->collegeToDelete) {
-            $collegeName = $this->collegeToDelete->name;
-            $this->collegeToDelete->delete();
-            
-            $this->closeDeleteConfirmationModal();
-            $this->dispatch('showNotification', 
-                type: 'success', 
-                content: "College '{$collegeName}' deleted successfully!"
-            );
-        }
-    }
-
     public function updateCollege()
     {
         try {
