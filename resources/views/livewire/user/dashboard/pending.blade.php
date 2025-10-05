@@ -9,17 +9,20 @@
 
     {{-- Horizontal scroll cards --}}
     <div class="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
-        @forelse($pendingRequirements as $requirement)
+        @forelse($pendingRequirements as $item)
             @php    
+                $requirement = $item['requirement'];
+                $course = $item['course'];
+                
                 $dueDate = \Carbon\Carbon::parse($requirement->due);
                 $isOverdue = $dueDate->isPast();
                 $isDueSoon = $dueDate->diffInDays() <= 3;
             @endphp
             
-            <div class="flex-shrink-0 w-64 bg-white border border-slate-200 rounded-xl p-4 ">
+            <div class="flex-shrink-0 w-72 bg-white border border-slate-200 rounded-xl p-4">
                 {{-- Header with folder icon and title --}}
                 <div class="flex items-center gap-3 mb-3">
-                    <div class>
+                    <div>
                         <i class="fa-solid fa-folder text-xl text-green-700"></i>
                     </div>
                     <div class="flex-1 min-w-0">
@@ -31,6 +34,14 @@
 
                 {{-- Content section --}}
                 <div class="space-y-3">
+                    {{-- Course section --}}
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-book text-slate-500 text-xs"></i>
+                        <span class="text-xs text-slate-600 font-medium">Course:</span>
+                        <span class="text-xs text-slate-700 font-semibold truncate" title="{{ $course->course_code }} - {{ $course->course_name }}">
+                            {{ $course->course_code }}
+                        </span>
+                    </div>
 
                     {{-- Due date section --}}
                     <div class="pt-2 border-t border-slate-100">
@@ -43,12 +54,12 @@
                                 @else
                                     <i class="fa-solid fa-calendar text-xs" style="color: #1C7C54;"></i>
                                 @endif
-                                <span class="text-xs font-semibold {{ $isOverdue ? 'text-red-600' : ($isDueSoon ? 'text-amber-600' : '') }}" style="{{ !$isOverdue && !$isDueSoon ? 'text-amber-600' : '' }}">
+                                <span class="text-xs font-semibold {{ $isOverdue ? 'text-red-600' : ($isDueSoon ? 'text-amber-600' : '') }}" style="{{ !$isOverdue && !$isDueSoon ? 'color: #1C7C54;' : '' }}">
                                     {{ $dueDate->format('M j, Y') }}
                                 </span>
                             </div>
                             
-                            {{-- Days remaining indicator - moved inline --}}
+                            {{-- Days remaining indicator --}}
                             @if($isOverdue)
                                 <span class="text-xs text-red-500 font-medium">{{ $dueDate->diffForHumans() }}</span>
                             @else
