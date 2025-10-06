@@ -74,19 +74,6 @@ class DepartmentManagement extends Component
         $this->resetErrorBag();
     }
 
-    // Delete Department Methods
-    public function openDeleteConfirmationModal($departmentId)
-    {
-        $this->departmentToDelete = Department::find($departmentId);
-        $this->showDeleteConfirmationModal = true;
-    }
-
-    public function closeDeleteConfirmationModal()
-    {
-        $this->showDeleteConfirmationModal = false;
-        $this->departmentToDelete = null;
-    }
-
     public function deleteDepartment()
     {
         if ($this->departmentToDelete) {

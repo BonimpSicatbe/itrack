@@ -196,32 +196,6 @@ class CourseManagement extends Component
         }
     }
 
-    public function openDeleteConfirmationModal($courseId)
-    {
-        $this->courseToDelete = Course::find($courseId);
-        $this->showDeleteConfirmationModal = true;
-    }
-
-    public function closeDeleteConfirmationModal()
-    {
-        $this->showDeleteConfirmationModal = false;
-        $this->courseToDelete = null;
-    }
-
-    public function deleteCourse()
-    {
-        if ($this->courseToDelete) {
-            $courseName = $this->courseToDelete->course_name;
-            $this->courseToDelete->delete();
-            
-            $this->closeDeleteConfirmationModal();
-            $this->dispatch('showNotification', 
-                type: 'success', 
-                content: "Course '{$courseName}' deleted successfully!"
-            );
-        }
-    }
-
     public function updateCourse()
     {
         try {
