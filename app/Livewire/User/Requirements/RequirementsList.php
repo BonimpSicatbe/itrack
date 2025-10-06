@@ -97,6 +97,24 @@ class RequirementsList extends Component
      */
     public function confirmDelete($submissionId)
     {
+        $submission = SubmittedRequirement::find($submissionId);
+        
+        // Check if requirement is marked as done for this course
+        if ($submission) {
+            $isMarkedDone = RequirementSubmissionIndicator::where('requirement_id', $submission->requirement_id)
+                ->where('user_id', Auth::id())
+                ->where('course_id', $this->selectedCourse)
+                ->exists();
+                
+            if ($isMarkedDone) {
+                $this->dispatch('showNotification',
+                    type: 'error',
+                    content: 'Cannot delete submission. Requirement is marked as done.'
+                );
+                return;
+            }
+        }
+        
         $this->submissionToDelete = $submissionId;
         $this->showDeleteModal = true;
     }
@@ -136,6 +154,20 @@ class RequirementsList extends Component
                 $this->dispatch('showNotification',
                     type: 'error',
                     content: 'Approved submissions cannot be deleted.'
+                );
+                return;
+            }
+            
+            // Check if requirement is marked as done for this course
+            $isMarkedDone = RequirementSubmissionIndicator::where('requirement_id', $submission->requirement_id)
+                ->where('user_id', Auth::id())
+                ->where('course_id', $this->selectedCourse)
+                ->exists();
+                
+            if ($isMarkedDone) {
+                $this->dispatch('showNotification',
+                    type: 'error',
+                    content: 'Cannot delete submission. Requirement is marked as done.'
                 );
                 return;
             }
@@ -184,7 +216,7 @@ class RequirementsList extends Component
             $submittedRequirement = SubmittedRequirement::create([
                 'requirement_id' => $requirementId,
                 'user_id' => Auth::id(),
-                'course_id' => $this->selectedCourse, // Add this line
+                'course_id' => $this->selectedCourse, // This is crucial - link to specific course
                 'submitted_at' => now(),
                 'admin_notes' => $this->submissionNotes,
                 'status' => SubmittedRequirement::STATUS_UNDER_REVIEW,
@@ -238,6 +270,7 @@ class RequirementsList extends Component
         $allRequirements = Requirement::where('semester_id', $this->activeSemester->id)
             ->with(['userSubmissions' => function($query) use ($userId) {
                 $query->where('user_id', $userId)
+                      ->where('course_id', $this->selectedCourse) // Filter by current course
                       ->with('submissionFile')
                       ->orderBy('submitted_at', 'desc');
             }])
@@ -250,13 +283,15 @@ class RequirementsList extends Component
             return $this->isUserAssignedToRequirement($requirement, $user);
         })
         ->map(function ($requirement) use ($userId) {
-            // Check if current user has submitted this requirement
             $userSubmitted = SubmittedRequirement::where('requirement_id', $requirement->id)
                 ->where('user_id', $userId)
+                ->where('course_id', $this->selectedCourse) // Add course filter
                 ->exists();
             
+            // UPDATED: Add course_id filter to indicator check
             $userMarkedDone = RequirementSubmissionIndicator::where('requirement_id', $requirement->id)
                 ->where('user_id', $userId)
+                ->where('course_id', $this->selectedCourse) // Added course filter
                 ->exists();
             
             $requirement->user_has_submitted = $userSubmitted || $userMarkedDone;
@@ -393,9 +428,10 @@ class RequirementsList extends Component
         try {
             $user = Auth::user();
             
-            // Check if user has submitted this requirement
+            // Check if user has submitted this requirement FOR THIS COURSE
             $submissionExists = SubmittedRequirement::where('requirement_id', $requirementId)
                 ->where('user_id', $user->id)
+                ->where('course_id', $this->selectedCourse) // Add course filter
                 ->exists();
                 
             if (!$submissionExists) {
@@ -406,9 +442,10 @@ class RequirementsList extends Component
                 return;
             }
             
-            // Check if already marked as done
+            // UPDATED: Check if already marked as done FOR THIS COURSE
             $existingIndicator = RequirementSubmissionIndicator::where('requirement_id', $requirementId)
                 ->where('user_id', $user->id)
+                ->where('course_id', $this->selectedCourse) // Added course filter
                 ->first();
             
             if ($existingIndicator) {
@@ -420,10 +457,11 @@ class RequirementsList extends Component
                 $this->deleteNotificationForRequirement($requirementId, $user->id);
                 
             } else {
-                // Toggle on - mark as done
+                // Toggle on - mark as done FOR THIS COURSE
                 RequirementSubmissionIndicator::create([
-                    'requirement_id' => $requirementId,
+                    'requirement_id' => $requirementId, // FIXED: removed comma, added =>
                     'user_id' => $user->id,
+                    'course_id' => $this->selectedCourse, // Added course_id
                     'submitted_at' => now(),
                 ]);
                 $message = 'Requirement marked as done!';
@@ -431,14 +469,15 @@ class RequirementsList extends Component
                 // Get the requirement
                 $requirement = Requirement::findOrFail($requirementId);
                 
-                // Get ALL submissions for this requirement by this user
+                // Get ALL submissions for this requirement by this user FOR THIS COURSE
                 $submissions = SubmittedRequirement::where('requirement_id', $requirementId)
                     ->where('user_id', $user->id)
+                    ->where('course_id', $this->selectedCourse) // Add course filter
                     ->with('media')
                     ->get();
                 
                 if ($submissions->count() > 0) {
-                    // Notify all admins with ALL submissions
+                    // Notify all admins with ALL submissions FOR THIS COURSE
                     $admins = User::role('admin')->get();
                     foreach ($admins as $admin) {
                         $admin->notify(new \App\Notifications\NewSubmissionNotification($requirement, $submissions));
@@ -562,6 +601,7 @@ class RequirementsList extends Component
         $allRequirements = Requirement::where('semester_id', $this->activeSemester->id)
             ->with(['userSubmissions' => function($query) use ($userId) {
                 $query->where('user_id', $userId)
+                    ->where('course_id', $this->selectedCourse) // Filter by current course
                     ->with('submissionFile')
                     ->orderBy('submitted_at', 'desc');
             }])
@@ -592,13 +632,16 @@ class RequirementsList extends Component
             return false;
         })
         ->map(function ($requirement) use ($userId) {
-            // Check if current user has submitted this requirement
+            // Check if current user has submitted this requirement FOR THIS COURSE
             $userSubmitted = SubmittedRequirement::where('requirement_id', $requirement->id)
                 ->where('user_id', $userId)
+                ->where('course_id', $this->selectedCourse) // Add course filter
                 ->exists();
             
+            // UPDATED: Add course_id filter to indicator check
             $userMarkedDone = RequirementSubmissionIndicator::where('requirement_id', $requirement->id)
                 ->where('user_id', $userId)
+                ->where('course_id', $this->selectedCourse) // Added course filter
                 ->exists();
             
             $requirement->user_has_submitted = $userSubmitted || $userMarkedDone;

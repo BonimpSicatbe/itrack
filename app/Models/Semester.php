@@ -113,4 +113,38 @@ class Semester extends Model
             'id'              // local key on requirements
         );
     }
+
+    // ADD THIS: Relationship to course assignments
+    public function courseAssignments()
+    {
+        return $this->hasMany(\App\Models\CourseAssignment::class, 'semester_id', 'id');
+    }
+
+    // ADD THIS: Get courses assigned to a specific professor in this semester
+    public function getCoursesForProfessor($professorId)
+    {
+        return $this->courseAssignments()
+            ->where('professor_id', $professorId)
+            ->with('course')
+            ->get()
+            ->pluck('course')
+            ->unique('id')
+            ->values();
+    }
+
+    // ADD THIS: Count courses assigned to a specific professor in this semester
+    public function getCourseCountForProfessor($professorId)
+    {
+        return $this->courseAssignments()
+            ->where('professor_id', $professorId)
+            ->count();
+    }
+
+    // ADD THIS: Check if professor has any courses in this semester
+    public function hasCoursesForProfessor($professorId)
+    {
+        return $this->courseAssignments()
+            ->where('professor_id', $professorId)
+            ->exists();
+    }
 }

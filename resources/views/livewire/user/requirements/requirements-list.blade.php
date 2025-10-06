@@ -7,29 +7,8 @@
             <!-- Left: Title -->
             <div class="flex items-center gap-2">
                 <i class="fa-solid fa-clipboard-list text-white text-2xl"></i>
-                <h1 class="text-xl font-bold text-white">
-                    @if($selectedFolder)
-                        {{ $selectedFolder->name }}
-                    @elseif($selectedCourse)
-                        Course Requirements
-                    @else
-                        My Courses
-                    @endif
-                </h1>
+                <h1 class="text-xl font-bold text-white">Course Requirements</h1>
             </div>
-
-            <!-- Back button when viewing course requirements or folder -->
-            @if($selectedFolder || $selectedCourse)
-                <button wire:click="backToCourses" 
-                        class="btn btn-sm btn-outline btn-light text-white border-white hover:bg-white hover:text-green-700">
-                    <i class="fa-solid fa-arrow-left mr-2"></i>
-                    @if($selectedFolder)
-                        Back to Requirements
-                    @else
-                        Back to Courses
-                    @endif
-                </button>
-            @endif
         </div>
     </div>
 
@@ -38,12 +17,12 @@
         style="max-height: calc(100vh - 125px);">
 
         <!-- Breadcrumb -->
-        <div class="mb-4 px-6">
-            <div class="text-sm breadcrumbs">
+        <div class="mb-4 border-b border-gray-200 pb-4">
+            <div class="text-sm breadcrumbs font-semibold">
                 <ul>
                     <li>
-                        <button wire:click="backToCourses" class="text-green-600 hover:text-green-800">
-                            <i class="fa-solid fa-graduation-cap mr-2"></i>
+                        <i class="fa-solid fa-graduation-cap text-sm mr-2 text-green-600"></i>
+                        <button wire:click="backToCourses" class="text-sm text-green-600 hover:text-amber-500 hover:underline hover:underline-offset-4">
                             My Courses
                         </button>
                     </li>
@@ -55,21 +34,21 @@
                             @if($course)
                                 @if($selectedFolder)
                                     <!-- When in folder view, make course clickable to go back to course requirements -->
-                                    <button wire:click="backToCourseRequirements" class="text-green-600 hover:text-green-800 font-medium">
+                                    <button wire:click="backToCourseRequirements" class="text-sm text-green-600 hover:text-amber-500 font-semibold hover:underline hover:underline-offset-4">
                                         {{ $course->course_code }}
                                     </button>
                                 @else
                                     <!-- When in course requirements view, show course as static -->
-                                    <span class="text-green-700 font-medium">{{ $course->course_code }}</span>
+                                    <span class="text-sm text-green-600 font-semibold hover:text-amber-500 hover:underline hover:underline-offset-4">{{ $course->course_code }}</span>
                                 @endif
                             @else
-                                <span class="text-green-700 font-medium">Course</span>
+                                <span class="text-sm text-green-600 font-semibold hover:text-amber-500 hover:underline hover:underline-offset-4">Course</span>
                             @endif
                         </li>
                     @endif
                     @if($selectedFolder)
                         <li>
-                            <span class="text-green-700 font-medium">{{ $selectedFolder->name }}</span>
+                            <span class="text-sm text-green-600 font-semibold hover:text-amber-500 hover:underline hover:underline-offset-4">{{ $selectedFolder->name }}</span>
                         </li>
                     @endif
                 </ul>
@@ -219,14 +198,14 @@
                                                         </div>
                                                         <div class="flex gap-2">
                                                             <a href="{{ route('guide.download', ['media' => $guide->id]) }}"
-                                                                class="text-blue-500 hover:text-blue-700 inline-flex items-center"
+                                                                class="text-blue-600 hover:text-blue-700 inline-flex items-center"
                                                                 title="Download">
                                                                 <i class="fa-solid fa-download text-sm"></i>
                                                             </a>
                                                             @if ($this->isPreviewable($guide->mime_type))
                                                                 <a href="{{ route('guide.preview', ['media' => $guide->id]) }}"
                                                                     target="_blank"
-                                                                    class="text-green-500 hover:text-green-700 inline-flex items-center"
+                                                                    class="text-green-600 hover:text-green-700 inline-flex items-center"
                                                                     title="View">
                                                                     <i class="fa-solid fa-eye text-sm"></i>
                                                                 </a>
@@ -248,9 +227,7 @@
                                                 <div class="alert bg-amber-300 border-amber-300">
                                                     <div class="flex items-center gap-2">
                                                         <i class="fa-solid fa-circle-info"></i>
-                                                        <span>Requirement completed. Click "<b>Done</b>" above to
-                                                            undone the requirement and submit additional
-                                                            files.</span>
+                                                        <span>Requirement completed. Click "<b>Mark as undone</b>" above to submit additional files.</span>
                                                     </div>
                                                 </div>
                                             @else
@@ -312,7 +289,14 @@
                                         {{ $this->isTabActive($requirement->id, 'submissions') ? 'checked' : '' }} />
                                     <div class="tab-content space-y-4 border-0 border-t border-base-300 pt-4 rounded-none">
                                         <div>
-                                            @if ($requirement->userSubmissions->count() > 0)
+                                            @php
+                                                // Filter submissions by current course
+                                                $courseSubmissions = $requirement->userSubmissions->filter(function($submission) {
+                                                    return $submission->course_id == $this->selectedCourse;
+                                                });
+                                            @endphp
+                                            
+                                            @if ($courseSubmissions->count() > 0)
                                                 <div class="overflow-x-auto max-h-96 overflow-y-auto">
                                                     <table class="table w-full">
                                                         <thead>
@@ -324,7 +308,7 @@
                                                             </tr>
                                                         </thead>
                                                         <tbody>
-                                                            @foreach ($requirement->userSubmissions as $submission)
+                                                            @foreach ($courseSubmissions as $submission)
                                                                 <tr class="text-xs">
                                                                     <td>
                                                                         <div class="flex items-center gap-2">
@@ -364,7 +348,7 @@
                                                                         <div class="flex gap-2 text-center justify-center gap-3">
                                                                             @if ($submission->submissionFile)
                                                                                 <a href="{{ route('file.download', ['submission' => $submission->id]) }}"
-                                                                                    class="text-sm text-blue-500"
+                                                                                    class="text-sm text-blue-600"
                                                                                     title="Download">
                                                                                     <i class="fa-solid fa-download"></i>
                                                                                 </a>
@@ -386,15 +370,22 @@
                                                                                 @if ($isPreviewable)
                                                                                     <a href="{{ route('file.preview', ['submission' => $submission->id]) }}"
                                                                                         target="_blank"
-                                                                                        class="text-sm text-green-500"
+                                                                                        class="text-sm text-green-600"
                                                                                         title="View">
                                                                                         <i class="fa-solid fa-eye"></i>
                                                                                     </a>
                                                                                 @endif
                                                                             @endif
-                                                                            @if ($submission->status === 'under_review' || $submission->status === 'rejected' || $submission->status === 'revision_needed')
+                                                                            @php
+                                                                                $isMarkedDone = \App\Models\RequirementSubmissionIndicator::where('requirement_id', $requirement->id)
+                                                                                    ->where('user_id', auth()->id())
+                                                                                    ->where('course_id', $this->selectedCourse)
+                                                                                    ->exists();
+                                                                            @endphp
+
+                                                                            @if (($submission->status === 'under_review' || $submission->status === 'rejected' || $submission->status === 'revision_needed') && !$isMarkedDone)
                                                                                 <button wire:click="confirmDelete({{ $submission->id }})"
-                                                                                    class="text-sm text-red-500"
+                                                                                    class="text-sm text-red-600"
                                                                                     title="Delete submission">
                                                                                     <i class="fa-solid fa-trash"></i>
                                                                                 </button>
@@ -524,13 +515,6 @@
                                             </div>
                                         @endif
 
-                                        @if($requirement->user_marked_done)
-                                            <div class="flex items-center gap-1 text-blue-600">
-                                                <i class="fa-solid fa-flag-checkered"></i>
-                                                <span>Completed</span>
-                                            </div>
-                                        @endif
-
                                         @if($requirement->guides->count() > 0)
                                             <div class="divider p-0 m-0"></div>
                                             <h4 class="font-semibold">Guide Files</h4>
@@ -547,14 +531,14 @@
                                                         </div>
                                                         <div class="flex gap-2">
                                                             <a href="{{ route('guide.download', ['media' => $guide->id]) }}"
-                                                                class="text-blue-500 hover:text-blue-700 inline-flex items-center"
+                                                                class="text-blue-600 hover:text-blue-700 inline-flex items-center"
                                                                 title="Download">
                                                                 <i class="fa-solid fa-download text-sm"></i>
                                                             </a>
                                                             @if ($this->isPreviewable($guide->mime_type))
                                                                 <a href="{{ route('guide.preview', ['media' => $guide->id]) }}"
                                                                     target="_blank"
-                                                                    class="text-green-500 hover:text-green-700 inline-flex items-center"
+                                                                    class="text-green-600 hover:text-green-700 inline-flex items-center"
                                                                     title="View">
                                                                     <i class="fa-solid fa-eye text-sm"></i>
                                                                 </a>
@@ -576,9 +560,7 @@
                                                 <div class="alert bg-amber-300 border-amber-300">
                                                     <div class="flex items-center gap-2">
                                                         <i class="fa-solid fa-circle-info"></i>
-                                                        <span>Requirement completed. Click "<b>Done</b>" above to
-                                                            undone the requirement and submit additional
-                                                            files.</span>
+                                                        <span>Requirement completed. Click "<b>Mark as undone</b>" above to submit additional files.</span>
                                                     </div>
                                                 </div>
                                             @else
@@ -640,7 +622,14 @@
                                         {{ $this->isTabActive($requirement->id, 'submissions') ? 'checked' : '' }} />
                                     <div class="tab-content space-y-4 border-0 border-t border-base-300 pt-4 rounded-none">
                                         <div>
-                                            @if ($requirement->userSubmissions->count() > 0)
+                                            @php
+                                                // Filter submissions by current course
+                                                $courseSubmissions = $requirement->userSubmissions->filter(function($submission) {
+                                                    return $submission->course_id == $this->selectedCourse;
+                                                });
+                                            @endphp
+                                            
+                                            @if ($courseSubmissions->count() > 0)
                                                 <div class="overflow-x-auto max-h-96 overflow-y-auto">
                                                     <table class="table w-full">
                                                         <thead>
@@ -652,7 +641,7 @@
                                                             </tr>
                                                         </thead>
                                                         <tbody>
-                                                            @foreach ($requirement->userSubmissions as $submission)
+                                                            @foreach ($courseSubmissions as $submission)
                                                                 <tr class="text-xs">
                                                                     <td>
                                                                         <div class="flex items-center gap-2">
@@ -692,7 +681,7 @@
                                                                         <div class="flex gap-2 text-center justify-center gap-3">
                                                                             @if ($submission->submissionFile)
                                                                                 <a href="{{ route('file.download', ['submission' => $submission->id]) }}"
-                                                                                    class="text-sm text-blue-500"
+                                                                                    class="text-sm text-blue-600"
                                                                                     title="Download">
                                                                                     <i class="fa-solid fa-download"></i>
                                                                                 </a>
@@ -714,15 +703,22 @@
                                                                                 @if ($isPreviewable)
                                                                                     <a href="{{ route('file.preview', ['submission' => $submission->id]) }}"
                                                                                         target="_blank"
-                                                                                        class="text-sm text-green-500"
+                                                                                        class="text-sm text-green-600"
                                                                                         title="View">
                                                                                         <i class="fa-solid fa-eye"></i>
                                                                                     </a>
                                                                                 @endif
                                                                             @endif
-                                                                            @if ($submission->status === 'under_review' || $submission->status === 'rejected' || $submission->status === 'revision_needed')
+                                                                            @php
+                                                                                $isMarkedDone = \App\Models\RequirementSubmissionIndicator::where('requirement_id', $requirement->id)
+                                                                                    ->where('user_id', auth()->id())
+                                                                                    ->where('course_id', $this->selectedCourse)
+                                                                                    ->exists();
+                                                                            @endphp
+
+                                                                            @if (($submission->status === 'under_review' || $submission->status === 'rejected' || $submission->status === 'revision_needed') && !$isMarkedDone)
                                                                                 <button wire:click="confirmDelete({{ $submission->id }})"
-                                                                                    class="text-sm text-red-500"
+                                                                                    class="text-sm text-red-600"
                                                                                     title="Delete submission">
                                                                                     <i class="fa-solid fa-trash"></i>
                                                                                 </button>

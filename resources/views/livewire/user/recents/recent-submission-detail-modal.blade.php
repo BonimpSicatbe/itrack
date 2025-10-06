@@ -12,7 +12,7 @@
                 {{-- Header --}}
                 <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
                     <h2 class="text-xl font-semibold text-gray-800 flex items-center gap-1">
-                        <i class="fa-solid fa-circle-info text-[#1C7C54] text-2xl"></i>
+                        <i class="fa-solid fa-circle-info text-green-600 text-2xl"></i>
                         Submission Details
                     </h2>
                     <button 
@@ -34,7 +34,7 @@
                                 <h3 class="text-lg font-semibold text-gray-800">{{ $requirement->name }}</h3>
                                 <div class="flex items-center gap-3 text-sm text-gray-500 mt-1">
                                     <span class="flex items-center gap-1">
-                                        <i class="fa-solid fa-calendar-alt"></i>
+                                        <i class="fa-solid fa-calendar-alt text-green-600"></i>
                                         <span>{{ $requirement->semester->name ?? 'N/A' }}</span>
                                     </span>
                                 </div>
@@ -86,6 +86,17 @@
                         <div class="bg-white rounded-lg p-5 border border-gray-200 shadow-sm space-y-4">
                             <h4 class="text-base font-semibold text-gray-700">Submission Information</h4>
                             <div class="space-y-3 text-sm text-gray-600">
+                                {{-- Course Information --}}
+                                @if($submission->course)
+                                    <div class="flex justify-between items-center">
+                                        <span class="font-medium">Course</span>
+                                        <div class="text-right">
+                                            <span class="block">{{ $submission->course->course_code }}</span>
+                                            <span class="block text-xs text-gray-500">{{ $submission->course->course_name }}</span>
+                                        </div>
+                                    </div>
+                                @endif
+                                
                                 <div class="flex justify-between items-center">
                                     <span class="font-medium">Submitted</span>
                                     <span>{{ $submission->submitted_at->format('M j, Y g:i A') }}</span>
@@ -122,25 +133,38 @@
                 </div>
 
                 {{-- Footer --}}
-                <div class="bg-gray-50 border-t border-gray-100 px-6 py-4 flex justify-end">
+                <div class="bg-gray-50 border-t border-gray-100 px-6 py-4 flex justify-end gap-3">
                     @if($submission->submissionFile)
+                        {{-- Download Button --}}
                         <button 
                             wire:click="downloadFile"
-                            class="inline-flex items-center px-4 py-2 bg-gray-800 text-white text-sm font-medium rounded-lg hover:bg-gray-700 transition-colors duration-200"
+                            class="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-full hover:bg-blue-700 transition-colors duration-200"
                         >
                             <i class="fa-solid fa-download text-xs mr-2"></i>
-                            Download File
+                            Download
                         </button>
+
+                        {{-- Preview Button (opens in new tab) --}}
+                        @if($this->isPreviewable)
+                            <a 
+                                href="{{ $this->getPreviewUrl() }}"
+                                target="_blank"
+                                class="inline-flex items-center px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-full hover:bg-green-700 transition-colors duration-200"
+                            >
+                                <i class="fa-solid fa-eye text-xs mr-2"></i>
+                                Preview
+                            </a>
+                        @endif 
                     @endif
                 </div>
             </div>
         </div>
     @endif
 
-    {{-- Display flash messages (unchanged) --}}
+    {{-- Display flash messages --}}
     @if (session()->has('error'))
         <div class="fixed bottom-4 right-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded z-50" role="alert">
             <span class="block sm:inline">{{ session('error') }}</span>
         </div>
     @endif
-</div>
+</div>  

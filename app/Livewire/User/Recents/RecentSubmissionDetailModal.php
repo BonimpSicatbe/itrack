@@ -21,7 +21,8 @@ class RecentSubmissionDetailModal extends Component
         $this->submission = SubmittedRequirement::with([
             'requirement.semester',
             'submissionFile',
-            'reviewer'
+            'reviewer',
+            'course' 
         ])->find($submissionId);
         
         if ($this->submission) {
@@ -74,6 +75,37 @@ class RecentSubmissionDetailModal extends Component
             session()->flash('error', 'Error downloading file: ' . $e->getMessage());
             return;
         }
+    }
+
+    /**
+     * Get preview URL for the file
+     */
+    public function getPreviewUrl()
+    {
+        if ($this->submission && $this->submission->submissionFile) {
+            return route('file.preview', ['submission' => $this->submission->id]);
+        }
+        return null;
+    }
+
+    /**
+     * Check if file is previewable
+     */
+    public function getIsPreviewableProperty()
+    {
+        if (!$this->submission || !$this->submission->submissionFile) {
+            return false;
+        }
+
+        $extension = strtolower(pathinfo($this->submission->submissionFile->file_name, PATHINFO_EXTENSION));
+        
+        $previewableTypes = [
+            'pdf',
+            'jpg', 'jpeg', 'png', 'gif', 'bmp', 'svg', // Images
+            'txt', 'rtf', // Text files
+        ];
+        
+        return in_array($extension, $previewableTypes);
     }
 
     public function render()

@@ -13,6 +13,7 @@ class RequirementSubmissionIndicator extends Model
     protected $fillable = [
         'requirement_id',
         'user_id',
+        'course_id', 
         'submitted_at'
     ];
 
@@ -34,5 +35,13 @@ class RequirementSubmissionIndicator extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /**
+     * The course this submission indicator belongs to
+     */
+    public function course(): BelongsTo
+    {
+        return $this->belongsTo(Course::class);
     }
 }

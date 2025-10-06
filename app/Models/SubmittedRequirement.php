@@ -81,6 +81,14 @@ class SubmittedRequirement extends Model implements HasMedia
     }
 
     /**
+     * The course this submission belongs to
+     */
+    public function course(): BelongsTo
+    {
+        return $this->belongsTo(Course::class);
+    }
+
+    /**
      * The user who submitted this requirement
      */
     public function user(): BelongsTo

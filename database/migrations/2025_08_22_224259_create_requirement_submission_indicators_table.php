@@ -12,11 +12,12 @@ return new class extends Migration
             $table->id();
             $table->foreignId('requirement_id')->constrained()->onDelete('cascade');
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->foreignId('course_id')->constrained()->onDelete('cascade');
             $table->timestamp('submitted_at')->useCurrent();
             $table->timestamps();
             
-            // Unique constraint to prevent duplicate submissions
-            $table->unique(['requirement_id', 'user_id']);
+            // Use a shorter custom name for the unique constraint
+            $table->unique(['requirement_id', 'user_id', 'course_id'], 'req_user_course_unique');
         });
     }
 

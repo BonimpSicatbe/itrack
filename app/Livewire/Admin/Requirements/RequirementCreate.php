@@ -7,6 +7,7 @@ use App\Models\Department;
 use App\Models\Requirement;
 use App\Models\RequirementType;
 use App\Models\Semester;
+use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Livewire\Attributes\Computed;
@@ -253,6 +254,46 @@ class RequirementCreate extends Component
         }
     }
 
+    // --- HELPER METHOD TO GET ASSIGNED USERS ---
+    protected function getAssignedUsers($assignedData)
+    {
+        $users = collect();
+        
+        // If all colleges are selected, get all users from all colleges
+        if ($assignedData['selectAllColleges']) {
+            $users = User::whereNotNull('college_id')->get();
+        } 
+        // If specific colleges are selected
+        elseif (!empty($assignedData['colleges'])) {
+            $collegeUsers = User::whereIn('college_id', $assignedData['colleges'])->get();
+            $users = $users->merge($collegeUsers);
+        }
+        
+        // If all departments are selected (and we have colleges selected), get all users from those departments
+        if ($assignedData['selectAllDepartments'] && (!empty($assignedData['colleges']) || $assignedData['selectAllColleges'])) {
+            $departmentQuery = User::whereNotNull('department_id');
+            
+            if (!$assignedData['selectAllColleges'] && !empty($assignedData['colleges'])) {
+                // Get departments from selected colleges
+                $departmentIds = Department::whereIn('college_id', $assignedData['colleges'])->pluck('id');
+                $departmentQuery->whereIn('department_id', $departmentIds);
+            }
+            
+            $departmentUsers = $departmentQuery->get();
+            $users = $users->merge($departmentUsers);
+        }
+        // If specific departments are selected
+        elseif (!empty($assignedData['departments'])) {
+            $departmentUsers = User::whereIn('department_id', $assignedData['departments'])->get();
+            $users = $users->merge($departmentUsers);
+        }
+        
+        // Remove duplicates and filter out admin users
+        return $users->unique('id')->filter(function ($user) {
+            return !in_array($user->role ?? 'user', ['admin', 'super-admin']);
+        });
+    }
+
     // --- CREATE METHOD ---
     public function createRequirement()
     {
@@ -319,7 +360,10 @@ class RequirementCreate extends Component
                 throw new \Exception('Please select at least one requirement type or specify a custom requirement.');
             }
 
-            // 3. Loop and Create Requirements
+            // 3. Get assigned users for notifications
+            $assignedUsers = $this->getAssignedUsers($assignedData);
+
+            // 4. Loop and Create Requirements
             $createdCount = 0;
             $filesToUpload = $this->required_files; 
             $firstRequirement = null;
@@ -336,13 +380,18 @@ class RequirementCreate extends Component
                     'status' => 'pending'
                 ]);
 
+                // Send notifications to assigned users
+                foreach ($assignedUsers as $user) {
+                    $user->notify(new \App\Notifications\NewRequirementNotification($requirement));
+                }
+
                 if ($createdCount === 0) {
                     $firstRequirement = $requirement;
                 }
                 $createdCount++;
             }
 
-            // 4. Handle file uploads (to the first created record)
+            // 5. Handle file uploads (to the first created record)
             if ($firstRequirement && !empty($filesToUpload)) {
                 foreach ($filesToUpload as $file) {
                     $firstRequirement->addMedia($file->getRealPath())
@@ -356,7 +405,7 @@ class RequirementCreate extends Component
             
             session()->flash('notification', [
                 'type' => 'success',
-                'content' => "Successfully created {$createdCount} requirement(s).",
+                'content' => "Successfully created {$createdCount} requirement(s). Notifications sent to {$assignedUsers->count()} users.",
                 'duration' => 3000
             ]);
 

@@ -6,6 +6,8 @@ use Livewire\Component;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Requirement;
 use App\Models\SubmittedRequirement;
+use App\Models\College;
+use App\Models\Department;
 use Carbon\Carbon;
 use Illuminate\Support\Str;
 use Livewire\WithFileUploads;
@@ -111,13 +113,23 @@ class Notification extends Component
 
         if ($requirement) {
             $dueRaw = $requirement->due ?? null;
+            
+            // Handle assigned_to field - it's stored as JSON string
+            $assignedTo = $requirement->assigned_to;
+            if (is_string($assignedTo)) {
+                $decodedAssignedTo = json_decode($assignedTo, true);
+                if (json_last_error() === JSON_ERROR_NONE) {
+                    $assignedTo = $decodedAssignedTo;
+                }
+            }
 
             $data['requirement'] = [
                 'id'          => $requirement->id,
                 'name'        => $requirement->name,
                 'description' => $requirement->description,
                 'due'         => $dueRaw instanceof Carbon ? $dueRaw : ($dueRaw ? Carbon::parse($dueRaw) : null),
-                'assigned_to' => $requirement->assigned_to ?? data_get($notification->data, 'requirement.assigned_to'),
+                'assigned_to' => $assignedTo,
+                'assigned_to_display' => $this->formatAssignedToDisplay($assignedTo),
                 'status'      => $requirement->status ?? null,
                 'priority'    => $requirement->priority ?? null,
                 'created_at'  => $requirement->created_at,
@@ -224,7 +236,79 @@ class Notification extends Component
         // Fallback: redirect to general requirements page
         return redirect()->to('/user/requirements');
     }
-    
+
+    protected function formatAssignedToDisplay($assignedTo): array
+    {
+        $currentUser = Auth::user();
+        $currentCollegeId = $currentUser->college_id;
+        $currentDepartmentId = $currentUser->department_id;
+        
+        $collegeDisplay = '';
+        $departmentDisplay = '';
+        
+        if (is_array($assignedTo)) {
+            // Handle colleges
+            if (isset($assignedTo['selectAllColleges']) && $assignedTo['selectAllColleges']) {
+                $collegeDisplay = 'All Colleges';
+            } elseif (isset($assignedTo['colleges']) && is_array($assignedTo['colleges'])) {
+                $collegeIds = array_filter(array_map('intval', $assignedTo['colleges']));
+                
+                if (!empty($collegeIds)) {
+                    // Check if current user's college is in the list
+                    $userCollegeInList = in_array((int)$currentCollegeId, $collegeIds);
+                    $otherCollegesCount = count($collegeIds) - ($userCollegeInList ? 1 : 0);
+                    
+                    if ($userCollegeInList) {
+                        $userCollege = College::find($currentCollegeId);
+                        if ($userCollege) {
+                            if ($otherCollegesCount > 0) {
+                                $collegeDisplay = $userCollege->name . ' and ' . $otherCollegesCount . ' other college(s)';
+                            } else {
+                                $collegeDisplay = $userCollege->name;
+                            }
+                        } else {
+                            $collegeDisplay = count($collegeIds) . ' college(s)';
+                        }
+                    } else {
+                        $collegeDisplay = count($collegeIds) . ' college(s)';
+                    }
+                }
+            }
+            
+            // Handle departments
+            if (isset($assignedTo['selectAllDepartments']) && $assignedTo['selectAllDepartments']) {
+                $departmentDisplay = 'All Departments';
+            } elseif (isset($assignedTo['departments']) && is_array($assignedTo['departments'])) {
+                $deptIds = array_filter(array_map('intval', $assignedTo['departments']));
+                
+                if (!empty($deptIds)) {
+                    // Check if current user's department is in the list
+                    $userDeptInList = in_array((int)$currentDepartmentId, $deptIds);
+                    $otherDeptsCount = count($deptIds) - ($userDeptInList ? 1 : 0);
+                    
+                    if ($userDeptInList) {
+                        $userDepartment = Department::find($currentDepartmentId);
+                        if ($userDepartment) {
+                            if ($otherDeptsCount > 0) {
+                                $departmentDisplay = $userDepartment->name . ' and ' . $otherDeptsCount . ' other department(s)';
+                            } else {
+                                $departmentDisplay = $userDepartment->name;
+                            }
+                        } else {
+                            $departmentDisplay = count($deptIds) . ' department(s)';
+                        }
+                    } else {
+                        $departmentDisplay = count($deptIds) . ' department(s)';
+                    }
+                }
+            }
+        }
+        
+        return [
+            'college' => $collegeDisplay ?: 'Not assigned to colleges',
+            'department' => $departmentDisplay ?: 'Not assigned to departments'
+        ];
+    }
 
     protected function statusLabel(?string $status): string
     {

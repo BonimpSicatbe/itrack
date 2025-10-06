@@ -30,21 +30,24 @@
             <div class="bg-white border-b border-gray-200 px-6 py-3 rounded-t-xl flex items-center justify-between">
                 <!-- Breadcrumb -->
                 <nav class="flex" aria-label="Breadcrumb">
-                    <ol class="flex items-center space-x-2">
+                    <ol class="flex items-center space-x-1">
                         @if(count($breadcrumb) > 0)
                             @foreach($breadcrumb as $index => $item)
                                 <li class="flex items-center">
                                     @if($index > 0)
-                                        <i class="fa-solid fa-chevron-right text-gray-400 text-xs mx-2"></i>
+                                        <i class="fa-regular fa-chevron-right text-gray-300 text-xs mx-2"></i>
                                     @endif
                                     
                                     @if($index === count($breadcrumb) - 1)
-                                        <span class="text-sm font-medium text-gray-700">{{ $item['name'] }}</span>
+                                        <button 
+                                            wire:click="handleNavigation('{{ $item['level'] }}', {{ $item['id'] }})"
+                                            class="text-sm text-green-600 hover:text-amber-500 hover:underline hover:underline-offset-4 font-semibold">
+                                            {{ $item['name'] }}
+                                        </button>
                                     @else
                                         <button 
                                             wire:click="handleNavigation('{{ $item['level'] }}', {{ $item['id'] }})"
-                                            class="text-sm text-[#1C7C54] hover:text-amber-600 font-semibold"
-                                        >
+                                            class="text-sm text-green-600 hover:text-amber-500 hover:underline hover:underline-offset-4 font-semibold">
                                             {{ $item['name'] }}
                                         </button>
                                     @endif
@@ -52,14 +55,14 @@
                             @endforeach
                         @else
                             <li class="flex items-center">
-                                <span class="text-sm font-medium text-gray-700">File Manager</span>
+                                <span class="text-sm font-semibold text-green-600">File Manager</span>
                             </li>
                         @endif
                     </ol>
                 </nav>
 
                 <!-- View Toggle - Show for relevant levels regardless of data -->
-                @if($currentLevel === 'semesters' || $currentLevel === 'requirements' || $currentLevel === 'files')
+                @if($currentLevel === 'semesters' || $currentLevel === 'courses' || $currentLevel === 'requirements' || $currentLevel === 'files' || $currentLevel === 'folder_requirements')
                     <div class="flex gap-1 bg-green-700/15 p-1 rounded-xl">
                         <button
                             wire:click="changeViewMode('list')"
@@ -80,7 +83,7 @@
             </div>
 
             <!-- Search and Filter Section - Show for relevant levels regardless of data -->
-            @if($currentLevel === 'semesters' || $currentLevel === 'requirements' || $currentLevel === 'files')
+            @if($currentLevel === 'semesters' || $currentLevel === 'courses' || $currentLevel === 'requirements' || $currentLevel === 'files' || $currentLevel === 'folder_requirements')
                 <div class="bg-white px-6 py-4">
                     <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
                         <div class="flex flex-col sm:flex-row gap-4 flex-1">
@@ -95,24 +98,34 @@
                                         type="text"
                                         wire:model.live.debounce.300ms="searchQuery"
                                         wire:keydown.escape="closeSearchResults"
-                                        placeholder="Search semesters, requirements, or files..."
+                                        placeholder="Search semesters, courses, requirements, folders, or files..."
                                         class="block w-full p-2 pl-9 text-sm text-1B512D border border-gray-300 shadow-sm focus:border-green-600 focus:ring-green-600 rounded-xl"
                                         aria-label="Search files"
                                         autocomplete="off"
                                     >
+                                    @if($searchQuery)
+                                        <button
+                                            wire:click="clearSearch"
+                                            class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+                                            type="button"
+                                        >
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    @endif
                                     <div wire:loading wire:target="searchQuery" class="absolute inset-y-2 right-0 pr-4 flex items-center">
                                         <i class="fas fa-spinner fa-spin text-gray-400"></i>
                                     </div>
                                 </div>
 
+                                {{-- In the search results section --}}
                                 @if($showSearchResults && count($searchResults) > 0)
                                     <div class="absolute z-50 w-full mt-1 bg-white rounded-md shadow-lg border border-gray-200 max-h-96 overflow-y-auto">
                                         <div class="py-2">
                                             @foreach($searchResults as $result)
                                                 <button
-                                                    wire:click="selectSearchResult('{{ $result['type'] }}', {{ $result['id'] }}, {{ $result['semester_id'] ?? 'null' }}, {{ $result['requirement_id'] ?? 'null' }})"
+                                                    wire:click="selectSearchResult({{ json_encode($result) }})"
                                                     class="w-full text-left px-4 py-2 hover:bg-gray-100 transition-colors flex items-center"
-                                                    wire:key="search-result-{{ $result['type'] }}-{{ $result['id'] }}"
+                                                    wire:key="search-result-{{ $result['type'] }}-{{ $result['id'] }}-{{ $result['course_id'] ?? '0' }}"
                                                 >
                                                     <div class="flex items-center flex-1 min-w-0">
                                                         <div class="flex-shrink-0 mr-3">
@@ -126,6 +139,11 @@
                                                             <span class="text-xs px-2 py-1 bg-gray-100 text-gray-700 rounded-full capitalize">
                                                                 {{ $result['type'] }}
                                                             </span>
+                                                            @if(isset($result['course_code']))
+                                                                <span class="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded-full ml-1">
+                                                                    {{ $result['course_code'] }}
+                                                                </span>
+                                                            @endif
                                                         </div>
                                                     </div>
                                                 </button>
@@ -156,7 +174,6 @@
                                 <div class="flex items-center">
                                     <button
                                         wire:click="clearFilters"
-                                        onclick="document.getElementById('fileManagerSearch').value = ''"
                                         class="inline-flex items-center px-4 py-2 bg-white border-2 border-green-600 text-sm font-medium rounded-xl text-gray-500 hover:bg-green-50 h-10 shadow-md"
                                     >
                                         <i class="fa-solid fa-xmark text-sm mr-2"></i>
@@ -165,6 +182,25 @@
                                 </div>
                             @endif
                         </div>
+                    </div>
+                </div>
+            @endif
+
+            <!-- Flash Messages -->
+            @if(session()->has('error'))
+                <div class="px-6 py-2">
+                    <div class="flex items-center p-3 bg-red-100 border border-red-200 text-red-700 rounded-lg">
+                        <i class="fas fa-exclamation-triangle mr-2"></i>
+                        <span class="text-sm">{{ session('error') }}</span>
+                    </div>
+                </div>
+            @endif
+
+            @if(session()->has('success'))
+                <div class="px-6 py-2">
+                    <div class="flex items-center p-3 bg-green-100 border border-green-200 text-green-700 rounded-lg">
+                        <i class="fas fa-check-circle mr-2"></i>
+                        <span class="text-sm">{{ session('success') }}</span>
                     </div>
                 </div>
             @endif
@@ -180,7 +216,7 @@
                                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 p-6">
                                     @foreach($allSemesters as $semester)
                                         <div 
-                                            wire:click="handleNavigation('requirements', {{ $semester->id }})"
+                                            wire:click="handleNavigation('courses', {{ $semester->id }})"
                                             class="cursor-pointer group"
                                         >
                                             <div class="bg-white border-2 border-gray-200 rounded-xl p-3 transition-all duration-200 group-hover:shadow-md group-hover:border-green-600 group-hover:border-2 group-hover:translate-y-[-2px] h-auto flex flex-col">
@@ -227,7 +263,7 @@
                                                     Status
                                                 </th>
                                                 <th class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider border-b border-green-800">
-                                                    Requirements
+                                                    Courses
                                                 </th>
                                             </tr>
                                         </thead>
@@ -235,7 +271,7 @@
                                         <tbody>
                                             @foreach($allSemesters as $semester)
                                                 <tr 
-                                                    wire:click="handleNavigation('requirements', {{ $semester->id }})"
+                                                    wire:click="handleNavigation('courses', {{ $semester->id }})"
                                                     class="cursor-pointer hover:bg-green-50 transition-colors"
                                                 >
                                                     <td class="px-6 py-4 whitespace-nowrap border-b border-gray-300">
@@ -266,7 +302,7 @@
                                                     </td>
 
                                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 border-b border-gray-300">
-                                                        {{ $semester->requirements->count() }} requirements
+                                                        {{ $semester->courseAssignments ? $semester->courseAssignments->where('professor_id', auth()->id())->count() : 0 }} courses
                                                     </td>
                                                 </tr>
                                             @endforeach
@@ -287,14 +323,265 @@
                             <div>
                         @endif
 
-                    @elseif($currentLevel === 'requirements')
-                        @if(isset($currentSemester) && $currentSemester->requirements && $currentSemester->requirements->count() > 0)
+                    @elseif($currentLevel === 'courses')
+                        @if(isset($currentSemester) && count($assignedCourses) > 0)
                             @if($viewMode === 'grid')
-                                <!-- Grid View for Requirements -->
+                                <!-- Grid View for Courses -->
                                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 p-6">
-                                    @foreach($currentSemester->requirements as $requirement)
+                                    @foreach($assignedCourses as $course)
                                         <div 
-                                            wire:click="handleNavigation('files', {{ $requirement->id }})"
+                                            wire:click="handleNavigation('requirements', {{ $course->id }})"
+                                            class="cursor-pointer group"
+                                        >
+                                            <div class="bg-white border-2 border-gray-200 rounded-xl p-3 transition-all duration-200 group-hover:shadow-md group-hover:border-green-600 group-hover:translate-y-[-2px]">
+                                                
+                                                <!-- Logo + Text side by side -->
+                                                <div class="flex items-center gap-3">
+                                                    <div>
+                                                        <i class="fa-solid fa-folder text-green-700 text-4xl"></i>
+                                                    </div>
+                                                    <div>
+                                                        <h3 class="font-semibold text-gray-800 text-md">
+                                                            {{ $course->course_code }}
+                                                        </h3>
+                                                        <p class="text-xs text-gray-500">
+                                                            {{ $course->course_name }}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            @else
+                                <!-- List View for Courses -->
+                                <div class="bg-white overflow-hidden">
+                                    <table class="w-full border-collapse">
+                                        <thead class="bg-green-700">
+                                        <tr>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Course Code</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Course Name</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Description</th>
+                                        </tr>
+                                        </thead>
+
+                                        <tbody>
+                                        @foreach($assignedCourses as $course)
+                                            <tr
+                                            wire:click="handleNavigation('requirements', {{ $course->id }})"
+                                            class="cursor-pointer hover:bg-green-50 transition-colors"
+                                            >
+                                            <!-- Put border on each TD (works consistently) -->
+                                            <td class="px-6 py-4 whitespace-nowrap border-b border-gray-300">
+                                                <div class="flex items-center">
+                                                <div class="flex-shrink-0 flex items-center justify-center mr-3">
+                                                    <i class="fa-solid fa-folder text-green-700 text-2xl"></i>
+                                                </div>
+                                                <div class="text-sm font-semibold text-gray-900">
+                                                    {{ $course->course_code }}
+                                                </div>
+                                                </div>
+                                            </td>
+
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 border-b border-gray-300">
+                                                {{ $course->course_name }}
+                                            </td>
+
+                                            <td class="px-6 py-4 text-sm text-gray-500 border-b border-gray-300">
+                                                {{ Str::limit($course->description, 50) }}
+                                            </td>
+                                            </tr>
+                                        @endforeach
+                                        </tbody>
+                                    </table>
+                                </div>
+                            @endif
+                        @else
+                            <!-- No Courses Available -->
+                            <div class="text-center py-16 px-6">
+                                <div class="flex items-center justify-center mb-4">
+                                    <i class="fa-solid fa-folder-open text-gray-300 text-4xl"></i>
+                                </div>
+                                <h3 class="text-sm font-semibold text-gray-800 mb-1">No courses available</h3>
+                                <p class="text-gray-500 text-sm">You don't have any assigned courses for this semester.</p>
+                            </div>
+                        @endif
+
+                    @elseif($currentLevel === 'requirements')
+                        @if(isset($currentCourse) && isset($currentCourse->organizedRequirements))
+                            <!-- Display Folders as Clickable Cards -->
+                            @if(isset($currentCourse->organizedRequirements['folders']) && count($currentCourse->organizedRequirements['folders']) > 0)
+                                @if($viewMode === 'grid')
+                                    <!-- Grid View for Folders -->
+                                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 p-6">
+                                        @foreach($currentCourse->organizedRequirements['folders'] as $folderData)
+                                            <div 
+                                                wire:click="handleNavigation('files', {{ $folderData['folder']->id }})"
+                                                class="cursor-pointer group"
+                                            >
+                                                <div class="bg-white border-2 border-gray-200 rounded-xl p-3 transition-all duration-200 group-hover:shadow-md group-hover:border-green-600 group-hover:translate-y-[-2px]">
+                                                    
+                                                    <!-- Logo + Text side by side -->
+                                                    <div class="flex items-center gap-3">
+                                                        <div>
+                                                            <i class="fa-solid fa-folder text-yellow-500 text-4xl"></i>
+                                                        </div>
+                                                        <div>
+                                                            <h3 class="font-semibold text-gray-800 text-md">
+                                                                {{ $folderData['folder']->name }}
+                                                            </h3>
+                                                            <p class="text-xs text-gray-500">
+                                                                {{ count($folderData['requirements']) }} requirement(s)
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                @else
+                                    <!-- List View for Folders -->
+                                    <div class="bg-white overflow-hidden mb-10">
+                                        <table class="w-full border-collapse">
+                                            <thead class="bg-green-700">
+                                                <tr>
+                                                    <th class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Folder</th>
+                                                    <th class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Requirements</th>
+                                                </tr>
+                                            </thead>
+
+                                            <tbody>
+                                                @foreach($currentCourse->organizedRequirements['folders'] as $folderData)
+                                                    <tr
+                                                        wire:click="handleNavigation('files', {{ $folderData['folder']->id }})"
+                                                        class="cursor-pointer hover:bg-green-50 transition-colors"
+                                                    >
+                                                        <!-- Put border on each TD (works consistently) -->
+                                                        <td class="px-6 py-4 whitespace-nowrap border-b border-gray-300">
+                                                            <div class="flex items-center">
+                                                                <div class="flex-shrink-0 flex items-center justify-center mr-3">
+                                                                    <i class="fa-solid fa-folder text-yellow-500 text-2xl"></i>
+                                                                </div>
+                                                                <div class="text-sm font-semibold text-gray-900">
+                                                                    {{ $folderData['folder']->name }}
+                                                                </div>
+                                                            </div>
+                                                        </td>
+
+                                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 border-b border-gray-300">
+                                                            {{ count($folderData['requirements']) }} requirements
+                                                        </td>
+                                                    </tr>
+                                                @endforeach
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                @endif
+                            @endif
+
+                            <!-- Display Standalone Requirements (without folders) -->
+                            @if(isset($currentCourse->organizedRequirements['standalone']) && count($currentCourse->organizedRequirements['standalone']) > 0)
+                                @if($viewMode === 'grid')
+                                    <!-- Grid View for Standalone Requirements -->
+                                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 p-6">
+                                        @foreach($currentCourse->organizedRequirements['standalone'] as $requirement)
+                                            <div 
+                                                wire:click="handleNavigation('files', {{ $requirement->id }})"
+                                                class="cursor-pointer group"
+                                            >
+                                                <div class="bg-white border-2 border-gray-200 rounded-xl p-3 transition-all duration-200 group-hover:shadow-md group-hover:border-green-600 group-hover:translate-y-[-2px]">
+                                                    
+                                                    <!-- Logo + Text side by side -->
+                                                    <div class="flex items-center gap-3">
+                                                        <div>
+                                                            <i class="fa-solid fa-folder text-green-700 text-4xl"></i>
+                                                        </div>
+                                                        <div>
+                                                            <h3 class="font-semibold text-gray-800 text-md">
+                                                                {{ $requirement->name }}
+                                                            </h3>
+                                                            <p class="text-xs text-gray-500">
+                                                                {{ $requirement->userSubmissions ? $requirement->userSubmissions->count() : 0 }} files
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                @else
+                                    <!-- List View for Standalone Requirements -->
+                                    <div class="bg-white overflow-hidden">
+                                        <table class="w-full border-collapse">
+                                            <thead class="bg-green-700">
+                                            <tr>
+                                                <th class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Requirement</th>
+                                                <th class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Files</th>
+                                                <th class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Due Date</th>
+                                            </tr>
+                                            </thead>
+
+                                            <tbody>
+                                            @foreach($currentCourse->organizedRequirements['standalone'] as $requirement)
+                                                <tr
+                                                wire:click="handleNavigation('files', {{ $requirement->id }})"
+                                                class="cursor-pointer hover:bg-green-50 transition-colors"
+                                                >
+                                                <!-- Put border on each TD (works consistently) -->
+                                                <td class="px-6 py-4 whitespace-nowrap border-b border-gray-300">
+                                                    <div class="flex items-center">
+                                                    <div class="flex-shrink-0 flex items-center justify-center mr-3">
+                                                        <i class="fa-solid fa-folder text-green-700 text-2xl"></i>
+                                                    </div>
+                                                    <div class="text-sm font-semibold text-gray-900">
+                                                        {{ $requirement->name }}
+                                                    </div>
+                                                    </div>
+                                                </td>
+
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 border-b border-gray-300">
+                                                    {{ $requirement->userSubmissions ? $requirement->userSubmissions->count() : 0 }} files
+                                                </td>
+
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 border-b border-gray-300">
+                                                    {{ $requirement->due ? $requirement->due->format('M j, Y') : 'No due date' }}
+                                                </td>
+                                                </tr>
+                                            @endforeach
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                @endif
+                            @endif
+
+                            <!-- Show message if no requirements at all -->
+                            @if((!isset($currentCourse->organizedRequirements['folders']) || count($currentCourse->organizedRequirements['folders']) === 0) && 
+                                (!isset($currentCourse->organizedRequirements['standalone']) || count($currentCourse->organizedRequirements['standalone']) === 0))
+                                <div class="text-center py-16 px-6">
+                                    <i class="fa-solid fa-folder-open text-4xl mb-2 text-gray-300"></i>
+                                    <p class="text-sm font-semibold text-gray-800 mb-1">No requirements available</p>
+                                    <p class="text-gray-500 text-sm">This course doesn't have any requirements yet.</p>
+                                </div>
+                            @endif
+                        @else
+                            <!-- No Requirements Available -->
+                            <div class="text-center py-16 px-6">
+                                <div class="flex items-center justify-center mb-4">
+                                    <i class="fa-solid fa-folder-open text-gray-300 text-4xl"></i>
+                                </div>
+                                <h3 class="text-sm font-semibold text-gray-800 mb-1">No requirements available</h3>
+                                <p class="text-gray-500 text-sm">This course doesn't have any requirements yet.</p>
+                            </div>
+                        @endif
+
+                    @elseif($currentLevel === 'folder_requirements')
+                        @if(count($folderRequirements) > 0)
+                            @if($viewMode === 'grid')
+                                <!-- Grid View for Folder Requirements -->
+                                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 p-6">
+                                    @foreach($folderRequirements as $requirement)
+                                        <div 
+                                            wire:click="handleNavigation('folder_requirements', {{ $requirement->id }})"
                                             class="cursor-pointer group"
                                         >
                                             <div class="bg-white border-2 border-gray-200 rounded-xl p-3 transition-all duration-200 group-hover:shadow-md group-hover:border-green-600 group-hover:translate-y-[-2px]">
@@ -309,7 +596,7 @@
                                                             {{ $requirement->name }}
                                                         </h3>
                                                         <p class="text-xs text-gray-500">
-                                                            {{ $requirement->submitted_requirements_count }} files
+                                                            {{ $requirement->userSubmissions ? $requirement->userSubmissions->count() : 0 }} files
                                                         </p>
                                                     </div>
                                                 </div>
@@ -318,21 +605,21 @@
                                     @endforeach
                                 </div>
                             @else
-                                <!-- List View for Requirements -->
+                                <!-- List View for Folder Requirements -->
                                 <div class="bg-white overflow-hidden">
                                     <table class="w-full border-collapse">
                                         <thead class="bg-green-700">
                                         <tr>
                                             <th class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Requirement</th>
                                             <th class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Files</th>
-                                            <th class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Description</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Due Date</th>
                                         </tr>
                                         </thead>
 
                                         <tbody>
-                                        @foreach($currentSemester->requirements as $requirement)
+                                        @foreach($folderRequirements as $requirement)
                                             <tr
-                                            wire:click="handleNavigation('files', {{ $requirement->id }})"
+                                            wire:click="handleNavigation('folder_requirements', {{ $requirement->id }})"
                                             class="cursor-pointer hover:bg-green-50 transition-colors"
                                             >
                                             <!-- Put border on each TD (works consistently) -->
@@ -348,11 +635,11 @@
                                             </td>
 
                                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 border-b border-gray-300">
-                                                {{ $requirement->submitted_requirements_count }} files
+                                                {{ $requirement->userSubmissions ? $requirement->userSubmissions->count() : 0 }} files
                                             </td>
 
-                                            <td class="px-6 py-4 text-sm text-gray-500 border-b border-gray-300">
-                                                {{ Str::limit($requirement->description, 50) }}
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 border-b border-gray-300">
+                                                {{ $requirement->due ? $requirement->due->format('M j, Y') : 'No due date' }}
                                             </td>
                                             </tr>
                                         @endforeach
@@ -361,18 +648,18 @@
                                 </div>
                             @endif
                         @else
-                            <!-- No Requirements Available -->
+                            <!-- No Requirements in Folder -->
                             <div class="text-center py-16 px-6">
                                 <div class="flex items-center justify-center mb-4">
                                     <i class="fa-solid fa-folder-open text-gray-300 text-4xl"></i>
                                 </div>
-                                <h3 class="text-sm font-semibold text-gray-800 mb-1">No requirements available</h3>
-                                <p class="text-gray-500 text-sm">This semester doesn't have any requirements yet.</p>
+                                <h3 class="text-sm font-semibold text-gray-800 mb-1">No requirements in this folder</h3>
+                                <p class="text-gray-500 text-sm">This folder doesn't contain any requirements yet.</p>
                             </div>
                         @endif
 
                     @elseif($currentLevel === 'files')
-                        @if(isset($currentRequirement) && $currentRequirement->submittedRequirements->count() > 0)
+                        @if(isset($currentRequirement) && $currentRequirement->submittedRequirements && $currentRequirement->submittedRequirements->count() > 0)
                             <!-- Files View -->
                             @if($viewMode === 'grid')
                                 <!-- Grid View -->
@@ -473,7 +760,7 @@
         </div>
 
         <!-- Right Panel -->
-       @if($currentLevel === 'files' && $selectedFile)
+        @if($currentLevel === 'files' && $selectedFile)
             <div class="bg-white rounded-xl overflow-hidden lg:w-96 flex flex-col">
                 <!-- File Details Header -->
                 <div class="px-6 py-4" style="background: linear-gradient(148deg,rgba(18, 67, 44, 1) 0%, rgba(30, 119, 77, 1) 54%, rgba(55, 120, 64, 1) 100%);">
@@ -513,6 +800,16 @@
                         </div>
 
                         <div>
+                            <h4 class="text-xs font-semibold text-gray-800 uppercase tracking-wider mb-1">Course</h4>
+                            <p class="text-sm text-gray-500">{{ $currentCourse->course_code ?? 'Unknown' }}</p>
+                        </div>
+
+                        <div>
+                            <h4 class="text-xs font-semibold text-gray-800 uppercase tracking-wider mb-1">Requirement</h4>
+                            <p class="text-sm text-gray-500">{{ $currentRequirement->name ?? 'Unknown' }}</p>
+                        </div>
+
+                        <div>
                             <h4 class="text-xs font-semibold text-gray-800 uppercase tracking-wider mb-1">Submitted By</h4>
                             <p class="text-sm text-gray-500">{{ $selectedFile->user->name ?? 'Unknown' }}</p>
                         </div>
@@ -543,7 +840,7 @@
                     @if($selectedFile->submissionFile)
                         <a 
                             href="{{ $this->getDownloadRoute($selectedFile->id) }}"
-                            class="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-full transition-colors shadow-sm"
+                            class="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-full transition-colors shadow-sm"
                             target="_blank"
                         >
                             <i class="fa-solid fa-download"></i>
@@ -554,7 +851,7 @@
                     @if($selectedFile->submissionFile && $this->canPreview($selectedFile->submissionFile->file_name))
                         <a 
                             href="{{ $this->getPreviewRoute($selectedFile->id) }}"
-                            class="flex-1 flex items-center justify-center gap-2 px-4 py-2 border-2 border-green-600 text-green-700 hover:bg-green-50 rounded-full transition-colors"
+                            class="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white hover:bg-green-700 rounded-full transition-colors"
                             target="_blank"
                         >
                             <i class="fa-solid fa-eye"></i>
@@ -643,6 +940,15 @@
 
         // Ensure click events work for dynamically loaded content
         document.addEventListener('click', function(e) {
+            // Handle course clicks
+            if (e.target.closest('[wire\\:click^="handleNavigation(\'requirements\'"]')) {
+                const element = e.target.closest('[wire\\:click^="handleNavigation(\'requirements\'"]');
+                const match = element.getAttribute('wire:click').match(/handleNavigation\('requirements', (\d+)\)/);
+                if (match) {
+                    @this.handleNavigation('requirements', parseInt(match[1]));
+                }
+            }
+            
             // Handle requirement folder clicks
             if (e.target.closest('[wire\\:click^="handleNavigation(\'files\'"]')) {
                 const element = e.target.closest('[wire\\:click^="handleNavigation(\'files\'"]');
@@ -653,11 +959,20 @@
             }
             
             // Handle semester folder clicks
-            if (e.target.closest('[wire\\:click^="handleNavigation(\'requirements\'"]')) {
-                const element = e.target.closest('[wire\\:click^="handleNavigation(\'requirements\'"]');
-                const match = element.getAttribute('wire:click').match(/handleNavigation\('requirements', (\d+)\)/);
+            if (e.target.closest('[wire\\:click^="handleNavigation(\'courses\'"]')) {
+                const element = e.target.closest('[wire\\:click^="handleNavigation(\'courses\'"]');
+                const match = element.getAttribute('wire:click').match(/handleNavigation\('courses', (\d+)\)/);
                 if (match) {
-                    @this.handleNavigation('requirements', parseInt(match[1]));
+                    @this.handleNavigation('courses', parseInt(match[1]));
+                }
+            }
+            
+            // Handle folder requirement clicks
+            if (e.target.closest('[wire\\:click^="handleNavigation(\'folder_requirements\'"]')) {
+                const element = e.target.closest('[wire\\:click^="handleNavigation(\'folder_requirements\'"]');
+                const match = element.getAttribute('wire:click').match(/handleNavigation\('folder_requirements', (\d+)\)/);
+                if (match) {
+                    @this.handleNavigation('folder_requirements', parseInt(match[1]));
                 }
             }
         });

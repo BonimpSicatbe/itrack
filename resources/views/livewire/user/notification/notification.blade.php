@@ -134,15 +134,35 @@
                         </div>
                         @endisset
                         
-                        @isset($selectedNotificationData['requirement']['assigned_to'])
+                        @php
+                            $assignedDisplay = $selectedNotificationData['requirement']['assigned_to_display'] ?? [];
+                            $collegeDisplay = $assignedDisplay['college'] ?? '';
+                            $departmentDisplay = $assignedDisplay['department'] ?? '';
+                        @endphp
+                        
+                        @if($collegeDisplay)
                         <div>
-                            <p class="font-medium text-gray-500 text-xs uppercase tracking-wide mb-1">Assigned To</p>
+                            <p class="font-medium text-gray-500 text-xs uppercase tracking-wide mb-1">Assigned Colleges</p>
                             <div class="flex items-center bg-[#73E2A7]/20 px-3 py-2 rounded-lg">
-                                <i class="fa-regular fa-user text-[#1C7C54] mr-2"></i>
-                                <p class="text-gray-800 font-medium">{{ $selectedNotificationData['requirement']['assigned_to'] }}</p>
+                                <i class="fa-solid fa-building text-[#1C7C54] mr-2"></i>
+                                <p class="text-gray-800 font-medium text-sm leading-relaxed">
+                                    {{ $collegeDisplay }}
+                                </p>
                             </div>
                         </div>
-                        @endisset
+                        @endif
+                        
+                        @if($departmentDisplay)
+                        <div>
+                            <p class="font-medium text-gray-500 text-xs uppercase tracking-wide mb-1">Assigned Departments</p>
+                            <div class="flex items-center bg-[#73E2A7]/20 px-3 py-2 rounded-lg">
+                                <i class="fa-solid fa-users text-[#1C7C54] mr-2"></i>
+                                <p class="text-gray-800 font-medium text-sm leading-relaxed">
+                                    {{ $departmentDisplay }}
+                                </p>
+                            </div>
+                        </div>
+                        @endif
                     </div>
                 </div>
                 @endisset
@@ -235,7 +255,55 @@
                 </div>
                 @endif
 
-                
+                {{-- Admin Review Section --}}
+                @isset($selectedNotificationData['admin_review'])
+                <div class="bg-white p-5 rounded-lg border border-gray-200 shadow-sm">
+                    <div class="flex items-center mb-4 p-3 rounded-lg" style="background: linear-gradient(to right, #DEF4C6/20, #73E2A7/10);">
+                        <div class="w-8 h-8 bg-gradient-to-br from-[#1C7C54] to-[#1B512D] rounded-lg flex items-center justify-center mr-3">
+                            <i class="fa-solid fa-clipboard-check text-white text-sm"></i>
+                        </div>
+                        <h3 class="text-lg font-semibold text-gray-800">Submission Review</h3>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                        <div>
+                            <p class="font-medium text-gray-500 text-xs uppercase tracking-wide mb-1">Status</p>
+                            <div class="flex items-center">
+                                @php
+                                    $status = $selectedNotificationData['admin_review']['status'] ?? '';
+                                    $statusLabel = $selectedNotificationData['admin_review']['status_label'] ?? '';
+                                    $statusColor = match($status) {
+                                        'approved' => 'bg-green-100 text-green-800 border-green-200',
+                                        'rejected' => 'bg-red-100 text-red-800 border-red-200',
+                                        'revision_needed' => 'bg-yellow-100 text-yellow-800 border-yellow-200',
+                                        'under_review' => 'bg-blue-100 text-blue-800 border-blue-200',
+                                        default => 'bg-gray-100 text-gray-800 border-gray-200'
+                                    };
+                                @endphp
+                                <span class="px-3 py-1.5 rounded-full border text-sm font-medium {{ $statusColor }}">
+                                    {{ $statusLabel }}
+                                </span>
+                            </div>
+                        </div>
+                        
+                        @isset($selectedNotificationData['admin_review']['reviewed_at'])
+                        <div>
+                            <p class="font-medium text-gray-500 text-xs uppercase tracking-wide mb-1">Reviewed At</p>
+                            <p class="text-gray-800 font-medium">
+                                {{ \Carbon\Carbon::parse($selectedNotificationData['admin_review']['reviewed_at'])->format('M d, Y g:i A') }}
+                            </p>
+                        </div>
+                        @endisset
+                        
+                        @isset($selectedNotificationData['admin_review']['admin_notes'])
+                        <div class="md:col-span-2">
+                            <p class="font-medium text-gray-500 text-xs uppercase tracking-wide mb-1">Admin Notes</p>
+                            <p class="text-gray-600 bg-gray-50 p-3 rounded-md border">{{ $selectedNotificationData['admin_review']['admin_notes'] }}</p>
+                        </div>
+                        @endisset
+                    </div>
+                </div>
+                @endisset
             </div>
         @else
             <div class="h-full flex flex-col items-center justify-center text-center py-12">
