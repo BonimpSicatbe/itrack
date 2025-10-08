@@ -22,10 +22,10 @@
             <div class="flex items-center gap-4">
                 {{-- Active status badge --}}
                 <div class="flex items-center gap-2">
-                    <span class="flex h-2 w-2">
-                        <span class="animate-ping absolute inline-flex h-2 w-2 rounded-full bg-green-400 opacity-75"></span>
+                    <div class="relative flex h-2 w-2">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
                         <span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
-                    </span>
+                    </div>
                     <span class="text-sm font-medium text-white">Active</span>
                 </div>
 

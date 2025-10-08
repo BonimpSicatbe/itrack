@@ -1,6 +1,15 @@
 <div class="flex flex-col md:flex-row gap-4 h-[calc(100vh-6rem)]">
     <!-- Left Panel (40%) -->
     <div class="w-full md:w-2/5 flex flex-col gap-6 overflow-y-auto pr-2 h-full">
+        <!-- Back Button -->
+        <div class="w-full">
+            <button wire:click="goBackToIndex" 
+                    class="flex items-center gap-2 px-4 py-2 text-sm bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">
+                <i class="fas fa-arrow-left"></i>
+                Back to Requirements
+            </button>
+        </div>
+
         <!-- Requirement Details -->
         <div class="bg-white rounded-xl shadow-md hover:shadow-lg transition p-0 overflow-hidden">
             <!-- Header -->
@@ -11,6 +20,27 @@
 
             <!-- Body -->
             <div class="p-6 space-y-4 text-sm text-gray-900">
+                <!-- Context Breadcrumb -->
+                @if($user && $course)
+                <div class="pb-3 border-b border-gray-200">
+                    <h3 class="font-semibold text-xs uppercase mb-2">Submission Context</h3>
+                    <div class="flex flex-col gap-2">
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-folder text-green-500 text-sm"></i>
+                            <span class="text-gray-700 font-medium">{{ $requirement->name }}</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-user text-blue-500 text-sm"></i>
+                            <span class="text-gray-700 font-medium">{{ $user->full_name }}</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-book text-purple-500 text-sm"></i>
+                            <span class="text-gray-700 font-medium">{{ $course->course_code }} - {{ $course->course_name }}</span>
+                        </div>
+                    </div>
+                </div>
+                @endif
+
                 <div>
                     <h3 class="font-semibold text-xs uppercase">Requirement Name</h3>
                     <p class="mt-1 text-gray-500 font-semibold">{{ $requirement->name }}</p>
@@ -34,6 +64,12 @@
                     </div>
                 </div>
                 
+                <!-- File Count -->
+                <div class="pt-3 border-t border-gray-200">
+                    <h3 class="font-semibold text-xs uppercase">Files Submitted</h3>
+                    <p class="mt-1 text-gray-500 font-semibold">{{ count($allFiles) }} file(s)</p>
+                </div>
+                
                 <!-- Reviewed Information -->
                 @if($selectedFile && $selectedFile['reviewed_at'])
                 <div class="pt-3 border-t border-gray-200">
@@ -51,80 +87,90 @@
         <!-- Submitted Files -->
         <div class="bg-white rounded-xl shadow-md hover:shadow-lg transition flex-1 flex flex-col overflow-hidden">
             <!-- Header -->
-            <div class=" text-gray-800 px-6 py-3 flex items-center justify-between rounded-t-xl border-b border-gray-300">
+            <div class="text-gray-800 px-6 py-3 flex items-center justify-between rounded-t-xl border-b border-gray-300">
                 <div class="flex items-center">
-                    <i class="fa-solid fa-folder-open mr-2 text-2xl"></i>
-                    <h2 class="text-xl font-semibold">Submitted Files</h2>
+                    <i class="fa-solid fa-files mr-2 text-2xl"></i>
+                    <h2 class="text-xl font-semibold">
+                        @if($user && $course)
+                            Course Submission Files
+                        @else
+                            No Files Available
+                        @endif
+                    </h2>
                 </div>
+                @if($user && $course)
                 <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-white text-gray-800">
                     {{ count($allFiles) }} file(s)
                 </span>
+                @endif
             </div>
 
             <!-- Body -->
             <div class="p-6 flex-1 overflow-y-auto">
-                @if(count($allFiles) > 0)
-                    <div class="space-y-5">
-                        @php
-                            $groupedFiles = $allFiles->groupBy(function($file) {
-                                return $file['user']['full_name'] ?? 'Unknown User';
-                            });
-                        @endphp
-                        
-                        @foreach($groupedFiles as $userName => $userFiles)
-                            <div>
-                                <!-- User Name -->
-                                <p class="text-sm font-semibold text-gray-800 mb-2 flex items-center">
-                                    <i class="fa-solid fa-user mr-2 text-sm text-gray-800"></i> {{ $userName }}
-                                </p>
-
-                                <!-- User Files -->
-                                <div class="space-y-3">
-                                    @foreach($userFiles as $file)
-                                        @php
-                                            $fileIcon = \App\Models\SubmittedRequirement::FILE_ICONS[$file['extension']] ?? \App\Models\SubmittedRequirement::FILE_ICONS['default'];
-                                            // Get the status badge classes using the model method
-                                            $submissionModel = App\Models\SubmittedRequirement::find($file['submission_id']);
-                                            $statusBadgeClasses = $submissionModel ? $submissionModel->status_badge : 'bg-blue-100 text-blue-800';
-                                        @endphp
-                                        <button wire:click="selectFile('{{ $file['id'] }}')"
-                                            class="w-full text-left p-3 rounded-xl transition-all duration-200 flex items-center gap-3
-                                                {{ ($selectedFile && $selectedFile['id'] === $file['id']) ? 
-                                                    'bg-green-600 text-white shadow-sm' : 
-                                                    'border-1 border-gray-300 hover:border-green-700 hover:border-2' }}">
-                                            <!-- File Icon -->
-                                            <div class="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center bg-white">
-                                                <i class="fa-solid {{ $fileIcon['icon'] }} text-lg {{ $fileIcon['color'] }}"></i>
-                                            </div>
-                                            <!-- File Info -->
-                                            <div class="min-w-0 flex-1">
-                                                <p class="font-medium truncate {{ ($selectedFile && $selectedFile['id'] === $file['id']) ? 'text-white' : 'text-gray-900' }}">
-                                                    {{ $file['file_name'] }}
-                                                </p>
-                                                <div class="flex items-center gap-2 text-xs mt-1 {{ ($selectedFile && $selectedFile['id'] === $file['id']) ? 'text-gray-200' : 'text-gray-500' }}">
-                                                    <i class="fa-solid fa-calendar"></i>
-                                                    {{ $file['created_at']->format('M j, Y') }}
-                                                </div>
-                                            </div>
-                                            <!-- Status -->
-                                            <div class="flex-shrink-0">
-                                                <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold {{ $statusBadgeClasses }}">
-                                                    {{ $this->formatStatus($file['status']) }}
-                                                </span>
-                                            </div>
-                                        </button>
-                                    @endforeach
-                                </div>
+                @if($user && $course)
+                    @if(count($allFiles) > 0)
+                        <div class="space-y-3">
+                            @foreach($allFiles as $file)
+                                @php
+                                    $fileIcon = \App\Models\SubmittedRequirement::FILE_ICONS[$file['extension']] ?? \App\Models\SubmittedRequirement::FILE_ICONS['default'];
+                                    // Get the status badge classes using the model method
+                                    $submissionModel = App\Models\SubmittedRequirement::find($file['submission_id']);
+                                    $statusBadgeClasses = $submissionModel ? $submissionModel->status_badge : 'bg-blue-100 text-blue-800';
+                                @endphp
+                                <button wire:click="selectFile('{{ $file['id'] }}')"
+                                    class="w-full text-left p-3 rounded-xl transition-all duration-200 flex items-center gap-3
+                                        {{ ($selectedFile && $selectedFile['id'] === $file['id']) ? 
+                                            'bg-green-600 text-white shadow-sm' : 
+                                            'border-1 border-gray-300 hover:border-green-700 hover:border-2' }}">
+                                    <!-- File Icon -->
+                                    <div class="flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center bg-white">
+                                        <i class="fa-solid {{ $fileIcon['icon'] }} text-lg {{ $fileIcon['color'] }}"></i>
+                                    </div>
+                                    <!-- File Info -->
+                                    <div class="min-w-0 flex-1">
+                                        <p class="font-medium truncate {{ ($selectedFile && $selectedFile['id'] === $file['id']) ? 'text-white' : 'text-gray-900' }}">
+                                            {{ $file['file_name'] }}
+                                        </p>
+                                        <div class="flex items-center gap-2 text-xs mt-1 {{ ($selectedFile && $selectedFile['id'] === $file['id']) ? 'text-gray-200' : 'text-gray-500' }}">
+                                            <i class="fa-solid fa-calendar"></i>
+                                            {{ $file['created_at']->format('M j, Y') }}
+                                            <i class="fa-solid fa-file"></i>
+                                            {{ $file['size'] }}
+                                        </div>
+                                    </div>
+                                    <!-- Status -->
+                                    <div class="flex-shrink-0">
+                                        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold {{ $statusBadgeClasses }}">
+                                            {{ $this->formatStatus($file['status']) }}
+                                        </span>
+                                    </div>
+                                </button>
+                            @endforeach
+                        </div>
+                    @else
+                        <div class="text-center py-8 flex-1 flex flex-col items-center justify-center">
+                            <div class="mx-auto w-16 h-16 rounded-full bg-green-700/10 flex items-center justify-center mb-3">
+                                <i class="fa-solid fa-file-arrow-up text-2xl text-green-700"></i>
                             </div>
-                        @endforeach
-                    </div>
+                            <h3 class="text-lg font-medium text-gray-900 mb-1">
+                                No files submitted
+                            </h3>
+                            <p class="text-sm text-gray-500">
+                                No files have been submitted for this requirement in the selected course
+                            </p>
+                        </div>
+                    @endif
                 @else
                     <div class="text-center py-8 flex-1 flex flex-col items-center justify-center">
-                        <div class="mx-auto w-16 h-16 rounded-full bg-green-700/10 flex items-center justify-center mb-3">
-                            <i class="fa-solid fa-file-arrow-up text-2xl text-green-700"></i>
+                        <div class="mx-auto w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-3">
+                            <i class="fa-solid fa-folder-open text-2xl text-gray-400"></i>
                         </div>
-                        <h3 class="text-lg font-medium text-gray-900 mb-1">No files submitted</h3>
-                        <p class="text-sm text-gray-500">This requirement hasn't been fulfilled yet</p>
+                        <h3 class="text-lg font-medium text-gray-900 mb-1">
+                            Incomplete Selection
+                        </h3>
+                        <p class="text-sm text-gray-500">
+                            Please select a specific user and course to view submitted files
+                        </p>
                     </div>
                 @endif
             </div>
@@ -138,7 +184,13 @@
             <div class="text-white px-6 py-3 flex items-center justify-between rounded-t-xl" style="background: linear-gradient(148deg,rgba(18, 67, 44, 1) 0%, rgba(30, 119, 77, 1) 54%, rgba(55, 120, 64, 1) 100%);">
                 <div class="flex items-center">
                     <i class="fa-solid fa-eye mr-2 text-2xl"></i>
-                    <h2 class="text-xl font-semibold">File Preview</h2>
+                    <h2 class="text-xl font-semibold">
+                        @if($selectedFile)
+                            File Preview
+                        @else
+                            No File Selected
+                        @endif
+                    </h2>
                 </div>
                 @if($selectedFile)
                     <div class="flex items-center gap-3">
@@ -190,8 +242,24 @@
                         <div class="mx-auto w-20 h-20 rounded-full bg-green-700/10 flex items-center justify-center mb-4">
                             <i class="fa-solid fa-file-circle-question text-3xl text-green-700"></i>
                         </div>
-                        <h3 class="text-lg font-medium text-gray-900 mb-1">No file selected</h3>
-                        <p class="text-sm text-gray-500">Select a file from the list to preview it here</p>
+                        <h3 class="text-lg font-medium text-gray-900 mb-1">
+                            @if($user && $course && count($allFiles) > 0)
+                                Select a file to preview
+                            @elseif($user && $course)
+                                No files available
+                            @else
+                                Incomplete selection
+                            @endif
+                        </h3>
+                        <p class="text-sm text-gray-500">
+                            @if($user && $course && count($allFiles) > 0)
+                                Choose a file from the list to view its contents
+                            @elseif($user && $course)
+                                No files have been submitted for this selection
+                            @else
+                                Please select a user and course to view files
+                            @endif
+                        </p>
                     </div>
                 @endif
             </div>

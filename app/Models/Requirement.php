@@ -41,6 +41,8 @@ class Requirement extends Model implements HasMedia
         'assigned_to' => 'array', // Add this cast for JSON data
     ];
 
+    protected $appends = ['assigned_to_display'];
+
     // Media Collections
     public function registerMediaCollections(): void
     {
@@ -80,6 +82,46 @@ class Requirement extends Model implements HasMedia
         
         // Fallback for any other data type
         return [];
+    }
+
+    /**
+     * Get formatted assigned_to display text
+     */
+    public function getAssignedToDisplayAttribute()
+    {
+        $assignedTo = $this->assigned_to;
+        
+        if (!$assignedTo || !is_array($assignedTo)) {
+            return 'Not assigned';
+        }
+
+        $parts = [];
+
+        // Handle colleges
+        if (isset($assignedTo['selectAllColleges']) && $assignedTo['selectAllColleges']) {
+            $parts[] = 'All Colleges';
+        } elseif (isset($assignedTo['colleges']) && is_array($assignedTo['colleges']) && !empty($assignedTo['colleges'])) {
+            $collegeNames = College::whereIn('id', $assignedTo['colleges'])
+                ->pluck('name')
+                ->toArray();
+            if (!empty($collegeNames)) {
+                $parts[] = 'Colleges: ' . implode(', ', $collegeNames);
+            }
+        }
+
+        // Handle departments
+        if (isset($assignedTo['selectAllDepartments']) && $assignedTo['selectAllDepartments']) {
+            $parts[] = 'All Departments';
+        } elseif (isset($assignedTo['departments']) && is_array($assignedTo['departments']) && !empty($assignedTo['departments'])) {
+            $departmentNames = Department::whereIn('id', $assignedTo['departments'])
+                ->pluck('name')
+                ->toArray();
+            if (!empty($departmentNames)) {
+                $parts[] = 'Departments: ' . implode(', ', $departmentNames);
+            }
+        }
+
+        return !empty($parts) ? implode('; ', $parts) : 'Not assigned';
     }
 
     public function requirementTypes()

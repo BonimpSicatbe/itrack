@@ -80,11 +80,18 @@ Route::middleware(['auth', 'role:admin|super-admin'])
         // Submitted Requirements
         Route::get('/submitted-requirements', [SubmittedRequirementController::class, 'index'])
             ->name('submitted-requirements.index');
+            
+        // Individual submission view (original route)
         Route::get('/submitted-requirements/{submitted_requirement}', [SubmittedRequirementController::class, 'show'])
             ->name('submitted-requirements.show');
-        Route::get('/submitted-requirements/requirement/{requirement_id}', function ($requirement_id) {
-            return view('admin.pages.submitted-requirements.requirement', ['requirement_id' => $requirement_id]);
-        })->name('submitted-requirements.requirement');
+            
+        Route::get('/submitted-requirements/requirement/{requirement_id}/{user_id?}/{course_id?}', function ($requirement_id, $user_id = null, $course_id = null) {
+            return view('admin.pages.submitted-requirements.requirement', [
+                'requirement_id' => $requirement_id,
+                'user_id' => $user_id,
+                'course_id' => $course_id
+            ]);
+        })->name('submitted-requirements.requirement-context');
 
         Route::prefix('management')->group(function () {
             // Main management dashboard

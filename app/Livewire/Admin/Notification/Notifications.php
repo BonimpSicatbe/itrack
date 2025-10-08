@@ -78,9 +78,8 @@ class Notifications extends Component
                 'name' => $requirement->name,
                 'description' => $requirement->description,
                 'due' => $requirement->due,
-                'assigned_to' => $requirement->assigned_to,
+                'assigned_to' => $requirement->assigned_to_display,
                 'status' => $requirement->status,
-                'priority' => $requirement->priority,
                 'created_at' => $requirement->created_at,
                 'updated_at' => $requirement->updated_at,
                 'creator' => $requirement->creator ? [
@@ -112,8 +111,8 @@ class Notifications extends Component
             $submissionIds = [$notificationData['submission_id']];
         }
 
-        // Load submissions
-        $submissions = \App\Models\SubmittedRequirement::with(['reviewer'])
+        // Load submissions with course information
+        $submissions = \App\Models\SubmittedRequirement::with(['reviewer', 'course'])
             ->whereIn('id', $submissionIds)
             ->get();
 
@@ -134,6 +133,11 @@ class Notifications extends Component
                     'admin_notes' => $submission->admin_notes,
                     'submitted_at' => $submission->submitted_at,
                     'reviewed_at' => $submission->reviewed_at,
+                    'course' => $submission->course ? [
+                        'id' => $submission->course->id,
+                        'course_code' => $submission->course->course_code,
+                        'course_name' => $submission->course->course_name,
+                    ] : null,
                     'reviewer' => $submission->reviewer ? [
                         'id' => $submission->reviewer->id,
                         'name' => $submission->reviewer->name,
@@ -155,6 +159,18 @@ class Notifications extends Component
                     'id' => $user->id,
                     'name' => $user->name,
                     'email' => $user->email,
+                ];
+            }
+        }
+
+        // Load course from notification data if available
+        if (isset($notificationData['course_id']) && $notificationData['course_id']) {
+            $course = \App\Models\Course::find($notificationData['course_id']);
+            if ($course) {
+                $this->selectedNotificationData['course'] = [
+                    'id' => $course->id,
+                    'course_code' => $course->course_code,
+                    'course_name' => $course->course_name,
                 ];
             }
         }
@@ -182,6 +198,11 @@ class Notifications extends Component
                     'status' => $submission->status,
                     'admin_notes' => $submission->admin_notes,
                     'submission_id' => $submission->id,
+                    'course' => $submission->course ? [
+                        'id' => $submission->course->id,
+                        'course_code' => $submission->course->course_code,
+                        'course_name' => $submission->course->course_name,
+                    ] : null,
                 ];
             }
         }

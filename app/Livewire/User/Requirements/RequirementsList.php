@@ -34,7 +34,6 @@ class RequirementsList extends Component
     public $showDeleteModal = false;
     public $submissionToDelete = null;
 
-
     public function mount()
     {
         $this->activeSemester = Semester::getActiveSemester();
@@ -48,16 +47,13 @@ class RequirementsList extends Component
 
     public function backToCourses()
     {
-        if ($this->selectedFolder) {
-            // If in folder view, go back to course requirements
-            $this->backToCourseRequirements();
-        } else {
-            // If in course requirements view, go back to courses list
-            $this->selectedCourse = null;
-            $this->courseRequirements = [];
-            $this->organizedRequirements = [];
-            $this->reset(['file', 'submissionNotes', 'activeTabs']);
-        }
+        // Reset everything to default view
+        $this->selectedCourse = null;
+        $this->selectedFolder = null;
+        $this->courseRequirements = [];
+        $this->organizedRequirements = [];
+        $this->folderRequirements = [];
+        $this->reset(['file', 'submissionNotes', 'activeTabs']);
     }
 
     /**
@@ -184,7 +180,11 @@ class RequirementsList extends Component
             $this->submissionToDelete = null;
             
             // Reload requirements
-            $this->loadCourseRequirements();
+            if ($this->selectedFolder) {
+                $this->loadFolderRequirements();
+            } else {
+                $this->loadCourseRequirements();
+            }
             
             $this->dispatch('showNotification',
                 type: 'success',
@@ -236,7 +236,11 @@ class RequirementsList extends Component
             $this->setActiveTab($requirementId, 'submissions');
             
             // Reload requirements
-            $this->loadCourseRequirements();
+            if ($this->selectedFolder) {
+                $this->loadFolderRequirements();
+            } else {
+                $this->loadCourseRequirements();
+            }
             
             // Show success message
             $this->dispatch('showNotification', 
@@ -459,7 +463,7 @@ class RequirementsList extends Component
             } else {
                 // Toggle on - mark as done FOR THIS COURSE
                 RequirementSubmissionIndicator::create([
-                    'requirement_id' => $requirementId, // FIXED: removed comma, added =>
+                    'requirement_id' => $requirementId,
                     'user_id' => $user->id,
                     'course_id' => $this->selectedCourse, // Added course_id
                     'submitted_at' => now(),
@@ -486,7 +490,11 @@ class RequirementsList extends Component
             }
             
             // Reload requirements to reflect changes
-            $this->loadCourseRequirements();
+            if ($this->selectedFolder) {
+                $this->loadFolderRequirements();
+            } else {
+                $this->loadCourseRequirements();
+            }
             
             $this->dispatch('showNotification',
                 type: 'success',

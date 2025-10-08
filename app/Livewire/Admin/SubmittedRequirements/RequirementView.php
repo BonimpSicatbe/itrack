@@ -5,15 +5,27 @@ namespace App\Livewire\Admin\SubmittedRequirements;
 use Livewire\Component;
 use App\Models\Requirement;
 use App\Models\SubmittedRequirement;
+use App\Models\User;
+use App\Models\Course;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Livewire\WithPagination;
+use Livewire\Attributes\Url;
 
 class RequirementView extends Component
 {
     use WithPagination;
 
     public $requirement_id;
+    
+    #[Url]
+    public $user_id;
+    
+    #[Url]
+    public $course_id;
+    
     public $requirement;
+    public $user;
+    public $course;
     public $allSubmissions = [];
     public $allFiles = [];
     public $selectedFile = null;
@@ -26,12 +38,36 @@ class RequirementView extends Component
     public $adminNotes = '';
     public $initialFileId;
 
-    public function mount($requirement_id, $initialFileId = null)
+    public function mount($requirement_id, $user_id = null, $course_id = null, $initialFileId = null)
     {
         $this->requirement_id = $requirement_id;
+        
+        // Get parameters from both route and query string
+        $this->user_id = $user_id ?? request()->query('user_id');
+        $this->course_id = $course_id ?? request()->query('course_id');
+        
         $this->requirement = Requirement::findOrFail($requirement_id);
+        
+        // Load user and course if provided
+        if ($this->user_id) {
+            $this->user = User::find($this->user_id);
+        }
+        
+        if ($this->course_id) {
+            $this->course = Course::find($this->course_id);
+        }
+        
         $this->initialFileId = $initialFileId;
         $this->loadFiles();
+    }
+
+    public function goBackToIndex()
+    {
+        return redirect()->route('admin.submitted-requirements.index', [
+            'category' => 'requirement',
+            'selectedRequirementId' => $this->requirement_id,
+            'selectedUserId' => $this->user_id,
+        ]);
     }
 
     public function formatStatus($status)
@@ -47,15 +83,49 @@ class RequirementView extends Component
 
     protected function loadFiles()
     {
-        // Load all submissions for this requirement
-        $this->allSubmissions = SubmittedRequirement::where('requirement_id', $this->requirement_id)
-            ->with(['media', 'reviewer', 'user.college', 'user.department'])
+        // Reset files collection
+        $this->allFiles = collect();
+        $this->allSubmissions = collect();
+
+        // Debug: Log the filter parameters
+        \Log::info('RequirementView Filters:', [
+            'requirement_id' => $this->requirement_id,
+            'user_id' => $this->user_id,
+            'course_id' => $this->course_id,
+            'user_loaded' => !is_null($this->user),
+            'course_loaded' => !is_null($this->course)
+        ]);
+
+        // Check if we have all required parameters
+        if (!$this->user_id || !$this->course_id) {
+            \Log::warning('Missing required parameters:', [
+                'user_id' => $this->user_id,
+                'course_id' => $this->course_id
+            ]);
+            $this->selectInitialFile();
+            return;
+        }
+
+        // Build query with STRICT filtering
+        $query = SubmittedRequirement::where('requirement_id', $this->requirement_id)
+            ->where('user_id', $this->user_id)
+            ->where('course_id', $this->course_id);
+        
+        // Load submissions with relationships
+        $this->allSubmissions = $query
+            ->with(['media', 'reviewer', 'user.college', 'user.department', 'course'])
             ->latest()
             ->get();
 
-        // Collect all files from all submissions as a collection
+        // Debug: Log the query results
+        \Log::info('RequirementView Query Results:', [
+            'submissions_count' => $this->allSubmissions->count(),
+            'submission_ids' => $this->allSubmissions->pluck('id')->toArray()
+        ]);
+
+        // Collect all files from the filtered submissions
         $this->allFiles = $this->allSubmissions->flatMap(function ($submission) {
-            return $submission->getMedia('submission_files')->map(function ($media) use ($submission) {
+            $mediaFiles = $submission->getMedia('submission_files')->map(function ($media) use ($submission) {
                 $extension = strtolower(pathinfo($media->file_name, PATHINFO_EXTENSION));
                 $isPreviewable = in_array($extension, ['jpg', 'jpeg', 'png', 'gif', 'pdf', 'doc', 'docx', 'xls', 'xlsx']);
                 
@@ -75,9 +145,12 @@ class RequirementView extends Component
                     'reviewed_at' => $submission->reviewed_at,
                     'reviewer' => $submission->reviewer,
                     'user' => $submission->user,
+                    'course' => $submission->course,
                     'submitted_at' => $submission->submitted_at,
                 ];
             });
+
+            return $mediaFiles;
         });
 
         // Select the file to preview
@@ -161,6 +234,14 @@ class RequirementView extends Component
 
     protected function formatFileSize($bytes)
     {
+        // Ensure $bytes is numeric
+        if (!is_numeric($bytes)) {
+            return 'Unknown size';
+        }
+        
+        // Convert to integer to be safe
+        $bytes = (int) $bytes;
+        
         if ($bytes >= 1073741824) {
             return number_format($bytes / 1073741824, 2) . ' GB';
         } elseif ($bytes >= 1048576) {

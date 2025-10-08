@@ -137,10 +137,18 @@
                                     </div>
                                     @if ($requirement->user_has_submitted)
                                         <button wire:click="toggleMarkAsDone({{ $requirement->id }})"
-                                            wire:target="toggleMarkAsDone({{ $requirement->id }})" type="button"
+                                            wire:target="toggleMarkAsDone({{ $requirement->id }})" 
+                                            wire:loading.attr="disabled"
+                                            type="button"
                                             class="btn btn-sm btn-outline z-1 rounded-full {{ $requirement->user_marked_done ? 'btn-warning' : 'btn-success' }}">
-                                            <i class="fa-solid fa-check-double min-w-[20px] text-center"></i>
-                                            {{ $requirement->user_marked_done ? 'Mark as undone' : 'Mark as done' }}
+                                            <span wire:loading.remove wire:target="toggleMarkAsDone({{ $requirement->id }})">
+                                                <i class="fa-solid fa-check-double min-w-[20px] text-center"></i>
+                                                {{ $requirement->user_marked_done ? 'Mark as undone' : 'Mark as done' }}
+                                            </span>
+                                            <span wire:loading wire:target="toggleMarkAsDone({{ $requirement->id }})">
+                                                <i class="fa-solid fa-spinner fa-spin"></i>
+                                                Updating...
+                                            </span>
                                         </button>
                                     @else
                                         <button class="btn btn-sm btn-outline btn-disabled bg-white rounded-full">
@@ -476,10 +484,18 @@
                                     </div>
                                     @if ($requirement->user_has_submitted)
                                         <button wire:click="toggleMarkAsDone({{ $requirement->id }})"
-                                            wire:target="toggleMarkAsDone({{ $requirement->id }})" type="button"
+                                            wire:target="toggleMarkAsDone({{ $requirement->id }})" 
+                                            wire:loading.attr="disabled"
+                                            type="button"
                                             class="btn btn-sm btn-outline z-1 rounded-full {{ $requirement->user_marked_done ? 'btn-warning' : 'btn-success' }}">
-                                            <i class="fa-solid fa-check-double min-w-[20px] text-center"></i>
-                                            {{ $requirement->user_marked_done ? 'Mark as undone' : 'Mark as done' }}
+                                            <span wire:loading.remove wire:target="toggleMarkAsDone({{ $requirement->id }})">
+                                                <i class="fa-solid fa-check-double min-w-[20px] text-center"></i>
+                                                {{ $requirement->user_marked_done ? 'Mark as undone' : 'Mark as done' }}
+                                            </span>
+                                            <span wire:loading wire:target="toggleMarkAsDone({{ $requirement->id }})">
+                                                <i class="fa-solid fa-spinner fa-spin"></i>
+                                                Updating...
+                                            </span>
                                         </button>
                                     @else
                                         <button class="btn btn-sm btn-outline btn-disabled bg-white rounded-full">

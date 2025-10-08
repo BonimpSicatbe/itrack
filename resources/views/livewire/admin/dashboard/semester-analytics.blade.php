@@ -20,7 +20,7 @@
                                     <th class="text-left font-semibold text-gray-700 bg-gray-50 rounded-l-lg">User</th>
                                     <th class="text-center font-semibold text-gray-700 bg-gray-50">Submitted</th>
                                     <th class="text-center font-semibold text-gray-700 bg-gray-50">Approved</th>
-                                    <th class="text-center font-semibold text-gray-700 bg-gray-50">Total Reqs</th>
+                                    <th class="text-center font-semibold text-gray-700 bg-gray-50">Total Requirements</th>
                                     <th class="text-center font-semibold text-gray-700 bg-gray-50 rounded-r-lg">Completion</th>
                                 </tr>
                             </thead>

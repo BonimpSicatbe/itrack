@@ -5,22 +5,38 @@ namespace App\Livewire\Admin\SubmittedRequirements;
 use App\Models\SubmittedRequirement;
 use App\Models\Requirement;
 use App\Models\Semester;
+use App\Models\User;
+use App\Models\Course;
 use Livewire\Component;
 use Livewire\WithPagination;
+use Livewire\Attributes\Url;
 
 class SubmittedRequirementsIndex extends Component
 {
     use WithPagination;
 
     public $viewMode = 'list';
-    public $category = 'file';
+    public $category = 'overview';
     public $search = '';
-    public $statusFilter = '';
+    
+    // Navigation properties with URL binding
+    #[Url]
+    public $selectedRequirementId = null;
+    
+    #[Url]
+    public $selectedUserId = null;
+    
+    #[Url]
+    public $selectedCourseId = null;
+    
+    public $breadcrumb = [];
 
     protected $queryString = [
-        'category' => ['except' => 'file'],
+        'category' => ['except' => 'overview'],
         'search' => ['except' => ''],
-        'statusFilter' => ['except' => ''],
+        'selectedRequirementId' => ['except' => null],
+        'selectedUserId' => ['except' => null],
+        'selectedCourseId' => ['except' => null],
     ];
 
     public function switchView($mode)
@@ -32,19 +48,119 @@ class SubmittedRequirementsIndex extends Component
     public function setCategory($category)
     {
         $this->category = $category;
+        $this->resetNavigation();
         $this->resetPage();
     }
 
     public function clearCategory()
     {
-        $this->category = 'file';
+        $this->category = 'overview';
+        $this->resetNavigation();
         $this->resetPage();
     }
 
     public function resetFilters()
     {
-        $this->reset(['search', 'statusFilter']);
+        $this->reset(['search']);
         $this->resetPage();
+    }
+    
+    // Navigation methods
+    public function selectRequirement($requirementId)
+    {
+        $this->selectedRequirementId = $requirementId;
+        $this->selectedUserId = null;
+        $this->selectedCourseId = null;
+        $this->updateBreadcrumb();
+        $this->resetPage();
+    }
+    
+    public function selectUser($userId)
+    {
+        $this->selectedUserId = $userId;
+        $this->selectedCourseId = null;
+        $this->updateBreadcrumb();
+        $this->resetPage();
+    }
+    
+    public function selectCourse($courseId)
+    {
+        $this->selectedCourseId = $courseId;
+        $this->updateBreadcrumb();
+        
+        // Navigate to requirement view page with all context parameters
+        if ($this->selectedRequirementId && $this->selectedUserId && $this->selectedCourseId) {
+            return redirect()->route('admin.submitted-requirements.requirement', [
+                'requirement_id' => $this->selectedRequirementId,
+                'user_id' => $this->selectedUserId,
+                'course_id' => $this->selectedCourseId
+            ]);
+        }
+    }
+    
+    public function goBack($level)
+    {
+        switch ($level) {
+            case 'requirement':
+                $this->selectedRequirementId = null;
+                $this->selectedUserId = null;
+                $this->selectedCourseId = null;
+                break;
+            case 'user':
+                $this->selectedUserId = null;
+                $this->selectedCourseId = null;
+                break;
+            case 'course':
+                $this->selectedCourseId = null;
+                break;
+        }
+        $this->updateBreadcrumb();
+        $this->resetPage();
+    }
+    
+    private function resetNavigation()
+    {
+        $this->selectedRequirementId = null;
+        $this->selectedUserId = null;
+        $this->selectedCourseId = null;
+        $this->breadcrumb = [];
+    }
+    
+    private function updateBreadcrumb()
+    {
+        $this->breadcrumb = [];
+        
+        if ($this->selectedRequirementId) {
+            $requirement = Requirement::find($this->selectedRequirementId);
+            $this->breadcrumb[] = [
+                'type' => 'requirement',
+                'id' => $this->selectedRequirementId,
+                'name' => $requirement ? $requirement->name : 'Requirement'
+            ];
+        }
+        
+        if ($this->selectedUserId) {
+            $user = User::find($this->selectedUserId);
+            $this->breadcrumb[] = [
+                'type' => 'user',
+                'id' => $this->selectedUserId,
+                'name' => $user ? $user->full_name : 'User'
+            ];
+        }
+        
+        if ($this->selectedCourseId) {
+            $course = Course::find($this->selectedCourseId);
+            $this->breadcrumb[] = [
+                'type' => 'course',
+                'id' => $this->selectedCourseId,
+                'name' => $course ? $course->course_code : 'Course'
+            ];
+        }
+    }
+
+    public function mount()
+    {
+        $this->updateBreadcrumb();
     }
 
     public function render()
@@ -55,66 +171,52 @@ class SubmittedRequirementsIndex extends Component
             return view('livewire.admin.submitted-requirements.submitted-requirements-index', [
                 'activeSemester' => null,
                 'categories' => $this->getCategories(),
-                'submittedRequirements' => null,
-                'groupedItems' => []
+                'requirements' => collect(),
+                'usersForRequirement' => collect(),
+                'coursesForUserRequirement' => collect(),
             ]);
         }
 
-        if ($this->category === 'file') {
-            $submittedRequirements = $this->getSubmittedRequirementsQuery($activeSemester)->paginate(10);
-            $groupedItems = [];
+        // Only handle requirement category logic here
+        if ($this->category === 'requirement') {
+            if ($this->selectedRequirementId) {
+                if ($this->selectedUserId) {
+                    // LEVEL 3: Courses for specific user and requirement
+                    $requirements = collect();
+                    $usersForRequirement = collect();
+                    $coursesForUserRequirement = $this->getCoursesForUserRequirement();
+                } else {
+                    // LEVEL 2: Users for specific requirement
+                    $requirements = collect();
+                    $usersForRequirement = $this->getUsersForRequirement();
+                    $coursesForUserRequirement = collect();
+                }
+            } else {
+                // LEVEL 1: All requirements
+                $requirements = $this->getRequirements($activeSemester);
+                $usersForRequirement = collect();
+                $coursesForUserRequirement = collect();
+            }
         } else {
-            $submittedRequirements = null;
-            $groupedItems = $this->getGroupedRequirements($activeSemester);
+            // For overview category, we'll use a separate component
+            $requirements = collect();
+            $usersForRequirement = collect();
+            $coursesForUserRequirement = collect();
         }
 
         return view('livewire.admin.submitted-requirements.submitted-requirements-index', [
-            'submittedRequirements' => $submittedRequirements,
-            'groupedItems' => $groupedItems,
-            'categories' => $this->getCategories(),
             'activeSemester' => $activeSemester,
+            'categories' => $this->getCategories(),
+            'requirements' => $requirements,
+            'usersForRequirement' => $usersForRequirement,
+            'coursesForUserRequirement' => $coursesForUserRequirement,
         ]);
     }
 
-    protected function getSubmittedRequirementsQuery($activeSemester)
-    {
-        $query = SubmittedRequirement::query()
-            ->with([
-                'requirement', 
-                'user.college', 
-                'user.department', 
-                'media'
-            ])
-            ->whereHas('requirement', function($q) use ($activeSemester) {
-                $q->where('semester_id', $activeSemester->id);
-            })
-            ->orderBy('submitted_at', 'asc');
-
-        if ($this->search) {
-            $query->where(function($q) {
-                $q->whereHas('requirement', function($q) {
-                    $q->where('name', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('user', function($q) {
-                    $q->where('firstname', 'like', '%'.$this->search.'%')
-                      ->orWhere('middlename', 'like', '%'.$this->search.'%')
-                      ->orWhere('lastname', 'like', '%'.$this->search.'%')
-                      ->orWhere('email', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('media', function($q) {
-                    $q->where('file_name', 'like', '%'.$this->search.'%');
-                });
-            });
-        }
-
-        if ($this->statusFilter) {
-            $query->where('status', $this->statusFilter);
-        }
-
-        return $query;
-    }
-
-    protected function getGroupedRequirements($activeSemester)
+    /**
+     * LEVEL 1: Get all requirements for active semester
+     */
+    protected function getRequirements($activeSemester)
     {
         $query = Requirement::where('semester_id', $activeSemester->id)
             ->orderBy('name');
@@ -123,29 +225,111 @@ class SubmittedRequirementsIndex extends Component
             $query->where('name', 'like', '%' . $this->search . '%');
         }
 
-        $requirements = $query->get();
-
-        $groupedItems = [];
-
-        foreach ($requirements as $requirement) {
-            $submissions = SubmittedRequirement::where('requirement_id', $requirement->id)
-                ->with(['user.college', 'user.department', 'media'])
-                ->get();
+        return $query->get()->map(function($requirement) {
+            // Count submissions using submitted_requirements table
+            $submissionCount = SubmittedRequirement::where('requirement_id', $requirement->id)
+                ->count();
                 
-            $groupedItems[$requirement->id] = [
+            return [
+                'id' => $requirement->id,
                 'name' => $requirement->name,
-                'count' => $submissions->count(),
-                'items' => $submissions
+                'submission_count' => $submissionCount,
             ];
+        });
+    }
+
+    /**
+     * LEVEL 2: Get users who submitted the selected requirement (from submitted_requirements)
+     */
+    protected function getUsersForRequirement()
+    {
+        if (!$this->selectedRequirementId) {
+            return collect();
         }
 
-        return $groupedItems;
+        // Get users who have submissions for this requirement
+        $userIds = SubmittedRequirement::where('requirement_id', $this->selectedRequirementId)
+            ->distinct('user_id')
+            ->pluck('user_id');
+
+        $query = User::whereIn('id', $userIds)
+            ->with(['college', 'department'])
+            ->orderBy('lastname')
+            ->orderBy('firstname');
+
+        if ($this->search) {
+            $query->where(function($q) {
+                $q->where('firstname', 'like', '%'.$this->search.'%')
+                  ->orWhere('middlename', 'like', '%'.$this->search.'%')
+                  ->orWhere('lastname', 'like', '%'.$this->search.'%')
+                  ->orWhere('email', 'like', '%'.$this->search.'%');
+            });
+        }
+
+        return $query->get()->map(function($user) {
+            // Count submissions for this user and requirement
+            $submissionCount = SubmittedRequirement::where('requirement_id', $this->selectedRequirementId)
+                ->where('user_id', $user->id)
+                ->count();
+                
+            // Count courses for this user and requirement
+            $courseCount = SubmittedRequirement::where('requirement_id', $this->selectedRequirementId)
+                ->where('user_id', $user->id)
+                ->distinct('course_id')
+                ->count('course_id');
+                
+            return [
+                'user' => $user,
+                'submission_count' => $submissionCount,
+                'course_count' => $courseCount
+            ];
+        });
+    }
+
+    /**
+     * LEVEL 3: Get courses where user submitted the selected requirement (from submitted_requirements)
+     */
+    protected function getCoursesForUserRequirement()
+    {
+        if (!$this->selectedRequirementId || !$this->selectedUserId) {
+            return collect();
+        }
+
+        // Get course IDs from submitted_requirements for this user and requirement
+        $courseIds = SubmittedRequirement::where('requirement_id', $this->selectedRequirementId)
+            ->where('user_id', $this->selectedUserId)
+            ->distinct('course_id')
+            ->pluck('course_id');
+
+        $query = Course::whereIn('id', $courseIds)
+            ->orderBy('course_code');
+
+        if ($this->search) {
+            $query->where(function($q) {
+                $q->where('course_code', 'like', '%'.$this->search.'%')
+                  ->orWhere('course_name', 'like', '%'.$this->search.'%');
+            });
+        }
+
+        return $query->get()->map(function($course) {
+            // Get the submission details for this course
+            $submission = SubmittedRequirement::where('requirement_id', $this->selectedRequirementId)
+                ->where('user_id', $this->selectedUserId)
+                ->where('course_id', $course->id)
+                ->first();
+                
+            return [
+                'course' => $course,
+                'submission' => $submission,
+                'status' => $submission ? $submission->status : 'not_submitted'
+            ];
+        });
     }
 
     protected function getCategories()
     {
         return [
-            'file' => 'File',
+            'overview' => 'Overview',
             'requirement' => 'Requirement',
         ];
     }

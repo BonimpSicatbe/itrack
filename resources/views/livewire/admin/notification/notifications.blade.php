@@ -176,17 +176,8 @@
                                 </div>
                             </div>
 
-                            <!-- Priority -->
-                            <div class="space-y-2">
-                                <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Priority</p>
-                                <div class="bg-gray-50 p-3 rounded-xl flex items-center text-sm text-gray-900 capitalize shadow-inner">
-                                    <i class="fa-solid fa-flag mr-2 text-gray-500"></i>
-                                    {{ $selectedNotificationData['requirement']['priority'] }}
-                                </div>
-                            </div>
-
                             <!-- Assigned To -->
-                            <div class="space-y-2 col-span-2">
+                            <div class="space-y-2">
                                 <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Assigned To</p>
                                 <div class="bg-gray-50 p-3 rounded-xl flex items-center text-sm text-gray-900 shadow-inner">
                                     <i class="fa-regular fa-user mr-2 text-gray-500"></i>
@@ -258,6 +249,16 @@
                                         </div>
                                         @endif
                                     </div>
+                                    {{-- Course Information --}}
+                                    @if($file['course'] ?? null)
+                                    <div class="mt-2 pt-2 border-t border-gray-200">
+                                        <p class="text-sm font-semibold text-gray-700">Course</p>
+                                        <p class="text-sm text-gray-900 flex items-center mt-1">
+                                            <i class="fa-solid fa-book-open mr-2 text-gray-500"></i>
+                                            {{ $file['course']['course_code'] }} - {{ $file['course']['course_name'] }}
+                                        </p>
+                                    </div>
+                                    @endif
                                 </div>
                                 
                                 {{-- File Details --}}

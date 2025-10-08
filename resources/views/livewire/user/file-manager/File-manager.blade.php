@@ -86,9 +86,9 @@
             @if($currentLevel === 'semesters' || $currentLevel === 'courses' || $currentLevel === 'requirements' || $currentLevel === 'files' || $currentLevel === 'folder_requirements')
                 <div class="bg-white px-6 py-4">
                     <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
-                        <div class="flex flex-col sm:flex-row gap-4 flex-1">
+                        <div class="flex flex-col sm:flex-row gap-4 flex-1 w-full">
                             {{-- Search Bar --}}
-                            <div class="flex-1 lg:max-w-96 relative">
+                            <div class="flex-1 lg:max-w-full xl:max-w-lg relative">
                                 <div class="relative">
                                     <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                                         <i class="fas fa-search text-gray-500 text-sm"></i>
@@ -103,15 +103,6 @@
                                         aria-label="Search files"
                                         autocomplete="off"
                                     >
-                                    @if($searchQuery)
-                                        <button
-                                            wire:click="clearSearch"
-                                            class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
-                                            type="button"
-                                        >
-                                            <i class="fas fa-times"></i>
-                                        </button>
-                                    @endif
                                     <div wire:loading wire:target="searchQuery" class="absolute inset-y-2 right-0 pr-4 flex items-center">
                                         <i class="fas fa-spinner fa-spin text-gray-400"></i>
                                     </div>
@@ -155,7 +146,7 @@
 
                             {{-- Status Filter --}}
                             @if($currentLevel === 'files')
-                                <div class="min-w-0">
+                                <div class="min-w-0 flex-shrink-0">
                                     <select
                                         wire:model.live="statusFilter"
                                         class="block p-2 w-[150px] text-sm text-gray-500 border border-gray-300 shadow-sm focus:border-green-600 focus:ring-green-600 rounded-xl"
@@ -171,7 +162,7 @@
 
                             {{-- Clear Filters Button --}}
                             @if($searchQuery || $statusFilter)
-                                <div class="flex items-center">
+                                <div class="flex items-center flex-shrink-0">
                                     <button
                                         wire:click="clearFilters"
                                         class="inline-flex items-center px-4 py-2 bg-white border-2 border-green-600 text-sm font-medium rounded-xl text-gray-500 hover:bg-green-50 h-10 shadow-md"
