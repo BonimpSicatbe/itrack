@@ -91,65 +91,42 @@
                 </div>
             </div>
 
-            <!-- Section 2: Assigned To (College & Department Hierarchy) -->
+            <!-- Section 2: Assigned To (Programs Only) -->
             <div class="bg-gray-50 rounded-xl p-6 border border-gray-200">
-                <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                    <i class="fa-solid fa-users text-green-600"></i> Assigned To
-                </h3>
 
                 <div class="space-y-4">
-                    @if($assignedColleges->isNotEmpty() || $assignedDepartments->isNotEmpty())
-                        <!-- Group departments by college -->
-                        @php
-                            $collegeDepartments = [];
-                            foreach ($assignedDepartments as $dept) {
-                                $collegeName = $dept->college->name ?? 'No College';
-                                if (!isset($collegeDepartments[$collegeName])) {
-                                    $collegeDepartments[$collegeName] = [];
-                                }
-                                $collegeDepartments[$collegeName][] = $dept->name;
-                            }
-                            
-                            // Add colleges without specific departments
-                            foreach ($assignedColleges as $college) {
-                                if (!isset($collegeDepartments[$college->name])) {
-                                    $collegeDepartments[$college->name] = [];
-                                }
-                            }
-                        @endphp
-
-                        @foreach($collegeDepartments as $collegeName => $departments)
-                            <div class="bg-white rounded-lg border border-gray-300 overflow-hidden">
-                                <!-- College Header -->
-                                <div class="bg-green-100 px-4 py-3 border-b border-green-200">
-                                    <div class="flex items-center gap-2">
-                                        <i class="fa-solid fa-building-columns text-green-700"></i>
-                                        <h4 class="font-semibold text-green-800">{{ $collegeName }}</h4>
-                                    </div>
-                                </div>
-                                
-                                <!-- Departments List -->
-                                <div class="p-4">
-                                    @if(!empty($departments))
-                                        <div class="space-y-2">
-                                            @foreach($departments as $department)
-                                                <div class="flex items-center gap-3 py-2 px-3 bg-gray-50 rounded-lg">
-                                                    <i class="fa-solid fa-building text-gray-500 text-sm"></i>
-                                                    <span class="text-gray-700 font-medium">{{ $department }}</span>
-                                                </div>
-                                            @endforeach
-                                        </div>
-                                    @else
-                                        <div class="text-center py-3">
-                                            <p class="text-gray-500 text-sm">All departments in this college</p>
-                                        </div>
-                                    @endif
+                    @if($assignedPrograms->isNotEmpty())
+                        <!-- Display programs directly without college grouping -->
+                        <div class="bg-white rounded-lg border border-gray-300 overflow-hidden">
+                            <!-- Programs Header -->
+                            <div class="bg-green-100 px-4 py-3 border-b border-green-200">
+                                <div class="flex items-center gap-2">
+                                    <i class="fa-solid fa-graduation-cap text-green-700"></i>
+                                    <h4 class="font-semibold text-green-800">Assigned Programs</h4>
                                 </div>
                             </div>
-                        @endforeach
+                            
+                            <!-- Programs List -->
+                            <div class="p-4">
+                                @if($assignedPrograms->isNotEmpty())
+                                    <div class="space-y-2">
+                                        @foreach($assignedPrograms as $program)
+                                            <div class="flex items-center gap-3 py-2 px-3 bg-gray-50 rounded-lg">
+                                                <i class="fa-solid fa-graduation-cap text-gray-500 text-sm"></i>
+                                                <span class="text-gray-700 font-medium">{{ $program->program_name }}</span>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                @else
+                                    <div class="text-center py-3">
+                                        <p class="text-gray-500 text-sm">No specific programs assigned</p>
+                                    </div>
+                                @endif
+                            </div>
+                        </div>
                     @else
                         <div class="bg-white rounded-lg p-4 border border-gray-300 text-center">
-                            <p class="text-gray-500">No colleges or departments assigned.</p>
+                            <p class="text-gray-500">No programs assigned.</p>
                         </div>
                     @endif
                 </div>
@@ -169,31 +146,57 @@
                         <thead class="bg-green-700">
                             <tr>
                                 <th class="px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">Name</th>
+                                <th class="px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">Programs</th>
                                 <th class="px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">College</th>
-                                <th class="px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">Department</th>
                                 <th class="px-6 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider">Email</th>
                             </tr>
                         </thead>
                         <tbody class="bg-white divide-y divide-gray-300">
                             @forelse ($assignedUsers as $user)
+                                @php
+                                    $userPrograms = $this->getUserPrograms($user);
+                                    $userColleges = $this->getUserColleges($user);
+                                @endphp
                                 <tr class="hover:bg-green-50 transition duration-200">
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <div class="flex items-center gap-3">
                                             <div class="h-10 w-10 rounded-full flex items-center justify-center bg-gradient-to-br from-green-400 to-green-600 text-white font-bold shadow">
-                                                {{ strtoupper(substr($user->full_name ?? $user->name ?? $user->email, 0, 1)) }}
+                                                {{ strtoupper(substr($user->firstname ?? $user->email, 0, 1)) }}
                                             </div>
                                             <div class="min-w-0">
                                                 <div class="text-sm font-semibold text-gray-900 truncate">
-                                                    {{ $user->full_name ?? $user->name ?? 'N/A' }}
+                                                    {{ $user->firstname }} {{ $user->middlename ? $user->middlename . ' ' : '' }}{{ $user->lastname }}{{ $user->extensionname ? ' ' . $user->extensionname : '' }}
                                                 </div>
                                             </div>
                                         </div>
                                     </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                                        {{ $user->college->name ?? $user->department->college->name ?? 'N/A' }}
+                                    <td class="px-6 py-4 text-sm text-gray-700">
+                                        @if($userPrograms->isNotEmpty())
+                                            <div class="space-y-1">
+                                                @foreach($userPrograms as $program)
+                                                    <div class="flex items-center gap-2">
+                                                        <i class="fa-solid fa-graduation-cap text-gray-400 text-xs"></i>
+                                                        <span>{{ $program->program_name }}</span>
+                                                    </div>
+                                                @endforeach
+                                            </div>
+                                        @else
+                                            <span class="text-gray-500">N/A</span>
+                                        @endif
                                     </td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                                        {{ $user->department->name ?? 'N/A' }}
+                                    <td class="px-6 py-4 text-sm text-gray-700">
+                                        @if($userColleges->isNotEmpty())
+                                            <div class="space-y-1">
+                                                @foreach($userColleges as $college)
+                                                    <div class="flex items-center gap-2">
+                                                        <i class="fa-solid fa-building text-gray-400 text-xs"></i>
+                                                        <span>{{ $college->name }}</span>
+                                                    </div>
+                                                @endforeach
+                                            </div>
+                                        @else
+                                            <span class="text-gray-500">N/A</span>
+                                        @endif
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                                         {{ $user->email }}

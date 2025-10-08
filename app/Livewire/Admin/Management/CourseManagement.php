@@ -7,6 +7,7 @@ use App\Models\Course;
 use App\Models\User;
 use App\Models\CourseAssignment;
 use App\Models\Semester;
+use App\Models\Program;
 use Illuminate\Validation\Rule;
 
 class CourseManagement extends Component
@@ -20,7 +21,7 @@ class CourseManagement extends Component
     public $newCourse = [
         'course_code' => '',
         'course_name' => '',
-        'description' => ''
+        'program_id' => ''
     ];
 
     public $showEditCourseModal = false;
@@ -28,7 +29,7 @@ class CourseManagement extends Component
         'id' => '',
         'course_code' => '',
         'course_name' => '',
-        'description' => ''
+        'program_id' => ''
     ];
     public $currentCourseAssignments = [];
 
@@ -42,6 +43,10 @@ class CourseManagement extends Component
 
     public $showRemoveAssignmentModal = false;
     public $assignmentToRemove = null;
+
+    // For combobox
+    public $facultySearch = '';
+    public $showFacultyDropdown = false;
 
     protected $queryString = [
         'search' => ['except' => ''],
@@ -71,7 +76,7 @@ class CourseManagement extends Component
             'id' => $course->id,
             'course_code' => $course->course_code,
             'course_name' => $course->course_name,
-            'description' => $course->description,
+            'program_id' => $course->program_id,
         ];
         
         $this->currentCourseAssignments = $course->assignments;
@@ -80,6 +85,9 @@ class CourseManagement extends Component
             'professor_id' => '',
             'semester_id' => ''
         ];
+
+        $this->facultySearch = '';
+        $this->showFacultyDropdown = false;
         
         $this->showEditCourseModal = true;
         $this->resetErrorBag();
@@ -91,7 +99,84 @@ class CourseManagement extends Component
         $this->reset('editingCourse');
         $this->reset('currentCourseAssignments');
         $this->reset('assignmentData');
+        $this->reset(['facultySearch', 'showFacultyDropdown']);
         $this->resetErrorBag();
+    }
+
+    public function updatedFacultySearch()
+    {
+        $this->showFacultyDropdown = true;
+        
+        // If user clears the search, clear the selection
+        if (empty($this->facultySearch)) {
+            $this->assignmentData['professor_id'] = '';
+        }
+    }
+
+    public function selectFaculty($professorId, $professorName)
+    {
+        $this->assignmentData['professor_id'] = $professorId;
+        $this->facultySearch = $professorName; // This replaces the search text
+        $this->showFacultyDropdown = false;
+        
+        // Force a re-render of the input field
+        $this->dispatch('faculty-selected', facultyName: $professorName);
+    }
+
+    public function clearFacultySelection()
+    {
+        $this->assignmentData['professor_id'] = '';
+        $this->facultySearch = '';
+        $this->showFacultyDropdown = false;
+    }
+
+    public function toggleFacultyDropdown()
+    {
+        $this->showFacultyDropdown = !$this->showFacultyDropdown;
+    }
+
+    public function getFilteredProfessorsProperty()
+    {
+        if (empty($this->facultySearch)) {
+            return User::whereHas('roles', function($query) {
+                    $query->where('name', 'user');
+                })
+                ->orderBy('firstname')
+                ->orderBy('lastname')
+                ->limit(10)
+                ->get()
+                ->map(function($professor) {
+                    return [
+                        'id' => $professor->id,
+                        'name' => $professor->firstname . ' ' . $professor->lastname
+                    ];
+                });
+        }
+
+        return User::whereHas('roles', function($query) {
+                $query->where('name', 'user');
+            })
+            ->where(function($query) {
+                $query->where('firstname', 'like', '%' . $this->facultySearch . '%')
+                      ->orWhere('lastname', 'like', '%' . $this->facultySearch . '%')
+                      ->orWhereRaw("CONCAT(firstname, ' ', lastname) LIKE ?", ['%' . $this->facultySearch . '%']);
+            })
+            ->orderBy('firstname')
+            ->orderBy('lastname')
+            ->limit(10)
+            ->get()
+            ->map(function($professor) {
+                return [
+                    'id' => $professor->id,
+                    'name' => $professor->firstname . ' ' . $professor->lastname
+                ];
+            });
+    }
+
+    // Close dropdown when clicking outside
+    public function closeFacultyDropdown()
+    {
+        $this->showFacultyDropdown = false;
     }
 
     public function assignProfessor()
@@ -101,7 +186,7 @@ class CourseManagement extends Component
                 'assignmentData.professor_id' => 'required|exists:users,id',
                 'assignmentData.semester_id' => 'required|exists:semesters,id',
             ], [
-                'assignmentData.professor_id.required' => 'Professor selection is required.',
+                'assignmentData.professor_id.required' => 'Faculty selection is required.',
                 'assignmentData.semester_id.required' => 'Semester selection is required.',
                 'assignmentData.semester_id.exists' => 'Invalid semester selected.',
             ]);
@@ -115,7 +200,7 @@ class CourseManagement extends Component
                 
                 $this->dispatch('showNotification', 
                     type: 'warning', 
-                    content: "This course already has a professor assigned for {$semesterName}."
+                    content: "This course already has a faculty assigned for {$semesterName}."
                 );
                 return;
             }
@@ -131,18 +216,20 @@ class CourseManagement extends Component
                 ->find($this->editingCourse['id'])
                 ->assignments;
 
-            $professorName = User::find($this->assignmentData['professor_id'])->full_name;
+            $professorName = User::find($this->assignmentData['professor_id'])->firstname . ' ' . User::find($this->assignmentData['professor_id'])->lastname;
             
             $this->assignmentData = [
                 'professor_id' => '',
                 'semester_id' => ''
             ];
+
+            $this->clearFacultySelection();
             
             $this->resetErrorBag();
             
             $this->dispatch('showNotification', 
                 type: 'success', 
-                content: "Professor '{$professorName}' assigned successfully!"
+                content: "Faculty '{$professorName}' assigned successfully!"
             );
             
         } catch (\Illuminate\Validation\ValidationException $e) {
@@ -177,7 +264,7 @@ class CourseManagement extends Component
     {
         if ($this->assignmentToRemove) {
             $courseName = $this->assignmentToRemove->course->course_name;
-            $professorName = $this->assignmentToRemove->professor->full_name;
+            $professorName = $this->assignmentToRemove->professor->firstname . ' ' . $this->assignmentToRemove->professor->lastname;
             $semesterInfo = $this->assignmentToRemove->semester->name ?? 'the selected semester';
             
             $this->assignmentToRemove->delete();
@@ -191,7 +278,7 @@ class CourseManagement extends Component
             $this->closeRemoveAssignmentModal();
             $this->dispatch('showNotification', 
                 type: 'success', 
-                content: "Professor '{$professorName}' removed from '{$courseName}' for {$semesterInfo} successfully!"
+                content: "Faculty '{$professorName}' removed from '{$courseName}' for {$semesterInfo} successfully!"
             );
         }
     }
@@ -207,11 +294,12 @@ class CourseManagement extends Component
                     Rule::unique('courses', 'course_code')->ignore($this->editingCourse['id'])
                 ],
                 'editingCourse.course_name' => 'required|string|max:255',
-                'editingCourse.description' => 'nullable|string',
+                'editingCourse.program_id' => 'required|exists:programs,id',
             ], [
                 'editingCourse.course_code.required' => 'Course code is required.',
                 'editingCourse.course_code.unique' => 'This course code is already in use.',
                 'editingCourse.course_name.required' => 'Course name is required.',
+                'editingCourse.program_id.required' => 'Program is required.',
             ]);
 
             $course = Course::find($this->editingCourse['id']);
@@ -220,8 +308,13 @@ class CourseManagement extends Component
             $course->update([
                 'course_code' => $this->editingCourse['course_code'],
                 'course_name' => $this->editingCourse['course_name'],
-                'description' => $this->editingCourse['description'],
+                'program_id' => $this->editingCourse['program_id'],
             ]);
+
+            // If assignment data is provided, assign the faculty
+            if (!empty($this->assignmentData['professor_id']) && !empty($this->assignmentData['semester_id'])) {
+                $this->assignProfessor();
+            }
 
             $this->closeEditCourseModal();
             $this->dispatch('showNotification', 
@@ -251,17 +344,18 @@ class CourseManagement extends Component
             $this->validate([
                 'newCourse.course_code' => 'required|string|max:50|unique:courses,course_code',
                 'newCourse.course_name' => 'required|string|max:255',
-                'newCourse.description' => 'nullable|string',
+                'newCourse.program_id' => 'required|exists:programs,id',
             ], [
                 'newCourse.course_code.required' => 'Course code is required.',
                 'newCourse.course_code.unique' => 'This course code is already in use.',
                 'newCourse.course_name.required' => 'Course name is required.',
+                'newCourse.program_id.required' => 'Program is required.',
             ]);
 
             $course = Course::create([
                 'course_code' => $this->newCourse['course_code'],
                 'course_name' => $this->newCourse['course_name'],
-                'description' => $this->newCourse['description'],
+                'program_id' => $this->newCourse['program_id'],
             ]);
 
             $courseName = $course->course_name;
@@ -305,32 +399,39 @@ class CourseManagement extends Component
 
     public function render()
     {
-        $courses = Course::with(['assignments.professor', 'assignments.semester'])
+        $courses = Course::with(['assignments.professor', 'assignments.semester', 'program'])
             ->when($this->search, function ($query) {
                 $query->where(function ($q) {
                     $q->where('course_code', 'like', '%' . $this->search . '%')
                       ->orWhere('course_name', 'like', '%' . $this->search . '%')
-                      ->orWhere('description', 'like', '%' . $this->search . '%')
                       ->orWhereHas('assignments.professor', function ($q) {
                           $q->where('firstname', 'like', '%' . $this->search . '%')
                             ->orWhere('lastname', 'like', '%' . $this->search . '%');
+                      })
+                      ->orWhereHas('program', function ($q) {
+                          $q->where('program_name', 'like', '%' . $this->search . '%')
+                            ->orWhere('program_code', 'like', '%' . $this->search . '%');
                       });
                 });
             })
             ->orderBy($this->sortField, $this->sortDirection)
             ->get();
 
-        $professors = User::whereHas('department')
+        $professors = User::whereHas('roles', function($query) {
+                $query->where('name', 'user');
+            })
             ->orderBy('firstname')
             ->orderBy('lastname')
             ->get();
 
         $semesters = Semester::orderBy('start_date', 'desc')->get();
+        $programs = Program::orderBy('program_name')->get();
 
         return view('livewire.admin.management.course-management', [
             'courses' => $courses,
             'professors' => $professors,
             'semesters' => $semesters,
+            'programs' => $programs,
         ]);
     }
 }

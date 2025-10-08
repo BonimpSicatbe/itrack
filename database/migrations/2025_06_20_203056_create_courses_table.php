@@ -1,4 +1,5 @@
 <?php
+// database/migrations/xxxx_xx_xx_xxxxxx_create_courses_table.php
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
@@ -6,23 +7,19 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('courses', function (Blueprint $table) {
-            $table->id(); // Auto-increments, serves as the primary key 'id'
+            $table->id();
             $table->string('course_code', 50)->unique();
             $table->string('course_name');
             $table->text('description')->nullable();
+            $table->foreignId('program_id')->nullable()->constrained()->onDelete('cascade');
+            $table->foreignId('course_type_id')->nullable()->constrained()->onDelete('set null');
             $table->timestamps();
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('courses');

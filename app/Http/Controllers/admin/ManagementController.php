@@ -11,10 +11,10 @@ class ManagementController extends Controller
     {
         $tabs = [
             'semesters' => ['label' => 'Semesters', 'icon' => 'calendar'],
-            'users' => ['label' => 'Users', 'icon' => 'users'],
-            'courses' => ['label' => 'Courses', 'icon' => 'book'],
             'colleges' => ['label' => 'Colleges', 'icon' => 'building-columns'],
-            'departments' => ['label' => 'Departments', 'icon' => 'building'],
+            'users' => ['label' => 'Users', 'icon' => 'users'],
+            'programs' => ['label' => 'Programs', 'icon' => 'graduation-cap'],
+            'courses' => ['label' => 'Courses', 'icon' => 'book'],
         ];
 
         $activeTab = $request->query('tab', 'semesters');

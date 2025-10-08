@@ -221,4 +221,9 @@ class User extends Authenticatable implements HasMedia
              ->singleFile()
              ->acceptsMimeTypes(['image/jpeg', 'image/png', 'image/gif']);
     }
+
+    public function courseAssignments()
+    {
+        return $this->hasMany(CourseAssignment::class, 'professor_id');
+    }
 }

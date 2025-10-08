@@ -5,7 +5,6 @@ namespace App\Livewire\Admin\Management;
 use Livewire\Component;
 use App\Models\User;
 use App\Models\College;
-use App\Models\Department;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
 use Spatie\Permission\Models\Role;
@@ -20,7 +19,6 @@ class UserManagement extends Component
 {
     public $search = '';
     public $collegeFilter = '';
-    public $departmentFilter = '';
     
     public $sortField = 'lastname';
     public $sortDirection = 'asc';
@@ -34,7 +32,6 @@ class UserManagement extends Component
         'extensionname' => '',
         'email' => '',
         'college_id' => '',
-        'department_id' => '',
         'role' => ''
     ];
 
@@ -48,7 +45,6 @@ class UserManagement extends Component
         'extensionname' => '',
         'email' => '',
         'college_id' => '',
-        'department_id' => '',
         'role' => '',
         'password' => '',
         'password_confirmation' => ''
@@ -60,7 +56,7 @@ class UserManagement extends Component
 
     public function showUser($userId)
     {
-        $this->selectedUser = User::with(['college', 'department'])->find($userId);
+        $this->selectedUser = User::with(['college'])->find($userId);
     }
 
     public function closeUserDetail()
@@ -95,7 +91,6 @@ class UserManagement extends Component
             'extensionname' => $user->extensionname,
             'email' => $user->email,
             'college_id' => $user->college_id,
-            'department_id' => $user->department_id,
             'role' => $user->roles->first() ? $user->roles->first()->id : '',
             'password' => '',
             'password_confirmation' => ''
@@ -154,7 +149,6 @@ class UserManagement extends Component
                 'editingUser.extensionname' => 'nullable|string|max:255',
                 'editingUser.email' => 'required|string|email|max:255|unique:users,email,' . $this->editingUser['id'],
                 'editingUser.college_id' => 'nullable|exists:colleges,id',
-                'editingUser.department_id' => 'nullable|exists:departments,id',
                 'editingUser.password' => 'nullable|confirmed|min:8',
                 'editingUser.role' => 'required|exists:roles,id',
             ], [
@@ -190,43 +184,36 @@ class UserManagement extends Component
                 'lastname' => $this->editingUser['lastname'],
                 'extensionname' => $this->editingUser['extensionname'],
                 'email' => $this->editingUser['email'],
-                'college_id' => $this->editingUser['college_id'] ?: null,
-                'department_id' => $this->editingUser['department_id'] ?: null,
+                'college_id' => $this->editingUser['college_id'],
             ];
-            
+
             // Only update password if provided
             if (!empty($this->editingUser['password'])) {
                 $updateData['password'] = Hash::make($this->editingUser['password']);
             }
-            
+
             $user->update($updateData);
 
+            // Update role
             $role = Role::find($this->editingUser['role']);
             $user->syncRoles([$role->name]);
 
             $this->closeEditUserModal();
+            
             $this->dispatch('showNotification', 
                 type: 'success', 
                 content: "User '{$userName}' updated successfully!"
             );
-            
-            // If we're viewing the user detail, refresh it
+
+            // Refresh the selected user if it's the same user
             if ($this->selectedUser && $this->selectedUser->id == $user->id) {
-                $this->selectedUser = $user->fresh(['college', 'department']);
+                $this->selectedUser = $user->fresh(['college']);
             }
-            
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            $errors = $e->validator->errors()->all();
-            foreach ($errors as $error) {
-                $this->dispatch('showNotification', 
-                    type: 'warning', 
-                    content: $error
-                );
-            }
+
         } catch (\Exception $e) {
             $this->dispatch('showNotification', 
                 type: 'error', 
-                content: 'An unexpected error occurred: ' . $e->getMessage()
+                content: 'Failed to update user. Please try again.'
             );
         }
     }
@@ -241,7 +228,6 @@ class UserManagement extends Component
                 'newUser.extensionname' => 'nullable|string|max:255',
                 'newUser.email' => 'required|string|email|max:255|unique:users,email',
                 'newUser.college_id' => 'nullable|exists:colleges,id',
-                'newUser.department_id' => 'nullable|exists:departments,id',
                 'newUser.role' => 'required|exists:roles,id',
             ], [
                 'newUser.firstname.required' => 'First name is required.',
@@ -264,94 +250,46 @@ class UserManagement extends Component
                 return;
             }
 
-            // Create user with temporary password and unverified email
-            $temporaryPassword = Str::random(40); // Long random string, not sent to user
-            
+            // Generate a random password
+            $generatedPassword = Str::password(12);
+
+            // Create the user
             $user = User::create([
                 'firstname' => $this->newUser['firstname'],
                 'middlename' => $this->newUser['middlename'],
                 'lastname' => $this->newUser['lastname'],
                 'extensionname' => $this->newUser['extensionname'],
                 'email' => $this->newUser['email'],
-                'college_id' => $this->newUser['college_id'] ?: null,
-                'department_id' => $this->newUser['department_id'] ?: null,
-                'password' => Hash::make($temporaryPassword), // Temporary password
-                'email_verified_at' => null // Ensure email is not verified yet
+                'college_id' => $this->newUser['college_id'],
+                'password' => Hash::make($generatedPassword),
             ]);
 
+            // Assign role
             $role = Role::find($this->newUser['role']);
             $user->assignRole($role->name);
 
-            // Generate password reset token and URL - UPDATED ROUTE
-            $token = Password::createToken($user);
-            $setupUrl = URL::temporarySignedRoute(
-                'account.setup', // Changed from 'password.reset'
-                now()->addHours(24), 
-                ['token' => $token, 
-                'email' => $user->email]
-            );
+            // Send email with credentials
+            try {
+                Mail::to($user->email)->send(new AccountSetupMail($user, $generatedPassword));
+            } catch (\Exception $mailException) {
+                // Log mail error but don't fail the user creation
+                \Log::error('Failed to send account setup email: ' . $mailException->getMessage());
+            }
 
-            // Send account setup email instead of credentials
-            Mail::to($user->email)->queue(new AccountSetupMail($user, $setupUrl));
-
-            $userName = $user->firstname . ' ' . $user->lastname;
             $this->closeAddUserModal();
             
             $this->dispatch('showNotification', 
                 type: 'success', 
-                content: "User '{$userName}' added successfully! Account setup instructions have been sent to their email."
+                content: "User '{$user->firstname} {$user->lastname}' created successfully! Account setup email sent."
             );
-            
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            $errors = $e->validator->errors()->all();
-            foreach ($errors as $error) {
-                $this->dispatch('showNotification', 
-                    type: 'warning', 
-                    content: $error
-                );
-            }
+
         } catch (\Exception $e) {
             $this->dispatch('showNotification', 
                 type: 'error', 
-                content: 'An unexpected error occurred: ' . $e->getMessage()
+                content: 'Failed to create user. Please try again.'
             );
         }
     }
-
-    public function resendSetupInstructions($userId)
-    {
-        try {
-            $user = User::find($userId);
-            
-            if (!$user->email_verified_at) {
-                $token = Password::createToken($user);
-                $setupUrl = URL::temporarySignedRoute(
-                    'account.setup', // Changed from 'password.reset'
-                    now()->addHours(24), 
-                    ['token' => $token, 
-                    'email' => $user->email]
-                );
-
-                Mail::to($user->email)->queue(new AccountSetupMail($user, $setupUrl));
-                
-                $this->dispatch('showNotification', 
-                    type: 'success', 
-                    content: "Setup instructions resent to {$user->email}"
-                );
-            } else {
-                $this->dispatch('showNotification', 
-                    type: 'info', 
-                    content: "User has already verified their email."
-                );
-            }
-        } catch (\Exception $e) {
-            $this->dispatch('showNotification', 
-                type: 'error', 
-                content: 'Failed to resend setup instructions: ' . $e->getMessage()
-            );
-        }
-    }
-
 
     public function sortBy($field)
     {
@@ -360,44 +298,33 @@ class UserManagement extends Component
         } else {
             $this->sortDirection = 'asc';
         }
-
+        
         $this->sortField = $field;
-    }
-
-    public function updatingSearch()
-    {
-        // No need to reset page since we removed pagination
     }
 
     public function render()
     {
-        $users = User::with(['college', 'department', 'roles'])
-            ->when($this->search, function ($query) {
-                $query->where(function ($q) {
-                    $q->where('firstname', 'like', '%' . $this->search . '%')
-                    ->orWhere('middlename', 'like', '%' . $this->search . '%')
-                    ->orWhere('lastname', 'like', '%' . $this->search . '%')
-                    ->orWhere('email', 'like', '%' . $this->search . '%');
-                });
-            })
-            ->when($this->collegeFilter, function ($query) {
-                $query->where('college_id', $this->collegeFilter);
-            })
-            ->when($this->departmentFilter, function ($query) {
-                $query->where('department_id', $this->departmentFilter);
-            })
-            ->orderBy($this->sortField, $this->sortDirection)
-            ->get();
+        $query = User::with(['college', 'roles'])
+            ->where(function ($q) {
+                $q->where('firstname', 'like', '%' . $this->search . '%')
+                  ->orWhere('middlename', 'like', '%' . $this->search . '%')
+                  ->orWhere('lastname', 'like', '%' . $this->search . '%')
+                  ->orWhere('email', 'like', '%' . $this->search . '%')
+                  ->orWhereHas('college', function ($collegeQuery) {
+                      $collegeQuery->where('name', 'like', '%' . $this->search . '%');
+                  });
+            });
+
+        if ($this->collegeFilter) {
+            $query->where('college_id', $this->collegeFilter);
+        }
+
+        $users = $query->orderBy($this->sortField, $this->sortDirection)
+            ->paginate(10);
 
         $colleges = College::orderBy('name')->get();
-        $departments = Department::orderBy('name')->get();
         $roles = Role::orderBy('name')->get();
 
-        return view('livewire.admin.management.user-management', [
-            'users' => $users,
-            'colleges' => $colleges,
-            'departments' => $departments,
-            'roles' => $roles,
-        ]);
+        return view('livewire.admin.management.user-management', compact('users', 'colleges', 'roles'));
     }
 }

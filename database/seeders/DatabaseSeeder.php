@@ -21,8 +21,7 @@ class DatabaseSeeder extends Seeder
         Role::firstOrCreate(['name' => 'admin']);
         Role::firstOrCreate(['name' => 'super-admin']);
 
-        $this->call(CollegesAndDepartmentsSeeder::class);
-        $this->call(CourseSeeder::class);
+        $this->call(AcademicProgramsSeeder::class);
         $this->call(RequirementTypeSeeder::class);
 
         // random users
@@ -38,7 +37,6 @@ class DatabaseSeeder extends Seeder
             'extensionname' => '',
             'email' => 'domingricalde@gmail.com',
             'college_id' => '1',
-            'department_id' => '1',
             'email_verified_at' => now(),
             'password' => bcrypt('password'),
         ]);
@@ -51,7 +49,6 @@ class DatabaseSeeder extends Seeder
             'extensionname' => '',
             'email' => 'admin@gmail.com',
             'college_id' => '1',
-            'department_id' => '1',
             'email_verified_at' => now(),
             'password' => bcrypt('password'),
         ]);
@@ -64,7 +61,6 @@ class DatabaseSeeder extends Seeder
             'extensionname' => '',
             'email' => 'superadmin@gmail.com',
             'college_id' => '1',
-            'department_id' => '1',
             'email_verified_at' => now(),
             'password' => bcrypt('password'),
         ]);

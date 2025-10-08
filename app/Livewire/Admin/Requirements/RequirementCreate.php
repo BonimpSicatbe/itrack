@@ -2,8 +2,7 @@
 
 namespace App\Livewire\Admin\Requirements;
 
-use App\Models\College;
-use App\Models\Department;
+use App\Models\Program;
 use App\Models\Requirement;
 use App\Models\RequirementType;
 use App\Models\Semester;
@@ -28,14 +27,9 @@ class RequirementCreate extends Component
     #[Validate('required|date|after_or_equal:today')]
     public $due = '';
 
-    #[Validate('required|in:low,normal,high')]
-    public $priority = 'normal';
-
     // --- ASSIGNMENT PROPERTIES ---
-    public $selectedColleges = [];
-    public $selectedDepartments = [];
-    public $selectAllColleges = false;
-    public $selectAllDepartments = false;
+    public $selectedPrograms = [];
+    public $selectAllPrograms = false;
 
     // --- FILE PROPERTIES ---
     public $required_files = [];
@@ -46,11 +40,17 @@ class RequirementCreate extends Component
     // Track previous selection for requirement types
     public $previousRequirementTypes = [];
 
+    // Track existing requirement names to disable already created types
+    public $existingRequirementNames = [];
+
     public function mount()
     {
         // Populate the map on mount for quick lookup
         $this->folderChildrenMap = $this->getFolderChildrenMap();
         $this->previousRequirementTypes = $this->selectedRequirementTypes;
+        
+        // Get all existing requirement names for the active semester
+        $this->loadExistingRequirementNames();
     }
 
     protected function getFolderChildrenMap(): array
@@ -62,6 +62,88 @@ class RequirementCreate extends Component
             $map[$folder->id] = $folder->children->pluck('id')->toArray();
         }
         return $map;
+    }
+
+    protected function loadExistingRequirementNames()
+    {
+        $activeSemester = $this->activeSemester;
+        if ($activeSemester) {
+            $this->existingRequirementNames = Requirement::where('semester_id', $activeSemester->id)
+                ->pluck('name')
+                ->toArray();
+        }
+    }
+
+    // Check if a requirement type is already created
+    public function isRequirementCreated($requirementType)
+    {
+        if ($requirementType->is_folder && $requirementType->children->isNotEmpty()) {
+            // For folders, check if any child requirement name exists
+            foreach ($requirementType->children as $child) {
+                $childWithRelations = RequirementType::with('children')->find($child->id);
+                
+                if ($childWithRelations->children->isNotEmpty()) {
+                    // Grandchild level
+                    foreach ($childWithRelations->children as $grandchild) {
+                        $fullName = $grandchild->name . ' ' . $child->name . ' ' . $requirementType->name;
+                        if (in_array($fullName, $this->existingRequirementNames)) {
+                            return true;
+                        }
+                    }
+                } else {
+                    // Child level
+                    $fullName = $child->name . ' ' . $requirementType->name;
+                    if (in_array($fullName, $this->existingRequirementNames)) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        } else {
+            // For individual requirements
+            if ($requirementType->parent_id) {
+                $parent = RequirementType::with('parent')->find($requirementType->parent_id);
+                $grandparent = $parent->parent ?? null;
+                
+                if ($grandparent) {
+                    $fullName = $requirementType->name . ' ' . $parent->name . ' ' . $grandparent->name;
+                } else {
+                    $fullName = $requirementType->name . ' ' . $parent->name;
+                }
+                
+                return in_array($fullName, $this->existingRequirementNames);
+            } else {
+                return in_array($requirementType->name, $this->existingRequirementNames);
+            }
+        }
+    }
+
+    // Check if a specific child requirement is already created
+    public function isChildRequirementCreated($child, $parent)
+    {
+        $childWithRelations = RequirementType::with('children')->find($child->id);
+        
+        if ($childWithRelations->children->isNotEmpty()) {
+            // This child has grandchildren
+            foreach ($childWithRelations->children as $grandchild) {
+                $fullName = $grandchild->name . ' ' . $child->name . ' ' . $parent->name;
+                if (in_array($fullName, $this->existingRequirementNames)) {
+                    return true;
+                }
+            }
+            return false;
+        } else {
+            // This child is a leaf node
+            $fullName = $child->name . ' ' . $parent->name;
+            return in_array($fullName, $this->existingRequirementNames);
+        }
+    }
+
+    // Check if a specific grandchild requirement is already created
+    public function isGrandchildRequirementCreated($grandchild, $child, $parent)
+    {
+        $fullName = $grandchild->name . ' ' . $child->name . ' ' . $parent->name;
+        return in_array($fullName, $this->existingRequirementNames);
     }
 
     // --- COMPUTED PROPERTIES ---
@@ -81,21 +163,9 @@ class RequirementCreate extends Component
     }
 
     #[Computed]
-    public function colleges()
+    public function programs()
     {
-        return College::with('departments')->get();
-    }
-
-    #[Computed]
-    public function departments()
-    {
-        if ($this->selectAllColleges) {
-            return Department::with('college')->get();
-        }
-        if (!empty($this->selectedColleges)) {
-            return Department::with('college')->whereIn('college_id', $this->selectedColleges)->get();
-        }
-        return collect();
+        return Program::all();
     }
 
     // --- VALIDATION RULES ---
@@ -122,12 +192,9 @@ class RequirementCreate extends Component
             'isOtherSelected' => ['boolean'],
 
             'due' => ['required', 'date', 'after_or_equal:today'],
-            'priority' => ['required', 'in:low,normal,high'],
             
-            'selectedColleges' => ['required', 'array', 'min:1'],
-            'selectedColleges.*' => ['exists:colleges,id'],
-            'selectedDepartments' => ['sometimes', 'array'],
-            'selectedDepartments.*' => ['exists:departments,id'],
+            'selectedPrograms' => ['required', 'array', 'min:1'],
+            'selectedPrograms.*' => ['exists:programs,id'],
             
             'required_files' => ['nullable', 'array', 'max:5'],
             'required_files.*' => ['file', 'max:15360', 'mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,jpg,jpeg,png,gif,txt,zip,rar,7z,mp4,avi,mkv,mp3,wav'],
@@ -137,8 +204,7 @@ class RequirementCreate extends Component
     public function validationAttributes()
     {
         return [
-            'selectedColleges' => 'colleges',
-            'selectedDepartments' => 'departments',
+            'selectedPrograms' => 'programs',
             'otherRequirementName' => 'requirement name',
             'selectedRequirementTypes' => 'requirement type selection',
         ];
@@ -191,9 +257,6 @@ class RequirementCreate extends Component
         
         // Update previous selection for next change
         $this->previousRequirementTypes = $this->selectedRequirementTypes;
-        
-        // REMOVED: Don't automatically clear "Other" when selecting predefined types
-        // This allows both to be selected simultaneously
     }
 
     
@@ -206,51 +269,12 @@ class RequirementCreate extends Component
     }
 
     // --- ASSIGNMENT HOOKS ---
-    public function updatedSelectAllColleges($value)
+    public function updatedSelectAllPrograms($value)
     {
         if ($value) {
-            $this->selectedColleges = $this->colleges->pluck('id')->toArray();
-            $this->selectedDepartments = $this->departments->pluck('id')->toArray();
-            $this->selectAllDepartments = true;
+            $this->selectedPrograms = $this->programs->pluck('id')->toArray();
         } else {
-            $this->selectedColleges = [];
-            $this->selectedDepartments = [];
-            $this->selectAllDepartments = false;
-        }
-    }
-
-    public function updatedSelectedColleges()
-    {
-        $this->selectAllColleges = false;
-        $this->selectAllDepartments = false;
-        
-        // Reset departments when colleges change
-        if (empty($this->selectedColleges)) {
-            $this->selectedDepartments = [];
-        } else {
-            // Keep only departments that belong to selected colleges
-            $validDepartments = $this->departments->pluck('id')->toArray();
-            $this->selectedDepartments = array_intersect($this->selectedDepartments, $validDepartments);
-        }
-    }
-
-    public function updatedSelectAllDepartments($value)
-    {
-        if ($value && (!empty($this->selectedColleges) || $this->selectAllColleges)) {
-            $this->selectedDepartments = $this->departments->pluck('id')->toArray();
-        } else {
-            $this->selectedDepartments = [];
-        }
-    }
-
-    public function updatedSelectedDepartments()
-    {
-        $this->selectAllDepartments = false;
-        
-        if (!empty($this->selectedColleges) || $this->selectAllColleges) {
-            $allDepartments = $this->departments->pluck('id')->toArray();
-            $this->selectAllDepartments = !empty($allDepartments) && 
-                                         count($this->selectedDepartments) === count($allDepartments);
+            $this->selectedPrograms = [];
         }
     }
 
@@ -259,33 +283,31 @@ class RequirementCreate extends Component
     {
         $users = collect();
         
-        // If all colleges are selected, get all users from all colleges
-        if ($assignedData['selectAllColleges']) {
-            $users = User::whereNotNull('college_id')->get();
+        // Get the active semester
+        $activeSemester = $this->activeSemester;
+        if (!$activeSemester) {
+            return $users;
+        }
+
+        // If all programs are selected, get all users from courses in all programs for the active semester
+        if ($assignedData['selectAllPrograms']) {
+            $users = User::whereHas('courseAssignments', function ($query) use ($activeSemester) {
+                    $query->where('semester_id', $activeSemester->id)
+                        ->whereHas('course', function ($courseQuery) {
+                            $courseQuery->whereNotNull('program_id');
+                        });
+                })
+                ->get();
         } 
-        // If specific colleges are selected
-        elseif (!empty($assignedData['colleges'])) {
-            $collegeUsers = User::whereIn('college_id', $assignedData['colleges'])->get();
-            $users = $users->merge($collegeUsers);
-        }
-        
-        // If all departments are selected (and we have colleges selected), get all users from those departments
-        if ($assignedData['selectAllDepartments'] && (!empty($assignedData['colleges']) || $assignedData['selectAllColleges'])) {
-            $departmentQuery = User::whereNotNull('department_id');
-            
-            if (!$assignedData['selectAllColleges'] && !empty($assignedData['colleges'])) {
-                // Get departments from selected colleges
-                $departmentIds = Department::whereIn('college_id', $assignedData['colleges'])->pluck('id');
-                $departmentQuery->whereIn('department_id', $departmentIds);
-            }
-            
-            $departmentUsers = $departmentQuery->get();
-            $users = $users->merge($departmentUsers);
-        }
-        // If specific departments are selected
-        elseif (!empty($assignedData['departments'])) {
-            $departmentUsers = User::whereIn('department_id', $assignedData['departments'])->get();
-            $users = $users->merge($departmentUsers);
+        // If specific programs are selected
+        elseif (!empty($assignedData['programs'])) {
+            $users = User::whereHas('courseAssignments', function ($query) use ($activeSemester, $assignedData) {
+                    $query->where('semester_id', $activeSemester->id)
+                        ->whereHas('course', function ($courseQuery) use ($assignedData) {
+                            $courseQuery->whereIn('program_id', $assignedData['programs']);
+                        });
+                })
+                ->get();
         }
         
         // Remove duplicates and filter out admin users
@@ -306,44 +328,76 @@ class RequirementCreate extends Component
 
             // 1. Prepare ASSIGNMENT DATA 
             $assignedData = [
-                'colleges' => $this->selectedColleges,
-                'departments' => $this->selectedDepartments,
-                'selectAllColleges' => $this->selectAllColleges,
-                'selectAllDepartments' => $this->selectAllDepartments
+                'programs' => $this->selectedPrograms,
+                'selectAllPrograms' => $this->selectAllPrograms,
             ];
 
             // 2. Determine REQUIREMENTS TO CREATE (Name and Type ID)
             $requirementsToCreate = [];
 
-            // Handle predefined requirement types (can be combined with "Other")
+            // Handle predefined requirement types
             if (!empty($this->selectedRequirementTypes)) {
-                // Filter out parent IDs, only keep children (parent_id is not null) or standalones (is_folder is false)
-                $allSelectedTypes = RequirementType::whereIn('id', $this->selectedRequirementTypes)->get();
-                $typeIdsToCreate = [];
-                
-                foreach ($allSelectedTypes as $type) {
-                    // We only create requirements for actual items, not the folders
-                    if (!$type->is_folder) {
-                        $typeIdsToCreate[] = $type->id;
-                    }
-                }
-
-                $typesForCreation = RequirementType::with('parent')
-                    ->whereIn('id', $typeIdsToCreate)
+                // Get all selected types with their relationships
+                $allSelectedTypes = RequirementType::with(['parent', 'children'])
+                    ->whereIn('id', $this->selectedRequirementTypes)
                     ->get();
-                
-                foreach ($typesForCreation as $type) {
-                    if ($type->parent) {
-                        // Create name as "TOS Midterm"
-                        $fullName = $type->parent->name . ' ' . $type->name; 
-                    } else {
-                        $fullName = $type->name;
+
+                foreach ($allSelectedTypes as $type) {
+                    // If this type HAS CHILDREN (is a parent folder), create requirements for ALL its children
+                    if ($type->children->isNotEmpty()) {
+                        foreach ($type->children as $child) {
+                            // Check if the child itself has children (nested folders)
+                            $childWithRelations = RequirementType::with('children')->find($child->id);
+                            
+                            if ($childWithRelations->children->isNotEmpty()) {
+                                // If the child has children, create requirements for THOSE grandchildren
+                                foreach ($childWithRelations->children as $grandchild) {
+                                    // Format: "Grandchild Name + Child Name + Parent Name" 
+                                    // (e.g., "Question 1 TOS Midterm")
+                                    $fullName = $grandchild->name . ' ' . $child->name . ' ' . $type->name;
+                                    
+                                    $requirementsToCreate[] = [
+                                        'name' => $fullName, 
+                                        'type_ids' => [$grandchild->id], // Store the GRANDCHILD ID
+                                    ];
+                                }
+                            } else {
+                                // If the child has NO children, create requirement for the child
+                                // Format: "Child Name + Parent Name" (e.g., "TOS Midterm")
+                                $fullName = $child->name . ' ' . $type->name;
+                                
+                                $requirementsToCreate[] = [
+                                    'name' => $fullName, 
+                                    'type_ids' => [$child->id], // Store the CHILD ID
+                                ];
+                            }
+                        }
+                    } 
+                    // If this type has NO CHILDREN but has a PARENT (is a leaf node)
+                    elseif ($type->parent_id && $type->children->isEmpty()) {
+                        $parent = RequirementType::with('parent')->find($type->parent_id);
+                        $grandparent = $parent->parent;
+                        
+                        if ($grandparent) {
+                            // Three levels: "Leaf + Parent + Grandparent" (e.g., "Question 1 TOS Midterm")
+                            $fullName = $type->name . ' ' . $parent->name . ' ' . $grandparent->name;
+                        } else {
+                            // Two levels: "Leaf + Parent" (e.g., "TOS Midterm")
+                            $fullName = $type->name . ' ' . $parent->name;
+                        }
+                        
+                        $requirementsToCreate[] = [
+                            'name' => $fullName,
+                            'type_ids' => [$type->id],
+                        ];
                     }
-                    
-                    $requirementsToCreate[] = [
-                        'name' => $fullName, 
-                        'type_ids' => [$type->id], // Store as array for consistency
-                    ];
+                    // If this type has NO CHILDREN and NO PARENT (standalone leaf node)
+                    elseif (!$type->parent_id && $type->children->isEmpty()) {
+                        $requirementsToCreate[] = [
+                            'name' => $type->name,
+                            'type_ids' => [$type->id],
+                        ];
+                    }
                 }
             }
 
@@ -360,6 +414,12 @@ class RequirementCreate extends Component
                 throw new \Exception('Please select at least one requirement type or specify a custom requirement.');
             }
 
+            // Remove duplicate requirements (in case same requirement was selected multiple ways)
+            $requirementsToCreate = collect($requirementsToCreate)
+                ->unique('name')
+                ->values()
+                ->toArray();
+
             // 3. Get assigned users for notifications
             $assignedUsers = $this->getAssignedUsers($assignedData);
 
@@ -372,7 +432,6 @@ class RequirementCreate extends Component
                 $requirement = Requirement::create([
                     'name' => $data['name'], 
                     'due' => $this->due,
-                    'priority' => $this->priority,
                     'assigned_to' => $assignedData, 
                     'requirement_type_ids' => $data['type_ids'], // This will be automatically cast to JSON
                     'created_by' => Auth::id(),

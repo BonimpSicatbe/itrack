@@ -24,7 +24,7 @@
         <div class="flex items-center gap-2 bg-green-50 border border-green-600 px-4 py-2 rounded-xl shadow-sm">
             <i class="fa-solid fa-users text-green-700"></i>
             <span class="text-sm font-semibold text-green-700">
-                Total Users: {{ $users->count() }}
+                Total Users: {{ $users->total() }}
             </span>
         </div>
 
@@ -37,7 +37,7 @@
                 </div>
                 <input type="text" wire:model.live.debounce.300ms="search"
                     class="pl-10 block w-full rounded-xl border-gray-300 shadow-sm focus:border-green-600 focus:ring-green-600 sm:text-sm"
-                    placeholder="Search by name or email">
+                    placeholder="Search by name, email, or college">
             </div>
         </div>
 
@@ -52,18 +52,6 @@
                 @endforeach
             </select>
         </div>
-
-        <!-- Department Filter -->
-        <div class="w-full sm:w-1/4">
-            <label class="block text-sm font-semibold text-gray-700 mb-1">Department</label>
-            <select wire:model.live="departmentFilter"
-                class="block w-full rounded-xl border-gray-300 shadow-sm focus:border-green-600 focus:ring-green-600 sm:text-sm">
-                <option value="">All Departments</option>
-                @foreach ($departments as $department)
-                    <option value="{{ $department->id }}">{{ $department->name }}</option>
-                @endforeach
-            </select>
-        </div>
     </div>
 
     <!-- Users Table -->
@@ -72,7 +60,7 @@
             <thead>
                 <tr class="bg-base-300 font-bold uppercase">
                     <th class="cursor-pointer hover:bg-green-800 bg-green-700 p-4 text-left"
-                        wire:click="sortBy('lastname')" style="color: white; width: 25%;">
+                        wire:click="sortBy('lastname')" style="color: white; width: 30%;">
                         <div class="flex items-center pt-2 pb-2">
                             Name
                             <div class="ml-1">
@@ -84,9 +72,8 @@
                             </div>
                         </div>
                     </th>
-                    <th class="p-4 text-left bg-green-700" style="color: white; width: 20%;">Email</th>
-                    <th class="p-4 text-left bg-green-700" style="color: white; width: 15%;">College</th>
-                    <th class="p-4 text-left bg-green-700" style="color: white; width: 15%;">Department</th>
+                    <th class="p-4 text-left bg-green-700" style="color: white; width: 25%;">Email</th>
+                    <th class="p-4 text-left bg-green-700" style="color: white; width: 20%;">College</th>
                     <th class="p-4 text-left bg-green-700" style="color: white; width: 15%;">Roles</th>
                     <th class="p-4 text-center bg-green-700" style="color: white; width: 10%;">Actions</th>
                 </tr>
@@ -114,7 +101,7 @@
                             </div>
                         </td>
                         <td class="whitespace-nowrap p-4">
-                            <div class="text-sm text-gray-900 mb-3">{{ $user->email }}</div>
+                            <div class="text-sm text-gray-900">{{ $user->email }}</div>
                             @if ($user->email_verified_at)
                                 <span
                                     class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
@@ -122,15 +109,12 @@
                                 </span>
                             @else
                                 <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
-                                    Unverified - Setup Required
+                                    Unverified
                                 </span>
                             @endif
                         </td>
                         <td class="whitespace-nowrap p-4 text-sm text-gray-500">
                             {{ $user->college->name ?? 'N/A' }}
-                        </td>
-                        <td class="whitespace-nowrap p-4 text-sm text-gray-500">
-                            {{ $user->department->name ?? 'N/A' }}
                         </td>
                         <td class="whitespace-nowrap p-4">
                             @foreach ($user->roles as $role)
@@ -163,18 +147,23 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="6" class="text-center p-4">No users found matching your criteria.</td>
+                        <td colspan="5" class="text-center p-4">No users found matching your criteria.</td>
                     </tr>
                 @endforelse
             </tbody>
         </table>
     </div>
 
+    <!-- Pagination -->
+    <div class="mt-4 px-6">
+        {{ $users->links() }}
+    </div>
+
     <!-- User Detail Sidebar -->
     @if ($selectedUser)
         <x-modal name="user-details-modal" :show="!!$selectedUser" maxWidth="2xl">
             <!-- Header -->
-            <div class="bg-1C7C54 text-white rounded-t-xl px-6 py-4 flex items-center justify-between">
+            <div class="bg-green-700 text-white rounded-t-xl px-6 py-4 flex items-center justify-between">
                 <div class="flex items-center space-x-3">
                     <i class="fa-solid fa-user text-lg"></i>
                     <h3 class="text-xl font-semibold">User Details</h3>
@@ -281,13 +270,6 @@
                                     {{ $selectedUser->college->name ?? 'N/A' }}
                                 </dd>
                             </div>
-                            <div class="sm:flex sm:items-center">
-                                <dt class="text-sm text-gray-500 font-medium sm:w-32 sm:flex-none sm:pr-4">Department
-                                </dt>
-                                <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                                    {{ $selectedUser->department->name ?? 'N/A' }}
-                                </dd>
-                            </div>
                         </dl>
                     </div>
 
@@ -314,27 +296,13 @@
                 </div>
 
                 <!-- Action buttons -->
-                <div class="mt-6 pt-4 border-t border-gray-200 flex justify-between items-center">
-                    <!-- Left side: Resend button for unverified users -->
-                    @if(!$selectedUser->email_verified_at)
-                        <button type="button"
-                                wire:click="resendSetupInstructions({{ $selectedUser->id }})"
-                                class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 cursor-pointer">
-                            <i class="fa-solid fa-paper-plane mr-2"></i> Resend Setup Instructions
-                        </button>
-                    @else
-                        <div></div> <!-- Empty div for spacing -->
-                    @endif
-
-                    <!-- Right side: Close and Edit buttons -->
-                    <div class="flex space-x-3">
-                        <button type="button" wire:click="closeUserDetail" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 cursor-pointer">
-                            Close
-                        </button>
-                        <button type="button" wire:click="openEditUserModal({{ $selectedUser->id }})" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 cursor-pointer">
-                            <i class="fa-solid fa-pen-to-square mr-2"></i> Edit User
-                        </button>
-                    </div>
+                <div class="mt-6 pt-4 border-t border-gray-200 flex justify-end space-x-3">
+                    <button type="button" wire:click="closeUserDetail" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 cursor-pointer">
+                        Close
+                    </button>
+                    <button type="button" wire:click="openEditUserModal({{ $selectedUser->id }})" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 cursor-pointer">
+                        <i class="fa-solid fa-pen-to-square mr-2"></i> Edit User
+                    </button>
                 </div>
             </div>
         </x-modal>
@@ -397,30 +365,21 @@
                         <input type="email" wire:model="newUser.email"
                             class="mt-2 block w-full rounded-xl border-gray-300 sm:text-sm"
                             placeholder="Enter email address">
+                        @error('newUser.email')
+                            <span class="text-red-500 text-xs">{{ $message }}</span>
+                        @enderror
                     </div>
 
-                    <!-- College/Department -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700">College</label>
-                            <select wire:model="newUser.college_id"
-                                class="mt-2 block w-full rounded-xl border-gray-300 sm:text-sm">
-                                <option value="">Select College</option>
-                                @foreach ($colleges as $college)
-                                    <option value="{{ $college->id }}">{{ $college->name }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700">Department</label>
-                            <select wire:model="newUser.department_id"
-                                class="mt-2 block w-full rounded-xl border-gray-300 sm:text-sm">
-                                <option value="">Select Department</option>
-                                @foreach ($departments as $department)
-                                    <option value="{{ $department->id }}">{{ $department->name }}</option>
-                                @endforeach
-                            </select>
-                        </div>
+                    <!-- College -->
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700">College</label>
+                        <select wire:model="newUser.college_id"
+                            class="mt-2 block w-full rounded-xl border-gray-300 sm:text-sm">
+                            <option value="">Select College</option>
+                            @foreach ($colleges as $college)
+                                <option value="{{ $college->id }}">{{ $college->name }}</option>
+                            @endforeach
+                        </select>
                     </div>
 
                     <div>
@@ -432,6 +391,9 @@
                                 <option value="{{ $role->id }}">{{ ucfirst($role->name) }}</option>
                             @endforeach
                         </select>
+                        @error('newUser.role')
+                            <span class="text-red-500 text-xs">{{ $message }}</span>
+                        @enderror
                     </div>
 
                     <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-4">
@@ -442,7 +404,7 @@
                             <div class="ml-3">
                                 <h3 class="text-sm font-medium text-blue-800">Auto-generated Password</h3>
                                 <div class="mt-1 text-sm text-blue-700">
-                                    <p>A secure password will be automatically generated and should be sent to the user's email address.</p>
+                                    <p>A secure password will be automatically generated and sent to the user's email address.</p>
                                 </div>
                             </div>
                         </div>
@@ -456,7 +418,7 @@
                         Cancel
                     </button>
                     <button type="button" wire:click="addUser"
-                        class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-full shadow-sm text-white bg-green-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-73E2A7 cursor-pointer">
+                        class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-full shadow-sm text-white bg-green-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 cursor-pointer">
                         <i class="fa-solid fa-user-plus mr-2"></i> Add User
                     </button>
                 </div>
@@ -526,28 +488,16 @@
                         @enderror
                     </div>
 
-                    <!-- College/Department -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700">College</label>
-                            <select wire:model="editingUser.college_id"
-                                class="mt-2 block w-full rounded-xl border-gray-300 sm:text-sm">
-                                <option value="">Select College</option>
-                                @foreach ($colleges as $college)
-                                    <option value="{{ $college->id }}">{{ $college->name }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700">Department</label>
-                            <select wire:model="editingUser.department_id"
-                                class="mt-2 block w-full rounded-xl border-gray-300 sm:text-sm">
-                                <option value="">Select Department</option>
-                                @foreach ($departments as $department)
-                                    <option value="{{ $department->id }}">{{ $department->name }}</option>
-                                @endforeach
-                            </select>
-                        </div>
+                    <!-- College -->
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700">College</label>
+                        <select wire:model="editingUser.college_id"
+                            class="mt-2 block w-full rounded-xl border-gray-300 sm:text-sm">
+                            <option value="">Select College</option>
+                            @foreach ($colleges as $college)
+                                <option value="{{ $college->id }}">{{ $college->name }}</option>
+                            @endforeach
+                        </select>
                     </div>
 
                     <div>
@@ -591,7 +541,7 @@
                         Cancel
                     </button>
                     <button type="button" wire:click="updateUser"
-                        class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-full shadow-sm text-white bg-green-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-73E2A7 cursor-pointer">
+                        class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-full shadow-sm text-white bg-green-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 cursor-pointer">
                         <i class="fa-solid fa-user-check mr-2"></i> Update User
                     </button>
                 </div>

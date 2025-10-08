@@ -8,7 +8,7 @@
             <!-- Title -->
             <div class="flex items-center gap-3">
                 <i class="fa-solid fa-gears text-white text-xl"></i>
-                <h2 class="text-xl font-semibold text-white">System Management</h2>
+                <h2 class="text-xl font-semibold text-white">mement</h2>
             </div>
 
             <!-- Tabs Navigation -->
@@ -38,24 +38,24 @@
                         @livewire('admin.management.semester-management')
                     </div>
                 @break
-                @case('users')
-                    <div>
-                        @livewire('admin.management.user-management')
-                    </div>
-                @break
-                @case('courses')
-                    <div>
-                        @livewire('admin.management.course-management')
-                    </div>
-                @break
                 @case('colleges')
                     <div>
                         @livewire('admin.management.college-management')
                     </div>
                 @break
-                @case('departments')
+                @case('users')
                     <div>
-                        @livewire('admin.management.department-management')
+                        @livewire('admin.management.user-management')
+                    </div>
+                @break
+                @case('programs')
+                    <div>
+                        @livewire('admin.management.program-management')
+                    </div>
+                @break  w
+                @case('courses')
+                    <div>
+                        @livewire('admin.management.course-management')
                     </div>
                 @break
             @endswitch

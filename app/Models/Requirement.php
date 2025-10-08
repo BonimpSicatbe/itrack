@@ -97,27 +97,19 @@ class Requirement extends Model implements HasMedia
 
         $parts = [];
 
-        // Handle colleges
-        if (isset($assignedTo['selectAllColleges']) && $assignedTo['selectAllColleges']) {
-            $parts[] = 'All Colleges';
-        } elseif (isset($assignedTo['colleges']) && is_array($assignedTo['colleges']) && !empty($assignedTo['colleges'])) {
-            $collegeNames = College::whereIn('id', $assignedTo['colleges'])
-                ->pluck('name')
+        // Handle programs
+        if (isset($assignedTo['selectAllPrograms']) && $assignedTo['selectAllPrograms']) {
+            $parts[] = 'All Programs';
+        } elseif (isset($assignedTo['programs']) && is_array($assignedTo['programs']) && !empty($assignedTo['programs'])) {
+            $programNames = Program::whereIn('id', $assignedTo['programs'])
+                ->get()
+                ->map(function ($program) {
+                    return $program->program_code . ' - ' . $program->program_name;
+                })
                 ->toArray();
-            if (!empty($collegeNames)) {
-                $parts[] = 'Colleges: ' . implode(', ', $collegeNames);
-            }
-        }
-
-        // Handle departments
-        if (isset($assignedTo['selectAllDepartments']) && $assignedTo['selectAllDepartments']) {
-            $parts[] = 'All Departments';
-        } elseif (isset($assignedTo['departments']) && is_array($assignedTo['departments']) && !empty($assignedTo['departments'])) {
-            $departmentNames = Department::whereIn('id', $assignedTo['departments'])
-                ->pluck('name')
-                ->toArray();
-            if (!empty($departmentNames)) {
-                $parts[] = 'Departments: ' . implode(', ', $departmentNames);
+                
+            if (!empty($programNames)) {
+                $parts[] = 'Programs: ' . implode(', ', $programNames);
             }
         }
 
@@ -217,36 +209,26 @@ class Requirement extends Model implements HasMedia
     // ========== Methods ==========
 
     /**
-     * Check if a user belongs to this requirement's assigned colleges AND departments
+     * Check if a user belongs to this requirement's assigned programs
      */
     public function isAssignedToUser(User $user): bool
     {
         $assignedTo = $this->assigned_to ?? [];
         
-        $colleges = $assignedTo['colleges'] ?? [];
-        $departments = $assignedTo['departments'] ?? [];
-        $selectAllColleges = $assignedTo['selectAllColleges'] ?? false;
-        $selectAllDepartments = $assignedTo['selectAllDepartments'] ?? false;
+        $programs = $assignedTo['programs'] ?? [];
+        $selectAllPrograms = $assignedTo['selectAllPrograms'] ?? false;
 
-        // Check if user has college and department
-        if (!$user->college_id || !$user->department_id) {
+        // Check if user has a program
+        if (!$user->program_id) {
             return false;
         }
 
-        // Convert user IDs to string for comparison (since JSON stores them as strings)
-        $userCollegeId = (string)$user->college_id;
-        $userDepartmentId = (string)$user->department_id;
+        // Convert user program ID to string for comparison (since JSON stores them as strings)
+        $userProgramId = (string)$user->program_id;
 
-        // Check college assignment - user's college must be in the colleges array OR selectAllColleges is true
-        $collegeAssigned = $selectAllColleges || 
-                          (is_array($colleges) && in_array($userCollegeId, $colleges));
-
-        // Check department assignment - user's department must be in the departments array OR selectAllDepartments is true
-        $departmentAssigned = $selectAllDepartments ||
-                            (is_array($departments) && in_array($userDepartmentId, $departments));
-
-        // User must belong to BOTH assigned college AND assigned department
-        return $collegeAssigned && $departmentAssigned;
+        // Check program assignment - user's program must be in the programs array OR selectAllPrograms is true
+        return $selectAllPrograms || 
+               (is_array($programs) && in_array($userProgramId, $programs));
     }
 
     /**
@@ -256,19 +238,13 @@ class Requirement extends Model implements HasMedia
     {
         $assignedTo = $this->assigned_to ?? [];
         
-        $colleges = $assignedTo['colleges'] ?? [];
-        $departments = $assignedTo['departments'] ?? [];
-        $selectAllColleges = $assignedTo['selectAllColleges'] ?? false;
-        $selectAllDepartments = $assignedTo['selectAllDepartments'] ?? false;
+        $programs = $assignedTo['programs'] ?? [];
+        $selectAllPrograms = $assignedTo['selectAllPrograms'] ?? false;
 
         $query = User::query();
 
-        if (!$selectAllColleges && !empty($colleges)) {
-            $query->whereIn('college_id', $colleges);
-        }
-
-        if (!$selectAllDepartments && !empty($departments)) {
-            $query->whereIn('department_id', $departments);
+        if (!$selectAllPrograms && !empty($programs)) {
+            $query->whereIn('program_id', $programs);
         }
 
         return $query->get();

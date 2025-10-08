@@ -7,6 +7,9 @@ use App\Models\Department;
 use App\Models\Requirement;
 use App\Models\Semester;
 use App\Models\User;
+use App\Models\Program;
+use App\Models\Course;
+use App\Models\CourseAssignment;
 use Livewire\Component;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
@@ -132,51 +135,36 @@ class RequirementIndex extends Component
             ->orderBy($this->sortField, $this->sortDirection)
             ->get();
 
-        return $requirements->map(function ($requirement) {
-            // assigned_to is now automatically an array due to the cast
+        return $requirements->map(function ($requirement) use ($activeSemester) {
             $assignedTo = $requirement->assigned_to ?? [];
-            
-            $userQuery = User::query();
-            $hasConditions = false;
-            
-            // Specific colleges AND departments combination
-            if (isset($assignedTo['colleges']) && is_array($assignedTo['colleges']) && 
-                isset($assignedTo['departments']) && is_array($assignedTo['departments'])) {
-                
-                $userQuery->where(function ($query) use ($assignedTo) {
-                    // Users in assigned colleges
-                    $query->whereIn('college_id', $assignedTo['colleges'])
-                        // AND in assigned departments
-                        ->whereIn('department_id', $assignedTo['departments']);
-                });
-                $hasConditions = true;
+            $count = 0;
+
+            // Check if programs are assigned to this requirement
+            if (isset($assignedTo['programs']) && is_array($assignedTo['programs']) && !empty($assignedTo['programs'])) {
+                // Get unique professors assigned to courses in the specified programs for active semester
+                $professorIds = CourseAssignment::where('semester_id', $activeSemester->id)
+                    ->whereHas('course', function ($query) use ($assignedTo) {
+                        $query->whereIn('program_id', $assignedTo['programs']);
+                    })
+                    ->distinct()
+                    ->pluck('professor_id')
+                    ->toArray();
+
+                $count = count($professorIds);
+            } 
+            // Check if "select all programs" is enabled
+            elseif (isset($assignedTo['selectAllPrograms']) && $assignedTo['selectAllPrograms']) {
+                // Get unique professors assigned to any course in active semester
+                $professorIds = CourseAssignment::where('semester_id', $activeSemester->id)
+                    ->distinct()
+                    ->pluck('professor_id')
+                    ->toArray();
+
+                $count = count($professorIds);
             }
-            // Only colleges assigned
-            elseif (isset($assignedTo['colleges']) && is_array($assignedTo['colleges'])) {
-                $userQuery->whereIn('college_id', $assignedTo['colleges']);
-                $hasConditions = true;
-            }
-            // Only departments assigned  
-            elseif (isset($assignedTo['departments']) && is_array($assignedTo['departments'])) {
-                $userQuery->whereIn('department_id', $assignedTo['departments']);
-                $hasConditions = true;
-            }
-            
-            // Handle "select all" cases
-            if (isset($assignedTo['selectAllColleges']) && $assignedTo['selectAllColleges']) {
-                $userQuery->orWhereNotNull('college_id');
-                $hasConditions = true;
-            }
-            
-            if (isset($assignedTo['selectAllDepartments']) && $assignedTo['selectAllDepartments']) {
-                $userQuery->orWhereNotNull('department_id');
-                $hasConditions = true;
-            }
-            
-            if (!$hasConditions) {
+            // If no specific programs assigned and no select all, count = 0
+            else {
                 $count = 0;
-            } else {
-                $count = $userQuery->count();
             }
             
             $requirement->assigned_users_count = $count;

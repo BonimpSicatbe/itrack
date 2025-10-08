@@ -36,7 +36,7 @@
                         type="text" 
                         wire:model.live.debounce.300ms="search"
                         class="pl-10 block w-full rounded-xl border-gray-300 shadow-sm focus:border-green-600 focus:ring-green-600 sm:text-sm" 
-                        placeholder="Search by code, name, description, or professor"
+                        placeholder="Search by code, name, faculty, or program"
                     >
                 </div>
             </div>
@@ -70,8 +70,8 @@
                                 </div>
                             </div>
                         </th>
-                        <th class="p-4 bg-green-700" style="color: white;">Description</th>
-                        <th class="p-4 bg-green-700" style="color: white;">Assigned Professor(s)</th>
+                        <th class="p-4 bg-green-700" style="color: white;">Program</th>
+                        <th class="p-4 bg-green-700" style="color: white;">Assigned Faculty</th>
                         <th class="p-4 text-right bg-green-700" style="color: white;">Actions</th>
                     </tr>
                 </thead>
@@ -84,34 +84,30 @@
                             <td class="whitespace-nowrap p-4">
                                 <div class="text-sm font-medium text-gray-900">{{ $course->course_name }}</div>
                             </td>
-                            <td class="p-4">
-                                <div class="text-sm text-gray-900 max-w-xs truncate">{{ $course->description ?? 'No description' }}</div>
+                            <td class="whitespace-nowrap p-4">
+                                <div class="text-sm font-medium text-gray-900">{{ $course->program->program_code ?? 'N/A' }}</div>
                             </td>
                             <td class="p-4">
                                 @if($course->assignments->count() > 0)
-                                    <div class="space-y-2">
+                                    <div class="space-y-1">
                                         @foreach($course->assignments as $assignment)
-                                            <div class="flex items-center justify-between bg-blue-50 border border-blue-200 rounded-lg px-3 py-2">
-                                                <div class="flex-1">
-                                                    <div class="text-sm font-medium text-gray-900">
-                                                        {{ $assignment->professor->firstname }} {{ $assignment->professor->lastname }}
-                                                    </div>
-                                                    <div class="text-xs text-gray-600">
-                                                        {{ $assignment->semester->name ?? 'N/A' }}
-                                                    </div>
-                                                </div>
+                                            <div class="text-sm text-gray-700">
+                                                {{ $assignment->professor->firstname }} {{ $assignment->professor->lastname }}
+                                                <span class="text-xs text-gray-500 ml-1">
+                                                    ({{ $assignment->semester->name ?? 'N/A' }})
+                                                </span>
                                                 <button 
                                                     wire:click="openRemoveAssignmentModal({{ $assignment->assignment_id }})"
-                                                    class="text-red-500 hover:text-red-700 ml-2 cursor-pointer"
+                                                    class="text-red-500 hover:text-red-700 ml-1 cursor-pointer text-xs"
                                                     title="Remove Assignment"
                                                 >
-                                                    <i class="fa-solid fa-times text-xs"></i>
+                                                    <i class="fa-solid fa-times"></i>
                                                 </button>
                                             </div>
                                         @endforeach
                                     </div>
                                 @else
-                                    <span class="text-sm text-gray-500 italic">No professor assigned</span>
+                                    <span class="text-sm text-gray-500 italic">No faculty assigned</span>
                                 @endif
                             </td>
                             <td class="whitespace-nowrap text-right text-sm font-medium p-4">
@@ -160,12 +156,15 @@
                     </div>
 
                     <div>
-                        <label class="block text-sm font-semibold text-gray-700">Description</label>
-                        <textarea wire:model="newCourse.description"
-                            class="mt-2 block w-full rounded-xl border-gray-300 sm:text-sm"
-                            placeholder="Enter course description"
-                            rows="3"></textarea>
-                        @error('newCourse.description') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
+                        <label class="block text-sm font-semibold text-gray-700">Program *</label>
+                        <select wire:model="newCourse.program_id"
+                            class="mt-2 block w-full rounded-xl border-gray-300 sm:text-sm">
+                            <option value="">Select Program</option>
+                            @foreach($programs as $program)
+                                <option value="{{ $program->id }}">{{ $program->program_name }} ({{ $program->program_code }})</option>
+                            @endforeach
+                        </select>
+                        @error('newCourse.program_id') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                     </div>
                 </div>
 
@@ -187,143 +186,196 @@
     @endif
 
     @if($showEditCourseModal)
-        <x-modal name="edit-course-modal" :show="$showEditCourseModal" maxWidth="3xl">
-            <div class=" text-white rounded-t-xl px-6 py-4 flex items-center space-x-3" style="background: linear-gradient(148deg,rgba(18, 67, 44, 1) 0%, rgba(30, 119, 77, 1) 54%, rgba(55, 120, 64, 1) 100%);">
-                <i class="fa-solid fa-book text-lg"></i>
-                <h3 class="text-xl font-semibold">Edit Course & Assign Professors</h3>
-            </div>
+    <x-modal name="edit-course-modal" :show="$showEditCourseModal" maxWidth="3xl">
+        <div class=" text-white rounded-t-xl px-6 py-4 flex items-center space-x-3" style="background: linear-gradient(148deg,rgba(18, 67, 44, 1) 0%, rgba(30, 119, 77, 1) 54%, rgba(55, 120, 64, 1) 100%);">
+            <i class="fa-solid fa-book text-lg"></i>
+            <h3 class="text-xl font-semibold">Edit Course & Assign Faculty</h3>
+        </div>
 
-            <div class="bg-white px-6 py-6 rounded-b-xl">
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <div class="space-y-6">
-                        <h4 class="text-lg font-semibold text-gray-700 border-b pb-2">Course Information</h4>
-                        
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700">Course Code *</label>
-                            <input type="text" wire:model="editingCourse.course_code"
-                                class="mt-2 block w-full rounded-xl border-gray-300 sm:text-sm"
-                                placeholder="Enter course code">
-                            @error('editingCourse.course_code') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700">Course Name *</label>
-                            <input type="text" wire:model="editingCourse.course_name"
-                                class="mt-2 block w-full rounded-xl border-gray-300 sm:text-sm"
-                                placeholder="Enter course name">
-                            @error('editingCourse.course_name') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700">Description</label>
-                            <textarea wire:model="editingCourse.description"
-                                class="mt-2 block w-full rounded-xl border-gray-300 sm:text-sm"
-                                placeholder="Enter course description"
-                                rows="3"></textarea>
-                            @error('editingCourse.description') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
-                        </div>
+        <div class="bg-white px-6 py-6 rounded-b-xl">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="space-y-6">
+                    <h4 class="text-lg font-semibold text-gray-700 border-b pb-2">Course Information</h4>
+                    
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700">Course Code *</label>
+                        <input type="text" wire:model="editingCourse.course_code"
+                            class="mt-2 block w-full rounded-xl border-gray-300 sm:text-sm"
+                            placeholder="Enter course code">
+                        @error('editingCourse.course_code') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                     </div>
 
-                    <div class="space-y-6">
-                        <h4 class="text-lg font-semibold text-gray-700 border-b pb-2">Assign Professors</h4>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700">Course Name *</label>
+                        <input type="text" wire:model="editingCourse.course_name"
+                            class="mt-2 block w-full rounded-xl border-gray-300 sm:text-sm"
+                            placeholder="Enter course name">
+                        @error('editingCourse.course_name') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
+                    </div>
 
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-2">Current Assignments</label>
-                            @if($currentCourseAssignments->count() > 0)
-                                <div class="space-y-2 max-h-40 overflow-y-auto">
-                                    @foreach($currentCourseAssignments as $assignment)
-                                        <div class="flex items-center justify-between bg-blue-50 border border-blue-200 rounded-lg px-3 py-2">
-                                            <div class="flex-1">
-                                                <div class="text-sm font-medium text-gray-900">
-                                                    {{ $assignment->professor->firstname }} {{ $assignment->professor->lastname }}
-                                                </div>
-                                                <div class="text-xs text-gray-600">
-                                                    {{ $assignment->semester->name ?? 'N/A' }}
-                                                </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700">Program *</label>
+                        <select wire:model="editingCourse.program_id"
+                            class="mt-2 block w-full rounded-xl border-gray-300 sm:text-sm">
+                            <option value="">Select Program</option>
+                            @foreach($programs as $program)
+                                <option value="{{ $program->id }}">{{ $program->program_name }} ({{ $program->program_code }})</option>
+                            @endforeach
+                        </select>
+                        @error('editingCourse.program_id') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
+                    </div>
+                </div>
+
+                <div class="space-y-6">
+                    <h4 class="text-lg font-semibold text-gray-700 border-b pb-2">Assign Faculty</h4>
+
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Current Assignments</label>
+                        @if($currentCourseAssignments->count() > 0)
+                            <div class="space-y-2 max-h-40 overflow-y-auto">
+                                @foreach($currentCourseAssignments as $assignment)
+                                    <div class="flex items-center justify-between bg-blue-50 border border-blue-200 rounded-lg px-3 py-2">
+                                        <div class="flex-1">
+                                            <div class="text-sm font-medium text-gray-900">
+                                                {{ $assignment->professor->firstname }} {{ $assignment->professor->lastname }}
                                             </div>
-                                            <button 
-                                                wire:click="openRemoveAssignmentModal({{ $assignment->assignment_id }})"
-                                                class="text-red-500 hover:text-red-700 ml-2 cursor-pointer"
-                                                title="Remove Assignment"
-                                            >
-                                                <i class="fa-solid fa-times text-xs"></i>
-                                            </button>
+                                            <div class="text-xs text-gray-600">
+                                                {{ $assignment->semester->name ?? 'N/A' }}
+                                            </div>
                                         </div>
-                                    @endforeach
+                                        <button 
+                                            wire:click="openRemoveAssignmentModal({{ $assignment->assignment_id }})"
+                                            class="text-red-500 hover:text-red-700 ml-2 cursor-pointer"
+                                            title="Remove Assignment"
+                                        >
+                                            <i class="fa-solid fa-times text-xs"></i>
+                                        </button>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @else
+                            <p class="text-sm text-gray-500 italic">No faculty assigned</p>
+                        @endif
+                    </div>
+
+                    <div class="border-t pt-4">
+                        <h5 class="text-md font-semibold text-gray-700 mb-3">Assign New Faculty</h5>
+                        
+                        <div class="mb-4">
+                            <label class="block text-sm font-semibold text-gray-700">Select Faculty</label>
+                            <div class="relative mt-2" 
+                                x-data="{
+                                    open: @entangle('showFacultyDropdown'),
+                                    searchText: @entangle('facultySearch'),
+                                    updateInput() {
+                                        // Force update the input value when faculty is selected
+                                        this.$refs.facultyInput.value = this.searchText;
+                                    }
+                                }"
+                                x-init="
+                                    $watch('searchText', value => {
+                                        updateInput();
+                                    });
+                                    $wire.on('faculty-selected', (event) => {
+                                        searchText = event.facultyName;
+                                        updateInput();
+                                    });
+                                "
+                                x-on:click.away="open = false; $wire.closeFacultyDropdown()">
+                                
+                                <div class="relative">
+                                    <input 
+                                        type="text"
+                                        x-ref="facultyInput"
+                                        x-model="searchText"
+                                        x-on:input="$wire.set('facultySearch', $event.target.value); open = true;"
+                                        x-on:click="open = true"
+                                        wire:keydown.escape="clearFacultySelection"
+                                        class="block w-full rounded-xl border-gray-300 sm:text-sm pr-10 cursor-text"
+                                        placeholder="Type to search faculty..."
+                                        autocomplete="off"
+                                    />
+                                    <div class="absolute inset-y-0 right-0 flex items-center pr-2">
+                                        @if($assignmentData['professor_id'])
+                                            <button 
+                                                type="button"
+                                                wire:click="clearFacultySelection"
+                                                class="text-gray-400 hover:text-gray-600 p-1"
+                                                title="Clear selection"
+                                            >
+                                                <i class="fa-solid fa-times"></i>
+                                            </button>
+                                        @endif
+                                        <button 
+                                            type="button"
+                                            wire:click="toggleFacultyDropdown"
+                                            class="text-gray-400 hover:text-gray-600 p-1"
+                                            title="Toggle dropdown"
+                                        >
+                                            <i class="fa-solid fa-chevron-down"></i>
+                                        </button>
+                                    </div>
                                 </div>
-                            @else
-                                <p class="text-sm text-gray-500 italic">No professors assigned</p>
-                            @endif
+                                
+                                <div x-show="open" x-transition class="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-xl shadow-lg max-h-60 overflow-auto">
+                                    <div class="max-h-60 overflow-y-auto">
+                                        @forelse($this->filteredProfessors as $professor)
+                                            <button 
+                                                type="button"
+                                                wire:click="selectFaculty('{{ $professor['id'] }}', '{{ $professor['name'] }}')"
+                                                class="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-green-50 hover:text-green-900 rounded-lg flex items-center justify-between {{ $assignmentData['professor_id'] == $professor['id'] ? 'bg-green-50 text-green-900' : '' }}"
+                                                x-on:click.stop
+                                            >
+                                                <span>{{ $professor['name'] }}</span>
+                                                @if($assignmentData['professor_id'] == $professor['id'])
+                                                    <i class="fa-solid fa-check text-green-600 ml-2"></i>
+                                                @endif
+                                            </button>
+                                        @empty
+                                            <div class="px-3 py-2 text-sm text-gray-500 text-center">No faculty members found</div>
+                                        @endforelse
+                                    </div>
+                                </div>
+                            </div>
+                            @error('assignmentData.professor_id') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                         </div>
 
-                        <div class="border-t pt-4">
-                            <h5 class="text-md font-semibold text-gray-700 mb-3">Assign New Professor</h5>
-                            
-                            <div class="mb-4">
-                                <label class="block text-sm font-semibold text-gray-700">Select Professor *</label>
-                                <select wire:model="assignmentData.professor_id"
-                                    class="mt-2 block w-full rounded-xl border-gray-300 sm:text-sm">
-                                    <option value="">Select a Professor</option>
-                                    @foreach($professors as $professor)
-                                        <option value="{{ $professor->id }}">
-                                            {{ $professor->firstname }} {{ $professor->lastname }}
-                                            @if($professor->department)
-                                                - {{ $professor->department->name }}
-                                            @endif
-                                        </option>
-                                    @endforeach
-                                </select>
-                                @error('assignmentData.professor_id') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
-                            </div>
-
-                            <div class="mb-4">
-                                <label class="block text-sm font-semibold text-gray-700">Select Semester *</label>
-                                <select wire:model="assignmentData.semester_id"
-                                    class="mt-2 block w-full rounded-xl border-gray-300 sm:text-sm">
-                                    <option value="">Select an Academic Semester</option>
-                                    @foreach($semesters as $semester)
-                                        <option value="{{ $semester->id }}">
-                                            {{ $semester->name }}
-                                            @if($semester->is_active)
-                                                (Active)
-                                            @endif
-                                        </option>
-                                    @endforeach
-                                </select>
-                                @error('assignmentData.semester_id') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
-                            </div>
-
-                            <div class="mt-4">
-                                <button type="button" wire:click="assignProfessor" wire:loading.attr="disabled"
-                                    class="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-full text-sm cursor-pointer">
-                                    <span wire:loading.remove wire:target="assignProfessor">
-                                        <i class="fa-solid fa-user-plus mr-2"></i> Assign Professor
-                                    </span>
-                                    <span wire:loading wire:target="assignProfessor">
-                                        <i class="fa-solid fa-spinner fa-spin mr-2"></i> Assigning...
-                                    </span>
-                                </button>
-                            </div>
+                        <div class="mb-4">
+                            <label class="block text-sm font-semibold text-gray-700">Select Semester</label>
+                            <select wire:model="assignmentData.semester_id"
+                                class="mt-2 block w-full rounded-xl border-gray-300 sm:text-sm">
+                                <option value="">Select an Academic Semester</option>
+                                @foreach($semesters as $semester)
+                                    <option value="{{ $semester->id }}">
+                                        {{ $semester->name }}
+                                        @if($semester->is_active)
+                                            (Active)
+                                        @endif
+                                    </option>
+                                @endforeach
+                            </select>
+                            @error('assignmentData.semester_id') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                         </div>
                     </div>
                 </div>
-
-                <div class="mt-8 flex justify-end space-x-3 border-t pt-4">
-                    <button type="button" wire:click="closeEditCourseModal"
-                        class="px-5 py-2 rounded-full border border-gray-300 text-gray-500 bg-white font-semibold text-sm cursor-pointer">
-                        Cancel
-                    </button>
-                    <button type="button" wire:click="updateCourse" wire:loading.attr="disabled"
-                        class="px-5 py-2 rounded-full bg-green-600 text-white font-semibold text-sm shadow cursor-pointer">
-                        <span wire:loading.remove wire:target="updateCourse">Update Course</span>
-                        <span wire:loading wire:target="updateCourse">
-                            <i class="fa-solid fa-spinner fa-spin mr-2"></i> Updating...
-                        </span>
-                    </button>
-                </div>
             </div>
-        </x-modal>
-    @endif
+
+            <div class="mt-8 flex justify-end space-x-3 border-t pt-4">
+                <button type="button" wire:click="closeEditCourseModal"
+                    class="px-5 py-2 rounded-full border border-gray-300 text-gray-500 bg-white font-semibold text-sm cursor-pointer">
+                    Cancel
+                </button>
+                <button type="button" wire:click="updateCourse" wire:loading.attr="disabled"
+                    class="px-5 py-2 rounded-full bg-green-600 text-white font-semibold text-sm shadow cursor-pointer">
+                    <span wire:loading.remove wire:target="updateCourse">Update Course</span>
+                    <span wire:loading wire:target="updateCourse">
+                        <i class="fa-solid fa-spinner fa-spin mr-2"></i> Updating...
+                    </span>
+                </button>
+            </div>
+        </div>
+    </x-modal>
+@endif
 
     @if($showRemoveAssignmentModal && $assignmentToRemove)
         <x-modal name="remove-assignment-modal" :show="$showRemoveAssignmentModal" maxWidth="md">
@@ -353,52 +405,8 @@
                         Cancel
                     </button>
                     <button type="button" wire:click="removeAssignment" 
-                            class="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-full text-sm font-medium cursor-pointer"
-                            wire:loading.attr="disabled">
-                        <span wire:loading.remove wire:target="removeAssignment">
-                            <i class="fa-solid fa-user-minus mr-2"></i> Remove Assignment
-                        </span>
-                        <span wire:loading wire:target="removeAssignment">
-                            <i class="fa-solid fa-spinner fa-spin mr-2"></i> Removing...
-                        </span>
-                    </button>
-                </div>
-            </div>
-        </x-modal>
-    @endif
-
-    @if($showDeleteConfirmationModal && $courseToDelete)
-        <x-modal name="delete-course-modal" :show="$showDeleteConfirmationModal" maxWidth="md">
-            <div class="bg-red-600 text-white rounded-t-xl px-6 py-4 flex items-center space-x-3">
-                <i class="fa-solid fa-triangle-exclamation text-lg"></i>
-                <h3 class="text-xl font-semibold">Confirm Deletion</h3>
-            </div>
-
-            <div class="bg-white px-6 py-6 rounded-b-xl">
-                <div class="space-y-4">
-                    <p class="text-gray-700">
-                        Are you sure you want to delete the course 
-                        <span class="font-semibold text-red-600">"{{ $courseToDelete->course_name }}" ({{ $courseToDelete->course_code }})</span>?
-                    </p>
-                    <p class="text-sm text-gray-600">
-                        This action cannot be undone. All data including course assignments will be permanently removed.
-                    </p>
-                </div>
-
-                <div class="mt-6 pt-4 border-t border-gray-200 flex justify-end space-x-3">
-                    <button type="button" wire:click="closeDeleteConfirmationModal" 
-                            class="px-4 py-2 border border-gray-300 rounded-full text-sm font-medium text-gray-700 hover:bg-gray-50 cursor-pointer">
-                        Cancel
-                    </button>
-                    <button type="button" wire:click="deleteCourse" 
-                            class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-full text-sm font-medium cursor-pointer"
-                            wire:loading.attr="disabled">
-                        <span wire:loading.remove wire:target="deleteCourse">
-                            <i class="fa-solid fa-trash mr-2"></i> Delete
-                        </span>
-                        <span wire:loading wire:target="deleteCourse">
-                            <i class="fa-solid fa-spinner fa-spin mr-2"></i> Deleting...
-                        </span>
+                            class="px-4 py-2 bg-orange-600 border border-transparent rounded-full text-sm font-medium text-white hover:bg-orange-700 cursor-pointer">
+                        Remove Assignment
                     </button>
                 </div>
             </div>

@@ -103,18 +103,18 @@
                 </div>
             </div>
 
-            <!-- Section 2: Assigned To (Multiple Selection) -->
+            <!-- Section 2: Assigned To (Programs Only) -->
             <div class="bg-gray-50 rounded-xl p-6 border border-gray-200">
                 <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
                     <i class="fa-solid fa-users text-green-600"></i> Assign To
                 </h3>
 
                 <div class="space-y-6">
-                    <!-- Colleges Selection -->
+                    <!-- Programs Selection -->
                     <div class="form-control">
                         <label class="label justify-start gap-2 pb-2">
-                            <span class="label-text font-semibold text-gray-700">Colleges</span>
-                            @error('selectedColleges')
+                            <span class="label-text font-semibold text-gray-700">Programs</span>
+                            @error('selectedPrograms')
                                 <span class="label-text-alt text-red-600 ml-auto">{{ $message }}</span>
                             @enderror
                         </label>
@@ -122,113 +122,29 @@
                             <label class="flex items-center space-x-3 mb-4 p-3 rounded-lg bg-gray-50 hover:bg-gray-100 cursor-pointer transition-colors duration-200">
                                 <input 
                                     type="checkbox" 
-                                    wire:model.live="selectAllColleges"
+                                    wire:model.live="selectAllPrograms"
                                     class="checkbox checkbox-primary rounded" 
                                 />
-                                <span class="font-medium text-gray-700">Select All Colleges</span>
-                                @if($selectAllColleges)
+                                <span class="font-medium text-gray-700">Select All Programs</span>
+                                @if($selectAllPrograms)
                                     <span class="badge bg-green-100 text-green-800 border-0 text-xs font-medium px-2 py-1 rounded-full ml-auto">All selected</span>
                                 @endif
                             </label>
                             <div class="grid grid-cols-1 gap-3 max-h-60 overflow-y-auto p-2 custom-scrollbar">
-                                @foreach($colleges as $college)
-                                    <label class="flex items-center space-x-3 p-3 rounded-lg transition-all duration-200 {{ in_array($college->id, $selectedColleges) ? 'bg-blue-50 border border-blue-200' : 'bg-white border border-transparent hover:border-gray-200' }}">
+                                @foreach($programs as $program)
+                                    <label class="flex items-center space-x-3 p-3 rounded-lg transition-all duration-200 {{ in_array($program->id, $selectedPrograms) ? 'bg-green-50 border border-green-200' : 'bg-white border border-transparent hover:border-gray-200' }}">
                                         <input 
                                             type="checkbox" 
-                                            wire:model.live="selectedColleges"
-                                            value="{{ $college->id }}"
+                                            wire:model.live="selectedPrograms"
+                                            value="{{ $program->id }}"
                                             class="checkbox checkbox-sm checkbox-primary rounded" 
                                         />
                                         <div class="flex flex-col">
-                                            <span class="text-sm font-medium text-gray-700">{{ $college->name }}</span>
-                                            <span class="text-xs text-gray-500">{{ $college->acronym }}</span>
+                                            <span class="text-sm font-medium text-gray-700">{{ $program->program_name }}</span>
+                                            <span class="text-xs text-gray-500">{{ $program->program_code }}</span>
                                         </div>
                                     </label>
                                 @endforeach
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Departments Selection -->
-                    <div class="form-control">
-                        <label class="label pb-2">
-                            <span class="label-text font-semibold text-gray-700">Departments</span>
-                            @if($selectAllColleges || !empty($selectedColleges))
-                                <span class="label-text-alt text-green-600">Select departments (optional)</span>
-                            @endif
-                        </label>
-                        <div class="border border-gray-200 rounded-xl p-4 bg-white {{ empty($selectedColleges) && !$selectAllColleges ? 'opacity-60 bg-gray-50' : '' }}">
-                            <label class="flex items-center space-x-3 mb-4 p-3 rounded-lg bg-gray-50 hover:bg-gray-100 cursor-pointer transition-colors duration-200 {{ (empty($selectedColleges) && !$selectAllColleges) ? 'opacity-60 cursor-not-allowed' : '' }}"
-                                @if(empty($selectedColleges) && !$selectAllColleges) title="Please select colleges first" @endif>
-                                <input 
-                                    type="checkbox" 
-                                    wire:model.live="selectAllDepartments"
-                                    class="checkbox checkbox-primary rounded" 
-                                    @if(empty($selectedColleges) && !$selectAllColleges) disabled @endif
-                                />
-                                <span class="font-medium text-gray-700 {{ (empty($selectedColleges) && !$selectAllColleges) ? 'text-gray-400' : '' }}">
-                                    Select All Departments
-                                    @if($selectAllColleges)
-                                        <span class="text-xs text-gray-500 ml-2">(auto-selected with all colleges)</span>
-                                    @endif
-                                </span>
-                                @if($selectAllDepartments && !$selectAllColleges)
-                                    <span class="badge bg-green-100 text-green-800 border-0 text-xs font-medium px-2 py-1 rounded-full ml-auto">All selected</span>
-                                @endif
-                            </label>
-                            
-                            @if($selectAllColleges)
-                                <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-4">
-                                    <div class="flex items-center">
-                                        <i class="fa-solid fa-circle-info text-blue-500 mr-3 text-lg"></i>
-                                        <span class="text-sm text-blue-700">All departments are automatically included because all colleges are selected.</span>
-                                    </div>
-                                </div>
-                            @elseif(!empty($selectedColleges))
-                                <div class="bg-green-50 border border-green-200 rounded-xl p-4 mb-4">
-                                    <div class="flex items-center">
-                                        <i class="fa-solid fa-filter text-green-500 mr-3 text-lg"></i>
-                                        <span class="text-sm text-green-700">Showing departments from selected colleges. You can select specific departments.</span>
-                                    </div>
-                                </div>
-                            @else
-                                <div class="bg-gray-50 border border-gray-200 rounded-xl p-4 mb-4">
-                                    <div class="flex items-center">
-                                        <i class="fa-solid fa-circle-info text-gray-500 mr-3 text-lg"></i>
-                                        <span class="text-sm text-gray-700">Please select colleges first to enable department selection.</span>
-                                    </div>
-                                </div>
-                            @endif
-                            
-                            <div class="grid grid-cols-1 gap-3 max-h-60 overflow-y-auto p-2 custom-scrollbar">
-                                @if($selectAllColleges || !empty($selectedColleges))
-                                    @foreach($departments as $department)
-                                        <label class="flex items-center space-x-3 p-3 rounded-lg transition-all duration-200 {{ $selectAllColleges ? 'bg-gray-50 opacity-70' : (in_array($department->id, $selectedDepartments) ? 'bg-green-50 border border-green-200' : 'bg-white border border-transparent hover:border-gray-200') }}"
-                                            @if($selectAllColleges) title="Included via college selection" @endif>
-                                            <input 
-                                                type="checkbox" 
-                                                wire:model.live="selectedDepartments"
-                                                value="{{ $department->id }}"
-                                                class="checkbox checkbox-sm checkbox-primary rounded" 
-                                                @if($selectAllColleges) disabled checked @endif
-                                            />
-                                            <div class="flex flex-col">
-                                                <span class="text-sm font-medium text-gray-700 {{ $selectAllColleges ? 'text-gray-500' : '' }}">{{ $department->name }}</span>
-                                                <span class="text-xs text-gray-500">
-                                                    {{ $department->college->acronym }}
-                                                    @if($selectAllColleges)
-                                                        <span class="text-green-500 ml-1">(included)</span>
-                                                    @endif
-                                                </span>
-                                            </div>
-                                        </label>
-                                    @endforeach
-                                @else
-                                    <div class="col-span-full text-center py-8 text-gray-400">
-                                        <i class="fa-solid fa-building text-4xl mb-3"></i>
-                                        <p>Select colleges first to view departments</p>
-                                    </div>
-                                @endif
                             </div>
                         </div>
                     </div>
@@ -331,4 +247,4 @@
         background: #a8a8a8;
     }
     </style>
-</div>
+</div>  

@@ -2,8 +2,7 @@
 
 namespace App\Livewire\Admin\Requirements;
 
-use App\Models\College;
-use App\Models\Department;
+use App\Models\Program;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Attributes\Validate;
 use Livewire\Component;
@@ -15,8 +14,7 @@ class RequirementEdit extends Component
 
     public $requirement;
     public $assignedUsers;
-    public $assignedColleges = [];
-    public $assignedDepartments = [];
+    public $assignedPrograms = [];
 
     // Form fields
     public $name = '';
@@ -27,10 +25,8 @@ class RequirementEdit extends Component
     public $showUploadModal = false;
     
     // Assignment properties (multiple selection)
-    public $selectedColleges = [];
-    public $selectedDepartments = [];
-    public $selectAllColleges = false;
-    public $selectAllDepartments = false;
+    public $selectedPrograms = [];
+    public $selectAllPrograms = false;
     
     // Add these properties for delete confirmation
     public $showDeleteModal = false;
@@ -48,9 +44,7 @@ class RequirementEdit extends Component
         $this->parseAssignedData();
         
         // Load assigned users with their relationships
-        $this->assignedUsers = $requirement->assignedTargets()->map(function($user) {
-            return $user->load(['department', 'college']);
-        });
+        $this->assignedUsers = $this->getAssignedUsers();
     }
 
     private function parseAssignedData()
@@ -58,23 +52,64 @@ class RequirementEdit extends Component
         // assigned_to is already an array due to the cast in Requirement model
         $assignedTo = $this->requirement->assigned_to ?? [];
         
-        // Get assigned colleges
-        if (isset($assignedTo['colleges']) && is_array($assignedTo['colleges'])) {
-            $this->selectedColleges = $assignedTo['colleges'];
-            $this->assignedColleges = College::whereIn('id', $assignedTo['colleges'])->get();
-        }
-        
-        // Get assigned departments
-        if (isset($assignedTo['departments']) && is_array($assignedTo['departments'])) {
-            $this->selectedDepartments = $assignedTo['departments'];
-            $this->assignedDepartments = Department::whereIn('id', $assignedTo['departments'])
+        // Get assigned programs
+        if (isset($assignedTo['programs']) && is_array($assignedTo['programs'])) {
+            $this->selectedPrograms = $assignedTo['programs'];
+            $this->assignedPrograms = Program::whereIn('id', $assignedTo['programs'])
                 ->with('college')
                 ->get();
         }
 
-        // Handle select all cases
-        $this->selectAllColleges = $assignedTo['selectAllColleges'] ?? false;
-        $this->selectAllDepartments = $assignedTo['selectAllDepartments'] ?? false;
+        // Handle select all case
+        $this->selectAllPrograms = $assignedTo['selectAllPrograms'] ?? false;
+    }
+
+    private function getAssignedUsers()
+    {
+        $assignedTo = $this->requirement->assigned_to ?? [];
+        
+        $userQuery = \App\Models\User::query()->with([
+            'department', 
+            'college',
+            'courseAssignments.course.program.college'
+        ]);
+        
+        $hasConditions = false;
+        
+        // Specific programs assigned - get users through course assignments
+        if (isset($assignedTo['programs']) && is_array($assignedTo['programs'])) {
+            // Get courses that belong to the assigned programs
+            $courseIds = \App\Models\Course::whereIn('program_id', $assignedTo['programs'])
+                ->pluck('id')
+                ->toArray();
+            
+            if (!empty($courseIds)) {
+                // Get users who are assigned to these courses in the current semester
+                $userQuery->whereHas('courseAssignments', function ($query) use ($courseIds) {
+                    $query->whereIn('course_id', $courseIds);
+                    if ($this->requirement->semester_id) {
+                        $query->where('semester_id', $this->requirement->semester_id);
+                    }
+                });
+                $hasConditions = true;
+            }
+        }
+        
+        // Handle "select all" case - get all users with course assignments
+        if (isset($assignedTo['selectAllPrograms']) && $assignedTo['selectAllPrograms']) {
+            $userQuery->whereHas('courseAssignments', function ($query) {
+                if ($this->requirement->semester_id) {
+                    $query->where('semester_id', $this->requirement->semester_id);
+                }
+            });
+            $hasConditions = true;
+        }
+        
+        if (!$hasConditions) {
+            return collect();
+        }
+        
+        return $userQuery->get();
     }
 
     public function updateRequirement()
@@ -83,10 +118,8 @@ class RequirementEdit extends Component
             'name' => 'required|string|max:255|unique:requirements,name,' . $this->requirement->id,
             'due' => 'required|date_format:Y-m-d\TH:i|after_or_equal:now',
             'priority' => 'required|in:low,normal,high',
-            'selectedColleges' => ['required', 'array', 'min:1'],
-            'selectedColleges.*' => ['exists:colleges,id'],
-            'selectedDepartments' => ['sometimes', 'array'],
-            'selectedDepartments.*' => ['exists:departments,id'],
+            'selectedPrograms' => ['required', 'array', 'min:1'],
+            'selectedPrograms.*' => ['exists:programs,id'],
         ]);
 
         $due = \DateTime::createFromFormat('Y-m-d\TH:i', $this->due);
@@ -97,10 +130,8 @@ class RequirementEdit extends Component
 
         // Prepare assignment data - no need to json_encode() since it's cast to array
         $assignedData = [
-            'colleges' => $this->selectedColleges,
-            'departments' => $this->selectedDepartments,
-            'selectAllColleges' => $this->selectAllColleges,
-            'selectAllDepartments' => $this->selectAllDepartments
+            'programs' => $this->selectedPrograms,
+            'selectAllPrograms' => $this->selectAllPrograms,
         ];
 
         $this->requirement->update([
@@ -114,7 +145,7 @@ class RequirementEdit extends Component
 
         // Refresh assigned data
         $this->parseAssignedData();
-        $this->assignedUsers = $this->requirement->assignedTargets();
+        $this->assignedUsers = $this->getAssignedUsers();
         
         $this->dispatch('showNotification', 
             type: 'success', 
@@ -122,70 +153,27 @@ class RequirementEdit extends Component
         );
     }
 
-    // Assignment hooks (same as RequirementCreate)
-    public function updatedSelectAllColleges($value)
+    // Assignment hooks
+    public function updatedSelectAllPrograms($value)
     {
         if ($value) {
-            $this->selectedColleges = College::all()->pluck('id')->toArray();
-            $this->selectedDepartments = $this->getDepartmentsProperty()->pluck('id')->toArray();
-            $this->selectAllDepartments = true;
+            $this->selectedPrograms = Program::all()->pluck('id')->toArray();
         } else {
-            $this->selectedColleges = [];
-            $this->selectedDepartments = [];
-            $this->selectAllDepartments = false;
+            $this->selectedPrograms = [];
         }
     }
 
-    public function updatedSelectedColleges()
+    public function updatedSelectedPrograms()
     {
-        $this->selectAllColleges = false;
-        $this->selectAllDepartments = false;
-        
-        // Reset departments when colleges change
-        if (empty($this->selectedColleges)) {
-            $this->selectedDepartments = [];
-        } else {
-            // Keep only departments that belong to selected colleges
-            $validDepartments = $this->getDepartmentsProperty()->pluck('id')->toArray();
-            $this->selectedDepartments = array_intersect($this->selectedDepartments, $validDepartments);
-        }
+        $allPrograms = Program::all()->pluck('id')->toArray();
+        $this->selectAllPrograms = !empty($allPrograms) && 
+                                 count($this->selectedPrograms) === count($allPrograms);
     }
 
-    public function updatedSelectAllDepartments($value)
+    // Computed property for programs
+    public function getProgramsProperty()
     {
-        if ($value && (!empty($this->selectedColleges) || $this->selectAllColleges)) {
-            $this->selectedDepartments = $this->getDepartmentsProperty()->pluck('id')->toArray();
-        } else {
-            $this->selectedDepartments = [];
-        }
-    }
-
-    public function updatedSelectedDepartments()
-    {
-        $this->selectAllDepartments = false;
-        
-        if (!empty($this->selectedColleges) || $this->selectAllColleges) {
-            $allDepartments = $this->getDepartmentsProperty()->pluck('id')->toArray();
-            $this->selectAllDepartments = !empty($allDepartments) && 
-                                         count($this->selectedDepartments) === count($allDepartments);
-        }
-    }
-
-    // Computed properties for colleges and departments
-    public function getCollegesProperty()
-    {
-        return College::with('departments')->get();
-    }
-
-    public function getDepartmentsProperty()
-    {
-        if ($this->selectAllColleges) {
-            return Department::with('college')->get();
-        }
-        if (!empty($this->selectedColleges)) {
-            return Department::with('college')->whereIn('college_id', $this->selectedColleges)->get();
-        }
-        return collect();
+        return Program::with('college')->get();
     }
 
     public function uploadRequiredFiles()
@@ -274,10 +262,8 @@ class RequirementEdit extends Component
             'requirement' => $this->requirement,
             'assignedUsers' => $this->assignedUsers,
             'requiredFiles' => $this->requirement->getMedia('guides'),
-            'colleges' => $this->colleges,
-            'departments' => $this->departments,
-            'assignedColleges' => $this->assignedColleges,
-            'assignedDepartments' => $this->assignedDepartments,
+            'programs' => $this->programs,
+            'assignedPrograms' => $this->assignedPrograms,
         ]);
     }
-}   
+}
