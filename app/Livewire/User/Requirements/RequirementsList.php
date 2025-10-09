@@ -13,7 +13,7 @@ use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use Livewire\WithFileUploads;
-use Livewire\Attributes\Url;
+use Livewire\Attributes\Url as LivewireUrl;
 
 class RequirementsList extends Component
 {
@@ -21,13 +21,13 @@ class RequirementsList extends Component
 
     public $activeSemester;
     
-    #[Url]
+    #[LivewireUrl(as: 'course', history: true, keep: false)]
     public $selectedCourse = null;
     
-    #[Url]
+    #[LivewireUrl(as: 'folder', history: true, keep: false)]
     public $selectedFolder = null;
     
-    #[Url]
+    #[LivewireUrl(as: 'subfolder', history: true, keep: false)]
     public $selectedSubFolder = null;
 
     public $courseRequirements = [];
@@ -48,19 +48,53 @@ class RequirementsList extends Component
     {
         $this->activeSemester = Semester::getActiveSemester();
         
-        // Initialize URL parameters if they exist
+        // Manually get URL parameters if Livewire URL attributes don't work
+        $request = request();
+        $this->selectedCourse = $request->query('course', $this->selectedCourse);
+        $this->selectedFolder = $request->query('folder', $this->selectedFolder);
+        $this->selectedSubFolder = $request->query('subfolder', $this->selectedSubFolder);
+        
+        \Log::info('RequirementsList mount with manual URL handling', [
+            'selectedCourse' => $this->selectedCourse,
+            'selectedFolder' => $this->selectedFolder,
+            'selectedSubFolder' => $this->selectedSubFolder,
+            'query_params' => $request->query()
+        ]);
+        
+        // Handle URL parameters for direct navigation from Pending page
         if ($this->selectedCourse) {
-            $this->loadCourseRequirements();
+            if ($this->selectedSubFolder) {
+                \Log::info('Loading sub-folder requirements from URL parameters');
+                $this->loadSubFolderRequirements();
+            } else if ($this->selectedFolder) {
+                // Check if this folder has children (sub-folders)
+                $folder = RequirementType::find($this->selectedFolder);
+                $hasChildren = $folder && $folder->children()->where('is_folder', true)->exists();
+                
+                if ($hasChildren) {
+                    \Log::info('Folder has children, loading course requirements to show sub-folders');
+                    // For parent folders with children, load course requirements to show the sub-folder grid
+                    $this->loadCourseRequirements();
+                } else {
+                    \Log::info('Folder has no children, loading folder requirements directly');
+                    // For folders without children, load requirements directly
+                    $this->loadFolderRequirements();
+                }
+            } else {
+                \Log::info('Loading course requirements from URL parameters');
+                $this->loadCourseRequirements();
+            }
         }
-        
-        if ($this->selectedFolder) {
-            $this->loadFolderRequirements();
-        }
-        
-        if ($this->selectedSubFolder) {
-            $this->loadSubFolderRequirements();
+        // If only folder/subfolder is provided without course, ignore them
+        else if ($this->selectedFolder || $this->selectedSubFolder) {
+            \Log::info('Ignoring folder parameters without course');
+            $this->selectedFolder = null;
+            $this->selectedSubFolder = null;
+        } else {
+            \Log::info('No URL parameters found, showing course selection');
         }
     }
+
 
     public function selectCourse($courseId)
     {
@@ -102,17 +136,26 @@ class RequirementsList extends Component
     }
 
     /**
+     * Navigate back to parent folder from sub-folder view
+     */
+    public function backToParentFolder()
+    {
+        if ($this->selectedSubFolder) {
+            $this->selectedSubFolder = null;
+            $this->loadFolderRequirements(); // This shows the parent folder with its children
+        }
+        $this->reset(['file', 'submissionNotes', 'activeTabs']);
+    }
+
+    /**
      * Navigate back to course requirements from folder view
      */
     public function backToCourseRequirements()
     {
-        if ($this->selectedSubFolder) {
-            $this->selectedSubFolder = null;
-            $this->loadFolderRequirements();
-        } else if ($this->selectedFolder) {
+        if ($this->selectedFolder || $this->selectedSubFolder) {
             $this->selectedFolder = null;
             $this->selectedSubFolder = null;
-            $this->loadCourseRequirements();
+            $this->loadCourseRequirements(); // This shows the folder grid for the course
         }
         $this->reset(['file', 'submissionNotes', 'activeTabs']);
     }
@@ -442,6 +485,12 @@ class RequirementsList extends Component
         }
 
         $partners = $requirement->getPartnerRequirements($this->activeSemester->id);
+        
+        // Only return partnership status if there are actual partners
+        if ($partners->isEmpty()) {
+            return null;
+        }
+
         $submittedPartners = $partners->filter(function($partner) {
             return $this->hasUserSubmittedRequirement($partner->id, Auth::id(), $this->selectedCourse);
         });
@@ -1045,6 +1094,13 @@ class RequirementsList extends Component
 
     public function render()
     {
+        \Log::info('RequirementsList render', [
+            'selectedCourse' => $this->selectedCourse,
+            'selectedFolder' => $this->selectedFolder,
+            'selectedSubFolder' => $this->selectedSubFolder,
+            'assignedCoursesCount' => $this->assignedCourses->count()
+        ]);
+
         return view('livewire.user.requirements.requirements-list', [
             'assignedCourses' => $this->assignedCourses,
             'activeSemester' => $this->activeSemester,

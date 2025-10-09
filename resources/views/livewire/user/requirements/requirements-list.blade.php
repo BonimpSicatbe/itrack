@@ -33,12 +33,11 @@
                             @endphp
                             @if($course)
                                 @if($selectedFolder || $selectedSubFolder)
-                                    <!-- When in folder view, make course clickable to go back to course requirements -->
+                                    <!-- When clicking COURSE breadcrumb from ANY folder view, go back to course requirements -->
                                     <button wire:click="backToCourseRequirements" class="text-sm text-green-600 hover:text-amber-500 font-semibold hover:underline hover:underline-offset-4">
                                         {{ $course->course_code }}
                                     </button>
                                 @else
-                                    <!-- When in course requirements view, show course as static -->
                                     <span class="text-sm text-green-600 font-semibold hover:text-amber-500 hover:underline hover:underline-offset-4">{{ $course->course_code }}</span>
                                 @endif
                             @else
@@ -49,7 +48,8 @@
                     @if($selectedFolder && $currentFolder)
                         @if($selectedSubFolder)
                             <li>
-                                <button wire:click="backToCourseRequirements" class="text-sm text-green-600 hover:text-amber-500 font-semibold hover:underline hover:underline-offset-4">
+                                <!-- When in sub-folder, make folder breadcrumb clickable to go back to parent folder -->
+                                <button wire:click="backToParentFolder" class="text-sm text-green-600 hover:text-amber-500 font-semibold hover:underline hover:underline-offset-4">
                                     {{ $currentFolder->name }}
                                 </button>
                             </li>
@@ -130,7 +130,6 @@
                                 @endphp
                                 
                                 <div class="text-xs text-gray-500 bg-gray-100 rounded-lg py-2 px-3">
-                                    <i class="fa-solid fa-list-check mr-1"></i>
                                     {{ $requirementsCount }} requirement(s)
                                 </div>
                             </div>
@@ -203,8 +202,6 @@
                                 @if($partnership_status)
                                     <div class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
                                         <div class="flex items-center gap-2 mb-2">
-                                            <i class="fa-solid fa-handshake text-blue-600"></i>
-                                            <span class="font-semibold text-blue-800">{{ $requirement->getPartnershipGroupName() }} Partnership</span>
                                         </div>
                                         <div class="text-sm text-blue-700">
                                             <p class="mb-2">This requirement must be submitted together with its partner. When you mark this requirement as done/undone, the partner requirement will also be marked as done/undone.</p>
@@ -477,7 +474,6 @@
             <!-- Root Folder View (with children) or Direct Requirements View -->
             @elseif($selectedFolder)
                 @php
-                    // For custom folder, we need to handle it differently
                     if ($selectedFolder === 'custom_requirements') {
                         $currentFolderData = [
                             'folder' => (object)[
@@ -508,8 +504,7 @@
                                     </div>
                                     <h3 class="font-bold text-gray-800 text-lg mb-2">{{ $childFolder['folder']->name }}</h3>
                                     <div class="text-xs text-gray-500 bg-gray-100 rounded-lg py-2 px-3">
-                                        <i class="fa-solid fa-list-check mr-1"></i>
-                                        {{ count($childFolder['requirements']) }} requirement(s)
+                                            {{ count($childFolder['requirements']) }} requirement(s)
                                     </div>
                                 </div>
                             </div>
@@ -573,8 +568,6 @@
                                     @if($partnership_status)
                                     <div class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
                                         <div class="flex items-center gap-2 mb-2">
-                                            <i class="fa-solid fa-handshake text-blue-600"></i>
-                                            <span class="font-semibold text-blue-800">{{ $requirement->getPartnershipGroupName() }} Partnership</span>
                                         </div>
                                         <div class="text-sm text-blue-700">
                                             <p class="mb-2">This requirement must be submitted together with its partner. When you mark this requirement as done/undone, the partner requirement will also be marked as done/undone.</p>
@@ -888,7 +881,6 @@
                                         }
                                     @endphp
                                     <div class="text-xs text-gray-500 bg-gray-100 rounded-lg py-2 px-3">
-                                        <i class="fa-solid fa-list-check mr-1"></i>
                                         {{ $totalRequirements }} requirement(s)
                                     </div>
                                 </div>

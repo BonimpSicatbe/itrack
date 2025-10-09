@@ -1,7 +1,7 @@
 <div class="flex flex-col gap-2 px-6 py-4 bg-white rounded-xl shadow-sm">
     {{-- Header --}}
     <div class="flex flex-row items-center justify-between w-full">
-        <div class="text-xl font-bold text-gray-800 tracking-wide">Pendings</div>
+        <div class="text-xl font-bold text-gray-800 tracking-wide">Pending Folders</div>
         <a href="{{ route('user.requirements') }}" class="flex items-center gap-1 hover:text-green-500 text-sm text-green-700 font-semibold hover:underline transition-colors">
             see more <i class="fa-solid fa-chevron-right text-xs"></i>
         </a>
@@ -9,64 +9,77 @@
 
     {{-- Horizontal scroll cards --}}
     <div class="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
-        @forelse($pendingRequirements as $item)
+        @forelse($pendingFoldersByCourse as $folderData)
             @php    
-                $requirement = $item['requirement'];
-                $course = $item['course'];
+                $folder = $folderData['folder'];
+                $course = $folderData['course'];
+                $requirementsCount = $folderData['requirements_count'];
+                $earliestDue = $folderData['earliest_due'];
                 
-                $dueDate = \Carbon\Carbon::parse($requirement->due);
-                $isOverdue = $dueDate->isPast();
-                $isDueSoon = $dueDate->diffInDays() <= 3;
+                $dueDate = $earliestDue ? \Carbon\Carbon::parse($earliestDue) : null;
+                
+                if ($dueDate) {
+                    $isOverdue = $dueDate->isPast();
+                    $isDueSoon = $dueDate->diffInDays() <= 3;
+                }
             @endphp
             
-            <div class="flex-shrink-0 w-72 bg-white border border-slate-200 rounded-xl p-4">
+            <div class="flex-shrink-0 w-72 bg-white border border-slate-200 rounded-xl p-4 hover:border-2 hover:border-green-500 transition-colors cursor-pointer"
+            onclick="window.location='{{ route('user.requirements') }}?course={{ $course->id }}&folder={{ $folder->id }}'">
                 {{-- Header with folder icon and title --}}
                 <div class="flex items-center gap-3 mb-3">
                     <div>
-                        <i class="fa-solid fa-folder text-xl text-green-700"></i>
+                        <i class="fa-solid fa-folder text-xl text-yellow-500"></i>
                     </div>
                     <div class="flex-1 min-w-0">
-                        <h4 class="font-semibold text-slate-800 text-sm truncate" title="{{ $requirement->name }}">
-                            {{ $requirement->name }}
+                        <h4 class="font-semibold text-slate-800 text-sm truncate" title="{{ $folder->name }}">
+                            {{ $folder->name }}
                         </h4>
+                        <p class="text-xs text-slate-500 truncate" title="{{ $course->course_code }} - {{ $course->course_name }}">
+                            {{ $course->course_code }}
+                        </p>
                     </div>
                 </div>
 
                 {{-- Content section --}}
                 <div class="space-y-3">
-                    {{-- Course section --}}
+                    {{-- Requirements count --}}
                     <div class="flex items-center gap-2">
-                        <i class="fa-solid fa-book text-slate-500 text-xs"></i>
-                        <span class="text-xs text-slate-600 font-medium">Course:</span>
-                        <span class="text-xs text-slate-700 font-semibold truncate" title="{{ $course->course_code }} - {{ $course->course_name }}">
-                            {{ $course->course_code }}
-                        </span>
+                        <i class="fa-solid fa-clipboard-list text-slate-500 text-xs"></i>
+                        <span class="text-xs text-slate-600 font-medium">Pending Requirements:</span>
+                        <span class="text-xs text-slate-700 font-semibold">{{ $requirementsCount }}</span>
                     </div>
 
                     {{-- Due date section --}}
-                    <div class="pt-2 border-t border-slate-100">
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center gap-1">
+                    @if($dueDate)
+                        <div class="pt-2 border-t border-slate-100">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-1">
+                                    @if($isOverdue)
+                                        <i class="fa-solid fa-exclamation-triangle text-xs text-red-500"></i>
+                                    @elseif($isDueSoon)
+                                        <i class="fa-solid fa-clock text-xs text-amber-500"></i>
+                                    @else
+                                        <i class="fa-solid fa-calendar text-xs" style="color: #1C7C54;"></i>
+                                    @endif
+                                    <span class="text-xs font-semibold {{ $isOverdue ? 'text-red-600' : ($isDueSoon ? 'text-amber-600' : '') }}" style="{{ !$isOverdue && !$isDueSoon ? 'color: #1C7C54;' : '' }}">
+                                        {{ $dueDate->format('M j, Y') }}
+                                    </span>
+                                </div>
+                                
+                                {{-- Days remaining indicator --}}
                                 @if($isOverdue)
-                                    <i class="fa-solid fa-exclamation-triangle text-xs text-red-500"></i>
-                                @elseif($isDueSoon)
-                                    <i class="fa-solid fa-clock text-xs text-amber-500"></i>
+                                    <span class="text-xs text-red-500 font-medium">Overdue</span>
                                 @else
-                                    <i class="fa-solid fa-calendar text-xs" style="color: #1C7C54;"></i>
+                                    <span class="text-xs font-medium text-amber-500">{{ $dueDate->diffForHumans() }}</span>
                                 @endif
-                                <span class="text-xs font-semibold {{ $isOverdue ? 'text-red-600' : ($isDueSoon ? 'text-amber-600' : '') }}" style="{{ !$isOverdue && !$isDueSoon ? 'color: #1C7C54;' : '' }}">
-                                    {{ $dueDate->format('M j, Y') }}
-                                </span>
                             </div>
-                            
-                            {{-- Days remaining indicator --}}
-                            @if($isOverdue)
-                                <span class="text-xs text-red-500 font-medium">{{ $dueDate->diffForHumans() }}</span>
-                            @else
-                                <span class="text-xs font-medium text-amber-500">{{ $dueDate->diffForHumans() }}</span>
-                            @endif
                         </div>
-                    </div>
+                    @else
+                        <div class="pt-2 border-t border-slate-100">
+                            <div class="text-xs text-slate-500 italic">No due date set</div>
+                        </div>
+                    @endif
                 </div>
             </div>
         @empty

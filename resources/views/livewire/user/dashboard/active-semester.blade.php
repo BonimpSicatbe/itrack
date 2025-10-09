@@ -26,17 +26,17 @@
                         <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
                         <span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
                     </div>
-                    <span class="text-sm font-medium text-white">Active</span>
+                    <span class="text-sm font-medium text-white whitespace-nowrap">Active</span>
                 </div>
 
                 {{-- Progress section --}}
-                <div class="text-right">
-                    <div class="text-sm font-semibold text-white mb-1">
+                <div class="flex items-center gap-2">
+                    <div class="text-sm font-semibold text-white whitespace-nowrap">
                         {{ number_format($semesterProgress, 0) }}%
                     </div>
                     <div class="w-20 bg-gray-200 rounded-full h-2">
                         <div class="h-2 rounded-full transition-all duration-500 ease-out {{ $this->progressColor }}" 
-                             style="width: {{ $semesterProgress }}%"></div>
+                            style="width: {{ $semesterProgress }}%"></div>
                     </div>
                 </div>
             </div>
