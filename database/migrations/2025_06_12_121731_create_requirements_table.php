@@ -22,7 +22,9 @@ return new class extends Migration
             $table->foreignId('created_by')->constrained('users');
             $table->foreignId('updated_by')->nullable()->constrained('users');
             $table->foreignId('archived_by')->nullable()->constrained('users');
-            $table->foreignId('semester_id')->constrained(); // Remove 'semesters' parameter if using conventional name
+            $table->foreignId('semester_id')->constrained();
+            $table->json('requirement_type_ids')->nullable();
+            $table->string('requirement_group')->nullable();
             $table->timestamps();
         });
     }

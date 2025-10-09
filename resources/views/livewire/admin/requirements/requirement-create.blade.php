@@ -29,6 +29,45 @@
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                         <!-- Left Column: Select Requirement Types -->
                         <div class="space-y-6">
+                            <!-- Select All Controls -->
+                            <div class="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                                <h3 class="font-semibold text-blue-800 mb-3 flex items-center gap-2">
+                                    <i class="fa-solid fa-bolt text-blue-600"></i>
+                                    Quick Selection
+                                </h3>
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                    <!-- Select All Requirements -->
+                                    <label class="flex items-center space-x-2 p-3 bg-white rounded-lg border border-blue-300 cursor-pointer hover:bg-blue-50 transition-colors">
+                                        <input 
+                                            type="checkbox" 
+                                            wire:model.live="selectAllRequirements"
+                                            class="checkbox checkbox-primary checkbox-sm" 
+                                        />
+                                        <span class="text-sm font-medium text-blue-800">Select All</span>
+                                    </label>
+
+                                    <!-- Select All Midterm -->
+                                    <label class="flex items-center space-x-2 p-3 bg-white rounded-lg border border-yellow-300 cursor-pointer hover:bg-yellow-50 transition-colors">
+                                        <input 
+                                            type="checkbox" 
+                                            wire:model.live="selectAllMidterm"
+                                            class="checkbox checkbox-warning checkbox-sm" 
+                                        />
+                                        <span class="text-sm font-medium text-yellow-800">All Midterm</span>
+                                    </label>
+
+                                    <!-- Select All Finals -->
+                                    <label class="flex items-center space-x-2 p-3 bg-white rounded-lg border border-green-300 cursor-pointer hover:bg-green-50 transition-colors">
+                                        <input 
+                                            type="checkbox" 
+                                            wire:model.live="selectAllFinals"
+                                            class="checkbox checkbox-success checkbox-sm" 
+                                        />
+                                        <span class="text-sm font-medium text-green-800">All Finals</span>
+                                    </label>
+                                </div>
+                            </div>
+
                             <div class="form-control">
                                 <label class="label justify-start gap-2 pb-2">
                                     <span class="label-text font-semibold text-gray-700 text-lg flex items-center gap-2">

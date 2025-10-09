@@ -13,17 +13,27 @@ use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use Livewire\WithFileUploads;
+use Livewire\Attributes\Url;
 
 class RequirementsList extends Component
 {
     use WithFileUploads;
 
     public $activeSemester;
+    
+    #[Url]
     public $selectedCourse = null;
+    
+    #[Url]
+    public $selectedFolder = null;
+    
+    #[Url]
+    public $selectedSubFolder = null;
+
     public $courseRequirements = [];
     public $organizedRequirements = [];
-    public $selectedFolder = null;
     public $folderRequirements = [];
+    public $folderStructure = [];
     
     // Properties for file upload and modals
     public $file;
@@ -37,11 +47,26 @@ class RequirementsList extends Component
     public function mount()
     {
         $this->activeSemester = Semester::getActiveSemester();
+        
+        // Initialize URL parameters if they exist
+        if ($this->selectedCourse) {
+            $this->loadCourseRequirements();
+        }
+        
+        if ($this->selectedFolder) {
+            $this->loadFolderRequirements();
+        }
+        
+        if ($this->selectedSubFolder) {
+            $this->loadSubFolderRequirements();
+        }
     }
 
     public function selectCourse($courseId)
     {
         $this->selectedCourse = $courseId;
+        $this->selectedFolder = null;
+        $this->selectedSubFolder = null;
         $this->loadCourseRequirements();
     }
 
@@ -50,9 +75,45 @@ class RequirementsList extends Component
         // Reset everything to default view
         $this->selectedCourse = null;
         $this->selectedFolder = null;
+        $this->selectedSubFolder = null;
         $this->courseRequirements = [];
         $this->organizedRequirements = [];
         $this->folderRequirements = [];
+        $this->reset(['file', 'submissionNotes', 'activeTabs']);
+    }
+
+    /**
+     * Select a root folder
+     */
+    public function selectFolder($folderId)
+    {
+        $this->selectedFolder = $folderId;
+        $this->selectedSubFolder = null;
+        $this->loadFolderRequirements();
+    }
+
+    /**
+     * Select a sub-folder
+     */
+    public function selectSubFolder($subFolderId)
+    {
+        $this->selectedSubFolder = $subFolderId;
+        $this->loadSubFolderRequirements();
+    }
+
+    /**
+     * Navigate back to course requirements from folder view
+     */
+    public function backToCourseRequirements()
+    {
+        if ($this->selectedSubFolder) {
+            $this->selectedSubFolder = null;
+            $this->loadFolderRequirements();
+        } else if ($this->selectedFolder) {
+            $this->selectedFolder = null;
+            $this->selectedSubFolder = null;
+            $this->loadCourseRequirements();
+        }
         $this->reset(['file', 'submissionNotes', 'activeTabs']);
     }
 
@@ -179,8 +240,10 @@ class RequirementsList extends Component
             $this->showDeleteModal = false;
             $this->submissionToDelete = null;
             
-            // Reload requirements
-            if ($this->selectedFolder) {
+            // Reload requirements based on current view
+            if ($this->selectedSubFolder) {
+                $this->loadSubFolderRequirements();
+            } else if ($this->selectedFolder) {
                 $this->loadFolderRequirements();
             } else {
                 $this->loadCourseRequirements();
@@ -235,8 +298,10 @@ class RequirementsList extends Component
             // Switch to submissions tab
             $this->setActiveTab($requirementId, 'submissions');
             
-            // Reload requirements
-            if ($this->selectedFolder) {
+            // Reload requirements to reflect changes
+            if ($this->selectedSubFolder) {
+                $this->loadSubFolderRequirements();
+            } else if ($this->selectedFolder) {
                 $this->loadFolderRequirements();
             } else {
                 $this->loadCourseRequirements();
@@ -257,113 +322,8 @@ class RequirementsList extends Component
     }
 
     /**
-     * Load course requirements
-     */
-    private function loadCourseRequirements()
-    {
-        if (!$this->selectedCourse || !$this->activeSemester) {
-            $this->courseRequirements = [];
-            $this->organizedRequirements = [];
-            return;
-        }
-
-        $userId = Auth::id();
-        $user = Auth::user();
-        
-        // Get all requirements for the active semester
-        $allRequirements = Requirement::where('semester_id', $this->activeSemester->id)
-            ->with(['userSubmissions' => function($query) use ($userId) {
-                $query->where('user_id', $userId)
-                      ->where('course_id', $this->selectedCourse) // Filter by current course
-                      ->with('submissionFile')
-                      ->orderBy('submitted_at', 'desc');
-            }])
-            ->with('guides')
-            ->orderBy('due', 'asc')
-            ->get();
-
-        // Filter requirements where user's college AND department are both present in assigned_to
-        $this->courseRequirements = $allRequirements->filter(function ($requirement) use ($user) {
-            return $this->isUserAssignedToRequirement($requirement, $user);
-        })
-        ->map(function ($requirement) use ($userId) {
-            $userSubmitted = SubmittedRequirement::where('requirement_id', $requirement->id)
-                ->where('user_id', $userId)
-                ->where('course_id', $this->selectedCourse) // Add course filter
-                ->exists();
-            
-            // UPDATED: Add course_id filter to indicator check
-            $userMarkedDone = RequirementSubmissionIndicator::where('requirement_id', $requirement->id)
-                ->where('user_id', $userId)
-                ->where('course_id', $this->selectedCourse) // Added course filter
-                ->exists();
-            
-            $requirement->user_has_submitted = $userSubmitted || $userMarkedDone;
-            $requirement->user_marked_done = $userMarkedDone;
-            
-            return $requirement;
-        });
-
-        // Organize requirements by folders and standalone requirements
-        $this->organizedRequirements = $this->organizeRequirementsByFolders($this->courseRequirements);
-    }
-
-    /**
-     * Organize requirements into folder structure
-     */
-    private function organizeRequirementsByFolders($requirements)
-    {
-        $organized = [
-            'folders' => [],
-            'standalone' => []
-        ];
-
-        foreach ($requirements as $requirement) {
-            $hasFolderAssignment = false;
-            
-            // Check if requirement has requirement_type_ids
-            if (!empty($requirement->requirement_type_ids)) {
-                $requirementTypes = RequirementType::whereIn('id', $requirement->requirement_type_ids)->get();
-                
-                foreach ($requirementTypes as $type) {
-                    if ($type->is_folder) {
-                        // This requirement is directly assigned to a folder
-                        if (!isset($organized['folders'][$type->id])) {
-                            $organized['folders'][$type->id] = [
-                                'folder' => $type,
-                                'requirements' => []
-                            ];
-                        }
-                        $organized['folders'][$type->id]['requirements'][] = $requirement;
-                        $hasFolderAssignment = true;
-                    } else if ($type->parent_id) {
-                        // This requirement type has a parent (folder)
-                        $parentFolder = RequirementType::find($type->parent_id);
-                        if ($parentFolder && $parentFolder->is_folder) {
-                            if (!isset($organized['folders'][$parentFolder->id])) {
-                                $organized['folders'][$parentFolder->id] = [
-                                    'folder' => $parentFolder,
-                                    'requirements' => []
-                                ];
-                            }
-                            $organized['folders'][$parentFolder->id]['requirements'][] = $requirement;
-                            $hasFolderAssignment = true;
-                        }
-                    }
-                }
-            }
-            
-            // If requirement wasn't assigned to any folder, put it in standalone
-            if (!$hasFolderAssignment) {
-                $organized['standalone'][] = $requirement;
-            }
-        }
-
-        return $organized;
-    }
-
-    /**
-     * Check if user is assigned to a requirement based on college AND department
+     * Check if user is assigned to a requirement based on program assignment
+     * through the chain: requirement(programs) → program → course → course_assignment → user
      */
     private function isUserAssignedToRequirement($requirement, $user)
     {
@@ -379,29 +339,410 @@ class RequirementsList extends Component
             $assignedTo = [];
         }
 
-        $colleges = $assignedTo['colleges'] ?? [];
-        $departments = $assignedTo['departments'] ?? [];
-        $selectAllColleges = $assignedTo['selectAllColleges'] ?? false;
-        $selectAllDepartments = $assignedTo['selectAllDepartments'] ?? false;
+        $programs = $assignedTo['programs'] ?? [];
+        $selectAllPrograms = $assignedTo['selectAllPrograms'] ?? false;
 
-        // Check if user has college and department
-        if (!$user->college_id || !$user->department_id) {
+        // If requirement is assigned to all programs, check if user teaches any course
+        if ($selectAllPrograms) {
+            return $this->userTeachesAnyCourseInSemester($user);
+        }
+
+        // Convert program IDs to integers for comparison
+        $assignedProgramIds = array_map('intval', $programs);
+
+        // Check if user teaches any course that belongs to the assigned programs
+        return $this->userTeachesCoursesInPrograms($user, $assignedProgramIds);
+    }
+
+    /**
+     * Check if user teaches any course in the current semester
+     */
+    private function userTeachesAnyCourseInSemester($user)
+    {
+        if (!$this->activeSemester) {
             return false;
         }
 
-        // Convert user IDs to string for comparison
-        $userCollegeId = (string)$user->college_id;
-        $userDepartmentId = (string)$user->department_id;
+        return CourseAssignment::where('professor_id', $user->id)
+            ->where('semester_id', $this->activeSemester->id)
+            ->exists();
+    }
 
-        // Check college assignment
-        $collegeAssigned = $selectAllColleges || 
-                          (is_array($colleges) && in_array($userCollegeId, $colleges));
+    /**
+     * Check if user teaches courses that belong to specific programs
+     */
+    private function userTeachesCoursesInPrograms($user, $programIds)
+    {
+        if (!$this->activeSemester || empty($programIds)) {
+            return false;
+        }
 
-        // Check department assignment
-        $departmentAssigned = $selectAllDepartments ||
-                            (is_array($departments) && in_array($userDepartmentId, $departments));
+        return CourseAssignment::where('professor_id', $user->id)
+            ->where('semester_id', $this->activeSemester->id)
+            ->whereHas('course', function($query) use ($programIds) {
+                $query->whereIn('program_id', $programIds);
+            })
+            ->exists();
+    }
 
-        return $collegeAssigned && $departmentAssigned;
+    /**
+     * Check if requirement can be marked as done (partnership validation)
+     */
+    public function canMarkAsDone($requirementId)
+    {
+        $requirement = Requirement::find($requirementId);
+        if (!$requirement) {
+            return false;
+        }
+
+        $userSubmitted = $this->hasUserSubmittedRequirement($requirementId, Auth::id(), $this->selectedCourse);
+        $userMarkedDone = RequirementSubmissionIndicator::where('requirement_id', $requirementId)
+            ->where('user_id', Auth::id())
+            ->where('course_id', $this->selectedCourse)
+            ->exists();
+
+        \Log::info("Checking if requirement can be marked as done - FRESH CHECK", [
+            'requirement_id' => $requirementId,
+            'requirement_name' => $requirement->name,
+            'requirement_group' => $requirement->requirement_group,
+            'is_part_of_partnership' => $requirement->isPartOfPartnership(),
+            'user_has_submitted' => $userSubmitted,
+            'user_marked_done' => $userMarkedDone,
+        ]);
+
+        // If requirement is not part of partnership, user can mark as done if they have submitted
+        if (!$requirement->isPartOfPartnership()) {
+            \Log::info("Requirement is NOT part of partnership, checking user_has_submitted", [
+                'requirement_id' => $requirementId,
+                'user_has_submitted' => $userSubmitted,
+                'result' => $userSubmitted
+            ]);
+            return $userSubmitted;
+        }
+
+        // For partnership requirements (TOS/Examinations), check if all partners are submitted
+        $allPartnersSubmitted = $requirement->areAllPartnersSubmitted(Auth::id(), $this->selectedCourse);
+        
+        \Log::info("Requirement IS part of partnership, checking all partners submitted", [
+            'requirement_id' => $requirementId,
+            'all_partners_submitted' => $allPartnersSubmitted,
+            'result' => $allPartnersSubmitted
+        ]);
+        
+        return $allPartnersSubmitted;
+    }
+
+    /**
+     * Get partnership status for a requirement
+     */
+    public function getPartnershipStatus($requirement)
+    {
+        if (!$requirement->isPartOfPartnership()) {
+            return null;
+        }
+
+        $partners = $requirement->getPartnerRequirements($this->activeSemester->id);
+        $submittedPartners = $partners->filter(function($partner) {
+            return $this->hasUserSubmittedRequirement($partner->id, Auth::id(), $this->selectedCourse);
+        });
+
+        return [
+            'total_partners' => $partners->count(),
+            'submitted_partners' => $submittedPartners->count(),
+            'all_submitted' => $submittedPartners->count() === $partners->count(),
+            'partners' => $partners->map(function($partner) {
+                return [
+                    'id' => $partner->id,
+                    'name' => $partner->name,
+                    'submitted' => $this->hasUserSubmittedRequirement($partner->id, Auth::id(), $this->selectedCourse)
+                ];
+            })
+        ];
+    }
+
+    /**
+     * Check if user has submitted a specific requirement for a course
+     */
+    private function hasUserSubmittedRequirement($requirementId, $userId, $courseId)
+    {
+        $hasSubmission = SubmittedRequirement::where('requirement_id', $requirementId)
+            ->where('user_id', $userId)
+            ->where('course_id', $courseId)
+            ->exists();
+            
+        return $hasSubmission;
+    }
+
+    /**
+     * Check if user has marked requirement as done
+     */
+    private function hasUserMarkedDone($requirementId, $userId, $courseId)
+    {
+        return RequirementSubmissionIndicator::where('requirement_id', $requirementId)
+            ->where('user_id', $userId)
+            ->where('course_id', $courseId)
+            ->exists();
+    }
+
+    /**
+     * Load course requirements and build folder structure
+     */
+    private function loadCourseRequirements()
+    {
+        if (!$this->selectedCourse || !$this->activeSemester) {
+            $this->courseRequirements = [];
+            $this->organizedRequirements = [];
+            $this->folderStructure = [];
+            return;
+        }
+
+        $userId = Auth::id();
+        $user = Auth::user();
+        
+        // Get all requirements for the active semester
+        $allRequirements = Requirement::where('semester_id', $this->activeSemester->id)
+            ->with(['userSubmissions' => function($query) use ($userId) {
+                $query->where('user_id', $userId)
+                      ->where('course_id', $this->selectedCourse)
+                      ->with('submissionFile')
+                      ->orderBy('submitted_at', 'desc');
+            }])
+            ->with('guides')
+            ->orderBy('due', 'asc')
+            ->get();
+
+        // Filter requirements where user is assigned via program chain
+        $this->courseRequirements = $allRequirements->filter(function ($requirement) use ($user) {
+            return $this->isUserAssignedToRequirement($requirement, $user);
+        })
+        ->map(function ($requirement) use ($userId) {
+            $userSubmitted = $this->hasUserSubmittedRequirement($requirement->id, $userId, $this->selectedCourse);
+            $userMarkedDone = $this->hasUserMarkedDone($requirement->id, $userId, $this->selectedCourse);
+            
+            // Create a data array instead of setting dynamic properties
+            $requirementData = [
+                'requirement' => $requirement,
+                'user_has_submitted' => $userSubmitted || $userMarkedDone,
+                'user_marked_done' => $userMarkedDone,
+                'can_mark_done' => $this->canMarkAsDone($requirement->id),
+                'partnership_status' => $this->getPartnershipStatus($requirement),
+            ];
+            
+            \Log::info("Processed requirement for course view", [
+                'requirement_id' => $requirement->id,
+                'name' => $requirement->name,
+                'requirement_group' => $requirement->requirement_group,
+                'user_has_submitted' => $requirementData['user_has_submitted'],
+                'user_marked_done' => $requirementData['user_marked_done'],
+                'can_mark_done' => $requirementData['can_mark_done']
+            ]);
+            
+            return $requirementData;
+        });
+
+        // Build folder structure based on new logic
+        $this->folderStructure = $this->buildFolderStructure($this->courseRequirements);
+    }
+
+    /**
+     * Build hierarchical folder structure
+     */
+    private function buildFolderStructure($requirements)
+    {
+        // Get all folders (requirement types that are folders)
+        $allFolders = RequirementType::where('is_folder', true)
+            ->with('children')
+            ->get()
+            ->keyBy('id');
+
+        // Build the folder tree
+        $rootFolders = $allFolders->where('parent_id', null);
+        
+        $folderStructure = [];
+        
+        foreach ($rootFolders as $rootFolder) {
+            $folderData = [
+                'folder' => $rootFolder,
+                'requirements' => [],
+                'children' => []
+            ];
+            
+            // Check if this root folder has children
+            $hasChildren = $rootFolder->children->where('is_folder', true)->isNotEmpty();
+            
+            if ($hasChildren) {
+                // Folder has children - don't show requirements at root level
+                foreach ($rootFolder->children->where('is_folder', true) as $childFolder) {
+                    $childFolderData = [
+                        'folder' => $childFolder,
+                        'requirements' => $this->getRequirementsForFolder($requirements, $childFolder->id)
+                    ];
+                    
+                    $folderData['children'][] = $childFolderData;
+                }
+            } else {
+                // Folder has no children - show requirements directly
+                $folderData['requirements'] = $this->getRequirementsForFolder($requirements, $rootFolder->id);
+            }
+            
+            $folderStructure[] = $folderData;
+        }
+        
+        // Handle custom requirements (without requirement_type_ids or with empty array)
+        $customRequirements = $requirements->filter(function($requirementData) {
+            $requirement = $requirementData['requirement'];
+            return empty($requirement->requirement_type_ids) || 
+                   (is_array($requirement->requirement_type_ids) && count($requirement->requirement_type_ids) === 0);
+        });
+        
+        if ($customRequirements->isNotEmpty()) {
+            // Use a string ID with prefix to avoid conflicts with database IDs
+            $folderStructure[] = [
+                'folder' => (object)[
+                    'id' => 'custom_requirements',
+                    'name' => 'Other Requirements',
+                    'parent_id' => null,
+                    'is_folder' => true
+                ],
+                'requirements' => $customRequirements->values()->all(),
+                'children' => []
+            ];
+        }
+        
+        return $folderStructure;
+    }
+
+    /**
+     * Get requirements for a specific folder
+     */
+    private function getRequirementsForFolder($requirements, $folderId)
+    {
+        return $requirements->filter(function($requirementData) use ($folderId) {
+            $requirement = $requirementData['requirement'];
+            if (empty($requirement->requirement_type_ids) || 
+                (is_array($requirement->requirement_type_ids) && count($requirement->requirement_type_ids) === 0)) {
+                return false;
+            }
+            
+            return in_array($folderId, $requirement->requirement_type_ids);
+        })->values()->all();
+    }
+
+    /**
+     * Load requirements for a selected root folder
+     */
+    private function loadFolderRequirements()
+    {
+        if (!$this->selectedFolder || !$this->activeSemester) {
+            $this->folderRequirements = [];
+            return;
+        }
+
+        $userId = Auth::id();
+        $user = Auth::user();
+        
+        // Get all requirements for the active semester
+        $allRequirements = Requirement::where('semester_id', $this->activeSemester->id)
+            ->with(['userSubmissions' => function($query) use ($userId) {
+                $query->where('user_id', $userId)
+                    ->where('course_id', $this->selectedCourse)
+                    ->with('submissionFile')
+                    ->orderBy('submitted_at', 'desc');
+            }])
+            ->with('guides')
+            ->orderBy('due', 'asc')
+            ->get();
+
+        // Filter requirements that belong to this folder AND user is assigned via program chain
+        $this->folderRequirements = $allRequirements->filter(function ($requirement) use ($user) {
+            // Check if user is assigned to requirement via program chain
+            if (!$this->isUserAssignedToRequirement($requirement, $user)) {
+                return false;
+            }
+            
+            // Check if requirement belongs to the selected folder
+            if (!empty($requirement->requirement_type_ids) && 
+                is_array($requirement->requirement_type_ids) && 
+                count($requirement->requirement_type_ids) > 0) {
+                return in_array($this->selectedFolder, $requirement->requirement_type_ids);
+            }
+            
+            // For custom requirements (empty requirement_type_ids), check if we're in the custom folder
+            if (($this->selectedFolder === 'custom_requirements') && 
+                (empty($requirement->requirement_type_ids) || 
+                 (is_array($requirement->requirement_type_ids) && count($requirement->requirement_type_ids) === 0))) {
+                return true;
+            }
+            
+            return false;
+        })
+        ->map(function ($requirement) use ($userId) {
+            $userSubmitted = $this->hasUserSubmittedRequirement($requirement->id, $userId, $this->selectedCourse);
+            $userMarkedDone = $this->hasUserMarkedDone($requirement->id, $userId, $this->selectedCourse);
+            
+            return [
+                'requirement' => $requirement,
+                'user_has_submitted' => $userSubmitted || $userMarkedDone,
+                'user_marked_done' => $userMarkedDone,
+                'can_mark_done' => $this->canMarkAsDone($requirement->id),
+                'partnership_status' => $this->getPartnershipStatus($requirement),
+            ];
+        });
+    }
+
+    /**
+     * Load requirements for a selected sub-folder
+     */
+    private function loadSubFolderRequirements()
+    {
+        if (!$this->selectedSubFolder || !$this->activeSemester) {
+            $this->folderRequirements = [];
+            return;
+        }
+
+        $userId = Auth::id();
+        $user = Auth::user();
+        
+        // Get all requirements for the active semester
+        $allRequirements = Requirement::where('semester_id', $this->activeSemester->id)
+            ->with(['userSubmissions' => function($query) use ($userId) {
+                $query->where('user_id', $userId)
+                    ->where('course_id', $this->selectedCourse)
+                    ->with('submissionFile')
+                    ->orderBy('submitted_at', 'desc');
+            }])
+            ->with('guides')
+            ->orderBy('due', 'asc')
+            ->get();
+
+        // Filter requirements that belong to this sub-folder AND user is assigned via program chain
+        $this->folderRequirements = $allRequirements->filter(function ($requirement) use ($user) {
+            // Check if user is assigned to requirement via program chain
+            if (!$this->isUserAssignedToRequirement($requirement, $user)) {
+                return false;
+            }
+            
+            // Check if requirement belongs to the selected sub-folder
+            if (!empty($requirement->requirement_type_ids) && 
+                is_array($requirement->requirement_type_ids) && 
+                count($requirement->requirement_type_ids) > 0) {
+                return in_array($this->selectedSubFolder, $requirement->requirement_type_ids);
+            }
+            
+            return false;
+        })
+        ->map(function ($requirement) use ($userId) {
+            $userSubmitted = $this->hasUserSubmittedRequirement($requirement->id, $userId, $this->selectedCourse);
+            $userMarkedDone = $this->hasUserMarkedDone($requirement->id, $userId, $this->selectedCourse);
+            
+            return [
+                'requirement' => $requirement,
+                'user_has_submitted' => $userSubmitted || $userMarkedDone,
+                'user_marked_done' => $userMarkedDone,
+                'can_mark_done' => $this->canMarkAsDone($requirement->id),
+                'partnership_status' => $this->getPartnershipStatus($requirement),
+            ];
+        });
     }
 
     /**
@@ -431,52 +772,59 @@ class RequirementsList extends Component
     {
         try {
             $user = Auth::user();
+            $requirement = Requirement::findOrFail($requirementId);
             
-            // Check if user has submitted this requirement FOR THIS COURSE
-            $submissionExists = SubmittedRequirement::where('requirement_id', $requirementId)
-                ->where('user_id', $user->id)
-                ->where('course_id', $this->selectedCourse) // Add course filter
-                ->exists();
-                
-            if (!$submissionExists) {
-                $this->dispatch('showNotification',
-                    type: 'error',
-                    content: 'You need to submit a file first before marking as done.'
-                );
+            // Always do a fresh check instead of relying on cached properties
+            $canMarkDone = $this->canMarkAsDone($requirementId);
+            
+            \Log::info("Attempting to toggle mark as done - FRESH CHECK", [
+                'requirement_id' => $requirementId,
+                'requirement_name' => $requirement->name,
+                'requirement_group' => $requirement->requirement_group,
+                'can_mark_done' => $canMarkDone,
+                'user_has_submitted' => $this->hasUserSubmittedRequirement($requirementId, Auth::id(), $this->selectedCourse),
+                'is_part_of_partnership' => $requirement->isPartOfPartnership(),
+            ]);
+            
+            // Check if requirement can be marked as done (partnership validation)
+            if (!$canMarkDone) {
+                if ($requirement->isPartOfPartnership()) {
+                    $this->dispatch('showNotification',
+                        type: 'error',
+                        content: 'Cannot mark as done. All partner requirements (TOS and Examinations) must be submitted together.'
+                    );
+                } else {
+                    $this->dispatch('showNotification',
+                        type: 'error',
+                        content: 'You need to submit a file first before marking as done.'
+                    );
+                }
                 return;
             }
             
-            // UPDATED: Check if already marked as done FOR THIS COURSE
+            // Check if already marked as done FOR THIS COURSE
             $existingIndicator = RequirementSubmissionIndicator::where('requirement_id', $requirementId)
                 ->where('user_id', $user->id)
-                ->where('course_id', $this->selectedCourse) // Added course filter
+                ->where('course_id', $this->selectedCourse)
                 ->first();
             
             if ($existingIndicator) {
-                // Toggle off - mark as undone
-                $existingIndicator->delete();
+                // Toggle off - mark as undone (for all partners too if it's a partnership)
+                $this->markPartnershipAsUndone($requirement, $user->id);
                 $message = 'Requirement marked as undone!';
                 
                 // Delete notification for admins
                 $this->deleteNotificationForRequirement($requirementId, $user->id);
                 
             } else {
-                // Toggle on - mark as done FOR THIS COURSE
-                RequirementSubmissionIndicator::create([
-                    'requirement_id' => $requirementId,
-                    'user_id' => $user->id,
-                    'course_id' => $this->selectedCourse, // Added course_id
-                    'submitted_at' => now(),
-                ]);
+                // Toggle on - mark as done FOR THIS COURSE (and all partners if it's a partnership)
+                $this->markPartnershipAsDone($requirement, $user->id);
                 $message = 'Requirement marked as done!';
-                
-                // Get the requirement
-                $requirement = Requirement::findOrFail($requirementId);
                 
                 // Get ALL submissions for this requirement by this user FOR THIS COURSE
                 $submissions = SubmittedRequirement::where('requirement_id', $requirementId)
                     ->where('user_id', $user->id)
-                    ->where('course_id', $this->selectedCourse) // Add course filter
+                    ->where('course_id', $this->selectedCourse)
                     ->with('media')
                     ->get();
                 
@@ -490,7 +838,9 @@ class RequirementsList extends Component
             }
             
             // Reload requirements to reflect changes
-            if ($this->selectedFolder) {
+            if ($this->selectedSubFolder) {
+                $this->loadSubFolderRequirements();
+            } else if ($this->selectedFolder) {
                 $this->loadFolderRequirements();
             } else {
                 $this->loadCourseRequirements();
@@ -502,10 +852,92 @@ class RequirementsList extends Component
             );
             
         } catch (\Exception $e) {
+            \Log::error("Failed to toggle mark as done", [
+                'requirement_id' => $requirementId,
+                'error' => $e->getMessage()
+            ]);
+            
             $this->dispatch('showNotification',
                 type: 'error',
                 content: 'Failed to update status: ' . $e->getMessage()
             );
+        }
+    }
+
+    /**
+     * Mark a partnership group as done (main requirement + all partners)
+     */
+    protected function markPartnershipAsDone($requirement, $userId)
+    {
+        if ($requirement->isPartOfPartnership()) {
+            // Get all partners including the main requirement
+            $allRequirements = $requirement->getPartnerRequirements($this->activeSemester->id);
+            $allRequirements->push($requirement);
+            
+            foreach ($allRequirements as $partnerRequirement) {
+                // Check if already marked as done for this course
+                $existingIndicator = RequirementSubmissionIndicator::where('requirement_id', $partnerRequirement->id)
+                    ->where('user_id', $userId)
+                    ->where('course_id', $this->selectedCourse)
+                    ->first();
+                
+                if (!$existingIndicator) {
+                    RequirementSubmissionIndicator::create([
+                        'requirement_id' => $partnerRequirement->id,
+                        'user_id' => $userId,
+                        'course_id' => $this->selectedCourse,
+                        'submitted_at' => now(),
+                    ]);
+                    
+                    \Log::info("Marked partner requirement as done", [
+                        'main_requirement_id' => $requirement->id,
+                        'partner_requirement_id' => $partnerRequirement->id,
+                        'user_id' => $userId,
+                        'course_id' => $this->selectedCourse
+                    ]);
+                }
+            }
+        } else {
+            // For non-partnership requirements, just mark the single requirement
+            RequirementSubmissionIndicator::create([
+                'requirement_id' => $requirement->id,
+                'user_id' => $userId,
+                'course_id' => $this->selectedCourse,
+                'submitted_at' => now(),
+            ]);
+        }
+    }
+
+    /**
+     * Mark a partnership group as undone (main requirement + all partners)
+     */
+    protected function markPartnershipAsUndone($requirement, $userId)
+    {
+        if ($requirement->isPartOfPartnership()) {
+            // Get all partners including the main requirement
+            $allRequirements = $requirement->getPartnerRequirements($this->activeSemester->id);
+            $allRequirements->push($requirement);
+            
+            foreach ($allRequirements as $partnerRequirement) {
+                // Delete the indicator for this partner requirement
+                RequirementSubmissionIndicator::where('requirement_id', $partnerRequirement->id)
+                    ->where('user_id', $userId)
+                    ->where('course_id', $this->selectedCourse)
+                    ->delete();
+                    
+                \Log::info("Marked partner requirement as undone", [
+                    'main_requirement_id' => $requirement->id,
+                    'partner_requirement_id' => $partnerRequirement->id,
+                    'user_id' => $userId,
+                    'course_id' => $this->selectedCourse
+                ]);
+            }
+        } else {
+            // For non-partnership requirements, just unmark the single requirement
+            RequirementSubmissionIndicator::where('requirement_id', $requirement->id)
+                ->where('user_id', $userId)
+                ->where('course_id', $this->selectedCourse)
+                ->delete();
         }
     }
 
@@ -565,12 +997,6 @@ class RequirementsList extends Component
         });
     }
 
-    public function selectFolder($folderId)
-    {
-        $this->selectedFolder = RequirementType::find($folderId);
-        $this->loadFolderRequirements();
-    }
-
     /**
      * Get current course for breadcrumb
      */
@@ -584,79 +1010,37 @@ class RequirementsList extends Component
     }
 
     /**
-     * Navigate back to course requirements from folder view
+     * Get current folder for breadcrumb
      */
-    public function backToCourseRequirements()
+    public function getCurrentFolderProperty()
     {
-        if ($this->selectedFolder) {
-            $this->selectedFolder = null;
-            $this->folderRequirements = [];
+        if (!$this->selectedFolder) {
+            return null;
         }
-        $this->reset(['file', 'submissionNotes', 'activeTabs']);
+        
+        // Handle custom folder
+        if ($this->selectedFolder === 'custom_requirements') {
+            return (object)[
+                'id' => 'custom_requirements',
+                'name' => 'Other Requirements',
+                'parent_id' => null,
+                'is_folder' => true
+            ];
+        }
+        
+        return RequirementType::find($this->selectedFolder);
     }
 
-    private function loadFolderRequirements()
+    /**
+     * Get current sub-folder for breadcrumb
+     */
+    public function getCurrentSubFolderProperty()
     {
-        if (!$this->selectedFolder || !$this->activeSemester) {
-            $this->folderRequirements = [];
-            return;
+        if (!$this->selectedSubFolder) {
+            return null;
         }
-
-        $userId = Auth::id();
-        $user = Auth::user();
         
-        // Get all requirements for the active semester
-        $allRequirements = Requirement::where('semester_id', $this->activeSemester->id)
-            ->with(['userSubmissions' => function($query) use ($userId) {
-                $query->where('user_id', $userId)
-                    ->where('course_id', $this->selectedCourse) // Filter by current course
-                    ->with('submissionFile')
-                    ->orderBy('submitted_at', 'desc');
-            }])
-            ->with('guides')
-            ->orderBy('due', 'asc')
-            ->get();
-
-        // Filter requirements that belong to this folder
-        $this->folderRequirements = $allRequirements->filter(function ($requirement) use ($user, $userId) {
-            // Check if user is assigned to requirement
-            if (!$this->isUserAssignedToRequirement($requirement, $user)) {
-                return false;
-            }
-            
-            // Check if requirement belongs to the selected folder
-            if (!empty($requirement->requirement_type_ids)) {
-                $requirementTypes = RequirementType::whereIn('id', $requirement->requirement_type_ids)->get();
-                
-                foreach ($requirementTypes as $type) {
-                    // Check if requirement is directly in folder or has folder as parent
-                    if ($type->id === $this->selectedFolder->id || 
-                        ($type->parent_id === $this->selectedFolder->id)) {
-                        return true;
-                    }
-                }
-            }
-            
-            return false;
-        })
-        ->map(function ($requirement) use ($userId) {
-            // Check if current user has submitted this requirement FOR THIS COURSE
-            $userSubmitted = SubmittedRequirement::where('requirement_id', $requirement->id)
-                ->where('user_id', $userId)
-                ->where('course_id', $this->selectedCourse) // Add course filter
-                ->exists();
-            
-            // UPDATED: Add course_id filter to indicator check
-            $userMarkedDone = RequirementSubmissionIndicator::where('requirement_id', $requirement->id)
-                ->where('user_id', $userId)
-                ->where('course_id', $this->selectedCourse) // Added course filter
-                ->exists();
-            
-            $requirement->user_has_submitted = $userSubmitted || $userMarkedDone;
-            $requirement->user_marked_done = $userMarkedDone;
-            
-            return $requirement;
-        });
+        return RequirementType::find($this->selectedSubFolder);
     }
 
     public function render()
@@ -665,6 +1049,9 @@ class RequirementsList extends Component
             'assignedCourses' => $this->assignedCourses,
             'activeSemester' => $this->activeSemester,
             'hasAssignedRequirements' => $this->hasAssignedRequirements,
+            'currentCourse' => $this->currentCourse,
+            'currentFolder' => $this->currentFolder,
+            'currentSubFolder' => $this->currentSubFolder,
         ]);
     }
 }

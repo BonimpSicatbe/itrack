@@ -31,6 +31,7 @@ class Requirement extends Model implements HasMedia
         'archived_by',
         'semester_id',
         'requirement_type_ids',
+        'requirement_group',
     ];
 
     protected $casts = [
@@ -132,6 +133,108 @@ class Requirement extends Model implements HasMedia
         }
         
         return in_array($typeId, $this->requirement_type_ids);
+    }
+
+    /**
+     * Check if this requirement is part of a partnership group
+     */
+    public function isPartOfPartnership()
+    {
+        return in_array($this->requirement_group, ['midterm_assessment', 'finals_assessment']);
+    }
+
+    /**
+     * Get partnership group name for display
+     */
+    public function getPartnershipGroupName()
+    {
+        return match($this->requirement_group) {
+            'midterm_assessment' => 'Midterm Assessment',
+            'finals_assessment' => 'Finals Assessment',
+            default => null
+        };
+    }
+
+    /**
+     * Get partner requirements (TOS and Examinations in the same group)
+     */
+    public function getPartnerRequirements($semesterId = null)
+    {
+        if (!$this->isPartOfPartnership()) {
+            return collect();
+        }
+
+        return Requirement::where('requirement_group', $this->requirement_group)
+            ->where('id', '!=', $this->id)
+            ->where('semester_id', $semesterId ?? $this->semester_id)
+            ->get();
+    }
+
+    /**
+     * Check if all partners in the group are submitted for a user and course
+     */
+    public function areAllPartnersSubmitted($userId = null, $courseId = null)
+    {
+        if (!$this->isPartOfPartnership()) {
+            return true; // Not part of partnership, so considered "complete"
+        }
+
+        $userId = $userId ?? Auth::id();
+        $courseId = $courseId ?? request()->input('selectedCourse');
+
+        if (!$courseId) {
+            return false;
+        }
+
+        $partners = $this->getPartnerRequirements();
+        
+        // Check if this requirement and all partners have submissions
+        $allRequirements = $partners->push($this);
+        
+        foreach ($allRequirements as $requirement) {
+            $hasSubmission = SubmittedRequirement::where('requirement_id', $requirement->id)
+                ->where('user_id', $userId)
+                ->where('course_id', $courseId)
+                ->exists();
+                
+            if (!$hasSubmission) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Check if any partner in the group is submitted for a user and course
+     */
+    public function isAnyPartnerSubmitted($userId = null, $courseId = null)
+    {
+        if (!$this->isPartOfPartnership()) {
+            return false;
+        }
+
+        $userId = $userId ?? Auth::id();
+        $courseId = $courseId ?? request()->input('selectedCourse');
+
+        if (!$courseId) {
+            return false;
+        }
+
+        $partners = $this->getPartnerRequirements();
+        
+        foreach ($partners as $partner) {
+            $hasSubmission = SubmittedRequirement::where('requirement_id', $partner->id)
+                ->where('user_id', $userId)
+                ->where('course_id', $courseId)
+                ->exists();
+                
+            if ($hasSubmission) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public function registerMediaConversions(?Media $media = null): void

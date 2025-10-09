@@ -31,6 +31,11 @@ class RequirementCreate extends Component
     public $selectedPrograms = [];
     public $selectAllPrograms = false;
 
+    // --- SELECT ALL PROPERTIES ---
+    public $selectAllRequirements = false;
+    public $selectAllMidterm = false;
+    public $selectAllFinals = false;
+
     // --- FILE PROPERTIES ---
     public $required_files = [];
     
@@ -168,6 +173,28 @@ class RequirementCreate extends Component
         return Program::all();
     }
 
+    // Get Midterm children IDs
+    #[Computed]
+    public function midtermChildrenIds()
+    {
+        $midterm = RequirementType::where('name', 'Midterm')->first();
+        if ($midterm) {
+            return $midterm->children->pluck('id')->toArray();
+        }
+        return [];
+    }
+
+    // Get Finals children IDs
+    #[Computed]
+    public function finalsChildrenIds()
+    {
+        $finals = RequirementType::where('name', 'Finals')->first();
+        if ($finals) {
+            return $finals->children->pluck('id')->toArray();
+        }
+        return [];
+    }
+
     // --- VALIDATION RULES ---
     public function rules()
     {
@@ -257,8 +284,73 @@ class RequirementCreate extends Component
         
         // Update previous selection for next change
         $this->previousRequirementTypes = $this->selectedRequirementTypes;
+
+        // Update select all states
+        $this->updateSelectAllStates();
     }
 
+    // Update select all states based on current selection
+    public function updateSelectAllStates()
+    {
+        // Update Select All Requirements
+        $allRequirementIds = $this->requirementTypes->pluck('id')->toArray();
+        $this->selectAllRequirements = count(array_intersect($allRequirementIds, $this->selectedRequirementTypes)) === count($allRequirementIds);
+
+        // Update Select All Midterm
+        $midtermIds = $this->midtermChildrenIds;
+        if (!empty($midtermIds)) {
+            $this->selectAllMidterm = count(array_intersect($midtermIds, $this->selectedRequirementTypes)) === count($midtermIds);
+        }
+
+        // Update Select All Finals
+        $finalsIds = $this->finalsChildrenIds;
+        if (!empty($finalsIds)) {
+            $this->selectAllFinals = count(array_intersect($finalsIds, $this->selectedRequirementTypes)) === count($finalsIds);
+        }
+    }
+
+    // Select All Requirements
+    public function updatedSelectAllRequirements($value)
+    {
+        if ($value) {
+            $this->selectedRequirementTypes = $this->requirementTypes->pluck('id')->toArray();
+        } else {
+            $this->selectedRequirementTypes = [];
+        }
+        $this->updateSelectAllStates();
+    }
+
+    // Select All Midterm
+    public function updatedSelectAllMidterm($value)
+    {
+        $midtermIds = $this->midtermChildrenIds;
+        if (!empty($midtermIds)) {
+            if ($value) {
+                // Add Midterm children to selection
+                $this->selectedRequirementTypes = array_values(array_unique(array_merge($this->selectedRequirementTypes, $midtermIds)));
+            } else {
+                // Remove Midterm children from selection
+                $this->selectedRequirementTypes = array_values(array_diff($this->selectedRequirementTypes, $midtermIds));
+            }
+            $this->updateSelectAllStates();
+        }
+    }
+
+    // Select All Finals
+    public function updatedSelectAllFinals($value)
+    {
+        $finalsIds = $this->finalsChildrenIds;
+        if (!empty($finalsIds)) {
+            if ($value) {
+                // Add Finals children to selection
+                $this->selectedRequirementTypes = array_values(array_unique(array_merge($this->selectedRequirementTypes, $finalsIds)));
+            } else {
+                // Remove Finals children from selection
+                $this->selectedRequirementTypes = array_values(array_diff($this->selectedRequirementTypes, $finalsIds));
+            }
+            $this->updateSelectAllStates();
+        }
+    }
     
     public function updatedIsOtherSelected($value)
     {
@@ -359,6 +451,7 @@ class RequirementCreate extends Component
                                     $requirementsToCreate[] = [
                                         'name' => $fullName, 
                                         'type_ids' => [$grandchild->id], // Store the GRANDCHILD ID
+                                        'requirement_group' => $this->getRequirementGroup($grandchild->id, $child->id, $type->id),
                                     ];
                                 }
                             } else {
@@ -369,6 +462,7 @@ class RequirementCreate extends Component
                                 $requirementsToCreate[] = [
                                     'name' => $fullName, 
                                     'type_ids' => [$child->id], // Store the CHILD ID
+                                    'requirement_group' => $this->getRequirementGroup($child->id, $type->id),
                                 ];
                             }
                         }
@@ -389,6 +483,7 @@ class RequirementCreate extends Component
                         $requirementsToCreate[] = [
                             'name' => $fullName,
                             'type_ids' => [$type->id],
+                            'requirement_group' => $this->getRequirementGroup($type->id, $parent->id, $grandparent?->id),
                         ];
                     }
                     // If this type has NO CHILDREN and NO PARENT (standalone leaf node)
@@ -396,6 +491,7 @@ class RequirementCreate extends Component
                         $requirementsToCreate[] = [
                             'name' => $type->name,
                             'type_ids' => [$type->id],
+                            'requirement_group' => null,
                         ];
                     }
                 }
@@ -406,6 +502,7 @@ class RequirementCreate extends Component
                 $requirementsToCreate[] = [
                     'name' => $this->otherRequirementName,
                     'type_ids' => [], // Empty array for custom requirements
+                    'requirement_group' => null,
                 ];
             }
 
@@ -434,6 +531,7 @@ class RequirementCreate extends Component
                     'due' => $this->due,
                     'assigned_to' => $assignedData, 
                     'requirement_type_ids' => $data['type_ids'], // This will be automatically cast to JSON
+                    'requirement_group' => $data['requirement_group'], // Add partnership group
                     'created_by' => Auth::id(),
                     'semester_id' => $activeSemester->id,
                     'status' => 'pending'
@@ -478,6 +576,53 @@ class RequirementCreate extends Component
                 'duration' => 5000
             ]);
         }
+    }
+
+    // Helper method to determine requirement group based on type hierarchy
+    protected function getRequirementGroup(...$typeIds)
+    {
+        // Auto-detect partnership groups based on requirement types
+        foreach ($typeIds as $typeId) {
+            $type = RequirementType::find($typeId);
+            if ($type) {
+                // Check if this is TOS or Examinations in Midterm
+                if (($type->name === 'TOS' || $type->name === 'Examinations') && $this->isMidtermType($type)) {
+                    return 'midterm_assessment';
+                }
+                // Check if this is TOS or Examinations in Finals
+                if (($type->name === 'TOS' || $type->name === 'Examinations') && $this->isFinalsType($type)) {
+                    return 'finals_assessment';
+                }
+            }
+        }
+
+        return null;
+    }
+
+    // Check if type belongs to Midterm hierarchy
+    protected function isMidtermType($type)
+    {
+        $current = $type;
+        while ($current) {
+            if ($current->name === 'Midterm') {
+                return true;
+            }
+            $current = $current->parent;
+        }
+        return false;
+    }
+
+    // Check if type belongs to Finals hierarchy
+    protected function isFinalsType($type)
+    {
+        $current = $type;
+        while ($current) {
+            if ($current->name === 'Finals') {
+                return true;
+            }
+            $current = $current->parent;
+        }
+        return false;
     }
 
     public function cancel()
