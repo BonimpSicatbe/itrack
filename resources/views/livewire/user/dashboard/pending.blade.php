@@ -22,6 +22,10 @@
                     $isOverdue = $dueDate->isPast();
                     $isDueSoon = $dueDate->diffInDays() <= 3;
                 }
+
+                // Determine folder type for special handling
+                $isMidtermFolder = $folder->id == 3;
+                $isFinalsFolder = $folder->id == 7;
             @endphp
             
             <div class="flex-shrink-0 w-72 bg-white border border-slate-200 rounded-xl p-4 hover:border-2 hover:border-green-500 transition-colors cursor-pointer"
@@ -29,11 +33,16 @@
                 {{-- Header with folder icon and title --}}
                 <div class="flex items-center gap-3 mb-3">
                     <div>
-                        <i class="fa-solid fa-folder text-xl text-yellow-500"></i>
+                        @if($isMidtermFolder || $isFinalsFolder)
+                            <i class="fa-solid fa-folder-open text-xl text-yellow-500"></i>
+                        @else
+                            <i class="fa-solid fa-folder text-xl text-yellow-500"></i>
+                        @endif
                     </div>
                     <div class="flex-1 min-w-0">
                         <h4 class="font-semibold text-slate-800 text-sm truncate" title="{{ $folder->name }}">
                             {{ $folder->name }}
+                            
                         </h4>
                         <p class="text-xs text-slate-500 truncate" title="{{ $course->course_code }} - {{ $course->course_name }}">
                             {{ $course->course_code }}
@@ -89,8 +98,21 @@
                         <i class="fa-solid fa-folder-open text-3xl text-gray-300"></i>
                     </div>
                     <div class="text-sm font-semibold text-gray-500">No pending requirements</div>
+                    <div class="text-xs text-gray-400">All requirements are completed or submitted!</div>
                 </div>
             </div>
         @endforelse
     </div>
+
+    {{-- Information Panel about Auto-Removal --}}
+    @if($pendingFoldersByCourse->count() > 0)
+        <div class="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+            <div class="flex items-start gap-2">
+                <i class="fa-solid fa-lightbulb text-blue-500"></i>
+                <div class="text-xs text-blue-700">
+                    <span class="font-semibold">Smart Completion:</span> Midterm and Finals folders are automatically removed from pending when you submit either the TOS+Examinations partnership OR the Rubrics requirement.
+                </div>
+            </div>
+        </div>
+    @endif
 </div>

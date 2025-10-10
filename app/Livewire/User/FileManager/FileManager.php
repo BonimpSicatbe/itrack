@@ -3,6 +3,7 @@
 namespace App\Livewire\User\FileManager;
 
 use Livewire\Component;
+use Livewire\WithUrlPagination;
 use App\Models\SubmittedRequirement;
 use App\Models\Semester;
 use App\Models\Requirement;
@@ -24,14 +25,17 @@ class FileManager extends Component
     
     // Navigation properties
     public $breadcrumb = [];
-    public $currentLevel = 'semesters'; // semesters, courses, requirements, files, folder_requirements
+    public $currentLevel = 'semesters'; 
     public $currentSemester = null;
     public $currentCourse = null;
-    public $currentRequirement = null;
-    public $currentFolder = null;
-    
-    // File selection properties
-    public $selectedFile = null;
+    public $currentParentFolder = null;
+    public $currentSubFolder = null;
+
+    // URL query parameters
+    public $semesterId = null;
+    public $courseId = null;
+    public $folderId = null;
+    public $subFolderId = null;
     
     // Semester properties
     public $activeSemester = null;
@@ -43,6 +47,13 @@ class FileManager extends Component
 
     // Course properties
     public $assignedCourses = [];
+    
+    // Folder content properties
+    public $parentFolderContents = [];
+    public $contentType = ''; 
+
+    // File selection properties
+    public $selectedFile = null;
     
     public $showDeleteModal = false;
     public $fileToDelete = null;
@@ -57,21 +68,238 @@ class FileManager extends Component
         'navigateToFileAfterSearch' => 'handleNavigateToFileAfterSearch'
     ];
 
+    protected $queryString = [
+        'semesterId' => ['except' => ''],
+        'courseId' => ['except' => ''],
+        'folderId' => ['except' => ''],
+        'subFolderId' => ['except' => ''],
+        'viewMode' => ['except' => 'grid'],
+        'searchQuery' => ['except' => ''],
+        'statusFilter' => ['except' => ''],
+    ];
+
     public function mount()
     {
+        $this->initializeFromUrl();
+        
         $this->refreshSemesterData();
         $this->loadAllSemesters();
         
-        // Retrieve view mode preference from session if exists
         $this->viewMode = session()->get('fileManagerViewMode', 'grid');
         
-        // Set default selected semester to active semester
-        if ($this->activeSemester) {
+        if (!$this->semesterId && $this->activeSemester) {
             $this->selectedSemesterId = $this->activeSemester->id;
             $this->currentSemester = $this->activeSemester;
             $this->loadAssignedCourses();
             $this->initializeBreadcrumb();
         }
+    }
+
+    /**
+     * Initialize component state from URL parameters
+     */
+    public function initializeFromUrl()
+    {
+        if ($this->subFolderId) {
+            // We're at a sub-folder level
+            $this->handleNavigationFromUrl('parent_folder_contents', $this->subFolderId, true);
+        } elseif ($this->folderId) {
+            // We're at a parent folder level
+            $this->handleNavigationFromUrl('parent_folder_contents', $this->folderId, true);
+        } elseif ($this->courseId) {
+            // We're at a course level
+            $this->handleNavigationFromUrl('parent_folders', $this->courseId, true);
+        } elseif ($this->semesterId) {
+            // We're at a semester level
+            $this->handleNavigationFromUrl('courses', $this->semesterId, true);
+        } else {
+            // We're at the root level
+            $this->currentLevel = 'semesters';
+            $this->initializeBreadcrumb();
+        }
+    }
+
+    /**
+     * Handle navigation from URL parameters (without updating URL again)
+     */
+    public function handleNavigationFromUrl($level, $id = null, $fromUrl = false)
+    {
+        $this->statusFilter = '';
+        if ($this->isNavigating) return;
+
+        $this->isNavigating = true; 
+
+        try {
+            $this->currentLevel = $level;
+            
+            if ($level === 'semesters') {
+                $this->currentSemester = null;
+                $this->currentCourse = null;
+                $this->currentParentFolder = null;
+                $this->currentSubFolder = null;
+                $this->selectedSemesterId = null;
+                $this->assignedCourses = [];
+                $this->deselectFile();
+                $this->breadcrumb = [['name' => 'File Manager', 'level' => 'semesters', 'id' => null]];
+                
+                // Clear URL parameters
+                if (!$fromUrl) {
+                    $this->updateUrlParameters('', '', '', '');
+                }
+            } elseif ($level === 'courses' && $id) {
+                // Load semester with assigned courses
+                $this->currentSemester = Semester::find($id);
+                
+                if (!$this->currentSemester) {
+                    $this->currentLevel = 'semesters';
+                    return;
+                }
+                
+                $this->selectedSemesterId = $id;
+                $this->loadAssignedCourses();
+                $this->currentCourse = null;
+                $this->currentParentFolder = null;
+                $this->currentSubFolder = null;
+                $this->deselectFile();
+                
+                // Update breadcrumb
+                $this->breadcrumb = [
+                    ['name' => 'File Manager', 'level' => 'semesters', 'id' => null],
+                    ['name' => $this->currentSemester->name, 'level' => 'courses', 'id' => $id]
+                ];
+                
+                // Update URL parameters
+                if (!$fromUrl) {
+                    $this->updateUrlParameters($id, null, null, null);
+                }
+            } elseif ($level === 'parent_folders' && $id) {
+                // Load course
+                $this->currentCourse = Course::with('program')->find($id);
+                
+                if (!$this->currentCourse) {
+                    if ($this->currentSemester) {
+                        $this->currentLevel = 'courses';
+                    } else {
+                        $this->currentLevel = 'semesters';
+                    }
+                    return;
+                }
+                
+                // Make sure we have the current semester set
+                if (!$this->currentSemester) {
+                    $this->currentSemester = $this->activeSemester;
+                    $this->selectedSemesterId = $this->currentSemester->id;
+                }
+                
+                $this->currentParentFolder = null;
+                $this->currentSubFolder = null;
+                $this->deselectFile();
+                
+                // Update breadcrumb
+                $this->breadcrumb = [
+                    ['name' => 'File Manager', 'level' => 'semesters', 'id' => null],
+                    ['name' => $this->currentSemester->name, 'level' => 'courses', 'id' => $this->currentSemester->id],
+                    ['name' => $this->currentCourse->course_code, 'level' => 'parent_folders', 'id' => $id]
+                ];
+                
+                // Update URL parameters
+                if (!$fromUrl) {
+                    $this->updateUrlParameters($this->currentSemester->id, $id, null, null);
+                }
+            } elseif ($level === 'parent_folder_contents' && $id) {
+                // Check if this is a parent folder or sub-folder
+                $folder = \App\Models\RequirementType::find($id);
+                
+                if (!$folder) {
+                    $this->currentLevel = 'parent_folders';
+                    return;
+                }
+                
+                if ($folder->parent_id === null) {
+                    // This is a parent folder
+                    $this->currentParentFolder = $folder;
+                    $this->currentSubFolder = null;
+                    
+                    // Update URL parameters for parent folder
+                    if (!$fromUrl) {
+                        $this->updateUrlParameters(
+                            $this->currentSemester->id, 
+                            $this->currentCourse->id, 
+                            $id, 
+                            null
+                        );
+                    }
+                } else {
+                    // This is a sub-folder - find the parent folder
+                    $this->currentSubFolder = $folder;
+                    $this->currentParentFolder = \App\Models\RequirementType::find($folder->parent_id);
+                    
+                    // Update URL parameters for sub-folder
+                    if (!$fromUrl) {
+                        $this->updateUrlParameters(
+                            $this->currentSemester->id, 
+                            $this->currentCourse->id, 
+                            $this->currentParentFolder->id, 
+                            $id
+                        );
+                    }
+                }
+                
+                // Determine if this folder has sub-folders or direct files
+                $this->loadParentFolderContents($id);
+                
+                $this->deselectFile();
+                
+                // Update breadcrumb with proper hierarchy
+                $this->breadcrumb = [
+                    ['name' => 'File Manager', 'level' => 'semesters', 'id' => null],
+                    ['name' => $this->currentSemester->name, 'level' => 'courses', 'id' => $this->currentSemester->id],
+                    ['name' => $this->currentCourse->course_code, 'level' => 'parent_folders', 'id' => $this->currentCourse->id],
+                ];
+                
+                // Add parent folder to breadcrumb
+                if ($this->currentParentFolder) {
+                    $this->breadcrumb[] = [
+                        'name' => $this->currentParentFolder->name, 
+                        'level' => 'parent_folder_contents', 
+                        'id' => $this->currentParentFolder->id
+                    ];
+                }
+                
+                // Add sub-folder to breadcrumb if viewing a sub-folder
+                if ($this->currentSubFolder) {
+                    $this->breadcrumb[] = [
+                        'name' => $this->currentSubFolder->name, 
+                        'level' => 'parent_folder_contents', 
+                        'id' => $this->currentSubFolder->id
+                    ];
+                }
+            }
+            
+            $this->dispatch('levelChanged', $level, $id);
+        } catch (\Exception $e) {
+            \Log::error('Navigation error: ' . $e->getMessage());
+            $this->currentLevel = 'semesters';
+            $this->currentSemester = null;
+            $this->currentCourse = null;
+            $this->currentParentFolder = null;
+            $this->currentSubFolder = null;
+            $this->breadcrumb = [['name' => 'File Manager', 'level' => 'semesters', 'id' => null]];
+            $this->updateUrlParameters(null, null, null, null);
+        } finally {
+            $this->isNavigating = false;
+        }
+    }
+
+    /**
+     * Update URL parameters
+     */
+    private function updateUrlParameters($semesterId = null, $courseId = null, $folderId = null, $subFolderId = null)
+    {
+        $this->semesterId = $semesterId ?: '';
+        $this->courseId = $courseId ?: '';
+        $this->folderId = $folderId ?: '';
+        $this->subFolderId = $subFolderId ?: '';
     }
 
     public function initializeBreadcrumb()
@@ -88,7 +316,7 @@ class FileManager extends Component
             ];
         }
         
-        if ($this->currentLevel === 'requirements' && $this->currentCourse) {
+        if ($this->currentLevel === 'parent_folders' && $this->currentCourse) {
             $this->breadcrumb[] = [
                 'name' => $this->currentSemester->name, 
                 'level' => 'courses', 
@@ -96,12 +324,12 @@ class FileManager extends Component
             ];
             $this->breadcrumb[] = [
                 'name' => $this->currentCourse->course_code, 
-                'level' => 'requirements', 
+                'level' => 'parent_folders', 
                 'id' => $this->currentCourse->id
             ];
         }
         
-        if ($this->currentLevel === 'files' && $this->currentRequirement) {
+        if ($this->currentLevel === 'parent_folder_contents' && $this->currentParentFolder) {
             $this->breadcrumb[] = [
                 'name' => $this->currentSemester->name, 
                 'level' => 'courses', 
@@ -109,32 +337,22 @@ class FileManager extends Component
             ];
             $this->breadcrumb[] = [
                 'name' => $this->currentCourse->course_code, 
-                'level' => 'requirements', 
+                'level' => 'parent_folders', 
                 'id' => $this->currentCourse->id
             ];
             $this->breadcrumb[] = [
-                'name' => $this->currentRequirement->name, 
-                'level' => 'files', 
-                'id' => $this->currentRequirement->id
+                'name' => $this->currentParentFolder->name, 
+                'level' => 'parent_folder_contents', 
+                'id' => $this->currentParentFolder->id
             ];
-        }
-        
-        if ($this->currentLevel === 'folder_requirements' && $this->currentFolder) {
-            $this->breadcrumb[] = [
-                'name' => $this->currentSemester->name, 
-                'level' => 'courses', 
-                'id' => $this->currentSemester->id
-            ];
-            $this->breadcrumb[] = [
-                'name' => $this->currentCourse->course_code, 
-                'level' => 'requirements', 
-                'id' => $this->currentCourse->id
-            ];
-            $this->breadcrumb[] = [
-                'name' => $this->currentFolder->name, 
-                'level' => 'folder_requirements', 
-                'id' => $this->currentFolder->id
-            ];
+            
+            if ($this->currentSubFolder) {
+                $this->breadcrumb[] = [
+                    'name' => $this->currentSubFolder->name, 
+                    'level' => 'parent_folder_contents', 
+                    'id' => $this->currentSubFolder->id
+                ];
+            }
         }
     }
 
@@ -154,7 +372,7 @@ class FileManager extends Component
         
         $this->assignedCourses = CourseAssignment::where('professor_id', $userId)
             ->where('semester_id', $this->currentSemester->id)
-            ->with('course')
+            ->with(['course', 'course.program'])
             ->get()
             ->pluck('course')
             ->unique('id')
@@ -237,245 +455,136 @@ class FileManager extends Component
 
     public function handleNavigation($level, $id = null)
     {
-        $this->statusFilter = ''; // Reset the status filter
-        if ($this->isNavigating) return;
+        $this->handleNavigationFromUrl($level, $id, false);
+    }
 
-        $this->isNavigating = true; 
-
-        try {
-            $this->currentLevel = $level;
-            
-            if ($level === 'semesters') {
-                $this->currentSemester = null;
-                $this->currentCourse = null;
-                $this->currentRequirement = null;
-                $this->currentFolder = null;
-                $this->selectedSemesterId = null;
-                $this->assignedCourses = [];
-                $this->deselectFile();
-                $this->breadcrumb = [['name' => 'File Manager', 'level' => 'semesters', 'id' => null]];
-            } elseif ($level === 'courses' && $id) {
-                // Load semester with assigned courses
-                $this->currentSemester = Semester::find($id);
-                
-                if (!$this->currentSemester) {
-                    $this->currentLevel = 'semesters';
-                    return;
-                }
-                
-                $this->selectedSemesterId = $id;
-                $this->loadAssignedCourses();
-                $this->currentCourse = null;
-                $this->currentRequirement = null;
-                $this->currentFolder = null;
-                $this->deselectFile();
-                
-                // Update breadcrumb
-                $this->breadcrumb = [
-                    ['name' => 'File Manager', 'level' => 'semesters', 'id' => null],
-                    ['name' => $this->currentSemester->name, 'level' => 'courses', 'id' => $id]
-                ];
-            } elseif ($level === 'requirements' && $id) {
-                // Load course and its requirements
-                $this->currentCourse = Course::find($id);
-                
-                if (!$this->currentCourse) {
-                    // Fall back to courses level if course doesn't exist
-                    if ($this->currentSemester) {
-                        $this->currentLevel = 'courses';
-                    } else {
-                        $this->currentLevel = 'semesters';
-                    }
-                    return;
-                }
-                
-                // Make sure we have the current semester set
-                if (!$this->currentSemester) {
-                    $this->currentSemester = $this->activeSemester;
-                    $this->selectedSemesterId = $this->currentSemester->id;
-                }
-                
-                $this->currentRequirement = null;
-                $this->currentFolder = null;
-                $this->deselectFile();
-                
-                // Update breadcrumb
-                $this->breadcrumb = [
-                    ['name' => 'File Manager', 'level' => 'semesters', 'id' => null],
-                    ['name' => $this->currentSemester->name, 'level' => 'courses', 'id' => $this->currentSemester->id],
-                    ['name' => $this->currentCourse->course_code, 'level' => 'requirements', 'id' => $id]
-                ];
-            } elseif ($level === 'files' && $id) {
-                // Check if this is a folder (requirement type) or a regular requirement
-                $requirementType = \App\Models\RequirementType::find($id);
-                
-                if ($requirementType && $requirementType->is_folder) {
-                    // Handle folder navigation - show requirements within this folder
-                    $this->currentFolder = $requirementType;
-                    $this->currentLevel = 'folder_requirements';
-                    
-                    // Update breadcrumb for folder
-                    $this->breadcrumb = [
-                        ['name' => 'File Manager', 'level' => 'semesters', 'id' => null],
-                        ['name' => $this->currentSemester->name, 'level' => 'courses', 'id' => $this->currentSemester->id],
-                        ['name' => $this->currentCourse->course_code, 'level' => 'requirements', 'id' => $this->currentCourse->id],
-                        ['name' => $requirementType->name, 'level' => 'folder_requirements', 'id' => $id]
-                    ];
-                } else {
-                    // Load requirement with user's submissions for this specific course
-                    $this->currentRequirement = Requirement::with([
-                        'submittedRequirements' => function($query) {
-                            $query->where('user_id', Auth::id())
-                                ->where('course_id', $this->currentCourse->id) // Filter by current course
-                                ->with(['submissionFile', 'user', 'requirement.semester']);
-                        }
-                    ])->find($id);
-                    
-                    if (!$this->currentRequirement) {
-                        // Fall back to requirements level if requirement doesn't exist
-                        if ($this->currentCourse) {
-                            $this->currentLevel = 'requirements';
-                        } else {
-                            $this->currentLevel = 'semesters';
-                        }
-                        return;
-                    }
-                    
-                    // Make sure we have the current semester and course set
-                    if (!$this->currentSemester && $this->currentRequirement->semester) {
-                        $this->currentSemester = $this->currentRequirement->semester;
-                        $this->selectedSemesterId = $this->currentSemester->id;
-                    }
-                    
-                    if (!$this->currentCourse) {
-                        // Try to get the course from the first submission or fall back
-                        $firstSubmission = $this->currentRequirement->submittedRequirements->first();
-                        if ($firstSubmission) {
-                            $this->currentCourse = Course::find($firstSubmission->course_id);
-                        }
-                    }
-                    
-                    // Find the parent folder for this requirement
-                    $parentFolder = $this->findParentFolderForRequirement($this->currentRequirement);
-                    
-                    if ($parentFolder) {
-                        // This requirement belongs to a folder - preserve folder in breadcrumb
-                        $this->breadcrumb = [
-                            ['name' => 'File Manager', 'level' => 'semesters', 'id' => null],
-                            ['name' => $this->currentSemester->name, 'level' => 'courses', 'id' => $this->currentSemester->id],
-                            ['name' => $this->currentCourse->course_code, 'level' => 'requirements', 'id' => $this->currentCourse->id],
-                            ['name' => $parentFolder->name, 'level' => 'folder_requirements', 'id' => $parentFolder->id],
-                            ['name' => $this->currentRequirement->name, 'level' => 'files', 'id' => $id]
-                        ];
-                    } else {
-                        // This is a standalone requirement
-                        $this->breadcrumb = [
-                            ['name' => 'File Manager', 'level' => 'semesters', 'id' => null],
-                            ['name' => $this->currentSemester->name, 'level' => 'courses', 'id' => $this->currentSemester->id],
-                            ['name' => $this->currentCourse->course_code, 'level' => 'requirements', 'id' => $this->currentCourse->id],
-                            ['name' => $this->currentRequirement->name, 'level' => 'files', 'id' => $id]
-                        ];
-                    }
-                }
-            } elseif ($level === 'folder_requirements' && $id) {
-                // Check if this is a folder navigation (from breadcrumb) or requirement within folder
-                $requirementType = \App\Models\RequirementType::find($id);
-                
-                if ($requirementType && $requirementType->is_folder) {
-                    // This is folder navigation from breadcrumb
-                    $this->currentFolder = $requirementType;
-                    $this->currentLevel = 'folder_requirements';
-                    
-                    // Update breadcrumb
-                    $this->breadcrumb = [
-                        ['name' => 'File Manager', 'level' => 'semesters', 'id' => null],
-                        ['name' => $this->currentSemester->name, 'level' => 'courses', 'id' => $this->currentSemester->id],
-                        ['name' => $this->currentCourse->course_code, 'level' => 'requirements', 'id' => $this->currentCourse->id],
-                        ['name' => $requirementType->name, 'level' => 'folder_requirements', 'id' => $id]
-                    ];
-                } else {
-                    // Load individual requirement within a folder
-                    $this->currentRequirement = Requirement::with([
-                        'submittedRequirements' => function($query) {
-                            $query->where('user_id', Auth::id())
-                                ->where('course_id', $this->currentCourse->id)
-                                ->with(['submissionFile', 'user', 'requirement.semester']);
-                        }
-                    ])->find($id);
-                    
-                    if (!$this->currentRequirement) {
-                        // Fall back to folder level if requirement doesn't exist
-                        $this->currentLevel = 'folder_requirements';
-                        return;
-                    }
-                    
-                    $this->currentLevel = 'files';
-                    
-                    // Find the parent folder for this requirement
-                    $parentFolder = $this->findParentFolderForRequirement($this->currentRequirement);
-                    
-                    if ($parentFolder) {
-                        // Update breadcrumb - preserve the folder context
-                        $this->breadcrumb = [
-                            ['name' => 'File Manager', 'level' => 'semesters', 'id' => null],
-                            ['name' => $this->currentSemester->name, 'level' => 'courses', 'id' => $this->currentSemester->id],
-                            ['name' => $this->currentCourse->course_code, 'level' => 'requirements', 'id' => $this->currentCourse->id],
-                            ['name' => $parentFolder->name, 'level' => 'folder_requirements', 'id' => $parentFolder->id],
-                            ['name' => $this->currentRequirement->name, 'level' => 'files', 'id' => $id]
-                        ];
-                    } else {
-                        // Fallback if no parent folder found
-                        $this->breadcrumb = [
-                            ['name' => 'File Manager', 'level' => 'semesters', 'id' => null],
-                            ['name' => $this->currentSemester->name, 'level' => 'courses', 'id' => $this->currentSemester->id],
-                            ['name' => $this->currentCourse->course_code, 'level' => 'requirements', 'id' => $this->currentCourse->id],
-                            ['name' => $this->currentRequirement->name, 'level' => 'files', 'id' => $id]
-                        ];
-                    }
-                }
-            }
-            
-            $this->dispatch('levelChanged', $level, $id);
-        } catch (\Exception $e) {
-            \Log::error('Navigation error: ' . $e->getMessage());
-            $this->currentLevel = 'semesters';
-            $this->currentSemester = null;
-            $this->currentCourse = null;
-            $this->currentRequirement = null;
-            $this->currentFolder = null;
-            $this->breadcrumb = [['name' => 'File Manager', 'level' => 'semesters', 'id' => null]];
-        } finally {
-            $this->isNavigating = false;
+    /**
+     * Load contents of a parent folder - either sub-folders or files
+     */
+    private function loadParentFolderContents($folderId)
+    {
+        $this->parentFolderContents = [];
+        $this->contentType = '';
+        
+        // Check if this folder has sub-folders that actually have files
+        $subFolders = \App\Models\RequirementType::where('parent_id', $folderId)
+            ->where('is_folder', true)
+            ->get()
+            ->filter(function ($subFolder) {
+                // Only keep sub-folders that have files (in the sub-folder or its children)
+                return $this->folderHasFiles($subFolder->id);
+            });
+        
+        if ($subFolders->count() > 0) {
+            // Show only sub-folders that have files
+            $this->contentType = 'sub_folders';
+            $this->parentFolderContents = $subFolders;
+        } else {
+            // Show files (submitted requirements for requirements assigned to this folder or its sub-folders)
+            $this->contentType = 'files';
+            $this->parentFolderContents = $this->getSubmittedFilesForFolder($folderId);
         }
     }
 
-    private function findParentFolderForRequirement($requirement)
+    /**
+     * Check if a folder (or its sub-folders) has any submitted files
+     */
+    private function folderHasFiles($folderId)
     {
-        if (empty($requirement->requirement_type_ids)) {
-            return null;
+        $user = Auth::user();
+        $courseId = $this->currentCourse->id;
+        $semesterId = $this->currentSemester->id;
+        
+        // Get all folder IDs to check (current folder + all its sub-folders)
+        $folderIdsToCheck = $this->getAllSubFolderIds($folderId);
+        $folderIdsToCheck[] = $folderId;
+
+        // Check if any requirements assigned to these folders have submissions
+        $requirementsWithSubmissions = Requirement::where('semester_id', $semesterId)
+            ->where(function($query) use ($folderIdsToCheck) {
+                foreach ($folderIdsToCheck as $checkFolderId) {
+                    $query->orWhereJsonContains('requirement_type_ids', $checkFolderId);
+                }
+            })
+            ->whereHas('userSubmissions', function($query) use ($user, $courseId) {
+                $query->where('user_id', $user->id)
+                    ->where('course_id', $courseId);
+            })
+            ->exists();
+
+        return $requirementsWithSubmissions;
+    }
+
+    private function getAllSubFolderIds($parentFolderId)
+    {
+        $allSubFolderIds = [];
+        
+        // Get direct sub-folders
+        $subFolders = \App\Models\RequirementType::where('parent_id', $parentFolderId)
+            ->where('is_folder', true)
+            ->get();
+        
+        foreach ($subFolders as $subFolder) {
+            $allSubFolderIds[] = $subFolder->id;
+            
+            // Recursively get sub-folders of sub-folders
+            $nestedSubFolderIds = $this->getAllSubFolderIds($subFolder->id);
+            $allSubFolderIds = array_merge($allSubFolderIds, $nestedSubFolderIds);
         }
         
-        $requirementTypeIds = $requirement->requirement_type_ids;
+        return $allSubFolderIds;
+    }
+
+    /**
+     * Get submitted files for requirements assigned to a specific folder
+     */
+    private function getSubmittedFilesForFolder($folderId)
+    {
+        $user = Auth::user();
         
-        // Get all requirement types associated with this requirement
-        $requirementTypes = \App\Models\RequirementType::whereIn('id', $requirementTypeIds)->get();
-        
-        foreach ($requirementTypes as $type) {
-            // If this type is a folder, return it
-            if ($type->is_folder) {
-                return $type;
+        // Get all requirements for the current semester
+        $allRequirements = Requirement::where('semester_id', $this->currentSemester->id)
+            ->with(['userSubmissions' => function($query) use ($user) {
+                $query->where('user_id', $user->id)
+                    ->where('course_id', $this->currentCourse->id)
+                    ->with('submissionFile')
+                    ->orderBy('submitted_at', 'desc');
+            }])
+            ->with('guides')
+            ->orderBy('due', 'asc')
+            ->get();
+
+        // Filter requirements that are assigned to this folder via requirement_type_ids
+        $folderRequirements = $allRequirements->filter(function ($requirement) use ($user, $folderId) {
+            if (!$this->isUserAssignedToRequirement($requirement, $user)) {
+                return false;
             }
             
-            // If this type has a parent that is a folder, return the parent
-            if ($type->parent_id) {
-                $parent = \App\Models\RequirementType::find($type->parent_id);
-                if ($parent && $parent->is_folder) {
-                    return $parent;
-                }
+            // Check if requirement is assigned to this folder via requirement_type_ids
+            $requirementTypeIds = $requirement->requirement_type_ids ?? [];
+            if (empty($requirementTypeIds)) {
+                return false;
+            }
+            
+            // Convert to array if it's a JSON string
+            if (is_string($requirementTypeIds)) {
+                $requirementTypeIds = json_decode($requirementTypeIds, true);
+            }
+            
+            return in_array($folderId, $requirementTypeIds);
+        });
+
+        // Collect all submitted files from the filtered requirements
+        $submittedFiles = collect();
+        
+        foreach ($folderRequirements as $requirement) {
+            foreach ($requirement->userSubmissions as $submission) {
+                $submission->requirement_name = $requirement->name;
+                $submittedFiles->push($submission);
             }
         }
-        
-        return null;
+
+        return $submittedFiles;
     }
 
     public function updateBreadcrumb($breadcrumb)
@@ -491,10 +600,7 @@ class FileManager extends Component
                 ->with(['requirement', 'submissionFile', 'user'])
                 ->findOrFail($submissionId);
 
-            // The file has been selected, no need to dispatch an event back to self.
-            // Dispatch a general event if other components need to know.
-            // For example:
-            $this->dispatch('fileSelected'); // Dispatch a generic 'file selected' event
+            $this->dispatch('fileSelected');
 
         } catch (\Exception $e) {
             \Log::error('Error selecting file: ' . $e->getMessage());
@@ -533,23 +639,15 @@ class FileManager extends Component
 
     public function getFileIcon($filename)
     {
-        // Get the extension
         $extension = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
-        
-        // Use the FILE_ICONS constant from SubmittedRequirement model
         $icons = SubmittedRequirement::FILE_ICONS;
-        
         return $icons[$extension]['icon'] ?? $icons['default']['icon'];
     }
 
     public function getFileIconColor($filename)
     {
-        // Get the extension
         $extension = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
-        
-        // Use the FILE_ICONS constant from SubmittedRequirement model
         $icons = SubmittedRequirement::FILE_ICONS;
-        
         return $icons[$extension]['color'] ?? $icons['default']['color'];
     }
 
@@ -567,7 +665,6 @@ class FileManager extends Component
         return round($bytes, 2) . ' ' . $units[$pow];
     }
 
-    // Missing methods added here
     public function closeSearchResults()
     {
         $this->showSearchResults = false;
@@ -588,7 +685,6 @@ class FileManager extends Component
         $this->showSearchResults = false;
     }
 
-    // Delete methods (if not already present)
     public function confirmDelete($fileId)
     {
         $this->fileToDelete = $fileId;
@@ -631,82 +727,28 @@ class FileManager extends Component
     }
 
     public function render()
-{
-    $this->ensureNavigationData();
+    {
+        $this->ensureNavigationData();
 
-    $allSemesters = $this->allSemesters;
-    $currentSemester = $this->currentSemester;
-    $currentCourse = $this->currentCourse;
-    $currentRequirement = $this->currentRequirement;
-    $currentFolder = $this->currentFolder;
-    $folderRequirements = [];
+        $allSemesters = $this->allSemesters;
+        $currentSemester = $this->currentSemester;
+        $currentCourse = $this->currentCourse;
+        $currentParentFolder = $this->currentParentFolder;
+        $currentSubFolder = $this->currentSubFolder;
+        $parentFolders = [];
+        $parentFolderContents = $this->parentFolderContents;
+        $contentType = $this->contentType;
 
-    // Load requirements for current course if at requirements level
-    if ($this->currentLevel === 'requirements' && $currentCourse && $currentSemester) {
-        $user = Auth::user();
-        
-        // Get all requirements for the current semester
-        $allRequirements = Requirement::where('semester_id', $currentSemester->id)
-            ->with(['userSubmissions' => function($query) use ($user) {
-                $query->where('user_id', $user->id)
-                      ->where('course_id', $this->currentCourse->id)
-                      ->with('submissionFile')
-                      ->orderBy('submitted_at', 'desc');
-            }])
-            ->with('guides')
-            ->orderBy('due', 'asc')
-            ->get();
-
-        // Filter requirements where user's college AND department are both present in assigned_to
-        $courseRequirements = $allRequirements->filter(function ($requirement) use ($user) {
-            return $this->isUserAssignedToRequirement($requirement, $user);
-        })
-        ->map(function ($requirement) use ($user) {
-            $userSubmitted = SubmittedRequirement::where('requirement_id', $requirement->id)
-                ->where('user_id', $user->id)
-                ->where('course_id', $this->currentCourse->id)
-                ->exists();
-            
-            $requirement->user_has_submitted = $userSubmitted;
-            
-            return $requirement;
-        });
-
-        // Organize requirements by folders and standalone requirements
-        $organizedRequirements = $this->organizeRequirementsByFolders($courseRequirements);
-        
-        // Add organized requirements to current course for the view
-        $currentCourse->organizedRequirements = $organizedRequirements;
-    } else {
-        // Initialize empty organizedRequirements if not set
-        if ($currentCourse && !isset($currentCourse->organizedRequirements)) {
-            $currentCourse->organizedRequirements = [
-                'folders' => [],
-                'standalone' => []
-            ];
-        }
-    }
-
-        // Load folder requirements if at folder_requirements level
-        if ($this->currentLevel === 'folder_requirements' && $currentCourse && $currentSemester && $currentFolder) {
-            $folderRequirements = $this->getFolderRequirements($currentFolder->id, $currentCourse->id);
+        // Load parent folders for current course if at parent_folders level
+        if ($this->currentLevel === 'parent_folders' && $currentCourse && $currentSemester) {
+            $parentFolders = $this->getParentFoldersWithSubmissions();
         }
 
-        // Filter files by course if at files level
-        if ($this->currentLevel === 'files' && $currentRequirement && $currentCourse) {
-            $submittedRequirementsQuery = SubmittedRequirement::query()
-                ->where('requirement_id', $currentRequirement->id)
-                ->where('user_id', Auth::id())
-                ->where('course_id', $currentCourse->id) // Filter by current course
-                ->with(['submissionFile', 'user', 'requirement.semester']);
-
-            // Apply status filter if it's set
-            if (!empty($this->statusFilter)) {
-                $submittedRequirementsQuery->where('status', $this->statusFilter);
-            }
-
-            // Replace the collection on the currentRequirement object
-            $currentRequirement->setRelation('submittedRequirements', $submittedRequirementsQuery->get());
+        // Filter files if at parent_folder_contents level with files content type
+        if ($this->currentLevel === 'parent_folder_contents' && $contentType === 'files' && !empty($this->statusFilter)) {
+            $parentFolderContents = $parentFolderContents->filter(function ($submission) {
+                return $submission->status === $this->statusFilter;
+            });
         }
         
         return view('livewire.user.file-manager.file-manager', [
@@ -716,61 +758,116 @@ class FileManager extends Component
             'allSemesters' => $allSemesters,
             'currentSemester' => $currentSemester,
             'currentCourse' => $currentCourse,
-            'currentRequirement' => $currentRequirement,
-            'currentFolder' => $currentFolder,
-            'folderRequirements' => $folderRequirements,
+            'currentParentFolder' => $currentParentFolder,
+            'currentSubFolder' => $currentSubFolder,
+            'parentFolders' => $parentFolders,
+            'parentFolderContents' => $parentFolderContents,
+            'contentType' => $contentType,
             'assignedCourses' => $this->assignedCourses,
             'archiveRoute' => route('user.archive'),
         ]);
     }
 
     /**
-     * Get requirements for a specific folder
+     * Get parent folders that have submitted files (including files in sub-folders)
      */
-    private function getFolderRequirements($folderId, $courseId)
+    private function getParentFoldersWithSubmissions()
     {
-        $user = Auth::user();
-        
-        // Get all requirements for the current semester
-        $allRequirements = Requirement::where('semester_id', $this->currentSemester->id)
-            ->with(['userSubmissions' => function($query) use ($user, $courseId) {
-                $query->where('user_id', $user->id)
-                    ->where('course_id', $courseId)
-                    ->with('submissionFile')
-                    ->orderBy('submitted_at', 'desc');
-            }])
-            ->with('guides')
-            ->orderBy('due', 'asc')
+        $userId = Auth::id();
+        $courseId = $this->currentCourse->id;
+        $semesterId = $this->currentSemester->id;
+
+        // Get all parent folders
+        $parentFolders = \App\Models\RequirementType::whereNull('parent_id')
+            ->where('is_folder', true)
+            ->orderBy('id')
             ->get();
 
-        // Filter requirements that belong to this folder using the same parent finding logic
-        $folderRequirements = $allRequirements->filter(function ($requirement) use ($user, $folderId) {
-            if (!$this->isUserAssignedToRequirement($requirement, $user)) {
-                return false;
-            }
-            
-            // Use the same logic to find parent folder
-            $parentFolder = $this->findParentFolderForRequirement($requirement);
-            
-            // Check if requirement belongs to the specified folder
-            return $parentFolder && $parentFolder->id == $folderId;
-        })
-        ->map(function ($requirement) use ($user, $courseId) {
-            $userSubmitted = SubmittedRequirement::where('requirement_id', $requirement->id)
-                ->where('user_id', $user->id)
-                ->where('course_id', $courseId)
-                ->exists();
-            
-            $requirement->user_has_submitted = $userSubmitted;
-            
-            return $requirement;
+        // Filter to only include folders that have files (in themselves or their sub-folders)
+        return $parentFolders->filter(function ($folder) use ($userId, $courseId, $semesterId) {
+            return $this->folderHasFiles($folder->id);
         });
-
-        return $folderRequirements;
     }
 
     /**
-     * Check if user is assigned to a requirement based on college AND department
+     * Get all folder IDs including parent folders of sub-folders that have submissions
+     */
+    private function getAllRelevantFolderIds($folderIds)
+    {
+        $allIds = [];
+        
+        foreach ($folderIds as $folderId) {
+            $this->addFolderAndAncestors($folderId, $allIds);
+        }
+        
+        return array_unique($allIds);
+    }
+
+    /**
+     * Recursively add folder and all its parent folders to the list
+     */
+    private function addFolderAndAncestors($folderId, &$allIds)
+    {
+        if (in_array($folderId, $allIds)) {
+            return;
+        }
+        
+        $folder = \App\Models\RequirementType::find($folderId);
+        if (!$folder) {
+            return;
+        }
+        
+        $allIds[] = $folderId;
+        
+        // If this folder has a parent, add it too
+        if ($folder->parent_id) {
+            $this->addFolderAndAncestors($folder->parent_id, $allIds);
+        }
+    }
+
+
+    /**
+     * Check if a folder (or its sub-folders) has any submitted files
+     */
+    private function folderHasSubmissions($folderId, $userId, $courseId, $semesterId)
+    {
+        // Get all requirements for this semester
+        $requirements = Requirement::where('semester_id', $semesterId)
+            ->where(function($query) use ($folderId) {
+                // Check if requirement is assigned to this folder or any of its sub-folders
+                $query->whereJsonContains('requirement_type_ids', $folderId)
+                    ->orWhereJsonContains('requirement_type_ids', (string)$folderId);
+            })
+            ->get();
+
+        // Check if any of these requirements have submissions from this user/course
+        foreach ($requirements as $requirement) {
+            $hasSubmissions = SubmittedRequirement::where('requirement_id', $requirement->id)
+                ->where('user_id', $userId)
+                ->where('course_id', $courseId)
+                ->exists();
+                
+            if ($hasSubmissions) {
+                return true;
+            }
+        }
+
+        // Check sub-folders recursively
+        $subFolders = \App\Models\RequirementType::where('parent_id', $folderId)
+            ->where('is_folder', true)
+            ->get();
+
+        foreach ($subFolders as $subFolder) {
+            if ($this->folderHasSubmissions($subFolder->id, $userId, $courseId, $semesterId)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Check if user is assigned to a requirement based on program
      */
     private function isUserAssignedToRequirement($requirement, $user)
     {
@@ -786,83 +883,22 @@ class FileManager extends Component
             $assignedTo = [];
         }
 
-        $colleges = $assignedTo['colleges'] ?? [];
-        $departments = $assignedTo['departments'] ?? [];
-        $selectAllColleges = $assignedTo['selectAllColleges'] ?? false;
-        $selectAllDepartments = $assignedTo['selectAllDepartments'] ?? false;
+        $programs = $assignedTo['programs'] ?? [];
+        $selectAllPrograms = $assignedTo['selectAllPrograms'] ?? false;
 
-        // Check if user has college and department
-        if (!$user->college_id || !$user->department_id) {
+        // Check if user's course has a program
+        if (!$this->currentCourse || !$this->currentCourse->program_id) {
             return false;
         }
 
-        // Convert user IDs to string for comparison
-        $userCollegeId = (string)$user->college_id;
-        $userDepartmentId = (string)$user->department_id;
+        // Convert program ID to string for comparison
+        $userProgramId = (string)$this->currentCourse->program_id;
 
-        // Check college assignment
-        $collegeAssigned = $selectAllColleges || 
-                          (is_array($colleges) && in_array($userCollegeId, $colleges));
+        // Check program assignment
+        $programAssigned = $selectAllPrograms || 
+                          (is_array($programs) && in_array($userProgramId, $programs));
 
-        // Check department assignment
-        $departmentAssigned = $selectAllDepartments ||
-                            (is_array($departments) && in_array($userDepartmentId, $departments));
-
-        return $collegeAssigned && $departmentAssigned;
-    }
-
-    /**
-     * Organize requirements into folder structure
-     */
-    private function organizeRequirementsByFolders($requirements)
-    {
-        $organized = [
-            'folders' => [],
-            'standalone' => []
-        ];
-
-        foreach ($requirements as $requirement) {
-            $hasFolderAssignment = false;
-            
-            // Check if requirement has requirement_type_ids
-            if (!empty($requirement->requirement_type_ids)) {
-                $requirementTypes = \App\Models\RequirementType::whereIn('id', $requirement->requirement_type_ids)->get();
-                
-                foreach ($requirementTypes as $type) {
-                    if ($type->is_folder) {
-                        // This requirement is directly assigned to a folder
-                        if (!isset($organized['folders'][$type->id])) {
-                            $organized['folders'][$type->id] = [
-                                'folder' => $type,
-                                'requirements' => []
-                            ];
-                        }
-                        $organized['folders'][$type->id]['requirements'][] = $requirement;
-                        $hasFolderAssignment = true;
-                    } else if ($type->parent_id) {
-                        // This requirement type has a parent (folder)
-                        $parentFolder = \App\Models\RequirementType::find($type->parent_id);
-                        if ($parentFolder && $parentFolder->is_folder) {
-                            if (!isset($organized['folders'][$parentFolder->id])) {
-                                $organized['folders'][$parentFolder->id] = [
-                                    'folder' => $parentFolder,
-                                    'requirements' => []
-                                ];
-                            }
-                            $organized['folders'][$parentFolder->id]['requirements'][] = $requirement;
-                            $hasFolderAssignment = true;
-                        }
-                    }
-                }
-            }
-            
-            // If requirement wasn't assigned to any folder, put it in standalone
-            if (!$hasFolderAssignment) {
-                $organized['standalone'][] = $requirement;
-            }
-        }
-
-        return $organized;
+        return $programAssigned;
     }
 
     protected function getTotalFiles()
@@ -912,8 +948,6 @@ class FileManager extends Component
     public function changeViewMode($mode)
     {
         $this->viewMode = $mode;
-        
-        // Store the view preference in session for persistence
         session()->put('fileManagerViewMode', $mode);
     }
 
@@ -934,7 +968,7 @@ class FileManager extends Component
         $results = [];
         $userId = Auth::id();
         
-        // Search semesters
+        // Search semesters (no changes needed)
         $semesters = Semester::where('name', 'like', "%{$query}%")
             ->orderBy('start_date', 'desc')
             ->get();
@@ -951,7 +985,7 @@ class FileManager extends Component
             ];
         }
         
-        // Search courses assigned to the user - FIXED: Use correct relationship
+        // Search courses assigned to the user (no changes needed)
         $courses = Course::whereHas('assignments', function($q) use ($userId) {
                 $q->where('professor_id', $userId);
             })
@@ -959,130 +993,239 @@ class FileManager extends Component
                 $q->where('course_code', 'like', "%{$query}%")
                 ->orWhere('course_name', 'like', "%{$query}%");
             })
+            ->with('program')
             ->get();
         
         foreach ($courses as $course) {
+            $programName = $course->program ? $course->program->program_name : 'No Program';
             $results[] = [
                 'type' => 'course',
                 'id' => $course->id,
                 'name' => $course->course_code,
-                'description' => $course->course_name,
+                'description' => $course->course_name . ' • ' . $programName,
                 'icon' => 'fa-folder',
                 'icon_color' => 'text-green-700',
                 'course_id' => $course->id
             ];
         }
         
-        // Search requirements - MODIFIED: Show separate results for each course and exclude folders
-        $requirements = Requirement::where('name', 'like', "%{$query}%")
-            ->with('semester')
-            ->get();
-
-        foreach ($requirements as $requirement) {
-            // Skip folders in search results
-            $requirementTypeIds = $requirement->requirement_type_ids ?? [];
-            $isFolder = false;
-            
-            if (!empty($requirementTypeIds)) {
-                $requirementTypes = \App\Models\RequirementType::whereIn('id', $requirementTypeIds)->get();
-                foreach ($requirementTypes as $type) {
-                    if ($type->is_folder) {
-                        $isFolder = true;
-                        break;
-                    }
-                }
-            }
-            
-            if ($isFolder) {
-                continue; // Skip folders
-            }
-            
-            // Get all courses where this requirement appears for the user
-            $userCourses = $this->getCoursesForRequirement($requirement, $userId);
-            
-            foreach ($userCourses as $course) {
-                $results[] = [
-                    'type' => 'requirement',
-                    'id' => $requirement->id,
-                    'name' => $requirement->name,
-                    'description' => 'In ' . $course->course_code . ' • ' . ($requirement->semester->name ?? 'Unknown Semester'),
-                    'icon' => 'fa-folder',
-                    'icon_color' => 'text-green-700',
-                    'semester_id' => $requirement->semester_id,
-                    'requirement_id' => $requirement->id,
-                    'course_id' => $course->id,
-                    'course_code' => $course->course_code
-                ];
-            }
-        }
+        // Search parent folders WITH COURSE CONTEXT
+        $this->searchParentFoldersWithContext($query, $userId, $results);
         
-        // Search files
-        $files = SubmittedRequirement::where('user_id', $userId)
-            ->whereHas('submissionFile', function($q) use ($query) {
-                $q->where('file_name', 'like', "%{$query}%");
-            })
-            ->with(['submissionFile', 'requirement.semester', 'course'])
-            ->get();
+        // Search sub-folders WITH COURSE CONTEXT  
+        $this->searchSubFoldersWithContext($query, $userId, $results);
         
-        foreach ($files as $file) {
-            // Safely access nested relationships with null coalescing
-            $fileName = $file->submissionFile->file_name ?? 'Untitled';
-            $fileSize = $file->submissionFile->size ?? 0;
-            $requirementName = $file->requirement->name ?? 'Unknown Requirement';
-            $semesterId = $file->requirement->semester_id ?? null;
-            $requirementId = $file->requirement_id ?? null;
-            $courseId = $file->course_id ?? null;
-            $courseCode = $file->course->course_code ?? 'Unknown Course';
-            
-            $results[] = [
-                'type' => 'file',
-                'id' => $file->id,
-                'name' => $fileName,
-                'description' => 'In ' . $requirementName . ' • ' . $courseCode . ' • ' . $this->formatFileSize($fileSize),
-                'icon' => $this->getFileIcon($fileName),
-                'icon_color' => $this->getFileIconColor($fileName),
-                'requirement_id' => $requirementId,
-                'semester_id' => $semesterId,
-                'course_id' => $courseId,
-                'course_code' => $courseCode
-            ];
-        }
+        // Search files WITH COURSE CONTEXT
+        $this->searchFilesWithContext($query, $userId, $results);
         
         return $results;
     }
 
     /**
-     * Get all courses where a requirement appears for a user
+     * Search parent folders with course context for duplicates
      */
-    private function getCoursesForRequirement($requirement, $userId)
+    private function searchParentFoldersWithContext($query, $userId, &$results)
     {
-        $user = Auth::user();
-        
-        // Get all semesters where this requirement exists
-        $semesters = Semester::where('id', $requirement->semester_id)->get();
-        
-        $userCourses = collect();
-        
-        foreach ($semesters as $semester) {
-            // Get user's assigned courses for this semester
-            $assignedCourses = CourseAssignment::where('professor_id', $userId)
-                ->where('semester_id', $semester->id)
-                ->with('course')
-                ->get()
-                ->pluck('course')
-                ->unique('id')
-                ->values();
+        // Get all courses assigned to the user
+        $userCourses = CourseAssignment::where('professor_id', $userId)
+            ->with(['course', 'course.program', 'semester'])
+            ->get();
+
+        foreach ($userCourses as $assignment) {
+            $course = $assignment->course;
+            $semester = $assignment->semester;
             
-            // Filter courses where the requirement is assigned to the user
-            foreach ($assignedCourses as $course) {
-                if ($this->isUserAssignedToRequirement($requirement, $user)) {
-                    $userCourses->push($course);
-                }
+            // Get all parent folders matching the search query
+            $parentFolders = \App\Models\RequirementType::whereNull('parent_id')
+                ->where('is_folder', true)
+                ->where('name', 'like', "%{$query}%")
+                ->get()
+                ->filter(function ($folder) use ($userId, $course, $semester) {
+                    // Check if this folder OR ANY OF ITS SUB-FOLDERS has submissions for the current course
+                    return $this->folderOrSubfoldersHaveSubmissions($folder->id, $userId, $course->id, $semester->id);
+                });
+
+            foreach ($parentFolders as $folder) {
+                $programName = $course->program ? $course->program->program_name : 'No Program';
+                $results[] = [
+                    'type' => 'parent_folder',
+                    'id' => $folder->id,
+                    'name' => $folder->name,
+                    'description' => '',
+                    'icon' => 'fa-folder',
+                    'icon_color' => 'text-green-700',
+                    'folder_id' => $folder->id,
+                    'semester_id' => $semester->id,
+                    'course_id' => $course->id,
+                    'course_code' => $course->course_code
+                ];
             }
         }
-        
-        return $userCourses->unique('id')->values();
     }
+
+    /**
+     * Check if a folder OR ANY OF ITS SUB-FOLDERS has submissions for a specific course
+     */
+    private function folderOrSubfoldersHaveSubmissions($folderId, $userId, $courseId, $semesterId)
+    {
+        // First check if the current folder itself has submissions
+        if ($this->folderHasDirectSubmissions($folderId, $userId, $courseId, $semesterId)) {
+            return true;
+        }
+
+        // Then check all sub-folders recursively
+        $subFolders = \App\Models\RequirementType::where('parent_id', $folderId)
+            ->where('is_folder', true)
+            ->get();
+
+        foreach ($subFolders as $subFolder) {
+            if ($this->folderOrSubfoldersHaveSubmissions($subFolder->id, $userId, $courseId, $semesterId)) {
+                return true;
+            }
+        }
+
+        return false;
+    } 
+
+    /**
+     * Check if a specific folder has direct submissions (not including sub-folders)
+     */
+    private function folderHasDirectSubmissions($folderId, $userId, $courseId, $semesterId)
+    {
+        // Get requirements for this semester that are assigned to this specific folder
+        $requirements = Requirement::where('semester_id', $semesterId)
+            ->where(function($query) use ($folderId) {
+                // Handle JSON array containing the folder ID
+                $query->whereJsonContains('requirement_type_ids', $folderId)
+                    ->orWhereJsonContains('requirement_type_ids', (string)$folderId);
+            })
+            ->get();
+
+        // Check if any of these requirements have submissions from this user/course
+        foreach ($requirements as $requirement) {
+            $hasSubmissions = SubmittedRequirement::where('requirement_id', $requirement->id)
+                ->where('user_id', $userId)
+                ->where('course_id', $courseId)
+                ->exists();
+                
+            if ($hasSubmissions) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Search sub-folders with course context for duplicates
+     */
+    private function searchSubFoldersWithContext($query, $userId, &$results)
+    {
+        // Get all courses assigned to the user
+        $userCourses = CourseAssignment::where('professor_id', $userId)
+            ->with(['course', 'course.program', 'semester'])
+            ->get();
+
+        foreach ($userCourses as $assignment) {
+            $course = $assignment->course;
+            $semester = $assignment->semester;
+            
+            // Get all sub-folders matching the search query (at any level)
+            $subFolders = \App\Models\RequirementType::whereNotNull('parent_id')
+                ->where('is_folder', true)
+                ->where('name', 'like', "%{$query}%")
+                ->with('parent')
+                ->get()
+                ->filter(function ($folder) use ($userId, $course, $semester) {
+                    // Check if this sub-folder OR ANY OF ITS CHILD FOLDERS has submissions for the current course
+                    return $this->folderOrSubfoldersHaveSubmissions($folder->id, $userId, $course->id, $semester->id);
+                });
+
+            foreach ($subFolders as $folder) {
+                $parentName = $folder->parent ? $folder->parent->name : 'Unknown Parent';
+                $programName = $course->program ? $course->program->program_name : 'No Program';
+                $results[] = [
+                    'type' => 'sub_folder',
+                    'id' => $folder->id,
+                    'name' => $folder->name,
+                    'description' => 'Sub-folder in ' . $parentName,
+                    'icon' => 'fa-folder',
+                    'icon_color' => 'text-green-700',
+                    'folder_id' => $folder->id,
+                    'parent_folder_id' => $folder->parent_id,
+                    'semester_id' => $semester->id,
+                    'course_id' => $course->id,
+                    'course_code' => $course->course_code
+                ];
+            }
+        }
+    }
+
+    /**
+     * Check if a folder has submissions for a specific course
+     */
+    private function folderHasSubmissionsForCourse($folderId, $userId, $courseId, $semesterId)
+    {
+        // Get requirements for this semester that are assigned to this folder
+        $requirements = Requirement::where('semester_id', $semesterId)
+            ->where(function($query) use ($folderId) {
+                // Handle JSON array containing the folder ID
+                $query->whereJsonContains('requirement_type_ids', $folderId)
+                    ->orWhereJsonContains('requirement_type_ids', (string)$folderId);
+            })
+            ->get();
+
+        // Check if any of these requirements have submissions from this user/course
+        foreach ($requirements as $requirement) {
+            $hasSubmissions = SubmittedRequirement::where('requirement_id', $requirement->id)
+                ->where('user_id', $userId)
+                ->where('course_id', $courseId)
+                ->exists();
+                
+            if ($hasSubmissions) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Search files with course context for duplicates
+     */
+    private function searchFilesWithContext($query, $userId, &$results)
+    {
+        $files = SubmittedRequirement::where('user_id', $userId)
+            ->whereHas('submissionFile', function($q) use ($query) {
+                $q->where('file_name', 'like', "%{$query}%");
+            })
+            ->with(['submissionFile', 'requirement.semester', 'course', 'course.program'])
+            ->get();
+
+        foreach ($files as $file) {
+            $fileName = $file->submissionFile->file_name ?? 'Untitled';
+            $fileSize = $file->submissionFile->size ?? 0;
+            $requirementName = $file->requirement->name ?? 'Unknown Requirement';
+            $semesterId = $file->requirement->semester_id ?? null;
+            $courseId = $file->course_id ?? null;
+            $courseCode = $file->course->course_code ?? 'Unknown Course';
+            $programName = $file->course->program->program_name ?? 'No Program';
+            
+            $results[] = [
+                'type' => 'file',
+                'id' => $file->id,
+                'name' => $fileName,
+                'description' => 'In ' . $requirementName,
+                'icon' => $this->getFileIcon($fileName),
+                'icon_color' => $this->getFileIconColor($fileName),
+                'requirement_id' => $file->requirement_id,
+                'semester_id' => $semesterId,
+                'course_id' => $courseId,
+                'course_code' => $courseCode
+            ];
+        }
+    }
+
 
     public function selectSearchResult($result)
     {
@@ -1092,66 +1235,63 @@ class FileManager extends Component
         try {
             switch ($result['type']) {
                 case 'semester':
-                    // Navigate to courses level for this semester
                     $this->handleNavigation('courses', $result['id']);
                     break;
                     
                 case 'course':
-                    // Navigate to requirements level for this course
-                    $this->handleNavigation('requirements', $result['id']);
+                    $this->handleNavigation('parent_folders', $result['id']);
                     break;
                     
-                case 'requirement':
-                    // For requirements, navigate to the specific course context
-                    $semesterId = $result['semester_id'];
-                    $courseId = $result['course_id'];
-                    $requirementId = $result['id'];
-                    
-                    if ($semesterId && $courseId) {
-                        // Navigate through the hierarchy: semesters -> courses -> requirements -> files
-                        $this->handleNavigation('courses', $semesterId);
-                        $this->handleNavigation('requirements', $courseId);
-                        $this->handleNavigation('files', $requirementId);
+                case 'parent_folder':
+                    // Use the course context from search result
+                    if (isset($result['semester_id']) && isset($result['course_id'])) {
+                        $this->handleNavigation('courses', $result['semester_id']);
+                        $this->handleNavigation('parent_folders', $result['course_id']);
+                        $this->handleNavigation('parent_folder_contents', $result['folder_id']);
                     } else {
-                        // Fallback: try to find a context for this requirement
-                        $context = $this->findContextForRequirement($requirementId);
+                        // Fallback to old method if no context
+                        $context = $this->findContextForFolder($result['id']);
                         if ($context) {
                             $this->handleNavigation('courses', $context['semester_id']);
-                            $this->handleNavigation('requirements', $context['course_id']);
-                            $this->handleNavigation('files', $requirementId);
-                        } else {
-                            $this->handleNavigation('semesters');
-                            session()->flash('error', 'Requirement not found in any of your assigned courses.');
+                            $this->handleNavigation('parent_folders', $context['course_id']);
+                            $this->handleNavigation('parent_folder_contents', $result['id']);
+                        }
+                    }
+                    break;
+                    
+                case 'sub_folder':
+                    // Use the course context from search result
+                    if (isset($result['semester_id']) && isset($result['course_id'])) {
+                        $this->handleNavigation('courses', $result['semester_id']);
+                        $this->handleNavigation('parent_folders', $result['course_id']);
+                        $this->handleNavigation('parent_folder_contents', $result['parent_folder_id']);
+                        $this->handleNavigation('parent_folder_contents', $result['folder_id']);
+                    } else {
+                        // Fallback to old method if no context
+                        $context = $this->findContextForFolder($result['parent_folder_id']);
+                        if ($context) {
+                            $this->handleNavigation('courses', $context['semester_id']);
+                            $this->handleNavigation('parent_folders', $context['course_id']);
+                            $this->handleNavigation('parent_folder_contents', $result['parent_folder_id']);
+                            $this->handleNavigation('parent_folder_contents', $result['id']);
                         }
                     }
                     break;
                     
                 case 'file':
-                    // For files, we need to navigate to the requirement and select the file
-                    $requirementId = $result['requirement_id'];
                     $semesterId = $result['semester_id'];
                     $courseId = $result['course_id'];
                     $fileId = $result['id'];
                     
-                    if ($semesterId && $courseId && $requirementId) {
-                        // Navigate through the hierarchy and select the file
+                    if ($semesterId && $courseId) {
                         $this->handleNavigation('courses', $semesterId);
-                        $this->handleNavigation('requirements', $courseId);
-                        $this->handleNavigation('files', $requirementId);
+                        $this->handleNavigation('parent_folders', $courseId);
                         
-                        // Use a small delay to ensure navigation completes before selecting file
-                        $this->dispatch('navigateToFileAfterSearch', fileId: $fileId);
-                    } else {
-                        // Fallback: try to find context from the file itself
-                        $file = SubmittedRequirement::with(['requirement', 'course'])->find($fileId);
-                        if ($file && $file->requirement) {
-                            $this->handleNavigation('courses', $file->requirement->semester_id);
-                            $this->handleNavigation('requirements', $file->course_id);
-                            $this->handleNavigation('files', $file->requirement_id);
+                        // Find the folder that contains this file
+                        $folderContext = $this->findFolderForFile($fileId);
+                        if ($folderContext) {
+                            $this->handleNavigation('parent_folder_contents', $folderContext['folder_id']);
                             $this->dispatch('navigateToFileAfterSearch', fileId: $fileId);
-                        } else {
-                            $this->handleNavigation('semesters');
-                            session()->flash('error', 'File context not found.');
                         }
                     }
                     break;
@@ -1164,40 +1304,51 @@ class FileManager extends Component
     }
 
     /**
-     * Find a suitable context (semester and course) for a requirement
+     * Find a suitable context (semester and course) for a folder
      */
-    private function findContextForRequirement($requirementId)
+    private function findContextForFolder($folderId)
     {
         $userId = Auth::id();
         
-        // Check if user has a submission for this requirement
-        $submission = SubmittedRequirement::where('requirement_id', $requirementId)
-            ->where('user_id', $userId)
+        // Try to find a course where this folder is used
+        $courseAssignment = CourseAssignment::where('professor_id', $userId)
+            ->with(['course', 'semester'])
             ->first();
             
-        if ($submission) {
+        if ($courseAssignment) {
             return [
-                'semester_id' => $submission->requirement->semester_id ?? null,
-                'course_id' => $submission->course_id
+                'semester_id' => $courseAssignment->semester_id,
+                'course_id' => $courseAssignment->course_id
             ];
         }
         
-        // If no submission, check if user is assigned to this requirement via course assignment
-        $requirement = Requirement::find($requirementId);
-        if ($requirement) {
-            $courseAssignment = CourseAssignment::where('professor_id', $userId)
-                ->where('semester_id', $requirement->semester_id)
-                ->first();
-                
-            if ($courseAssignment) {
-                return [
-                    'semester_id' => $requirement->semester_id,
-                    'course_id' => $courseAssignment->course_id
-                ];
-            }
-        }
-        
         return null;
+    }
+
+    /**
+     * Find the folder that contains a specific file
+     */
+    private function findFolderForFile($fileId)
+    {
+        $submission = SubmittedRequirement::with('requirement')->find($fileId);
+        
+        if (!$submission || !$submission->requirement) {
+            return null;
+        }
+
+        $requirementTypeIds = $submission->requirement->requirement_type_ids ?? [];
+        
+        if (empty($requirementTypeIds)) {
+            return null;
+        }
+
+        // Convert to array if it's a JSON string
+        if (is_string($requirementTypeIds)) {
+            $requirementTypeIds = json_decode($requirementTypeIds, true);
+        }
+
+        // Return the first folder ID
+        return !empty($requirementTypeIds) ? ['folder_id' => $requirementTypeIds[0]] : null;
     }
 
     public function handleNavigateAfterSearch($level, $id)
@@ -1207,23 +1358,25 @@ class FileManager extends Component
 
     public function handleNavigateToFileAfterSearch($fileId)
     {
-        // Small delay to ensure navigation is complete
-        usleep(300000); // 300ms delay
-        
+        usleep(300000);
         $this->selectFile($fileId);
     }
 
     public function ensureNavigationData()
     {
-        // Ensure we have the necessary data for current navigation level
         if ($this->currentLevel === 'courses' && $this->currentSemester) {
             $this->loadAssignedCourses();
         }
         
-        if (($this->currentLevel === 'requirements' || $this->currentLevel === 'files') && !$this->currentSemester) {
-            // Fallback to active semester if current semester is not set
+        if (($this->currentLevel === 'parent_folders' || $this->currentLevel === 'parent_folder_contents') && !$this->currentSemester) {
             $this->currentSemester = $this->activeSemester;
             $this->selectedSemesterId = $this->currentSemester->id;
+        }
+        
+        // Reload parent folder contents if needed
+        if ($this->currentLevel === 'parent_folder_contents' && ($this->currentParentFolder || $this->currentSubFolder)) {
+            $folderId = $this->currentSubFolder ? $this->currentSubFolder->id : $this->currentParentFolder->id;
+            $this->loadParentFolderContents($folderId);
         }
     }
 }

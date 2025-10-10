@@ -17,4 +17,14 @@ class RequirementType extends Model
     {
         return $this->hasMany(RequirementType::class, 'parent_id');
     }
+
+    public function subFolders()
+    {
+        return $this->hasMany(RequirementType::class, 'parent_id');
+    }
+
+    public function allSubFolders()
+    {
+        return $this->subFolders()->with('allSubFolders');
+    }
 }

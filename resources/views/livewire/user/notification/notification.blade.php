@@ -24,9 +24,9 @@
                     $isSelected = $selectedNotification === $notification->id;
                     
                     if ($isSelected) {
-                        $classes = 'bg-[#DEF4C6]/40 border-l-4 border-[#1C7C54] shadow-md';
+                        $classes = 'bg-[#DEF4C6]/40 border-l-7 border-[#1C7C54] shadow-md';
                     } elseif ($isUnread) {
-                        $classes = 'bg-[#DEF4C6]/20 border-l-4 border-[#1C7C54]';
+                        $classes = 'bg-[#DEF4C6]/20 border-l-7 border-[#1C7C54]';
                     } else {
                         $classes = 'bg-white hover:bg-gray-50';
                     }
@@ -34,7 +34,7 @@
 
                 <div 
                     wire:click="selectNotification('{{ $notification->id }}')"
-                    class="block p-4 rounded-lg border border-gray-200 {{ $classes }} cursor-pointer transition-all duration-200"
+                    class="block p-4 rounded-xl border-2 border-green-600 {{ $classes }} cursor-pointer transition-all duration-200"
                 >
                     <div class="flex justify-between items-start">
                         <div class="flex-1 min-w-0">
@@ -133,36 +133,6 @@
                             </div>
                         </div>
                         @endisset
-                        
-                        @php
-                            $assignedDisplay = $selectedNotificationData['requirement']['assigned_to_display'] ?? [];
-                            $collegeDisplay = $assignedDisplay['college'] ?? '';
-                            $departmentDisplay = $assignedDisplay['department'] ?? '';
-                        @endphp
-                        
-                        @if($collegeDisplay)
-                        <div>
-                            <p class="font-medium text-gray-500 text-xs uppercase tracking-wide mb-1">Assigned Colleges</p>
-                            <div class="flex items-center bg-[#73E2A7]/20 px-3 py-2 rounded-lg">
-                                <i class="fa-solid fa-building text-[#1C7C54] mr-2"></i>
-                                <p class="text-gray-800 font-medium text-sm leading-relaxed">
-                                    {{ $collegeDisplay }}
-                                </p>
-                            </div>
-                        </div>
-                        @endif
-                        
-                        @if($departmentDisplay)
-                        <div>
-                            <p class="font-medium text-gray-500 text-xs uppercase tracking-wide mb-1">Assigned Departments</p>
-                            <div class="flex items-center bg-[#73E2A7]/20 px-3 py-2 rounded-lg">
-                                <i class="fa-solid fa-users text-[#1C7C54] mr-2"></i>
-                                <p class="text-gray-800 font-medium text-sm leading-relaxed">
-                                    {{ $departmentDisplay }}
-                                </p>
-                            </div>
-                        </div>
-                        @endif
                     </div>
                 </div>
                 @endisset
