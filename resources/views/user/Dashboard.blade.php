@@ -1,6 +1,6 @@
 <x-user.app-layout>
     <div class="flex flex-col gap-4 h-full w-full overflow-y-auto">
-        {{-- Active Semester Card --}}
+        {{-- Active Semester Card with Notification --}}
         @livewire('user.dashboard.active-semester')
 
         {{-- Conditionally display sections only when there's an active semester --}}

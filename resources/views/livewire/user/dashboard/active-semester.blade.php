@@ -18,27 +18,9 @@
                 </div>
             </div>
 
-            {{-- Right side: Status and progress --}}
-            <div class="flex items-center gap-4">
-                {{-- Active status badge --}}
-                <div class="flex items-center gap-2">
-                    <div class="relative flex h-2 w-2">
-                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                        <span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
-                    </div>
-                    <span class="text-sm font-medium text-white whitespace-nowrap">Active</span>
-                </div>
-
-                {{-- Progress section --}}
-                <div class="flex items-center gap-2">
-                    <div class="text-sm font-semibold text-white whitespace-nowrap">
-                        {{ number_format($semesterProgress, 0) }}%
-                    </div>
-                    <div class="w-20 bg-gray-200 rounded-full h-2">
-                        <div class="h-2 rounded-full transition-all duration-500 ease-out {{ $this->progressColor }}" 
-                            style="width: {{ $semesterProgress }}%"></div>
-                    </div>
-                </div>
+            {{-- Right side: Notification icon only --}}
+            <div class="flex items-center" wire:ignore>
+                @livewire('user.dashboard.notification')
             </div>
         </div>
 
@@ -60,13 +42,20 @@
         @endif
     @else
         {{-- No Active Semester - Compact version --}}
-        <div class="flex items-center gap-3">
-            <div class="flex items-center justify-center">
-                <i class="fas fa-triangle-exclamation text-amber-400 text-2xl"></i>
+        <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="flex items-center justify-center">
+                    <i class="fas fa-triangle-exclamation text-amber-400 text-2xl"></i>
+                </div>
+                <div>
+                    <h3 class="font-semibold text-white">No Active Semester</h3>
+                    <p class="text-sm text-gray-100">Progress, pending, and recent data will be displayed here once a semester is active.</p>
+                </div>
             </div>
-            <div>
-                <h3 class="font-semibold text-white">No Active Semester</h3>
-                <p class="text-sm text-gray-100">Progress, pending, and recent data will be displayed here once a semester is active.</p>
+            
+            {{-- Notification icon even when no active semester --}}
+            <div class="flex items-center">
+                @livewire('user.dashboard.notification')
             </div>
         </div>
     @endif

@@ -1,0 +1,116 @@
+{{-- Notification Bell Icon with Dropdown --}}
+<div class="relative">
+    {{-- Bell Icon Button --}}
+    <button 
+        wire:click="toggleDropdown"
+        class="relative p-2 text-white hover:bg-white/10 rounded-lg transition-colors"
+    >
+        <i class="fas fa-bell text-xl"></i>
+        
+        {{-- Badge --}}
+        @if($unreadCount > 0)
+            <span class="absolute -top-1 -right-1 inline-flex items-center justify-center min-w-[20px] h-5 px-1 text-xs font-bold text-white bg-red-500 rounded-full border-2 border-green-700">
+                {{ $unreadCount > 9 ? '9+' : $unreadCount }}
+            </span>
+        @endif
+    </button>
+
+    {{-- Floating Dropdown --}}
+    @if($showDropdown)
+        <div 
+            wire:click.outside="toggleDropdown"
+            class="absolute right-0 mt-3 w-[350px] bg-white rounded-xl shadow-2xl border border-gray-200 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200"
+        >
+            {{-- Header --}}
+            <div class="px-5 py-3" style="background: linear-gradient(148deg,rgba(18, 67, 44, 1) 0%, rgba(30, 119, 77, 1) 54%, rgba(55, 120, 64, 1) 100%);">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-bell text-white text-lg"></i>
+                        <h3 class="font-semibold text-white text-base">Notifications</h3>
+                    </div>
+                    <button 
+                        wire:click="toggleDropdown"
+                        class="text-white/80 hover:text-white transition-colors"
+                    >
+                        <i class="fa-solid fa-xmark text-lg"></i>
+                    </button>
+                </div>
+                <p class="text-white/80 text-xs mt-1">
+                    @if($unreadCount > 0)
+                        {{ $unreadCount }} {{ $unreadCount === 1 ? 'new notification' : 'new notifications' }}
+                    @else
+                        All caught up!
+                    @endif
+                </p>
+            </div>
+
+            {{-- Notifications List --}}
+            <div class="max-h-[400px] overflow-y-auto p-4">
+                @forelse($notifications as $notification)
+                    @php
+                        $type = data_get($notification->data, 'type');
+                        $iconClass = match($type) {
+                            'requirement_assigned' => 'fa-file-circle-plus text-blue-500',
+                            'requirement_approved' => 'fa-circle-check text-green-500',
+                            'requirement_revision' => 'fa-triangle-exclamation text-yellow-500',
+                            'requirement_rejected' => 'fa-circle-xmark text-red-500',
+                            'requirement_deadline' => 'fa-clock text-orange-500',
+                            default => 'fa-bell text-gray-500'
+                        };
+                    @endphp
+                    
+                    <div 
+                        wire:click="markAsRead('{{ $notification->id }}')"
+                        class="p-3 mb-2 rounded-lg border border-gray-200 hover:bg-[#DEF4C6]/20 hover:border-[#1C7C54]/30 cursor-pointer transition-all duration-200 group last:mb-0"
+                    >
+                        <div class="flex gap-3">
+                            {{-- Icon --}}
+                            <div class="flex-shrink-0">
+                                <div class="flex items-center justify-center w-9 h-9 rounded-lg bg-gray-100 group-hover:bg-[#DEF4C6]/40 transition-colors">
+                                    <i class="fas {{ $iconClass }} text-sm"></i>
+                                </div>
+                            </div>
+
+                            {{-- Content --}}
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm text-gray-900 line-clamp-2 mb-1">
+                                    {{ data_get($notification->data, 'message', 'New notification') }}
+                                </p>
+                                <p class="text-xs text-gray-500 flex items-center">
+                                    <i class="fa-regular fa-clock mr-1"></i>
+                                    {{ $notification->created_at->diffForHumans() }}
+                                </p>
+                            </div>
+
+                            {{-- Unread indicator --}}
+                            <div class="flex-shrink-0 flex items-start pt-1">
+                                <span class="inline-block w-2 h-2 bg-[#1C7C54] rounded-full"></span>
+                            </div>
+                        </div>
+                    </div>
+                @empty
+                    <div class="py-12 text-center">
+                        <div class="mx-auto w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-3">
+                            <i class="fa-regular fa-bell-slash text-gray-300 text-2xl"></i>
+                        </div>
+                        <p class="text-sm font-medium text-gray-500">No notifications</p>
+                        <p class="text-xs text-gray-400 mt-1">You're all caught up!</p>
+                    </div>
+                @endforelse
+            </div>
+
+            {{-- Footer --}}
+            @if($notifications->isNotEmpty())
+                <div class="px-4 py-3 border-t border-gray-200">
+                    <button 
+                        wire:click="viewAllNotifications"
+                        class="w-full text-center text-sm font-medium text-[#1C7C54] hover:text-[#1B512D] hover:bg-[#DEF4C6]/20 transition-all py-2 rounded-lg"
+                    >
+                        View all notifications
+                        <i class="fa-solid fa-arrow-right ml-2 text-xs"></i>
+                    </button>
+                </div>
+            @endif
+        </div>
+    @endif
+</div>
