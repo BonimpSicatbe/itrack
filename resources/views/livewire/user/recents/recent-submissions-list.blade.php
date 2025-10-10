@@ -53,7 +53,7 @@
                             >
                                 <option value="">All Statuses</option>
                                 <option value="under_review">Under Review</option>
-                                <option value="revision_needed">Revision Needed</option>
+                                <option value="revision_needed">Revision Required</option>
                                 <option value="rejected">Rejected</option>
                                 <option value="approved">Approved</option>
                             </select>

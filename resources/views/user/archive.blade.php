@@ -32,7 +32,7 @@
                     <select name="status" class="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 focus:border-green-500">
                         <option value="">All Status</option>
                         <option value="approved" {{ ($statusFilter ?? '') == 'approved' ? 'selected' : '' }}>Approved</option>
-                        <option value="revision_needed" {{ ($statusFilter ?? '') == 'revision_needed' ? 'selected' : '' }}>Revision Needed</option>
+                        <option value="revision_needed" {{ ($statusFilter ?? '') == 'revision_needed' ? 'selected' : '' }}>Revision Required</option>
                         <option value="rejected" {{ ($statusFilter ?? '') == 'rejected' ? 'selected' : '' }}>Rejected</option>
                         <option value="under_review" {{ ($statusFilter ?? '') == 'under_review' ? 'selected' : '' }}>Under Review</option>
                     </select>
@@ -113,7 +113,7 @@
                                                         <span class="text-green-600">Approved</span>
                                                         @break
                                                     @case('revision_needed')
-                                                        <span class="text-yellow-600">Revision Needed</span>
+                                                        <span class="text-yellow-600">Revision Required</span>
                                                         @break
                                                     @case('rejected')
                                                         <span class="text-red-600">Rejected</span>

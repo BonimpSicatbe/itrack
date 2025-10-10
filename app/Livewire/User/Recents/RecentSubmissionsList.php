@@ -15,7 +15,7 @@ class RecentSubmissionsList extends Component
     public $viewMode = 'list';
     public $statuses = [
         'under_review' => 'Under Review',
-        'revision_needed' => 'Revision Needed',
+        'revision_needed' => 'Revision Required',
         'rejected' => 'Rejected',
         'approved' => 'Approved'
     ];

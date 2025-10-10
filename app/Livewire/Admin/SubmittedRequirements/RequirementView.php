@@ -74,7 +74,7 @@ class RequirementView extends Component
     {
         return match($status) {
             'under_review' => 'Under Review',
-            'revision_needed' => 'Revision Needed',
+            'revision_needed' => 'Revision Required',
             'rejected' => 'Rejected',
             'approved' => 'Approved',
             default => ucfirst(str_replace('_', ' ', $status))
