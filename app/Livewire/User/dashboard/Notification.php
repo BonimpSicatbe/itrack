@@ -20,18 +20,20 @@ class Notification extends Component
 
     public function loadNotifications(): void
     {
-        // Get all unread notifications
+        // Get both read and unread notifications (last 10)
         $allNotifications = Auth::user()
-            ->unreadNotifications()
+            ->notifications()
             ->latest()
-            ->take(5)
+            ->take(10)
             ->get();
 
-        // Only filter if the notification has a requirement_id AND you want to check active semester
-        // Otherwise, show all notifications
+        // Filter notifications to only show those related to active semester
         $this->notifications = $allNotifications->filter(function ($notification) {
-            $requirementId = data_get($notification->data, 'requirement_id')
-                ?? data_get($notification->data, 'requirement.id');
+            // Ensure data is decoded properly
+            $data = is_array($notification->data) ? $notification->data : (json_decode($notification->data, true) ?? []);
+            
+            $requirementId = data_get($data, 'requirement_id')
+                ?? data_get($data, 'requirement.id');
 
             // If no requirement_id, show the notification (for system notifications, etc.)
             if (!$requirementId) {
@@ -43,12 +45,15 @@ class Notification extends Component
                 ->whereHas('semester', function ($query) {
                     $query->where('is_active', true);
                 })
-                ->exists(); // Use exists() instead of first() for better performance
+                ->exists();
 
             return $requirement;
         })->values();
 
-        $this->unreadCount = $this->notifications->count();
+        // Count only unread notifications
+        $this->unreadCount = $this->notifications->filter(function ($notification) {
+            return $notification->unread();
+        })->count();
         
         // Dispatch event to update count in other components
         $this->dispatch('unreadCountUpdated', count: $this->unreadCount);
@@ -64,7 +69,7 @@ class Notification extends Component
         }
     }
 
-    public function markAsRead($notificationId): void
+    public function markAsRead($notificationId)
     {
         $notification = Auth::user()
             ->notifications()
@@ -78,16 +83,16 @@ class Notification extends Component
             // Dispatch event for other components
             $this->dispatch('notificationRead');
             
-            // Close dropdown and redirect to notifications page
+            // Close dropdown and navigate to notifications page
             $this->showDropdown = false;
-            $this->redirect(route('user.notifications'));
+            return $this->redirect(route('user.notifications'), navigate: true);
         }
     }
 
-    public function viewAllNotifications(): void
+    public function viewAllNotifications()
     {
         $this->showDropdown = false;
-        $this->redirect(route('user.notifications'));
+        return $this->redirect(route('user.notifications'), navigate: true);
     }
 
     public function render()

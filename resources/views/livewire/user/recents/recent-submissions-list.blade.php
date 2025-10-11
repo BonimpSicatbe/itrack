@@ -1,12 +1,13 @@
 <div class="flex flex-col w-full mx-auto min-h-screen">
     {{-- Header Container - Now a separate div --}}
-    <div class="bg-white rounded-xl shadow-sm overflow-hidden mb-4">
+    <div class="bg-white rounded-xl shadow-sm mb-4">
         {{-- Header Section --}}
         <div class="flex items-center justify-between px-6 py-6 border-b border-gray-200" style="background: linear-gradient(148deg,rgba(18, 67, 44, 1) 0%, rgba(30, 119, 77, 1) 54%, rgba(55, 120, 64, 1) 100%);">
             <div class="flex items-center gap-2">
                 <i class="fa-solid fa-clock-rotate-left text-white text-2xl"></i>
                 <h1 class="text-xl font-bold text-white">Recent Submissions</h1>
             </div>
+            @livewire('user.dashboard.notification')
         </div>
     </div>
 

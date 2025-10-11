@@ -20,10 +20,12 @@ class Notification extends Component
     public $selectedNotification = null;
     public $selectedNotificationData = null;
     public $activeTab = 'all'; // 'all', 'unread', 'read'
+    public $hasUnreadNotifications = false;
 
     public function mount(): void
     {
         $this->loadNotifications();
+        $this->updateUnreadStatus();
     }
 
     public function loadNotifications(): void
@@ -54,6 +56,16 @@ class Notification extends Component
 
             return $requirement !== null;
         })->values(); // Reset array keys
+        
+        // Update unread status after loading notifications
+        $this->updateUnreadStatus();
+    }
+
+    public function updateUnreadStatus(): void
+    {
+        $this->hasUnreadNotifications = $this->notifications->contains(function ($notification) {
+            return $notification->unread();
+        });
     }
 
     public function getFilteredNotifications()
@@ -78,26 +90,40 @@ class Notification extends Component
         $this->selectedNotificationData = null;
     }
 
-    public function markAllAsRead(): void
+    public function toggleAllReadStatus(): void
     {
-        // Only mark notifications related to active semester requirements as read
+        // Get all notification IDs from filtered notifications
         $notificationIds = $this->notifications->pluck('id')->toArray();
         
-        Auth::user()->notifications()
-            ->whereIn('id', $notificationIds)
-            ->whereNull('read_at')
-            ->update(['read_at' => now()]);
-            
+        if ($this->hasUnreadNotifications) {
+            // Mark all as read
+            Auth::user()->notifications()
+                ->whereIn('id', $notificationIds)
+                ->whereNull('read_at')
+                ->update(['read_at' => now()]);
+                
+            session()->flash('message', 'All active semester notifications marked as read.');
+        } else {
+            // Mark all as unread
+            Auth::user()->notifications()
+                ->whereIn('id', $notificationIds)
+                ->whereNotNull('read_at')
+                ->update(['read_at' => null]);
+                
+            session()->flash('message', 'All active semester notifications marked as unread.');
+        }
+        
         $this->loadNotifications();
         $this->selectedNotification = null;
         $this->selectedNotificationData = null;
         
-        // If we're on unread tab, switch to all tab after marking all as read
-        if ($this->activeTab === 'unread') {
+        // Update the unread status
+        $this->updateUnreadStatus();
+        
+        // If we're on unread tab and marking all as read, switch to all tab
+        if ($this->hasUnreadNotifications && $this->activeTab === 'unread') {
             $this->activeTab = 'all';
         }
-        
-        session()->flash('message', 'All active semester notifications marked as read.');
     }
 
     public function selectNotification(string $id): void
@@ -113,6 +139,7 @@ class Notification extends Component
             $notification->markAsRead();
             // Reload notifications to update unread status
             $this->loadNotifications();
+            $this->updateUnreadStatus();
         }
 
         // Base info

@@ -3,12 +3,13 @@
     <div class="bg-white rounded-xl shadow-sm mb-3" style="background: linear-gradient(148deg,rgba(18, 67, 44, 1) 0%, rgba(30, 119, 77, 1) 54%, rgba(55, 120, 64, 1) 100%);">
         <div class="p-6">
             <div class="flex items-center justify-between">
-                <div class="flex items-center gap-3">
-                    <i class="fa-solid fa-folder text-white text-2xl"></i>
-                    <h1 class="text-xl font-bold text-white">File Manager</h1>
-                </div>
+            <div class="flex items-center gap-3">
+                <i class="fa-solid fa-folder text-white text-2xl"></i>
+                <h1 class="text-xl font-bold text-white">File Manager</h1>
             </div>
+            @livewire('user.dashboard.notification')
         </div>
+            </div>
     </div>
 
     <!-- Main Content Container -->
