@@ -12,7 +12,7 @@
     </div>
 
     <!-- Main Content Container -->
-    <div class="flex-1 flex flex-col lg:flex-row gap-3" style="max-height: calc(100vh - 125px);">
+    <div class="flex-1 flex flex-col lg:flex-row gap-3" style="max-height: calc(100vh - 120px);">
         <!-- Left Panel - File List -->
         <div class="bg-white rounded-xl overflow-auto {{ $selectedFile ? 'lg:flex-1' : 'flex-1' }}">
             <!-- Breadcrumb Section - Always Visible -->
