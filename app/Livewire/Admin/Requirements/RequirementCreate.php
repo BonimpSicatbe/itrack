@@ -292,9 +292,26 @@ class RequirementCreate extends Component
     // Update select all states based on current selection
     public function updateSelectAllStates()
     {
+        // Get all individual requirement IDs
+        $allIndividualIds = [];
+        foreach ($this->requirementTypes as $type) {
+            if ($type->is_folder && $type->children->isNotEmpty()) {
+                foreach ($type->children as $child) {
+                    if ($child->children->isNotEmpty()) {
+                        $allIndividualIds = array_merge($allIndividualIds, $child->children->pluck('id')->toArray());
+                    } else {
+                        $allIndividualIds[] = $child->id;
+                    }
+                }
+            } else {
+                $allIndividualIds[] = $type->id;
+            }
+        }
+        
+        $allIndividualIds = array_unique($allIndividualIds);
+        
         // Update Select All Requirements
-        $allRequirementIds = $this->requirementTypes->pluck('id')->toArray();
-        $this->selectAllRequirements = count(array_intersect($allRequirementIds, $this->selectedRequirementTypes)) === count($allRequirementIds);
+        $this->selectAllRequirements = count(array_intersect($allIndividualIds, $this->selectedRequirementTypes)) === count($allIndividualIds);
 
         // Update Select All Midterm
         $midtermIds = $this->midtermChildrenIds;
@@ -309,25 +326,88 @@ class RequirementCreate extends Component
         }
     }
 
-    // Select All Requirements
+    public function toggleProgram($programId)
+    {
+        if (in_array($programId, $this->selectedPrograms)) {
+            // Remove from selection
+            $this->selectedPrograms = array_values(array_diff($this->selectedPrograms, [$programId]));
+        } else {
+            // Add to selection
+            $this->selectedPrograms[] = $programId;
+        }
+        
+        // Update select all programs state
+        $this->selectAllPrograms = count($this->selectedPrograms) === count($this->programs);
+    }
+
+    public function toggleRequirement($requirementId)
+    {
+        if (in_array($requirementId, $this->selectedRequirementTypes)) {
+            // Remove from selection
+            $this->selectedRequirementTypes = array_values(array_diff($this->selectedRequirementTypes, [$requirementId]));
+        } else {
+            // Add to selection
+            $this->selectedRequirementTypes[] = $requirementId;
+        }
+        
+        // Update the select all states
+        $this->updateSelectAllStates();
+    }
+
+    // Select All Requirements - This selects ALL requirement types including standalone, midterms, and finals
     public function updatedSelectAllRequirements($value)
     {
         if ($value) {
-            $this->selectedRequirementTypes = $this->requirementTypes->pluck('id')->toArray();
+            // Get all individual requirement IDs (including children and grandchildren)
+            $allIndividualIds = [];
+            
+            foreach ($this->requirementTypes as $type) {
+                if ($type->is_folder && $type->children->isNotEmpty()) {
+                    // Add all children and grandchildren
+                    foreach ($type->children as $child) {
+                        if ($child->children->isNotEmpty()) {
+                            // Add grandchildren that are not created
+                            foreach ($child->children as $grandchild) {
+                                if (!$this->isGrandchildRequirementCreated($grandchild, $child, $type)) {
+                                    $allIndividualIds[] = $grandchild->id;
+                                }
+                            }
+                        } else {
+                            // Add child that is not created
+                            if (!$this->isChildRequirementCreated($child, $type)) {
+                                $allIndividualIds[] = $child->id;
+                            }
+                        }
+                    }
+                } else {
+                    // Add standalone requirement that is not created
+                    if (!$this->isRequirementCreated($type)) {
+                        $allIndividualIds[] = $type->id;
+                    }
+                }
+            }
+            
+            $this->selectedRequirementTypes = array_values(array_unique($allIndividualIds));
         } else {
             $this->selectedRequirementTypes = [];
         }
         $this->updateSelectAllStates();
     }
 
-    // Select All Midterm
+    // Select All Midterm - This selects only Midterm children
     public function updatedSelectAllMidterm($value)
     {
         $midtermIds = $this->midtermChildrenIds;
         if (!empty($midtermIds)) {
             if ($value) {
-                // Add Midterm children to selection
-                $this->selectedRequirementTypes = array_values(array_unique(array_merge($this->selectedRequirementTypes, $midtermIds)));
+                // Filter out already created requirements
+                $availableMidtermIds = array_filter($midtermIds, function($id) {
+                    $type = RequirementType::find($id);
+                    return $type && !$this->isChildRequirementCreated($type, RequirementType::find($type->parent_id));
+                });
+                
+                // Add available Midterm children to selection
+                $this->selectedRequirementTypes = array_values(array_unique(array_merge($this->selectedRequirementTypes, $availableMidtermIds)));
             } else {
                 // Remove Midterm children from selection
                 $this->selectedRequirementTypes = array_values(array_diff($this->selectedRequirementTypes, $midtermIds));
@@ -336,14 +416,20 @@ class RequirementCreate extends Component
         }
     }
 
-    // Select All Finals
+    // Select All Finals - This selects only Finals children
     public function updatedSelectAllFinals($value)
     {
         $finalsIds = $this->finalsChildrenIds;
         if (!empty($finalsIds)) {
             if ($value) {
-                // Add Finals children to selection
-                $this->selectedRequirementTypes = array_values(array_unique(array_merge($this->selectedRequirementTypes, $finalsIds)));
+                // Filter out already created requirements
+                $availableFinalsIds = array_filter($finalsIds, function($id) {
+                    $type = RequirementType::find($id);
+                    return $type && !$this->isChildRequirementCreated($type, RequirementType::find($type->parent_id));
+                });
+                
+                // Add available Finals children to selection
+                $this->selectedRequirementTypes = array_values(array_unique(array_merge($this->selectedRequirementTypes, $availableFinalsIds)));
             } else {
                 // Remove Finals children from selection
                 $this->selectedRequirementTypes = array_values(array_diff($this->selectedRequirementTypes, $finalsIds));

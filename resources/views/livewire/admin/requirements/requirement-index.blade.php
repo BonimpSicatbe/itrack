@@ -108,7 +108,11 @@
 
                                     <!-- Quick Actions -->
                                     <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity" onclick="event.stopPropagation()">
-                                        
+                                        <a href="{{ route('admin.submitted-requirements.index') }}?category=requirement&selectedRequirementId={{ $requirement->id }}"
+                                        class="p-1.5 hover:bg-blue-100 rounded-lg text-blue-500 text-sm"
+                                        title="View Submissions">
+                                            <i class="fa-solid fa-file-lines"></i>
+                                        </a>
                                         <a href="{{ route('admin.requirements.edit', $requirement) }}"
                                             class="p-1.5 hover:bg-amber-100 rounded-lg text-amber-500 text-sm"
                                             title="Edit">
@@ -216,7 +220,11 @@
                                             </td>
                                             <td class="px-4 py-3 whitespace-nowrap text-center" onclick="event.stopPropagation()">
                                                 <div class="flex justify-center gap-1">
-                                                    
+                                                    <a href="{{ route('admin.submitted-requirements.index') }}?category=requirement&selectedRequirementId={{ $requirement->id }}"
+                                                    class="p-2 hover:bg-blue-100 rounded-lg text-blue-500 text-sm"
+                                                    title="View Submissions">
+                                                        <i class="fa-solid fa-file-lines"></i>
+                                                    </a>
                                                     <a href="{{ route('admin.requirements.edit', $requirement) }}"
                                                        class="p-2 hover:bg-amber-100 rounded-lg text-amber-500 text-sm"
                                                        title="Edit">

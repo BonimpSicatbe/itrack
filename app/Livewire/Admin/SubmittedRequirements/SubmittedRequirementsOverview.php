@@ -116,7 +116,7 @@ class SubmittedRequirementsOverview extends Component
     {
         $status = $this->getSubmissionStatusForCourse($userId, $requirementId, $courseId, $submissionIndicators);
         
-        return $status === 'not_submitted' ? '' : 'Submitted';
+        return $status === 'not_submitted' ? 'No Submission' : 'Submitted';
     }
 
     public function getStatusBadgeClass($status)

@@ -3,7 +3,7 @@
     <div class="flex justify-between items-center text-white p-4 rounded-xl shadow-md" style="background: linear-gradient(148deg,rgba(18, 67, 44, 1) 0%, rgba(30, 119, 77, 1) 54%, rgba(55, 120, 64, 1) 100%);">
         <div class="flex items-center gap-3">
             <div class="pl-3 bg-1C7C54/10 rounded-xl">
-                <i class="fa-solid fa-folder-tree text-white text-2xl"></i>
+                <i class="fa-solid fa-paper-plane text-white text-2xl"></i>
             </div>
             <h2 class="text-xl md:text-xl font-semibold">Submitted Requirements</h2>
         </div>
@@ -62,46 +62,24 @@
                 <div class="flex items-center gap-2 text-sm text-gray-600 mb-4 p-3 bg-gray-50 rounded-lg border">
                     <button 
                         wire:click="goBack('requirement')" 
-                        class="flex items-center gap-2 px-3 py-1 rounded-lg bg-white border hover:bg-green-50 hover:border-green-200 transition-colors"
+                        class="flex items-center gap-1 px-1 py-1"
                     >
                         <i class="fas fa-home text-green-600"></i>
-                        <span class="font-medium text-green-700">Requirements</span>
+                        <span class=" text-green-700 hover:text-amber-500 hover:underline hover:underline-offset-4 font-semibold">Requirements</span>
                     </button>
                     
                     @foreach($breadcrumb as $index => $crumb)
                         <i class="fas fa-chevron-right text-gray-400 mx-1"></i>
                         @if($index === count($breadcrumb) - 1)
-                            <div class="flex items-center gap-2 px-3 py-1 rounded-lg bg-green-100 border border-green-200">
-                                @switch($crumb['type'])
-                                    @case('requirement')
-                                        <i class="fas fa-folder text-green-600"></i>
-                                    @break
-                                    @case('user')
-                                        <i class="fas fa-user text-blue-600"></i>
-                                    @break
-                                    @case('course')
-                                        <i class="fas fa-book text-purple-600"></i>
-                                    @break
-                                @endswitch
-                                <span class="font-semibold text-green-800">{{ $crumb['name'] }}</span>
+                            <div class="flex items-center gap-2 px-1 py-1 ">
+                                <span class="font-semibold text-green-800 hover:text-amber-500 hover:underline hover:underline-offset-4">{{ $crumb['name'] }}</span>
                             </div>
                         @else
                             <button 
                                 wire:click="goBack('{{ $crumb['type'] }}')" 
-                                class="flex items-center gap-2 px-3 py-1 rounded-lg bg-white border hover:bg-green-50 hover:border-green-200 transition-colors"
+                                class="flex items-center gap-2 px-3 py-1"
                             >
-                                @switch($crumb['type'])
-                                    @case('requirement')
-                                        <i class="fas fa-folder text-green-600"></i>
-                                    @break
-                                    @case('user')
-                                        <i class="fas fa-user text-blue-600"></i>
-                                    @break
-                                    @case('course')
-                                        <i class="fas fa-book text-purple-600"></i>
-                                    @break
-                                @endswitch
-                                <span class="font-medium text-green-700">{{ $crumb['name'] }}</span>
+                                <span class=" text-green-700 hover:text-amber-500 hover:underline hover:underline-offset-4 font-semibold">{{ $crumb['name'] }}</span>
                             </button>
                         @endif
                     @endforeach
@@ -238,9 +216,6 @@
                                             <div class="flex flex-col min-w-0">
                                                 <span class="font-semibold text-gray-800 truncate">{{ $user->full_name }}</span>
                                                 <span class="text-sm text-gray-500 truncate">{{ $user->email }}</span>
-                                                @if($user->college)
-                                                    <span class="text-xs text-gray-400">{{ $user->college->name }}</span>
-                                                @endif
                                             </div>
                                         </div>
                                         <div class="col-span-2 flex items-center justify-center">
@@ -265,8 +240,8 @@
                                     </div>
                                 @empty
                                     <div class="flex flex-col items-center justify-center py-12 text-gray-400">
-                                        <i class="fa-solid fa-users text-5xl text-gray-300 mb-4"></i>
-                                        <p class="text-lg font-semibold text-gray-500">No users found for this requirement</p>
+                                        <i class="fa-solid fa-users text-3xl text-gray-300 mb-4"></i>
+                                        <p class="text-sm font-semibold text-gray-500">No users have submitted yet</p>
                                         @if($search)
                                             <p class="text-sm text-amber-500 mt-2">Try adjusting your search term</p>
                                         @endif
@@ -332,18 +307,17 @@
                             <div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
                                 <!-- Table Header -->
                                 <div class="grid grid-cols-12 gap-4 px-6 py-4 bg-gray-50 border-b border-gray-200 text-sm font-semibold text-gray-700">
-                                    <div class="col-span-8 flex items-center gap-2">
+                                    <div class="col-span-10 flex items-center gap-2">
                                         <i class="fas fa-book text-purple-600"></i>
                                         <span>Course Information</span>
                                     </div>
-                                    <div class="col-span-2 text-center">Status</div>
                                     <div class="col-span-2 text-center">Actions</div>
                                 </div>
                                 
                                 @forelse ($coursesForUserRequirement as $courseData)
                                     @php $course = $courseData['course']; @endphp
                                     <div class="grid grid-cols-12 gap-4 px-6 py-4 border-b border-gray-100 hover:bg-purple-50 transition-colors">
-                                        <div class="col-span-8 flex items-center gap-4">
+                                        <div class="col-span-10 flex items-center gap-4">
                                             <div class="flex-shrink-0">
                                                 <div class="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
                                                     <i class="fas fa-book text-purple-600"></i>
@@ -353,29 +327,6 @@
                                                 <span class="font-semibold text-gray-800">{{ $course->course_code }}</span>
                                                 <span class="text-sm text-gray-500 truncate">{{ $course->course_name }}</span>
                                             </div>
-                                        </div>
-                                        <div class="col-span-2 flex items-center justify-center">
-                                            @php
-                                                $badgeClass = match($courseData['status']) {
-                                                    'submitted' => 'bg-green-100 text-green-800',
-                                                    'under_review' => 'bg-yellow-100 text-yellow-800',
-                                                    'revision_needed' => 'bg-orange-100 text-orange-800',
-                                                    'rejected' => 'bg-red-100 text-red-800',
-                                                    'approved' => 'bg-blue-100 text-blue-800',
-                                                    default => 'bg-gray-100 text-gray-500'
-                                                };
-                                                $statusText = match($courseData['status']) {
-                                                    'submitted' => 'Submitted',
-                                                    'under_review' => 'Under Review',
-                                                    'revision_needed' => 'Revision Required',
-                                                    'rejected' => 'Rejected',
-                                                    'approved' => 'Approved',
-                                                    default => 'Not Submitted'
-                                                };
-                                            @endphp
-                                            <span class="px-3 py-1 text-xs font-semibold rounded-full {{ $badgeClass }}">
-                                                {{ $statusText }}
-                                            </span>
                                         </div>
                                         <div class="col-span-2 flex items-center justify-center">
                                             <button 

@@ -84,7 +84,15 @@ Route::middleware(['auth', 'role:admin|super-admin'])
         // Individual submission view (original route)
         Route::get('/submitted-requirements/{submitted_requirement}', [SubmittedRequirementController::class, 'show'])
             ->name('submitted-requirements.show');
+        
+        // Add the missing route for requirement view
+        Route::get('/submitted-requirements/requirement/{requirement_id}', function ($requirement_id) {
+            return view('admin.pages.submitted-requirements.requirement', [
+                'requirement_id' => $requirement_id,
+            ]);
+        })->name('submitted-requirements.requirement');
             
+        // Context-based requirement view
         Route::get('/submitted-requirements/requirement/{requirement_id}/{user_id?}/{course_id?}', function ($requirement_id, $user_id = null, $course_id = null) {
             return view('admin.pages.submitted-requirements.requirement', [
                 'requirement_id' => $requirement_id,
