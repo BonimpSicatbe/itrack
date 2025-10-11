@@ -43,7 +43,9 @@
                                             <i class="fa-solid fa-check text-white text-xs"></i>
                                         @endif
                                     </div>
-                                    <span class="text-sm font-semibold text-blue-800">Select All</span>
+                                    <span class="text-sm font-semibold text-blue-800">
+                                        {{ $selectAllRequirements ? 'Deselect All' : 'Select All' }}
+                                    </span>
                                 </button>
                             </div>
                         </div>
@@ -109,7 +111,9 @@
                                                                     <i class="fa-solid fa-check text-white text-xs"></i>
                                                                 @endif
                                                             </div>
-                                                            <span class="text-sm font-medium {{ $isMidtermFolder ? 'text-orange-800' : 'text-green-800' }}">Select All</span>
+                                                            <span class="text-sm font-medium {{ $isMidtermFolder ? 'text-orange-800' : 'text-green-800' }}">
+                                                                {{ ($isMidtermFolder && $selectAllMidterm) || ($isFinalsFolder && $selectAllFinals) ? 'Deselect All' : 'Select All' }}
+                                                            </span>
                                                         </button>
                                                     @endif
                                                     

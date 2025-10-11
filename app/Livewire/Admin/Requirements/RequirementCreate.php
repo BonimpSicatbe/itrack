@@ -292,37 +292,57 @@ class RequirementCreate extends Component
     // Update select all states based on current selection
     public function updateSelectAllStates()
     {
-        // Get all individual requirement IDs
-        $allIndividualIds = [];
+        // Get all individual requirement IDs that are available (not created)
+        $allAvailableIndividualIds = [];
+        
         foreach ($this->requirementTypes as $type) {
             if ($type->is_folder && $type->children->isNotEmpty()) {
                 foreach ($type->children as $child) {
                     if ($child->children->isNotEmpty()) {
-                        $allIndividualIds = array_merge($allIndividualIds, $child->children->pluck('id')->toArray());
+                        foreach ($child->children as $grandchild) {
+                            if (!$this->isGrandchildRequirementCreated($grandchild, $child, $type)) {
+                                $allAvailableIndividualIds[] = $grandchild->id;
+                            }
+                        }
                     } else {
-                        $allIndividualIds[] = $child->id;
+                        if (!$this->isChildRequirementCreated($child, $type)) {
+                            $allAvailableIndividualIds[] = $child->id;
+                        }
                     }
                 }
             } else {
-                $allIndividualIds[] = $type->id;
+                if (!$this->isRequirementCreated($type)) {
+                    $allAvailableIndividualIds[] = $type->id;
+                }
             }
         }
         
-        $allIndividualIds = array_unique($allIndividualIds);
+        $allAvailableIndividualIds = array_unique($allAvailableIndividualIds);
         
-        // Update Select All Requirements
-        $this->selectAllRequirements = count(array_intersect($allIndividualIds, $this->selectedRequirementTypes)) === count($allIndividualIds);
+        // Get currently selected IDs that are available
+        $currentlySelectedAvailable = array_intersect($this->selectedRequirementTypes, $allAvailableIndividualIds);
+        
+        // Update Select All Requirements - true only if ALL available items are selected
+        $this->selectAllRequirements = count($currentlySelectedAvailable) === count($allAvailableIndividualIds) && count($allAvailableIndividualIds) > 0;
 
         // Update Select All Midterm
         $midtermIds = $this->midtermChildrenIds;
         if (!empty($midtermIds)) {
-            $this->selectAllMidterm = count(array_intersect($midtermIds, $this->selectedRequirementTypes)) === count($midtermIds);
+            $availableMidtermIds = array_filter($midtermIds, function($id) {
+                $type = RequirementType::find($id);
+                return $type && !$this->isChildRequirementCreated($type, RequirementType::find($type->parent_id));
+            });
+            $this->selectAllMidterm = count(array_intersect($availableMidtermIds, $this->selectedRequirementTypes)) === count($availableMidtermIds) && count($availableMidtermIds) > 0;
         }
 
         // Update Select All Finals
         $finalsIds = $this->finalsChildrenIds;
         if (!empty($finalsIds)) {
-            $this->selectAllFinals = count(array_intersect($finalsIds, $this->selectedRequirementTypes)) === count($finalsIds);
+            $availableFinalsIds = array_filter($finalsIds, function($id) {
+                $type = RequirementType::find($id);
+                return $type && !$this->isChildRequirementCreated($type, RequirementType::find($type->parent_id));
+            });
+            $this->selectAllFinals = count(array_intersect($availableFinalsIds, $this->selectedRequirementTypes)) === count($availableFinalsIds) && count($availableFinalsIds) > 0;
         }
     }
 
@@ -358,7 +378,7 @@ class RequirementCreate extends Component
     public function updatedSelectAllRequirements($value)
     {
         if ($value) {
-            // Get all individual requirement IDs (including children and grandchildren)
+            // Get all individual requirement IDs (including children and grandchildren) that are NOT created
             $allIndividualIds = [];
             
             foreach ($this->requirementTypes as $type) {
@@ -389,10 +409,14 @@ class RequirementCreate extends Component
             
             $this->selectedRequirementTypes = array_values(array_unique($allIndividualIds));
         } else {
+            // Deselect all
             $this->selectedRequirementTypes = [];
         }
+        
+        // Update the select all states to reflect the current selection
         $this->updateSelectAllStates();
     }
+
 
     // Select All Midterm - This selects only Midterm children
     public function updatedSelectAllMidterm($value)
