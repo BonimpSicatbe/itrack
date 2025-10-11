@@ -120,7 +120,7 @@ class Notifications extends Component
             $this->selectedNotificationData['submissions'] = $submissions->map(function ($submission) {
                 $statusLabel = match($submission->status) {
                     SubmittedRequirement::STATUS_UNDER_REVIEW => 'Under Review',
-                    SubmittedRequirement::STATUS_REVISION_NEEDED => 'Revision Needed',
+                    SubmittedRequirement::STATUS_REVISION_NEEDED => 'Revision Required',
                     SubmittedRequirement::STATUS_REJECTED => 'Rejected',
                     SubmittedRequirement::STATUS_APPROVED => 'Approved',
                     default => ucfirst($submission->status),

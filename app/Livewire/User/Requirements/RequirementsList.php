@@ -620,32 +620,48 @@ class RequirementsList extends Component
             $hasChildren = $rootFolder->children->where('is_folder', true)->isNotEmpty();
             
             if ($hasChildren) {
-                // Folder has children - don't show requirements at root level
+                // Folder has children - check each child folder for requirements
+                $hasRequirementsInChildren = false;
+                
                 foreach ($rootFolder->children->where('is_folder', true) as $childFolder) {
-                    $childFolderData = [
-                        'folder' => $childFolder,
-                        'requirements' => $this->getRequirementsForFolder($requirements, $childFolder->id)
-                    ];
+                    $childRequirements = $this->getRequirementsForFolder($requirements, $childFolder->id);
                     
-                    $folderData['children'][] = $childFolderData;
+                    if (count($childRequirements) > 0) {
+                        $hasRequirementsInChildren = true;
+                        $childFolderData = [
+                            'folder' => $childFolder,
+                            'requirements' => $childRequirements
+                        ];
+                        
+                        $folderData['children'][] = $childFolderData;
+                    }
+                }
+                
+                // Only add this root folder if it has children with requirements
+                if ($hasRequirementsInChildren) {
+                    $folderStructure[] = $folderData;
                 }
             } else {
                 // Folder has no children - show requirements directly
-                $folderData['requirements'] = $this->getRequirementsForFolder($requirements, $rootFolder->id);
+                $directRequirements = $this->getRequirementsForFolder($requirements, $rootFolder->id);
+                
+                // Only add this folder if it has direct requirements
+                if (count($directRequirements) > 0) {
+                    $folderData['requirements'] = $directRequirements;
+                    $folderStructure[] = $folderData;
+                }
             }
-            
-            $folderStructure[] = $folderData;
         }
         
         // Handle custom requirements (without requirement_type_ids or with empty array)
         $customRequirements = $requirements->filter(function($requirementData) {
             $requirement = $requirementData['requirement'];
             return empty($requirement->requirement_type_ids) || 
-                   (is_array($requirement->requirement_type_ids) && count($requirement->requirement_type_ids) === 0);
+                (is_array($requirement->requirement_type_ids) && count($requirement->requirement_type_ids) === 0);
         });
         
+        // Only add custom folder if it has requirements
         if ($customRequirements->isNotEmpty()) {
-            // Use a string ID with prefix to avoid conflicts with database IDs
             $folderStructure[] = [
                 'folder' => (object)[
                     'id' => 'custom_requirements',

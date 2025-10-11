@@ -129,7 +129,7 @@
                                         ->count();
                                 @endphp
                                 
-                                <div class="text-xs text-gray-500 bg-gray-100 rounded-lg py-2 px-3">
+                                <div class="text-xs text-gray-500 bg-gray-100 rounded-xl py-2 px-3">
                                     {{ $requirementsCount }} requirement(s)
                                 </div>
                             </div>
@@ -200,7 +200,7 @@
                             <div class="collapse-content text-sm">
                                 {{-- Partnership Status Display --}}
                                 @if($partnership_status)
-                                    <div class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                                    <div class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-xl">
                                         <div class="flex items-center gap-2 mb-2">
                                         </div>
                                         <div class="text-sm text-blue-700">
@@ -299,7 +299,7 @@
 
                                                     <!-- Display selected file name -->
                                                     @if ($file)
-                                                        <div class="p-3 bg-green-50 rounded-lg border border-gray-400">
+                                                        <div class="p-3 bg-green-50 rounded-xl border border-gray-400">
                                                             <div class="flex items-center justify-between">
                                                                 <div class="flex items-center gap-2">
                                                                     @php
@@ -503,7 +503,7 @@
                                         </div>
                                     </div>
                                     <h3 class="font-bold text-gray-800 text-lg mb-2">{{ $childFolder['folder']->name }}</h3>
-                                    <div class="text-xs text-gray-500 bg-gray-100 rounded-lg py-2 px-3">
+                                    <div class="text-xs text-gray-500 bg-gray-100 rounded-xl py-2 px-3">
                                             {{ count($childFolder['requirements']) }} requirement(s)
                                     </div>
                                 </div>
@@ -566,7 +566,7 @@
                                 <div class="collapse-content text-sm">
                                     {{-- Partnership Status Display --}}
                                     @if($partnership_status)
-                                    <div class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                                    <div class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-xl">
                                         <div class="flex items-center gap-2 mb-2">
                                         </div>
                                         <div class="text-sm text-blue-700">
@@ -680,7 +680,7 @@
 
                                                         <!-- Display selected file name -->
                                                         @if ($file)
-                                                            <div class="p-3 bg-green-50 rounded-lg border border-gray-400">
+                                                            <div class="p-3 bg-green-50 rounded-xl border border-gray-400">
                                                                 <div class="flex items-center justify-between">
                                                                     <div class="flex items-center gap-2">
                                                                         @php
@@ -866,7 +866,7 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-6">
                         @foreach($folderStructure as $folderData)
                             <div class="bg-white border-2 border-gray-200 rounded-xl shadow-sm hover:shadow-md transition-all duration-200 hover:border-green-500 cursor-pointer"
-                                 wire:click="selectFolder('{{ $folderData['folder']->id }}')">
+                                wire:click="selectFolder('{{ $folderData['folder']->id }}')">
                                 <div class="p-6 text-center">
                                     <div class="flex justify-center mb-4">
                                         <div class="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center">
@@ -880,7 +880,7 @@
                                             $totalRequirements += count($child['requirements']);
                                         }
                                     @endphp
-                                    <div class="text-xs text-gray-500 bg-gray-100 rounded-lg py-2 px-3">
+                                    <div class="text-xs text-gray-500 bg-gray-100 rounded-xl py-2 px-3">
                                         {{ $totalRequirements }} requirement(s)
                                     </div>
                                 </div>
@@ -899,7 +899,7 @@
             @endif
         @else
             <!-- No Active Semester -->
-            <div class="flex items-center p-4 bg-amber-100 border border-amber-300 text-amber-800 rounded-lg">
+            <div class="flex items-center p-4 bg-amber-100 border border-amber-300 text-amber-800 rounded-xl">
                 <i class="fa-solid fa-triangle-exclamation text-lg mr-3"></i>
                 <div>
                     <h3 class="font-bold">No active semester</h3>

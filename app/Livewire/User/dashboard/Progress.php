@@ -49,7 +49,7 @@ class Progress extends Component
         return match($status) {
             SubmittedRequirement::STATUS_APPROVED => 'Approved',
             SubmittedRequirement::STATUS_REJECTED => 'Rejected',
-            SubmittedRequirement::STATUS_REVISION_NEEDED => 'Revision Needed',
+            SubmittedRequirement::STATUS_REVISION_NEEDED => 'Revision Required',
             SubmittedRequirement::STATUS_UNDER_REVIEW => 'Under Review',
             default => ucfirst(str_replace('_', ' ', $status))
         };

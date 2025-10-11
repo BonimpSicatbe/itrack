@@ -367,7 +367,7 @@
                                                 $statusText = match($courseData['status']) {
                                                     'submitted' => 'Submitted',
                                                     'under_review' => 'Under Review',
-                                                    'revision_needed' => 'Revision Needed',
+                                                    'revision_needed' => 'Revision Required',
                                                     'rejected' => 'Rejected',
                                                     'approved' => 'Approved',
                                                     default => 'Not Submitted'
@@ -422,7 +422,7 @@
                                                     $statusText = match($courseData['status']) {
                                                         'submitted' => 'Submitted',
                                                         'under_review' => 'Under Review',
-                                                        'revision_needed' => 'Revision Needed',
+                                                        'revision_needed' => 'Revision Required',
                                                         'rejected' => 'Rejected',
                                                         'approved' => 'Approved',
                                                         default => 'Not Submitted'

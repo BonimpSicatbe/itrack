@@ -312,7 +312,7 @@ class Notification extends Component
     {
         return match ($status) {
             SubmittedRequirement::STATUS_UNDER_REVIEW     => 'Under Review',
-            SubmittedRequirement::STATUS_REVISION_NEEDED  => 'Revision Needed',
+            SubmittedRequirement::STATUS_REVISION_NEEDED  => 'Revision Required',
             SubmittedRequirement::STATUS_REJECTED         => 'Rejected',
             SubmittedRequirement::STATUS_APPROVED         => 'Approved',
             default                                        => $status ? ucfirst($status) : '',
