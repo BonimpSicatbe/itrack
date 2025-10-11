@@ -63,16 +63,16 @@
                             default => 'fa-bell text-gray-500'
                         };
                         
-                        // Apply gray styling for read notifications
+                        // Apply styling similar to admin side
                         if ($isUnread) {
-                            $containerClass = 'border-gray-200 hover:bg-[#DEF4C6]/20 hover:border-[#1C7C54]/30';
-                            $iconBgClass = 'bg-gray-100 group-hover:bg-[#DEF4C6]/40';
+                            $containerClass = 'bg-white border-l-4 border-green-500 shadow-md hover:shadow-lg';
+                            $iconBgClass = 'bg-green-50';
                             $textClass = 'text-gray-900';
                             $timeClass = 'text-gray-500';
                         } else {
-                            $containerClass = 'border-gray-200 hover:bg-gray-100 bg-gray-50';
-                            $iconBgClass = 'bg-gray-200';
-                            $textClass = 'text-gray-500';
+                            $containerClass = 'bg-gray-50 border border-gray-200 hover:bg-gray-100';
+                            $iconBgClass = 'bg-gray-100';
+                            $textClass = 'text-gray-600';
                             $timeClass = 'text-gray-400';
                             $iconClass = str_replace(['text-blue-500', 'text-green-500', 'text-yellow-500', 'text-red-500', 'text-orange-500'], 'text-gray-400', $iconClass);
                         }
@@ -80,19 +80,19 @@
                     
                     <div 
                         wire:click="markAsRead('{{ $notification->id }}')"
-                        class="p-3 mb-2 rounded-lg border {{ $containerClass }} cursor-pointer transition-all duration-200 group last:mb-0"
+                        class="p-4 mb-2 rounded-xl {{ $containerClass }} cursor-pointer transition-all duration-200 last:mb-0"
                     >
                         <div class="flex gap-3">
                             {{-- Icon --}}
                             <div class="flex-shrink-0">
-                                <div class="flex items-center justify-center w-9 h-9 rounded-lg {{ $iconBgClass }} transition-colors">
-                                    <i class="fas {{ $iconClass }} text-sm"></i>
+                                <div class="flex items-center justify-center w-10 h-10 rounded-lg {{ $iconBgClass }} transition-colors">
+                                    <i class="fas {{ $iconClass }} text-base"></i>
                                 </div>
                             </div>
 
                             {{-- Content --}}
                             <div class="flex-1 min-w-0">
-                                <p class="text-sm {{ $textClass }} line-clamp-2 mb-1 {{ $isUnread ? 'font-medium' : 'font-normal' }}">
+                                <p class="text-sm {{ $textClass }} mb-1 {{ $isUnread ? 'font-semibold' : 'font-normal' }}">
                                     {{ $message }}
                                 </p>
                                 <p class="text-xs {{ $timeClass }} flex items-center">
@@ -104,7 +104,7 @@
                             {{-- Unread indicator - only show for unread notifications --}}
                             @if($isUnread)
                                 <div class="flex-shrink-0 flex items-start pt-1">
-                                    <span class="inline-block w-2 h-2 bg-[#1C7C54] rounded-full"></span>
+                                    <span class="inline-block w-2.5 h-2.5 bg-green-500 rounded-full"></span>
                                 </div>
                             @endif
                         </div>
