@@ -8,21 +8,22 @@
         @method('patch')
 
         <div class="grid gap-6">
+            <!-- First Name Field -->
             <div>
-                <label for="name" class="block text-sm font-medium text-gray-700 mb-2">
-                    {{ __('Name') }}
+                <label for="firstname" class="block text-sm font-medium text-gray-700 mb-2">
+                    {{ __('First Name') }}
                 </label>
                 <div class="relative">
                     <input 
-                        id="name" 
-                        name="name" 
+                        id="firstname" 
+                        name="firstname" 
                         type="text" 
                         class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors duration-200 pr-10"
-                        value="{{ old('name', $user->name) }}" 
+                        value="{{ old('firstname', $user->firstname) }}" 
                         required 
                         autofocus 
-                        autocomplete="name"
-                        placeholder="Enter your full name"
+                        autocomplete="given-name"
+                        placeholder="Enter your first name"
                     />
                     <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
                         <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -30,9 +31,83 @@
                         </svg>
                     </div>
                 </div>
-                <x-input-error class="mt-2" :messages="$errors->get('name')" />
+                <x-input-error class="mt-2" :messages="$errors->get('firstname')" />
             </div>
 
+            <!-- Middle Name Field -->
+            <div>
+                <label for="middlename" class="block text-sm font-medium text-gray-700 mb-2">
+                    {{ __('Middle Name') }}
+                </label>
+                <div class="relative">
+                    <input 
+                        id="middlename" 
+                        name="middlename" 
+                        type="text" 
+                        class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors duration-200 pr-10"
+                        value="{{ old('middlename', $user->middlename) }}" 
+                        autocomplete="additional-name"
+                        placeholder="Enter your middle name (optional)"
+                    />
+                    <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
+                        <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                        </svg>
+                    </div>
+                </div>
+                <x-input-error class="mt-2" :messages="$errors->get('middlename')" />
+            </div>
+
+            <!-- Last Name Field -->
+            <div>
+                <label for="lastname" class="block text-sm font-medium text-gray-700 mb-2">
+                    {{ __('Last Name') }}
+                </label>
+                <div class="relative">
+                    <input 
+                        id="lastname" 
+                        name="lastname" 
+                        type="text" 
+                        class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors duration-200 pr-10"
+                        value="{{ old('lastname', $user->lastname) }}" 
+                        required 
+                        autocomplete="family-name"
+                        placeholder="Enter your last name"
+                    />
+                    <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
+                        <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                        </svg>
+                    </div>
+                </div>
+                <x-input-error class="mt-2" :messages="$errors->get('lastname')" />
+            </div>
+
+            <!-- Extension Name Field -->
+            <div>
+                <label for="extensionname" class="block text-sm font-medium text-gray-700 mb-2">
+                    {{ __('Extension Name') }}
+                </label>
+                <div class="relative">
+                    <input 
+                        id="extensionname" 
+                        name="extensionname" 
+                        type="text" 
+                        class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors duration-200 pr-10"
+                        value="{{ old('extensionname', $user->extensionname) }}" 
+                        autocomplete="honorific-suffix"
+                        placeholder="e.g., Jr., Sr., III (optional)"
+                    />
+                    <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
+                        <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                        </svg>
+                    </div>
+                </div>
+                <x-input-error class="mt-2" :messages="$errors->get('extensionname')" />
+            </div>
+
+            <!-- Email Field (unchanged) -->
             <div>
                 <label for="email" class="block text-sm font-medium text-gray-700 mb-2">
                     {{ __('Email') }}

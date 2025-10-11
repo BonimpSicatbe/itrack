@@ -38,7 +38,7 @@ class Navigation extends Component
         // Add logo configuration - different logos for each state
         $this->logos = [
             'collapsed' => asset('images/logo-1.png'),
-            'expanded' => asset('images/logo-title.png'), // Different logo for expanded state
+            'expanded' => asset('images/logo-title.png'), 
         ];
     }
 
@@ -47,7 +47,7 @@ class Navigation extends Component
         return view('layouts.user.navigation', [
             'navLinks' => $this->navLink,
             'bottomNavLinks' => $this->bottomNavLink,
-            'logos' => $this->logos, // Pass logos to the view
+            'logos' => $this->logos, 
         ]);
     }
 }

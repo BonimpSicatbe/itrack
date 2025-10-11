@@ -285,58 +285,58 @@
                                                         <span>Requirement completed. Click "<b>Mark as undone</b>" above to submit additional files.</span>
                                                     </div>
                                                 </div>
-                                            @else
-                                                <form wire:submit.prevent="submitRequirement({{ $requirement->id }})"
-                                                    class="space-y-4">
-                                                    <div>
-                                                        <input type="file" wire:model="file"
-                                                            class="file-input file-input-bordered w-full"
-                                                            wire:loading.attr="disabled">
-                                                        @error('file')
-                                                            <span class="text-error text-sm">{{ $message }}</span>
-                                                        @enderror
-                                                    </div>
-
-                                                    <!-- Display selected file name -->
-                                                    @if ($file)
-                                                        <div class="p-3 bg-green-50 rounded-xl border border-gray-400">
-                                                            <div class="flex items-center justify-between">
-                                                                <div class="flex items-center gap-2">
-                                                                    @php
-                                                                        $extension = strtolower(
-                                                                            $file->getClientOriginalExtension(),
-                                                                        );
-                                                                        $iconInfo = \App\Models\SubmittedRequirement::FILE_ICONS[$extension] ?? \App\Models\SubmittedRequirement::FILE_ICONS['default'];
-                                                                    @endphp
-                                                                    <i class="fa-solid {{ $iconInfo['icon'] }} {{ $iconInfo['color'] }}"></i>
-                                                                    <span class="text-sm font-medium truncate max-w-xs">
-                                                                        {{ $file->getClientOriginalName() }}
-                                                                    </span>
-                                                                </div>
-                                                                <button type="button" class="btn btn-xs btn-ghost text-error"
-                                                                    wire:click="$set('file', null)" title="Remove file">
-                                                                    <i class="fa-solid fa-times"></i>
-                                                                </button>
-                                                            </div>
-                                                            <div class="mt-1 text-xs text-gray-500">
-                                                                Size: {{ round($file->getSize() / 1024, 1) }} KB
-                                                            </div>
+                                                @else
+                                                    <form wire:submit.prevent="submitRequirement({{ $requirement->id }})"
+                                                        class="space-y-4">
+                                                        <div>
+                                                            <input type="file" wire:model="file"
+                                                                class="file-input file-input-bordered w-full"
+                                                                wire:loading.attr="disabled">
+                                                            @error('file')
+                                                                <span class="text-error text-sm">{{ $message }}</span>
+                                                            @enderror
                                                         </div>
-                                                    @endif
 
-                                                    <button type="submit"
-                                                        class="btn w-full bg-green-600 text-white hover:bg-green-700"
-                                                        wire:loading.attr="disabled" :disabled="!$file">
-                                                        <span wire:loading.remove>Submit Requirement</span>
-                                                        <span wire:loading>
-                                                            <i class="fa-solid fa-spinner animate-spin"></i>
-                                                            Uploading...
-                                                        </span>
-                                                    </button>
-                                                </form>
-                                            @endif
+                                                        <!-- Display selected file name -->
+                                                        @if ($file)
+                                                            <div class="p-3 bg-green-50 rounded-xl border border-gray-400">
+                                                                <div class="flex items-center justify-between">
+                                                                    <div class="flex items-center gap-2">
+                                                                        @php
+                                                                            $extension = strtolower(
+                                                                                $file->getClientOriginalExtension(),
+                                                                            );
+                                                                            $iconInfo = \App\Models\SubmittedRequirement::FILE_ICONS[$extension] ?? \App\Models\SubmittedRequirement::FILE_ICONS['default'];
+                                                                        @endphp
+                                                                        <i class="fa-solid {{ $iconInfo['icon'] }} {{ $iconInfo['color'] }}"></i>
+                                                                        <span class="text-sm font-medium truncate max-w-xs">
+                                                                            {{ $file->getClientOriginalName() }}
+                                                                        </span>
+                                                                    </div>
+                                                                    <button type="button" class="btn btn-xs btn-ghost text-error"
+                                                                        wire:click="$set('file', null)" title="Remove file">
+                                                                        <i class="fa-solid fa-times"></i>
+                                                                    </button>
+                                                                </div>
+                                                                <div class="mt-1 text-xs text-gray-500">
+                                                                    Size: {{ round($file->getSize() / 1024, 1) }} KB
+                                                                </div>
+                                                            </div>
+                                                        @endif
+
+                                                        <button type="submit"
+                                                            class="btn w-full bg-green-600 text-white hover:bg-green-700"
+                                                            wire:loading.attr="disabled" :disabled="!$file">
+                                                            <span wire:loading.remove>Submit Requirement</span>
+                                                            <span wire:loading>
+                                                                <i class="fa-solid fa-spinner animate-spin"></i>
+                                                                Uploading...
+                                                            </span>
+                                                        </button>
+                                                    </form>
+                                                @endif
+                                            </div>
                                         </div>
-                                    </div>
 
                                     {{-- Previous Submissions --}}
                                     <input type="radio" name="{{ $requirement->id }}"
@@ -659,7 +659,7 @@
                                             {{ $this->isTabActive($requirement->id, 'submit') ? 'checked' : '' }} />
                                         <div class="tab-content space-y-4 border-0 border-t border-base-300 pt-4 rounded-none">
                                             <div class="mb-6">
-                                                @if ($requirement->user_marked_done)
+                                                @if ($user_marked_done) {{-- FIXED: Use the extracted variable --}}
                                                     <div class="alert bg-amber-300 border-amber-300">
                                                         <div class="flex items-center gap-2">
                                                             <i class="fa-solid fa-circle-info"></i>

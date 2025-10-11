@@ -120,7 +120,6 @@
                                 
                                 <div class="flex-1 min-w-0" x-show="!collapsed" x-transition>
                                     <span class="block truncate font-medium">{{ $navlink['label'] }}</span>
-                                    <span class="block text-xs truncate text-gray-500">{{ Auth::user()->department_name ?? 'Department' }}</span>
                                 </div>
                             </a>
                         @else

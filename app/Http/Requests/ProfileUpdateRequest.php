@@ -24,7 +24,10 @@ class ProfileUpdateRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['required', 'string', 'max:255'],
+            'firstname' => ['required', 'string', 'max:255'],
+            'middlename' => ['nullable', 'string', 'max:255'],
+            'lastname' => ['required', 'string', 'max:255'],
+            'extensionname' => ['nullable', 'string', 'max:255'],
             'email' => [
                 'required',
                 'string',
@@ -42,9 +45,16 @@ class ProfileUpdateRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'name.required' => 'The name field is required.',
-            'name.string' => 'The name must be a string.',
-            'name.max' => 'The name may not be greater than 255 characters.',
+            'firstname.required' => 'The first name field is required.',
+            'firstname.string' => 'The first name must be a string.',
+            'firstname.max' => 'The first name may not be greater than 255 characters.',
+            'lastname.required' => 'The last name field is required.',
+            'lastname.string' => 'The last name must be a string.',
+            'lastname.max' => 'The last name may not be greater than 255 characters.',
+            'middlename.string' => 'The middle name must be a string.',
+            'middlename.max' => 'The middle name may not be greater than 255 characters.',
+            'extensionname.string' => 'The extension name must be a string.',
+            'extensionname.max' => 'The extension name may not be greater than 255 characters.',
             'email.required' => 'The email field is required.',
             'email.email' => 'Please enter a valid email address.',
             'email.unique' => 'This email address is already taken.',
