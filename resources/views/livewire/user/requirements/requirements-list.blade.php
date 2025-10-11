@@ -1,14 +1,16 @@
 <div class="flex flex-col w-full mx-auto min-h-screen text-sm overflow-hidden">
     <!-- Header Container (Fixed) -->
     <div class="mb-4">
-        <div class="flex items-center justify-between px-6 py-6 border-b border-gray-200 rounded-xl"
+       <div class="flex items-center justify-between px-6 py-6 border-b border-gray-200 rounded-xl"
             style="background: linear-gradient(148deg,rgba(18, 67, 44, 1) 0%, rgba(30, 119, 77, 1) 54%, rgba(55, 120, 64, 1) 100%);">
-
             <!-- Left: Title -->
             <div class="flex items-center gap-2">
                 <i class="fa-solid fa-clipboard-list text-white text-2xl"></i>
                 <h1 class="text-xl font-bold text-white">Course Requirements</h1>
             </div>
+            
+            <!-- Right: Notification -->
+            @livewire('user.dashboard.notification')
         </div>
     </div>
 
