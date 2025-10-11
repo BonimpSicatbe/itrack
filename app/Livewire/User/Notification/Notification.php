@@ -19,6 +19,7 @@ class Notification extends Component
     public $notifications;
     public $selectedNotification = null;
     public $selectedNotificationData = null;
+    public $activeTab = 'all'; // 'all', 'unread', 'read'
 
     public function mount(): void
     {
@@ -55,6 +56,28 @@ class Notification extends Component
         })->values(); // Reset array keys
     }
 
+    public function getFilteredNotifications()
+    {
+        if ($this->activeTab === 'unread') {
+            return $this->notifications->filter(function ($notification) {
+                return $notification->unread();
+            });
+        } elseif ($this->activeTab === 'read') {
+            return $this->notifications->filter(function ($notification) {
+                return !$notification->unread();
+            });
+        }
+
+        return $this->notifications;
+    }
+
+    public function updatedActiveTab(): void
+    {
+        // Reset selection when changing tabs
+        $this->selectedNotification = null;
+        $this->selectedNotificationData = null;
+    }
+
     public function markAllAsRead(): void
     {
         // Only mark notifications related to active semester requirements as read
@@ -68,6 +91,12 @@ class Notification extends Component
         $this->loadNotifications();
         $this->selectedNotification = null;
         $this->selectedNotificationData = null;
+        
+        // If we're on unread tab, switch to all tab after marking all as read
+        if ($this->activeTab === 'unread') {
+            $this->activeTab = 'all';
+        }
+        
         session()->flash('message', 'All active semester notifications marked as read.');
     }
 
@@ -82,6 +111,8 @@ class Notification extends Component
 
         if ($notification->unread()) {
             $notification->markAsRead();
+            // Reload notifications to update unread status
+            $this->loadNotifications();
         }
 
         // Base info
@@ -219,7 +250,6 @@ class Notification extends Component
         }
 
         $this->selectedNotificationData = $data;
-        $this->loadNotifications();
     }
     
     public function submitRequirement(): Redirector
@@ -305,6 +335,11 @@ class Notification extends Component
 
     public function render()
     {
-        return view('livewire.user.notification.notification');
+        $filteredNotifications = $this->getFilteredNotifications();
+        
+        return view('livewire.user.notification.notification', [
+            'activeTab' => $this->activeTab,
+            'filteredNotifications' => $filteredNotifications,
+        ]);
     }
 }
