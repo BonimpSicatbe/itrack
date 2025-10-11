@@ -8,11 +8,16 @@
                     <h3 class="text-lg font-semibold text-white">Notifications</h3>
                 </div>
                 <button 
-                    wire:click="markAllAsRead" 
+                    wire:click="toggleAllReadStatus" 
                     class="text-sm text-white hover:text-gray-200 font-medium px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 transition-colors border border-white/20"
                 >
-                    <i class="fa-solid fa-check mr-1 text-xs"></i>
-                    Mark all read
+                    @if($hasUnreadNotifications)
+                        <i class="fa-solid fa-check mr-1 text-xs"></i>
+                        Mark all read
+                    @else
+                        <i class="fa-solid fa-rotate-left mr-1 text-xs"></i>
+                        Mark all unread
+                    @endif
                 </button>
             </div>
 
