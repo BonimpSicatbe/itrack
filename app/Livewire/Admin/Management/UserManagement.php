@@ -19,11 +19,11 @@ class UserManagement extends Component
 {
     public $search = '';
     public $collegeFilter = '';
-    
+
     public $sortField = 'lastname';
     public $sortDirection = 'asc';
     public $selectedUser = null;
-    
+
     public $showAddUserModal = false;
     public $newUser = [
         'firstname' => '',
@@ -82,7 +82,7 @@ class UserManagement extends Component
     public function openEditUserModal($userId)
     {
         $user = User::find($userId);
-        
+
         $this->editingUser = [
             'id' => $user->id,
             'firstname' => $user->firstname,
@@ -95,7 +95,7 @@ class UserManagement extends Component
             'password' => '',
             'password_confirmation' => ''
         ];
-        
+
         $this->showEditUserModal = true;
         $this->resetErrorBag();
     }
@@ -126,13 +126,14 @@ class UserManagement extends Component
             $userName = $this->userToDelete->firstname . ' ' . $this->userToDelete->lastname;
             $userId = $this->userToDelete->id;
             $this->userToDelete->delete();
-            
+
             $this->closeDeleteConfirmationModal();
-            $this->dispatch('showNotification', 
-                type: 'success', 
+            $this->dispatch(
+                'showNotification',
+                type: 'success',
                 content: "User '{$userName}' deleted successfully!"
             );
-            
+
             if ($this->selectedUser && $this->selectedUser->id == $userId) {
                 $this->closeUserDetail();
             }
@@ -166,10 +167,11 @@ class UserManagement extends Component
                 ->where('lastname', $this->editingUser['lastname'])
                 ->where('id', '!=', $this->editingUser['id'])
                 ->first();
-                
+
             if ($existingUser) {
-                $this->dispatch('showNotification', 
-                    type: 'warning', 
+                $this->dispatch(
+                    'showNotification',
+                    type: 'warning',
                     content: "Another user with the name '{$this->editingUser['firstname']} {$this->editingUser['lastname']}' already exists."
                 );
                 return;
@@ -177,7 +179,7 @@ class UserManagement extends Component
 
             $user = User::find($this->editingUser['id']);
             $userName = $user->firstname . ' ' . $user->lastname;
-            
+
             $updateData = [
                 'firstname' => $this->editingUser['firstname'],
                 'middlename' => $this->editingUser['middlename'],
@@ -199,9 +201,10 @@ class UserManagement extends Component
             $user->syncRoles([$role->name]);
 
             $this->closeEditUserModal();
-            
-            $this->dispatch('showNotification', 
-                type: 'success', 
+
+            $this->dispatch(
+                'showNotification',
+                type: 'success',
                 content: "User '{$userName}' updated successfully!"
             );
 
@@ -209,10 +212,10 @@ class UserManagement extends Component
             if ($this->selectedUser && $this->selectedUser->id == $user->id) {
                 $this->selectedUser = $user->fresh(['college']);
             }
-
         } catch (\Exception $e) {
-            $this->dispatch('showNotification', 
-                type: 'error', 
+            $this->dispatch(
+                'showNotification',
+                type: 'error',
                 content: 'Failed to update user. Please try again.'
             );
         }
@@ -241,10 +244,11 @@ class UserManagement extends Component
             $existingUser = User::where('firstname', $this->newUser['firstname'])
                 ->where('lastname', $this->newUser['lastname'])
                 ->first();
-                
+
             if ($existingUser) {
-                $this->dispatch('showNotification', 
-                    type: 'warning', 
+                $this->dispatch(
+                    'showNotification',
+                    type: 'warning',
                     content: "A user with the name '{$this->newUser['firstname']} {$this->newUser['lastname']}' already exists."
                 );
                 return;
@@ -268,24 +272,36 @@ class UserManagement extends Component
             $role = Role::find($this->newUser['role']);
             $user->assignRole($role->name);
 
+            // Generate password reset token and URL - UPDATED ROUTE
+            $token = Password::createToken($user);
+            $setupUrl = URL::temporarySignedRoute(
+                'account.setup', // Changed from 'password.reset'
+                now()->addHours(24),
+                [
+                    'token' => $token,
+                    'email' => $user->email
+                ]
+            );
+
             // Send email with credentials
             try {
-                Mail::to($user->email)->send(new AccountSetupMail($user, $generatedPassword));
+                Mail::to($user->email)->queue(new AccountSetupMail($user, $setupUrl));
             } catch (\Exception $mailException) {
                 // Log mail error but don't fail the user creation
                 \Log::error('Failed to send account setup email: ' . $mailException->getMessage());
             }
 
             $this->closeAddUserModal();
-            
-            $this->dispatch('showNotification', 
-                type: 'success', 
+
+            $this->dispatch(
+                'showNotification',
+                type: 'success',
                 content: "User '{$user->firstname} {$user->lastname}' created successfully! Account setup email sent."
             );
-
         } catch (\Exception $e) {
-            $this->dispatch('showNotification', 
-                type: 'error', 
+            $this->dispatch(
+                'showNotification',
+                type: 'error',
                 content: 'Failed to create user. Please try again.'
             );
         }
@@ -298,7 +314,7 @@ class UserManagement extends Component
         } else {
             $this->sortDirection = 'asc';
         }
-        
+
         $this->sortField = $field;
     }
 
@@ -307,12 +323,12 @@ class UserManagement extends Component
         $query = User::with(['college', 'roles'])
             ->where(function ($q) {
                 $q->where('firstname', 'like', '%' . $this->search . '%')
-                  ->orWhere('middlename', 'like', '%' . $this->search . '%')
-                  ->orWhere('lastname', 'like', '%' . $this->search . '%')
-                  ->orWhere('email', 'like', '%' . $this->search . '%')
-                  ->orWhereHas('college', function ($collegeQuery) {
-                      $collegeQuery->where('name', 'like', '%' . $this->search . '%');
-                  });
+                    ->orWhere('middlename', 'like', '%' . $this->search . '%')
+                    ->orWhere('lastname', 'like', '%' . $this->search . '%')
+                    ->orWhere('email', 'like', '%' . $this->search . '%')
+                    ->orWhereHas('college', function ($collegeQuery) {
+                        $collegeQuery->where('name', 'like', '%' . $this->search . '%');
+                    });
             });
 
         if ($this->collegeFilter) {

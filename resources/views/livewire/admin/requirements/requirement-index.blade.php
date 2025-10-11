@@ -10,15 +10,15 @@
 
         <!-- View toggle buttons -->
         <div class="flex items-center gap-1 bg-white/20 p-1 rounded-xl">
-            <button 
-                wire:click="changeViewMode('list')" 
+            <button
+                wire:click="changeViewMode('list')"
                 class="p-2 rounded-lg transition-colors {{ $viewMode === 'list' ? 'bg-white text-green-600 shadow-sm' : 'hover:bg-white/20 text-white' }}"
                 title="List view"
             >
                 <i class="fas fa-bars"></i>
             </button>
-            <button 
-                wire:click="changeViewMode('grid')" 
+            <button
+                wire:click="changeViewMode('grid')"
                 class="p-2 rounded-lg transition-colors {{ $viewMode === 'grid' ? 'bg-white text-green-600 shadow-sm' : 'hover:bg-white/20 text-white' }}"
                 title="Grid view"
             >
@@ -36,10 +36,10 @@
                         <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
                             <i class="fas fa-search text-sm text-gray-500"></i>
                         </div>
-                        <input 
-                            type="text" 
+                        <input
+                            type="text"
                             wire:model.live.debounce.300ms="search"
-                            class="pl-10 block w-sm rounded-xl text-gray-500 border-gray-300 shadow-sm focus:border-green-600 focus:ring-green-600 sm:text-sm" 
+                            class="pl-10 block w-sm rounded-xl text-gray-500 border-gray-300 shadow-sm focus:border-green-600 focus:ring-green-600 sm:text-sm"
                             placeholder="Search requirements..."
                         >
                     </div>
@@ -48,17 +48,17 @@
                     <div class="flex flex-col sm:flex-row items-center gap-4">
                         <!-- Completion Filter -->
                         <div class="flex items-center gap-1 bg-white/80 p-1 rounded-xl font-semibold border border-gray-300 shadow-sm">
-                            <button 
+                            <button
                                 class="px-4 py-1.5 text-sm rounded-lg transition-colors {{ $completionFilter === 'all' ? 'bg-green-600 text-white shadow-sm' : 'hover:bg-green-600/20 text-green-600' }}"
                                 wire:click="$set('completionFilter', 'all')">
                                 All
                             </button>
-                            <button 
+                            <button
                                 class="px-4 py-1.5 text-sm rounded-lg transition-colors {{ $completionFilter === 'pending' ? 'bg-yellow-500 text-white shadow-sm' : 'hover:bg-yellow-500/20 text-yellow-600' }}"
                                 wire:click="$set('completionFilter', 'pending')">
                                 Pending
                             </button>
-                            <button 
+                            <button
                                 class="px-4 py-1.5 text-sm rounded-lg transition-colors {{ $completionFilter === 'completed' ? 'bg-red-800 text-white shadow-sm' : 'hover:bg-red-800/20 text-red-800' }}"
                                 wire:click="$set('completionFilter', 'completed')">
                                 Due
@@ -84,7 +84,7 @@
                                     <i class="fas fa-clipboard-list text-green-600 text-lg"></i>
                                     <h3 class="font-semibold text-gray-800 truncate text-sm">{{ $requirement->name }}</h3>
                                 </div>
-                                
+
                                 <!-- Due Date -->
                                 <div class="flex items-center gap-1 text-xs">
                                     @if($requirement->due->isPast() && !$requirement->is_completed)
@@ -94,12 +94,12 @@
                                         Due: {{ $requirement->due->format('m/d/Y h:i a') }}
                                     </span>
                                 </div>
-                                
+
                                 <!-- Created At -->
                                 <div class="text-xs text-gray-500">
                                     Created: {{ $requirement->created_at->format('m/d/Y') }}
                                 </div>
-                                
+
                                 <!-- Users Count -->
                                 <div class="flex items-center justify-between mt-2">
                                     <span class="inline-flex items-center justify-center gap-1 px-3 py-1 rounded-full bg-gray-100 text-gray-800 font-semibold text-xs">
@@ -108,7 +108,7 @@
 
                                     <!-- Quick Actions -->
                                     <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity" onclick="event.stopPropagation()">
-                                        <a href="{{ route('admin.submitted-requirements.requirement', $requirement->id) }}"
+                                        <a href="{{ route('admin.submitted-requirements.requirement-context', $requirement->id) }}"
                                             class="p-1.5 hover:bg-blue-100 rounded-lg text-blue-500 text-sm"
                                             title="View Submissions">
                                             <i class="fa-solid fa-file-lines"></i>
@@ -220,7 +220,7 @@
                                             </td>
                                             <td class="px-4 py-3 whitespace-nowrap text-center" onclick="event.stopPropagation()">
                                                 <div class="flex justify-center gap-1">
-                                                    <a href="{{ route('admin.submitted-requirements.requirement', $requirement->id) }}"
+                                                    <a href="{{ route('admin.submitted-requirements.requirement-context', $requirement->id) }}"
                                                        class="p-2 hover:bg-blue-100 rounded-lg text-blue-500 text-sm"
                                                        title="View Submissions">
                                                         <i class="fa-solid fa-file-lines"></i>
@@ -277,7 +277,7 @@
             <div class="bg-white px-6 py-6 rounded-b-xl">
                 <div class="space-y-4">
                     <p class="text-gray-700">
-                        Are you sure you want to delete the requirement 
+                        Are you sure you want to delete the requirement
                         <span class="font-semibold text-red-600">"{{ \App\Models\Requirement::find($requirementToDelete)->name ?? 'this requirement' }}"</span>?
                     </p>
                     <p class="text-sm text-gray-600">
@@ -286,11 +286,11 @@
                 </div>
 
                 <div class="mt-6 pt-4 border-t border-gray-200 flex justify-end space-x-3">
-                    <button type="button" wire:click="$set('showDeleteModal', false)" 
+                    <button type="button" wire:click="$set('showDeleteModal', false)"
                             class="px-4 py-2 border border-gray-300 rounded-full text-sm font-medium text-gray-700 hover:bg-gray-50 cursor-pointer">
                         Cancel
                     </button>
-                    <button type="button" wire:click="deleteRequirement" 
+                    <button type="button" wire:click="deleteRequirement"
                             class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-full text-sm font-medium cursor-pointer"
                             wire:loading.attr="disabled">
                         <span wire:loading.remove wire:target="deleteRequirement">
@@ -311,7 +311,7 @@
             text-overflow: ellipsis;
             white-space: nowrap;
         }
-        
+
         @media (max-width: 768px) {
             .table-responsive {
                 font-size: 0.875rem;
