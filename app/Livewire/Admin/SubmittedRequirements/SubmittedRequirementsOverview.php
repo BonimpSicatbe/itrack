@@ -13,6 +13,9 @@ class SubmittedRequirementsOverview extends Component
 {
     public $search = '';
 
+    // Add this to make search reactive
+    protected $listeners = ['refreshOverview' => '$refresh'];
+
     public function render()
     {
         $activeSemester = Semester::getActiveSemester();
@@ -38,7 +41,7 @@ class SubmittedRequirementsOverview extends Component
             ->orderBy('name')
             ->get();
 
-        // Get all non-admin users
+        // Get all non-admin users with search functionality
         $usersQuery = User::whereDoesntHave('roles', function($q) {
                 $q->whereIn('name', ['admin', 'super-admin']);
             })
@@ -46,25 +49,32 @@ class SubmittedRequirementsOverview extends Component
             ->orderBy('lastname')
             ->orderBy('firstname');
 
+        // Apply search filter
         if ($this->search) {
             $usersQuery->where(function($q) {
                 $q->where('firstname', 'like', '%'.$this->search.'%')
                   ->orWhere('middlename', 'like', '%'.$this->search.'%')
                   ->orWhere('lastname', 'like', '%'.$this->search.'%')
-                  ->orWhere('email', 'like', '%'.$this->search.'%');
+                  ->orWhere('email', 'like', '%'.$this->search.'%')
+                  ->orWhereHas('college', function($collegeQuery) {
+                      $collegeQuery->where('name', 'like', '%'.$this->search.'%');
+                  })
+                  ->orWhereHas('department', function($deptQuery) {
+                      $deptQuery->where('name', 'like', '%'.$this->search.'%');
+                  });
             });
         }
 
         $users = $usersQuery->get();
 
-        // Get course assignments
+        // Get course assignments for the filtered users
         $courseAssignments = CourseAssignment::whereIn('professor_id', $users->pluck('id'))
             ->where('semester_id', $activeSemester->id)
             ->with('course')
             ->get()
             ->groupBy('professor_id');
 
-        // Get submission indicators
+        // Get submission indicators for the filtered users
         $submissionIndicators = RequirementSubmissionIndicator::whereIn('user_id', $users->pluck('id'))
             ->whereIn('requirement_id', $requirements->pluck('id'))
             ->with(['requirement', 'course'])
@@ -87,7 +97,7 @@ class SubmittedRequirementsOverview extends Component
         ];
     }
 
-    // Helper methods for overview
+    // ... rest of your helper methods remain the same ...
     public function getUserCourses($userId, $courseAssignments)
     {
         if (!isset($courseAssignments[$userId])) {

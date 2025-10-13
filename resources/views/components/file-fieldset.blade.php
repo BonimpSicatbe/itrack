@@ -5,7 +5,7 @@
 --}}
 
 <fieldset class="fieldset w-full">
-    <legend class="fieldset-legend w-full capitalize text-base text-gray-700">{{ $label }}
+    <legend class="fieldset-legend w-full tracking-wide font-semibold uppercase text-xs text-gray-700">{{ $label }}
         <span class="text-gray-500 text-xs">(Optional)</span>
     </legend>
     <input

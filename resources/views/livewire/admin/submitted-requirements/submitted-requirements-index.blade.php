@@ -59,27 +59,26 @@
 
             <!-- Breadcrumb Navigation for Requirement Category -->
             @if($category === 'requirement')
-                <div class="flex items-center gap-2 text-sm text-gray-600 mb-4 p-3 bg-gray-50 rounded-lg border">
+                <div class="flex items-center text-sm text-gray-600 p-3 bg-green-50 rounded-xl border border-green-600">
                     <button 
                         wire:click="goBack('requirement')" 
                         class="flex items-center gap-1 px-1 py-1"
                     >
-                        <i class="fas fa-home text-green-600"></i>
-                        <span class=" text-green-700 hover:text-amber-500 hover:underline hover:underline-offset-4 font-semibold">Requirements</span>
+                        <span class=" text-green-600 hover:text-amber-500 hover:underline hover:underline-offset-4 font-semibold">Requirements</span>
                     </button>
                     
                     @foreach($breadcrumb as $index => $crumb)
-                        <i class="fas fa-chevron-right text-gray-400 mx-1"></i>
+                        <i class="fa-regular fa-chevron-right text-gray-300 mx-1 text-sm"></i>
                         @if($index === count($breadcrumb) - 1)
                             <div class="flex items-center gap-2 px-1 py-1 ">
-                                <span class="font-semibold text-green-800 hover:text-amber-500 hover:underline hover:underline-offset-4">{{ $crumb['name'] }}</span>
+                                <span class="font-semibold text-green-600 hover:text-amber-500 hover:underline hover:underline-offset-4">{{ $crumb['name'] }}</span>
                             </div>
                         @else
                             <button 
                                 wire:click="goBack('{{ $crumb['type'] }}')" 
-                                class="flex items-center gap-2 px-3 py-1"
+                                class="flex items-center gap-2 py-1"
                             >
-                                <span class=" text-green-700 hover:text-amber-500 hover:underline hover:underline-offset-4 font-semibold">{{ $crumb['name'] }}</span>
+                                <span class=" text-green-600 hover:text-amber-500 hover:underline hover:underline-offset-4 font-semibold">{{ $crumb['name'] }}</span>
                             </button>
                         @endif
                     @endforeach
@@ -90,7 +89,10 @@
             <div>
                 @if($category === 'overview')
                     <!-- Include Overview Component -->
-                    <livewire:admin.submitted-requirements.submitted-requirements-overview :search="$search" />
+                    <livewire:admin.submitted-requirements.submitted-requirements-overview 
+                        :search="$search" 
+                        :key="'overview-' . $search . '-' . $category"
+                    />
                 @else
                     <!-- Requirement Category with File Manager Style -->
 
@@ -98,7 +100,7 @@
                     @if(!$selectedRequirementId)
                         @if($viewMode === 'list')
                             <!-- List View for Requirements -->
-                            <div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
+                            <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
                                 <!-- Table Header -->
                                 <div class="grid grid-cols-12 gap-4 px-6 py-4 bg-gray-50 border-b border-gray-200 text-sm font-semibold text-gray-700">
                                     <div class="col-span-8 flex items-center gap-2">
@@ -115,7 +117,6 @@
                                             <i class="fas fa-folder text-green-600 text-xl"></i>
                                             <div class="flex flex-col">
                                                 <span class="font-semibold text-gray-800">{{ $requirement['name'] }}</span>
-                                                <span class="text-xs text-gray-500">{{ $requirement['submission_count'] }} {{ $requirement['submission_count'] == 1 ? 'submission' : 'submissions' }}</span>
                                             </div>
                                         </div>
                                         <div class="col-span-2 flex items-center justify-center">
@@ -126,7 +127,7 @@
                                         <div class="col-span-2 flex items-center justify-center">
                                             <button 
                                                 wire:click="selectRequirement({{ $requirement['id'] }})"
-                                                class="flex items-center gap-2 px-4 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                                                class="flex items-center gap-2 px-4 py-2 text-sm bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors"
                                             >
                                                 <i class="fas fa-folder-open"></i>
                                                 Open
@@ -135,8 +136,8 @@
                                     </div>
                                 @empty
                                     <div class="flex flex-col items-center justify-center py-12 text-gray-400">
-                                        <i class="fa-solid fa-folder-open text-5xl text-gray-300 mb-4"></i>
-                                        <p class="text-lg font-semibold text-gray-500">No requirements found</p>
+                                        <i class="fa-solid fa-folder-open text-4xl text-gray-300 mb-4"></i>
+                                        <p class="text-base font-semibold text-gray-500">No requirements found</p>
                                         @if($search)
                                             <p class="text-sm text-amber-500 mt-2">Try adjusting your search term</p>
                                         @endif
@@ -162,14 +163,11 @@
                                                 <h3 class="font-semibold text-gray-800 text-lg mb-1 line-clamp-2" title="{{ $requirement['name'] }}">
                                                     {{ $requirement['name'] }}
                                                 </h3>
-                                                <p class="text-sm text-gray-500">
-                                                    {{ $requirement['submission_count'] }} {{ $requirement['submission_count'] == 1 ? 'submission' : 'submissions' }}
-                                                </p>
                                             </div>
                                             
                                             <button 
                                                 wire:click="selectRequirement({{ $requirement['id'] }})"
-                                                class="w-full flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors group-hover:shadow-sm"
+                                                class="w-full flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors group-hover:shadow-sm"
                                             >
                                                 <i class="fas fa-folder-open"></i>
                                                 Open Folder
@@ -178,8 +176,8 @@
                                     </div>
                                 @empty
                                     <div class="col-span-full flex flex-col items-center justify-center py-16 text-gray-400">
-                                        <i class="fas fa-folder-open text-8xl text-gray-300 mb-6"></i>
-                                        <p class="text-xl font-semibold text-gray-500 mb-2">No requirements found</p>
+                                        <i class="fas fa-folder-open text-4xl text-gray-300 mb-6"></i>
+                                        <p class="text-base font-semibold text-gray-500 mb-2">No requirements found</p>
                                         @if($search)
                                             <p class="text-amber-500">Try adjusting your search term</p>
                                         @endif
@@ -192,7 +190,7 @@
                     @elseif($selectedRequirementId && !$selectedUserId)
                         @if($viewMode === 'list')
                             <!-- List View for Users -->
-                            <div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
+                            <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
                                 <!-- Table Header -->
                                 <div class="grid grid-cols-12 gap-4 px-6 py-4 bg-gray-50 border-b border-gray-200 text-sm font-semibold text-gray-700">
                                     <div class="col-span-6 flex items-center gap-2">
@@ -231,7 +229,7 @@
                                         <div class="col-span-2 flex items-center justify-center">
                                             <button 
                                                 wire:click="selectUser({{ $user->id }})"
-                                                class="flex items-center gap-2 px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                                                class="flex items-center gap-2 px-4 py-2 text-sm bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors"
                                             >
                                                 <i class="fas fa-folder-open"></i>
                                                 View Courses
@@ -240,8 +238,8 @@
                                     </div>
                                 @empty
                                     <div class="flex flex-col items-center justify-center py-12 text-gray-400">
-                                        <i class="fa-solid fa-users text-3xl text-gray-300 mb-4"></i>
-                                        <p class="text-sm font-semibold text-gray-500">No users have submitted yet</p>
+                                        <i class="fa-solid fa-users text-4xl text-gray-300 mb-4"></i>
+                                        <p class="text-base font-semibold text-gray-500">No users found</p>
                                         @if($search)
                                             <p class="text-sm text-amber-500 mt-2">Try adjusting your search term</p>
                                         @endif
@@ -274,14 +272,13 @@
                                             <div class="flex-1 mb-4">
                                                 <h3 class="font-semibold text-gray-800 text-lg mb-1">{{ $user->full_name }}</h3>
                                                 <p class="text-sm text-gray-500 truncate mb-1">{{ $user->email }}</p>
-                                                @if($user->college)
-                                                    <p class="text-xs text-gray-400">{{ $user->college->name }}</p>
-                                                @endif
                                             </div>
                                             
                                             <button 
                                                 wire:click="selectUser({{ $user->id }})"
-                                                class="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors group-hover:shadow-sm"
+                                                wire:key="user-btn-{{ $user->id }}"
+                                                type="button"
+                                                class="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors group-hover:shadow-sm"
                                             >
                                                 <i class="fas fa-folder-open"></i>
                                                 View Courses
@@ -290,8 +287,8 @@
                                     </div>
                                 @empty
                                     <div class="col-span-full flex flex-col items-center justify-center py-16 text-gray-400">
-                                        <i class="fas fa-users text-8xl text-gray-300 mb-6"></i>
-                                        <p class="text-xl font-semibold text-gray-500 mb-2">No users found</p>
+                                        <i class="fas fa-users text-4xl text-gray-300 mb-6"></i>
+                                        <p class="text-base font-semibold text-gray-500 mb-2">No users found</p>
                                         @if($search)
                                             <p class="text-amber-500">Try adjusting your search term</p>
                                         @endif
@@ -304,7 +301,7 @@
                     @elseif($selectedRequirementId && $selectedUserId && !$selectedCourseId)
                         @if($viewMode === 'list')
                             <!-- List View for Courses -->
-                            <div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
+                            <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
                                 <!-- Table Header -->
                                 <div class="grid grid-cols-12 gap-4 px-6 py-4 bg-gray-50 border-b border-gray-200 text-sm font-semibold text-gray-700">
                                     <div class="col-span-10 flex items-center gap-2">
@@ -331,7 +328,7 @@
                                         <div class="col-span-2 flex items-center justify-center">
                                             <button 
                                                 wire:click="selectCourse({{ $course->id }})"
-                                                class="flex items-center gap-2 px-4 py-2 text-sm bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                                                class="flex items-center gap-2 px-4 py-2 text-sm bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition-colors"
                                             >
                                                 <i class="fas fa-eye"></i>
                                                 View Files
@@ -340,8 +337,8 @@
                                     </div>
                                 @empty
                                     <div class="flex flex-col items-center justify-center py-12 text-gray-400">
-                                        <i class="fa-solid fa-book text-5xl text-gray-300 mb-4"></i>
-                                        <p class="text-lg font-semibold text-gray-500">No courses found for this user</p>
+                                        <i class="fa-solid fa-book text-4xl text-gray-300 mb-4"></i>
+                                        <p class="text-base font-semibold text-gray-500">No courses found</p>
                                         @if($search)
                                             <p class="text-sm text-amber-500 mt-2">Try adjusting your search term</p>
                                         @endif
@@ -361,27 +358,6 @@
                                                         <i class="fas fa-book text-purple-600 text-xl"></i>
                                                     </div>
                                                 </div>
-                                                @php
-                                                    $badgeClass = match($courseData['status']) {
-                                                        'submitted' => 'bg-green-100 text-green-800',
-                                                        'under_review' => 'bg-yellow-100 text-yellow-800',
-                                                        'revision_needed' => 'bg-orange-100 text-orange-800',
-                                                        'rejected' => 'bg-red-100 text-red-800',
-                                                        'approved' => 'bg-blue-100 text-blue-800',
-                                                        default => 'bg-gray-100 text-gray-500'
-                                                    };
-                                                    $statusText = match($courseData['status']) {
-                                                        'submitted' => 'Submitted',
-                                                        'under_review' => 'Under Review',
-                                                        'revision_needed' => 'Revision Required',
-                                                        'rejected' => 'Rejected',
-                                                        'approved' => 'Approved',
-                                                        default => 'Not Submitted'
-                                                    };
-                                                @endphp
-                                                <span class="px-2 py-1 text-xs font-semibold rounded-full {{ $badgeClass }}">
-                                                    {{ $statusText }}
-                                                </span>
                                             </div>
                                             
                                             <div class="flex-1 mb-4">
@@ -391,7 +367,9 @@
                                             
                                             <button 
                                                 wire:click="selectCourse({{ $course->id }})"
-                                                class="w-full flex items-center justify-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors group-hover:shadow-sm"
+                                                wire:key="course-btn-{{ $course->id }}"
+                                                type="button"
+                                                class="w-full flex items-center justify-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition-colors group-hover:shadow-sm"
                                             >
                                                 <i class="fas fa-eye"></i>
                                                 View Submission
@@ -400,8 +378,8 @@
                                     </div>
                                 @empty
                                     <div class="col-span-full flex flex-col items-center justify-center py-16 text-gray-400">
-                                        <i class="fas fa-book text-8xl text-gray-300 mb-6"></i>
-                                        <p class="text-xl font-semibold text-gray-500 mb-2">No courses found</p>
+                                        <i class="fas fa-book text-4xl text-gray-300 mb-6"></i>
+                                        <p class="text-base font-semibold text-gray-500 mb-2">No courses found</p>
                                         @if($search)
                                             <p class="text-amber-500">Try adjusting your search term</p>
                                         @endif
@@ -413,7 +391,7 @@
                 @endif
             </div>
         @else
-            <div class="flex items-center p-4 bg-[#DEF4C6] text-[#1B512D] rounded-lg shadow-lg">
+            <div class="flex items-center p-4 bg-[#DEF4C6] text-[#1B512D] rounded-xl shadow-lg">
                 <i class="fa-solid fa-triangle-exclamation text-lg mr-3"></i>
                 <div>
                     <h3 class="font-bold">No Active Semester</h3>

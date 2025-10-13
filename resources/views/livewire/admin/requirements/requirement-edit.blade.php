@@ -113,7 +113,7 @@
                     <!-- Programs Selection -->
                     <div class="form-control">
                         <label class="label justify-start gap-2 pb-2">
-                            <span class="label-text font-semibold text-gray-700">Programs</span>
+                            <span class="label-text text-xs font-semibold text-gray-700 tracking-wider uppercase">Programs</span>
                             @error('selectedPrograms')
                                 <span class="label-text-alt text-red-600 ml-auto">{{ $message }}</span>
                             @enderror
@@ -181,10 +181,42 @@
                     <i class="fa-solid fa-xmark"></i>
                 </button>
             </div>
-            <x-file-fieldset name="required_files" wire:model="required_files" multiple />
-            <button type="submit" class="btn px-4 py-1.5 bg-green-600 text-white hover:bg-green-700 rounded-full transition w-full">
-                Submit
-            </button>
+            
+            <div class="space-y-4">
+                <x-file-fieldset 
+                    name="required_files" 
+                    wire:model="required_files" 
+                    label="Required Files"
+                    help="Max 5 files, 15MB each. Supported: PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX, JPG, JPEG, PNG, GIF, TXT, ZIP, RAR, 7Z, MP4, AVI, MKV, MP3, WAV"
+                    multiple
+                />
+                
+                @error('required_files') 
+                    <span class="text-red-500 text-xs">{{ $message }}</span> 
+                @enderror
+                @error('required_files.*') 
+                    <span class="text-red-500 text-xs">{{ $message }}</span> 
+                @enderror
+            </div>
+            
+            <div class="flex justify-end gap-3 pt-4">
+                <button type="button" 
+                        class="btn btn-outline btn-gray rounded-full px-4 py-1.5"
+                        wire:click="$set('showUploadModal', false)"
+                        wire:loading.attr="disabled">
+                    Cancel
+                </button>
+                <button type="submit" 
+                        class="btn px-4 py-1.5 bg-green-600 text-white hover:bg-green-700 rounded-full transition flex items-center gap-2"
+                        wire:loading.attr="disabled">
+                    <span wire:loading.remove wire:target="uploadRequiredFiles">
+                        <i class="fa-solid fa-upload mr-1"></i> Upload Files
+                    </span>
+                    <span wire:loading wire:target="uploadRequiredFiles">
+                        <i class="fa-solid fa-spinner fa-spin mr-1"></i> Uploading...
+                    </span>
+                </button>
+            </div>
         </form>
         <label class="modal-backdrop" wire:click="$set('showUploadModal', false)"></label>
     </div>

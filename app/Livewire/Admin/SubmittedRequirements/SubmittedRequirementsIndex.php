@@ -10,6 +10,7 @@ use App\Models\Course;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Livewire\Attributes\Url;
+use Illuminate\Support\Facades\DB;
 
 class SubmittedRequirementsIndex extends Component
 {
@@ -81,6 +82,14 @@ class SubmittedRequirementsIndex extends Component
         $this->selectedCourseId = null;
         $this->updateBreadcrumb();
         $this->resetPage();
+        
+        // Debug
+        logger("User selected: " . $userId);
+        logger("Current state: ", [
+            'requirementId' => $this->selectedRequirementId,
+            'userId' => $this->selectedUserId,
+            'courseId' => $this->selectedCourseId
+        ]);
     }
     
     public function selectCourse($courseId)
@@ -219,15 +228,22 @@ class SubmittedRequirementsIndex extends Component
     protected function getRequirements($activeSemester)
     {
         $query = Requirement::where('semester_id', $activeSemester->id)
-            ->orderBy('name');
+            ->orderBy('id');
 
         if ($this->search) {
             $query->where('name', 'like', '%' . $this->search . '%');
         }
 
         return $query->get()->map(function($requirement) {
-            // Count submissions using submitted_requirements table
-            $submissionCount = SubmittedRequirement::where('requirement_id', $requirement->id)
+            // Count submissions using JOIN with requirement_submission_indicators
+            $submissionCount = DB::table('submitted_requirements as sr')
+                ->join('requirement_submission_indicators as rsi', function($join) use ($requirement) {
+                    $join->on('sr.requirement_id', '=', 'rsi.requirement_id')
+                        ->on('sr.user_id', '=', 'rsi.user_id')
+                        ->on('sr.course_id', '=', 'rsi.course_id')
+                        ->where('sr.requirement_id', $requirement->id);
+                })
+                ->where('sr.requirement_id', $requirement->id)
                 ->count();
                 
             return [
@@ -332,5 +348,24 @@ class SubmittedRequirementsIndex extends Component
             'overview' => 'Overview',
             'requirement' => 'Requirement',
         ];
+    }
+
+    public function debugState()
+    {
+        logger([
+            'category' => $this->category,
+            'selectedRequirementId' => $this->selectedRequirementId,
+            'selectedUserId' => $this->selectedUserId,
+            'selectedCourseId' => $this->selectedCourseId,
+            'viewMode' => $this->viewMode,
+            'search' => $this->search
+        ]);
+    }
+
+    public function updated($property)
+    {
+        if (in_array($property, ['selectedRequirementId', 'selectedUserId', 'selectedCourseId', 'viewMode', 'search'])) {
+            $this->debugState();
+        }
     }
 }

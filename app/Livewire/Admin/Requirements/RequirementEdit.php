@@ -179,26 +179,34 @@ class RequirementEdit extends Component
     public function uploadRequiredFiles()
     {
         $this->validate([
-            'required_files' => 'nullable|array',
+            'required_files' => 'required|array|max:5',
             'required_files.*' => 'file|max:15360|mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,jpg,jpeg,png,gif,txt,zip,rar,7z,mp4,avi,mkv,mp3,wav',
         ]);
 
         try {
-            foreach ($this->required_files as $file) {
-                $this->requirement->addMedia($file->getRealPath())
-                    ->usingFileName($file->getClientOriginalName())
-                    ->preservingOriginal()
-                    ->toMediaCollection('guides');
-            }
+            if (!empty($this->required_files)) {
+                foreach ($this->required_files as $file) {
+                    $this->requirement->addMedia($file->getRealPath())
+                        ->usingName($file->getClientOriginalName())
+                        ->usingFileName($file->getClientOriginalName())
+                        ->preservingOriginal()
+                        ->toMediaCollection('guides');
+                }
 
-            $this->reset(['required_files', 'showUploadModal']);
-            $this->dispatch('showNotification', 
-                type: 'success', 
-                content: 'Files uploaded successfully.'
-            );
-            
-            // Refresh the media collection
-            $this->requirement->refresh();
+                $this->reset(['required_files', 'showUploadModal']);
+                $this->dispatch('showNotification', 
+                    type: 'success', 
+                    content: 'Files uploaded successfully.'
+                );
+                
+                // Refresh the media collection
+                $this->requirement->refresh();
+            } else {
+                $this->dispatch('showNotification', 
+                    type: 'error', 
+                    content: 'Please select at least one file to upload.'
+                );
+            }
             
         } catch (\Exception $e) {
             $this->dispatch('showNotification', 

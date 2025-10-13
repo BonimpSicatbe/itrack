@@ -6,10 +6,11 @@ use Livewire\Component;
 use Livewire\WithPagination;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use App\Models\User;
-use App\Models\College;
-use App\Models\Department;
+use App\Models\Course;
+use App\Models\Requirement;
 use App\Models\SubmittedRequirement;
 use App\Models\Semester;
+use App\Models\RequirementSubmissionIndicator;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 
@@ -19,13 +20,16 @@ class FileManagerIndex extends Component
 
     public $selectedFile = null;
     public $viewMode = 'grid';
-    public $groupBy = null;
+    public $category = null; 
     public $search = '';
-    public $selectedGroup = null;
+    
+    // Navigation state
+    public $selectedRequirementId = null;
+    public $selectedUserId = null;
+    public $selectedCourseId = null;
+    
     public $selectedSemester = null;
-    public $showSemesterPanel = false; // Hidden by default
-    public $currentFolder = null;
-    public $folderType = null;
+    public $showSemesterPanel = false;
     public $breadcrumbs = [];
     public $fileUrl = null;
     public $isImage = false;
@@ -36,12 +40,12 @@ class FileManagerIndex extends Component
     
     protected $queryString = [
         'search' => ['except' => ''],
-        'groupBy' => ['except' => ''],
-        'selectedGroup' => ['except' => ''],
+        'category' => ['except' => ''],
+        'selectedRequirementId' => ['except' => null],
+        'selectedUserId' => ['except' => null],
+        'selectedCourseId' => ['except' => null],
         'viewMode' => ['except' => 'grid'],
-        'showSemesterPanel' => ['except' => false], // Hidden by default
-        'currentFolder' => ['except' => null],
-        'folderType' => ['except' => null],
+        'showSemesterPanel' => ['except' => false],
     ];
 
     protected $listeners = [
@@ -51,16 +55,13 @@ class FileManagerIndex extends Component
         'clearSelectedSemester' => 'clearSelectedSemester'
     ];
 
-    // New method to handle panel toggling
     public function togglePanel()
     {
-        // If file details are open, close them first
         if ($this->selectedFile) {
             $this->selectedFile = null;
             $this->updateBreadcrumbs();
         }
         
-        // Then toggle the semester panel
         $this->showSemesterPanel = !$this->showSemesterPanel;
     }
 
@@ -85,7 +86,54 @@ class FileManagerIndex extends Component
     public function mount()
     {
         $this->viewMode = 'grid';
+        $this->category = 'requirement';
         $this->updateBreadcrumbs();
+    }
+
+    // Navigation methods
+    public function setCategory($category)
+    {
+        $this->category = $category;
+        $this->resetNavigation();
+        $this->resetPage();
+    }
+
+    public function clearCategoryFilter()
+    {
+        $this->category = null;
+        $this->resetNavigation();
+        $this->resetPage();
+    }
+
+    public function resetNavigation()
+    {
+        $this->selectedRequirementId = null;
+        $this->selectedUserId = null;
+        $this->selectedCourseId = null;
+        $this->selectedFile = null;
+        $this->category = null; // Also reset category when doing full reset
+        $this->updateBreadcrumbs();
+    }
+
+    public function selectRequirement($requirementId)
+    {
+        $this->selectedRequirementId = $requirementId;
+        $this->updateBreadcrumbs();
+        $this->resetPage();
+    }
+
+    public function selectUser($userId)
+    {
+        $this->selectedUserId = $userId;
+        $this->updateBreadcrumbs();
+        $this->resetPage();
+    }
+
+    public function selectCourse($courseId)
+    {
+        $this->selectedCourseId = $courseId;
+        $this->updateBreadcrumbs();
+        $this->resetPage();
     }
 
     public function selectFile($fileId)
@@ -93,20 +141,17 @@ class FileManagerIndex extends Component
         $this->selectedFile = Media::find($fileId);
         
         if ($this->selectedFile) {
-            // Set file URL and determine file type
             $this->fileUrl = route('file.preview', [
                 'submission' => $this->selectedFile->model_id,
                 'file' => $this->selectedFile->id
             ]);
             
-            // Determine file type for proper display
             $this->isImage = str_starts_with($this->selectedFile->mime_type, 'image/');
             $this->isPdf = $this->selectedFile->mime_type === 'application/pdf';
             $this->isOfficeDoc = in_array(pathinfo($this->selectedFile->file_name, PATHINFO_EXTENSION), ['doc', 'docx', 'xls', 'xlsx']);
             $this->isPreviewable = $this->isImage || $this->isPdf || $this->isOfficeDoc;
         }
         
-        // Automatically hide semester panel when file is selected
         $this->showSemesterPanel = false;
         $this->updateBreadcrumbs();
     }
@@ -121,65 +166,114 @@ class FileManagerIndex extends Component
         $this->isPreviewable = false;
         $this->updateBreadcrumbs();
     }
+
+    public function goBack($crumbType)
+    {
+        switch ($crumbType) {
+            case 'category':
+                $this->resetNavigation();
+                $this->category = null;
+                break;
+            case 'requirement':
+                $this->selectedRequirementId = null;
+                break;
+            case 'user':
+                $this->selectedUserId = null;
+                break;
+            case 'course':
+                $this->selectedCourseId = null;
+                break;
+        }
+        $this->updateBreadcrumbs();
+        $this->resetPage();
+    }
     
     public function setViewMode($mode)
     {
         $this->viewMode = $mode;
     }
 
-    public function setGroup($group)
-    {
-        $this->groupBy = $group;
-        $this->selectedGroup = null;
-        $this->currentFolder = null;
-        $this->folderType = null;
-        $this->updateBreadcrumbs();
-        $this->resetPage();
-    }
-
-    public function navigateToFolder($type, $id)
-    {
-        $this->currentFolder = $id;
-        $this->folderType = $type;
-        $this->selectedGroup = $id; // For backward compatibility
-        $this->groupBy = $type; // For backward compatibility
-        $this->updateBreadcrumbs();
-        $this->resetPage();
-    }
-
-    public function selectGroup($groupId)
-    {
-        $this->navigateToFolder($this->groupBy, $groupId);
-    }
-
-    public function clearGroupFilter()
-    {
-        $this->groupBy = null;
-        $this->selectedGroup = null;
-        $this->currentFolder = null;
-        $this->folderType = null;
-        $this->updateBreadcrumbs();
-        $this->resetPage();
-    }
-
     public function updateBreadcrumbs()
     {
-        $this->breadcrumbs = [
-            ['type' => 'root', 'name' => 'File Manager', 'id' => null]
-        ];
-        
-        if ($this->currentFolder && $this->folderType) {
-            $folderName = $this->getSelectedGroupName();
-            
-            if ($folderName) {
+        $this->breadcrumbs = [];
+
+        // Start with category as the root instead of "File Manager"
+        if ($this->category) {
+            $this->breadcrumbs[] = [
+                'type' => 'category',
+                'name' => ucfirst($this->category),
+                'id' => $this->category
+            ];
+        } else {
+            // Default to requirement category if none selected
+            $this->breadcrumbs[] = [
+                'type' => 'category',
+                'name' => 'Requirement',
+                'id' => 'requirement'
+            ];
+        }
+
+        // Requirements category breadcrumbs
+        if ($this->category === 'requirement') {
+            if ($this->selectedRequirementId) {
+                $requirement = Requirement::find($this->selectedRequirementId);
                 $this->breadcrumbs[] = [
-                    'type' => $this->folderType,
-                    'name' => $folderName,
-                    'id' => $this->currentFolder
+                    'type' => 'requirement',
+                    'name' => $requirement ? $requirement->name : 'Requirement',
+                    'id' => $this->selectedRequirementId
                 ];
+
+                if ($this->selectedUserId) {
+                    $user = User::find($this->selectedUserId);
+                    $this->breadcrumbs[] = [
+                        'type' => 'user',
+                        'name' => $user ? $user->full_name : 'User',
+                        'id' => $this->selectedUserId
+                    ];
+
+                    if ($this->selectedCourseId) {
+                        $course = Course::find($this->selectedCourseId);
+                        $this->breadcrumbs[] = [
+                            'type' => 'course',
+                            'name' => $course ? $course->course_code : 'Course',
+                            'id' => $this->selectedCourseId
+                        ];
+                    }
+                }
             }
         }
-        
+
+        // Users category breadcrumbs
+        if ($this->category === 'user') {
+            if ($this->selectedUserId) {
+                $user = User::find($this->selectedUserId);
+                $this->breadcrumbs[] = [
+                    'type' => 'user',
+                    'name' => $user ? $user->full_name : 'User',
+                    'id' => $this->selectedUserId
+                ];
+
+                if ($this->selectedCourseId) {
+                    $course = Course::find($this->selectedCourseId);
+                    $this->breadcrumbs[] = [
+                        'type' => 'course',
+                        'name' => $course ? $course->course_code : 'Course',
+                        'id' => $this->selectedCourseId
+                    ];
+
+                    if ($this->selectedRequirementId) {
+                        $requirement = Requirement::find($this->selectedRequirementId);
+                        $this->breadcrumbs[] = [
+                            'type' => 'requirement',
+                            'name' => $requirement ? $requirement->name : 'Requirement',
+                            'id' => $this->selectedRequirementId
+                        ];
+                    }
+                }
+            }
+        }
+
+        // Add file breadcrumb if selected
         if ($this->selectedFile) {
             $this->breadcrumbs[] = [
                 'type' => 'file',
@@ -189,22 +283,276 @@ class FileManagerIndex extends Component
         }
     }
 
-    public function getGroupedFiles()
+    public function getRequirements()
     {
         $semester = $this->selectedSemester ?? Semester::getActiveSemester();
-        
-        // If no semester is selected and no active semester exists, return empty paginator
-        if (!$semester) {
-            return new \Illuminate\Pagination\LengthAwarePaginator([], 0, 24);
+        if (!$semester) return collect();
+
+        $query = Requirement::whereHas('submissionIndicators', function($q) use ($semester) {
+            $q->whereBetween('requirement_submission_indicators.submitted_at', [
+                $semester->start_date,
+                $semester->end_date
+            ]);
+        })
+        ->withCount(['submissionIndicators as file_count' => function($q) use ($semester) {
+            $q->whereBetween('requirement_submission_indicators.submitted_at', [
+                $semester->start_date,
+                $semester->end_date
+            ]);
+        }]);
+
+        if ($this->search) {
+            $query->where('name', 'like', '%'.$this->search.'%');
         }
 
-        $query = Media::query()
-            ->with(['model.user', 'model.user.college', 'model.user.department'])
-            ->whereHasMorph('model', [SubmittedRequirement::class], function($q) use ($semester) {
-                $q->whereBetween('created_at', [
+        return $query->get()->map(function($requirement) {
+            return [
+                'id' => $requirement->id,
+                'name' => $requirement->name,
+                'file_count' => $requirement->file_count
+            ];
+        });
+    }
+
+    public function getUsersForRequirement()
+    {
+        if (!$this->selectedRequirementId) return collect();
+
+        $semester = $this->selectedSemester ?? Semester::getActiveSemester();
+        if (!$semester) return collect();
+
+        $query = User::whereHas('submissionIndicators', function($q) use ($semester) {
+                $q->where('requirement_id', $this->selectedRequirementId)
+                ->whereBetween('requirement_submission_indicators.submitted_at', [
                     $semester->start_date,
                     $semester->end_date
                 ]);
+            })
+            ->withCount(['submissionIndicators as file_count' => function($q) use ($semester) {
+                $q->where('requirement_id', $this->selectedRequirementId)
+                ->whereBetween('requirement_submission_indicators.submitted_at', [
+                    $semester->start_date,
+                    $semester->end_date
+                ]);
+            }])
+            ->withCount(['courses as course_count' => function($q) use ($semester) {
+                $q->whereHas('submissionIndicators', function($q2) use ($semester) {
+                    $q2->where('requirement_id', $this->selectedRequirementId)
+                    ->where('user_id', DB::raw('users.id'))
+                    ->whereBetween('requirement_submission_indicators.submitted_at', [
+                        $semester->start_date,
+                        $semester->end_date
+                    ]);
+                })
+                ->distinct();
+            }]);
+
+        if ($this->search) {
+            $query->where(function($q) {
+                $q->where('firstname', 'like', '%'.$this->search.'%')
+                ->orWhere('lastname', 'like', '%'.$this->search.'%')
+                ->orWhere('email', 'like', '%'.$this->search.'%');
+            });
+        }
+
+        return $query->get()->map(function($user) {
+            return [
+                'user' => $user,
+                'file_count' => $user->file_count,
+                'course_count' => $user->course_count
+            ];
+        });
+    }
+
+    public function getCoursesForUserRequirement()
+    {
+        if (!$this->selectedRequirementId || !$this->selectedUserId) return collect();
+
+        $semester = $this->selectedSemester ?? Semester::getActiveSemester();
+        if (!$semester) return collect();
+
+        $query = Course::whereHas('submissionIndicators', function($q) {
+                $q->where('requirement_id', $this->selectedRequirementId)
+                ->where('user_id', $this->selectedUserId);
+            })
+            ->withCount(['submissionIndicators as file_count' => function($q) {
+                $q->where('requirement_id', $this->selectedRequirementId)
+                ->where('user_id', $this->selectedUserId);
+            }]);
+
+        if ($this->search) {
+            $query->where(function($q) {
+                $q->where('course_code', 'like', '%'.$this->search.'%')
+                ->orWhere('course_name', 'like', '%'.$this->search.'%');
+            });
+        }
+
+        return $query->get()->map(function($course) {
+            return [
+                'course' => $course,
+                'file_count' => $course->file_count
+            ];
+        });
+    }
+
+    public function getUsers()
+    {
+        $semester = $this->selectedSemester ?? Semester::getActiveSemester();
+        if (!$semester) return collect();
+
+        $query = User::whereHas('submissionIndicators', function($q) use ($semester) {
+                $q->whereBetween('requirement_submission_indicators.submitted_at', [
+                    $semester->start_date,
+                    $semester->end_date
+                ]);
+            })
+            ->withCount(['submissionIndicators as file_count' => function($q) use ($semester) {
+                $q->whereBetween('requirement_submission_indicators.submitted_at', [
+                    $semester->start_date,
+                    $semester->end_date
+                ]);
+            }])
+            ->withCount(['courses as course_count' => function($q) use ($semester) {
+                $q->whereHas('submissionIndicators', function($q2) use ($semester) {
+                    $q2->whereBetween('requirement_submission_indicators.submitted_at', [
+                        $semester->start_date,
+                        $semester->end_date
+                    ]);
+                })
+                ->distinct();
+            }]);
+
+        if ($this->search) {
+            $query->where(function($q) {
+                $q->where('firstname', 'like', '%'.$this->search.'%')
+                ->orWhere('lastname', 'like', '%'.$this->search.'%')
+                ->orWhere('email', 'like', '%'.$this->search.'%');
+            });
+        }
+
+        return $query->get()->map(function($user) {
+            return [
+                'user' => $user,
+                'file_count' => $user->file_count,
+                'course_count' => $user->course_count
+            ];
+        });
+    }
+
+    public function getCoursesForUser()
+    {
+        if (!$this->selectedUserId) return collect();
+
+        $semester = $this->selectedSemester ?? Semester::getActiveSemester();
+        if (!$semester) return collect();
+
+        $query = Course::whereHas('submissionIndicators', function($q) {
+                $q->where('user_id', $this->selectedUserId);
+            })
+            ->withCount(['submissionIndicators as file_count' => function($q) {
+                $q->where('user_id', $this->selectedUserId);
+            }]);
+
+        if ($this->search) {
+            $query->where(function($q) {
+                $q->where('course_code', 'like', '%'.$this->search.'%')
+                ->orWhere('course_name', 'like', '%'.$this->search.'%');
+            });
+        }
+
+        return $query->get()->map(function($course) {
+            return [
+                'course' => $course,
+                'file_count' => $course->file_count
+            ];
+        });
+    }
+
+
+    public function getRequirementsForUserCourse()
+    {
+        if (!$this->selectedUserId || !$this->selectedCourseId) return collect();
+
+        $semester = $this->selectedSemester ?? Semester::getActiveSemester();
+        if (!$semester) return collect();
+
+        $query = Requirement::whereHas('submissionIndicators', function($q) {
+                $q->where('user_id', $this->selectedUserId)
+                ->where('course_id', $this->selectedCourseId);
+            })
+            ->withCount(['submissionIndicators as file_count' => function($q) {
+                $q->where('user_id', $this->selectedUserId)
+                ->where('course_id', $this->selectedCourseId);
+            }]);
+
+        if ($this->search) {
+            $query->where('name', 'like', '%'.$this->search.'%');
+        }
+
+        return $query->get()->map(function($requirement) {
+            return [
+                'requirement' => $requirement,
+                'file_count' => $requirement->file_count
+            ];
+        });
+    }
+
+    public function getFiles()
+    {
+        $semester = $this->selectedSemester ?? Semester::getActiveSemester();
+        if (!$semester) {
+            return new \Illuminate\Pagination\LengthAwarePaginator([], 0, $this->viewMode === 'grid' ? 24 : 10);
+        }
+
+        // Get the submission indicator IDs that match our criteria
+        $indicatorQuery = RequirementSubmissionIndicator::query()
+            ->whereBetween('submitted_at', [
+                $semester->start_date,
+                $semester->end_date
+            ]);
+
+        // Apply filters based on current navigation state and category
+        if ($this->category === 'requirement') {
+            if ($this->selectedRequirementId) {
+                $indicatorQuery->where('requirement_id', $this->selectedRequirementId);
+            }
+            if ($this->selectedUserId) {
+                $indicatorQuery->where('user_id', $this->selectedUserId);
+            }
+            if ($this->selectedCourseId) {
+                $indicatorQuery->where('course_id', $this->selectedCourseId);
+            }
+        } elseif ($this->category === 'user') {
+            if ($this->selectedUserId) {
+                $indicatorQuery->where('user_id', $this->selectedUserId);
+            }
+            if ($this->selectedCourseId) {
+                $indicatorQuery->where('course_id', $this->selectedCourseId);
+            }
+            if ($this->selectedRequirementId) {
+                $indicatorQuery->where('requirement_id', $this->selectedRequirementId);
+            }
+        }
+
+        $matchingIndicators = $indicatorQuery->get();
+
+        if ($matchingIndicators->isEmpty()) {
+            return new \Illuminate\Pagination\LengthAwarePaginator([], 0, $this->viewMode === 'grid' ? 24 : 10);
+        }
+
+        // Build query for media files that belong to SubmittedRequirements matching the indicators
+        $query = Media::query()
+            ->with(['model.user', 'model.requirement', 'model.course'])
+            ->whereHasMorph('model', [SubmittedRequirement::class], function($q) use ($matchingIndicators) {
+                $q->where(function($subQuery) use ($matchingIndicators) {
+                    foreach ($matchingIndicators as $indicator) {
+                        $subQuery->orWhere(function($q2) use ($indicator) {
+                            $q2->where('requirement_id', $indicator->requirement_id)
+                            ->where('user_id', $indicator->user_id)
+                            ->where('course_id', $indicator->course_id);
+                        });
+                    }
+                });
             })
             ->orderBy('created_at', 'desc');
 
@@ -216,177 +564,54 @@ class FileManagerIndex extends Component
                     $modelQuery->whereHas('user', function($userQuery) {
                         $userQuery->where('firstname', 'like', '%'.$this->search.'%')
                                 ->orWhere('lastname', 'like', '%'.$this->search.'%')
-                                ->orWhere('email', 'like', '%'.$this->search.'%')
-                                ->orWhereHas('college', function($collegeQuery) {
-                                    $collegeQuery->where('name', 'like', '%'.$this->search.'%');
-                                })
-                                ->orWhereHas('department', function($deptQuery) {
-                                    $deptQuery->where('name', 'like', '%'.$this->search.'%');
-                                });
+                                ->orWhere('email', 'like', '%'.$this->search.'%');
+                    })
+                    ->orWhereHas('requirement', function($reqQuery) {
+                        $reqQuery->where('name', 'like', '%'.$this->search.'%');
+                    })
+                    ->orWhereHas('course', function($courseQuery) {
+                        $courseQuery->where('course_code', 'like', '%'.$this->search.'%')
+                                ->orWhere('course_name', 'like', '%'.$this->search.'%');
                     });
                 });
             });
         }
 
-        // Apply group filter if selected
-        if ($this->groupBy && $this->selectedGroup) {
-            switch ($this->groupBy) {
-                case 'user':
-                    $query->whereHasMorph('model', [SubmittedRequirement::class], function($q) {
-                        $q->where('user_id', $this->selectedGroup);
-                    });
-                    break;
-                case 'college':
-                    $query->whereHasMorph('model', [SubmittedRequirement::class], function($q) {
-                        $q->whereHas('user', function($userQuery) {
-                            $userQuery->where('college_id', $this->selectedGroup);
-                        });
-                    });
-                    break;
-                case 'department':
-                    $query->whereHasMorph('model', [SubmittedRequirement::class], function($q) {
-                        $q->whereHas('user', function($userQuery) {
-                            $userQuery->where('department_id', $this->selectedGroup);
-                        });
-                    });
-                    break;
-            }
-        }
-
         return $query->paginate($this->viewMode === 'grid' ? 24 : 10);
     }
 
-    public function getGroups()
+    public function getSemestersProperty()
     {
-        if (!$this->groupBy) return collect();
-
-        $activeSemester = $this->selectedSemester ?? Semester::getActiveSemester();
-        if (!$activeSemester) return collect();
-
-        switch ($this->groupBy) {
-            case 'user':
-                $query = User::withCount(['submittedRequirements as files_count' => function($query) use ($activeSemester) {
-                    $query->select(\DB::raw('count(distinct media.id)'))
-                        ->join('media', function($join) {
-                            $join->on('media.model_id', '=', 'submitted_requirements.id')
-                                ->where('media.model_type', SubmittedRequirement::class);
-                        })
-                        ->whereBetween('submitted_requirements.created_at', [
-                            $activeSemester->start_date,
-                            $activeSemester->end_date
-                        ]);
-                }])
-                ->has('submittedRequirements');
-                
-                // Apply search filter for users
-                if ($this->search) {
-                    $query->where(function($q) {
-                        $q->where('firstname', 'like', '%'.$this->search.'%')
-                        ->orWhere('lastname', 'like', '%'.$this->search.'%')
-                        ->orWhere('email', 'like', '%'.$this->search.'%');
-                    });
-                }
-                
-                return $query->orderBy('lastname')->get();
-                
-            case 'college':
-                $query = College::withCount(['users as files_count' => function($query) use ($activeSemester) {
-                    $query->select(\DB::raw('count(distinct media.id)'))
-                        ->join('submitted_requirements', 'submitted_requirements.user_id', '=', 'users.id')
-                        ->join('media', function($join) {
-                            $join->on('media.model_id', '=', 'submitted_requirements.id')
-                                ->where('media.model_type', SubmittedRequirement::class);
-                        })
-                        ->whereBetween('submitted_requirements.created_at', [
-                            $activeSemester->start_date,
-                            $activeSemester->end_date
-                        ]);
-                }])
-                ->has('users.submittedRequirements');
-                
-                // Apply search filter for colleges
-                if ($this->search) {
-                    $query->where('name', 'like', '%'.$this->search.'%');
-                }
-                
-                return $query->orderBy('name')->get();
-                
-            case 'department':
-                $query = Department::withCount(['users as files_count' => function($query) use ($activeSemester) {
-                    $query->select(\DB::raw('count(distinct media.id)'))
-                        ->join('submitted_requirements', 'submitted_requirements.user_id', '=', 'users.id')
-                        ->join('media', function($join) {
-                            $join->on('media.model_id', '=', 'submitted_requirements.id')
-                                ->where('media.model_type', SubmittedRequirement::class);
-                        })
-                        ->whereBetween('submitted_requirements.created_at', [
-                            $activeSemester->start_date,
-                            $activeSemester->end_date
-                        ]);
-                }])
-                ->has('users.submittedRequirements');
-                
-                // Apply search filter for departments
-                if ($this->search) {
-                    $query->where('name', 'like', '%'.$this->search.'%');
-                }
-                
-                return $query->orderBy('name')->get();
-                
-            default:
-                return collect();
-        }
-    }
-
-    public function shouldDisplayFiles()
-    {
-        return !$this->groupBy || ($this->groupBy && $this->selectedGroup);
+        return Semester::orderBy('created_at', 'desc')->get();
     }
 
     public function render()
     {
-        $files = $this->getGroupedFiles();
-        $groups = $this->getGroups();
-        $activeSemester = $this->selectedSemester ?? Semester::getActiveSemester();
-        
-        return view('livewire.admin.file-manager.file-manager-index', [
-            'files' => $files,
-            'groups' => $groups,
-            'selectedGroupName' => $this->getSelectedGroupName(),
-            'activeSemester' => $activeSemester,
-            'shouldDisplayFiles' => $this->shouldDisplayFiles(),
-            'groupedItems' => $this->getGroupsAsItems(), // Add this line
-        ])->extends('layouts.app');
-    }
+        $data = [
+            'files' => $this->getFiles(),
+            'activeSemester' => $this->selectedSemester ?? Semester::getActiveSemester(),
+            'semesters' => $this->semesters,
+        ];
 
-    protected function getGroupsAsItems()
-    {
-        $groups = $this->getGroups();
-        $groupedItems = [];
-        
-        foreach ($groups as $group) {
-            $groupedItems[$group->id] = [
-                'name' => $this->groupBy === 'user' ? $group->full_name : $group->name,
-                'count' => $group->files_count
-            ];
+        // Add data based on current navigation state
+        if ($this->category === 'requirement' || !$this->category) {
+            if (!$this->selectedRequirementId) {
+                $data['requirements'] = $this->getRequirements();
+            } elseif ($this->selectedRequirementId && !$this->selectedUserId) {
+                $data['usersForRequirement'] = $this->getUsersForRequirement();
+            } elseif ($this->selectedRequirementId && $this->selectedUserId && !$this->selectedCourseId) {
+                $data['coursesForUserRequirement'] = $this->getCoursesForUserRequirement();
+            }
+        } elseif ($this->category === 'user') {
+            if (!$this->selectedUserId) {
+                $data['users'] = $this->getUsers();
+            } elseif ($this->selectedUserId && !$this->selectedCourseId) {
+                $data['coursesForUser'] = $this->getCoursesForUser();
+            } elseif ($this->selectedUserId && $this->selectedCourseId && !$this->selectedRequirementId) {
+                $data['requirementsForUserCourse'] = $this->getRequirementsForUserCourse();
+            }
         }
-        
-        return $groupedItems;
-    }
-    
-    protected function getSelectedGroupName()
-    {
-        if (!$this->groupBy || !$this->selectedGroup) return null;
-        
-        switch ($this->groupBy) {
-            case 'user':
-                return User::find($this->selectedGroup)?->full_name;
-            case 'college':
-                return College::find($this->selectedGroup)?->name;
-            case 'department':
-                return Department::find($this->selectedGroup)?->name;
-            default:
-                return null;
-        }
+
+        return view('livewire.admin.file-manager.file-manager-index', $data)->extends('layouts.app');
     }
 }

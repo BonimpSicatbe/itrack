@@ -34,4 +34,20 @@ class Course extends Model
     {
         return $this->hasMany(CourseAssignment::class);
     }
+
+    public function submittedRequirements(): HasMany
+    {
+        return $this->hasMany(SubmittedRequirement::class, 'course_id');
+    }
+
+    public function users()
+    {
+        return $this->belongsToMany(User::class, 'submitted_requirements', 'course_id', 'user_id')
+                    ->distinct();
+    }
+
+    public function submissionIndicators()
+    {
+        return $this->hasMany(RequirementSubmissionIndicator::class);
+    }
 }

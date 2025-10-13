@@ -27,7 +27,7 @@
         </div>
     </div>
 
-    <div class="w-full min-h-[calc(100vh_-_195px)] bg-white shadow-lg rounded-xl space-y-4" >
+    <div class="w-full min-h-[calc(100vh_-_195px)] bg-white shadow-lg rounded-xl space-y-4 mb-5" >
         <div class="flex flex-col w-full h-full">
             @if($activeSemester)
                 <div class="p-6 rounded-xl flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -138,7 +138,7 @@
                     </div>
                 @else
                     <!-- List View -->
-                    <div class="overflow-hidden border-b-1 border-gray-300">
+                    <div class="overflow-hidden border-b-1 border-gray-300 rounded-b-xl">
                         <div class="overflow-x-auto">
                             <table class="min-w-full divide-y divide-gray-200">
                                 <thead class="bg-green-700">

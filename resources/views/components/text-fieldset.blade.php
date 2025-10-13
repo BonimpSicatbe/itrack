@@ -6,7 +6,7 @@
 
 <fieldset class="fieldset w-full">
     @if (!empty($label))
-        <legend class="fieldset-legend w-full capitalize text-base text-gray-700">{{ $label }}</legend>
+        <legend class="fieldset-legend w-full tracking-wide font-semibold uppercase text-xs text-gray-700">{{ $label }}</legend>
     @endif
 
     <input type="{{ $type }}" {{ $attributes->merge(['class' => 'input w-full rounded-xl']) }}

@@ -77,18 +77,28 @@ class User extends Authenticatable implements HasMedia
         return $this->hasMany(CourseAssignment::class, 'professor_id');
     }
 
+    public function taughtCourses(): BelongsToMany  // <- RENAMED from courses() to taughtCourses()
+    {
+        return $this->belongsToMany(Course::class, 'course_assignments', 'professor_id', 'course_id')
+                    ->as('assignment')
+                    ->using(CourseAssignment::class)
+                    ->withPivot('assignment_id', 'year', 'semester', 'assignment_date')
+                    ->withTimestamps();
+    }
+
     /**
      * Get all the courses the professor has taught (historical and current).
      * This uses the many-to-many relationship with the custom pivot model.
      */
-    public function courses(): BelongsToMany
+    public function courses(): BelongsToMany  // <- NEW: For submitted requirements
     {
-        return $this->belongsToMany(Course::class, 'course_assignments', 'id', 'course_id')
-                    ->as('assignment') // Rename pivot relationship for clarity
-                    ->using(CourseAssignment::class) // Specify the custom pivot model
-                    // Include the historical/semester fields from the pivot table
-                    ->withPivot('assignment_id', 'year', 'semester', 'assignment_date')
-                    ->withTimestamps();
+        return $this->belongsToMany(Course::class, 'submitted_requirements', 'user_id', 'course_id')
+                    ->distinct();
+    }
+
+    public function submissionIndicators()
+    {
+        return $this->hasMany(RequirementSubmissionIndicator::class);
     }
 
 

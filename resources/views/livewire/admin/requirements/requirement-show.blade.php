@@ -112,7 +112,6 @@
                                     <div class="space-y-2">
                                         @foreach($assignedPrograms as $program)
                                             <div class="flex items-center gap-3 py-2 px-3 bg-gray-50 rounded-lg">
-                                                <i class="fa-solid fa-graduation-cap text-gray-500 text-sm"></i>
                                                 <span class="text-gray-700 font-medium">{{ $program->program_name }}</span>
                                             </div>
                                         @endforeach

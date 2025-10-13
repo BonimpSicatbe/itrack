@@ -341,6 +341,13 @@ class SubmittedRequirement extends Model implements HasMedia
         return self::statuses()[$this->status] ?? $this->status;
     }
 
+    public function submissionIndicator()
+    {
+        return $this->hasOne(RequirementSubmissionIndicator::class, 'requirement_id', 'requirement_id')
+            ->where('user_id', $this->user_id)
+            ->where('course_id', $this->course_id);
+    }
+
     public function getStatusBadgeAttribute()
     {
         return match($this->status) {

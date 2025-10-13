@@ -415,6 +415,11 @@ class Requirement extends Model implements HasMedia
         return Carbon::now()->gt($this->due);
     }
 
+    public function submissionIndicators()
+    {
+        return $this->hasMany(RequirementSubmissionIndicator::class);
+    }
+
     protected static function booted()
     {
         static::deleting(function ($requirement) {

@@ -1,16 +1,16 @@
 <div>
     <!-- Overview Category - Excel-like View -->
-    <div class="overflow-x-auto bg-white rounded-xl border border-gray-200 relative">
+    <div class="overflow-x-auto bg-white rounded-xl border border-gray-200 relative" style="min-height: 200px;">
         <table class="min-w-full border-collapse">
             <!-- Table Header -->
             <thead class="bg-green-700 text-white font-semibold text-sm sticky top-0 z-30">
                 <tr>
-                    <th class="p-3 border border-green-600 sticky left-0 bg-green-700 z-40 w-49 min-w-49 border-green-800 relative">
+                    <th class="p-3 border border-green-600 sticky left-0 bg-green-700 z-40 w-49 min-w-49 relative">
                         <div class="absolute inset-0"></div>
                         User
                     </th>
-                    <th class="p-3 border border-green-600 sticky left-48 bg-green-700 z-40 w-40 min-w-40 border-green-800 relative">
-                        <div class="absolute inset-0 border-l-1 border-white"></div>
+                    <th class="p-3 border border-green-600 sticky left-48 bg-green-700 z-40 w-40 min-w-40  relative">
+                        <div class="absolute inset-0 "></div>
                         Course
                     </th>
                     
@@ -103,18 +103,20 @@
                         </tr>
                     @endif
                 @empty
-                    <tr>
-                        <td colspan="{{ count($overviewData['requirements']) + 2 }}" class="text-center py-8 text-gray-500">
-                            <i class="fa-solid fa-users text-3xl text-gray-300 mb-2"></i>
-                            <p class="text-sm font-semibold">No users found.</p>
-                            @if($search)
-                                <p class="text-sm font-semibold text-amber-500 mt-1">Try adjusting your search term</p>
-                            @endif
-                        </td>
-                    </tr>
                 @endforelse
             </tbody>
         </table>
+
+        <!-- Empty state overlay -->
+        @if($overviewData['users']->isEmpty())
+        <div class="absolute inset-0 flex flex-col items-center justify-center bg-white py-8 text-gray-500 mt-15">
+            <i class="fa-solid fa-users text-3xl text-gray-300 mb-2"></i>
+            <p class="text-sm font-semibold">No users found.</p>
+            @if($search)
+                <p class="text-sm font-semibold text-amber-500 mt-1">Try adjusting your search term</p>
+            @endif
+        </div>
+        @endif
     </div>
 
     <!-- Summary
