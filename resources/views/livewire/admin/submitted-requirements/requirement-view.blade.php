@@ -6,7 +6,7 @@
             <!-- Header with Back Button -->
             <div class="px-6 py-3 flex-shrink-0" style="background: linear-gradient(148deg,rgba(18, 67, 44, 1) 0%, rgba(30, 119, 77, 1) 54%, rgba(55, 120, 64, 1) 100%);">
                 <button wire:click="goBackToIndex" 
-                        class="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-white rounded-lg transition-all duration-200 hover:bg-white/20 hover:shadow-md hover:scale-105 flex-shrink-0">
+                        class="flex items-center gap-2 px-3 py-2 text-sm font-medium text-white bg-white/20 hover:bg-white/30 rounded-xl transition-all duration-200 hover:shadow-md hover:scale-105 flex-shrink-0">
                     <i class="fas fa-arrow-left"></i>
                     <span>Back</span>
                 </button>
@@ -15,70 +15,72 @@
             <!-- Scrollable Content -->
             <div class="flex-1 overflow-y-auto min-h-0">
                 <!-- Requirement Details Title -->
-                <div class="px-6 pt-5 pb-3">
+                <div class="px-6 py-3 pb-3 border-b border-gray-200 bg-gray-50">
                     <div class="flex items-center gap-2">
-                        <i class="fa-solid fa-circle-info text-green-700 text-xl"></i>
-                        <h2 class="text-lg font-semibold text-gray-800">Requirement Details</h2>
+                        <i class="fa-solid fa-circle-info text-green-600 text-xl"></i>
+                        <h2 class="text-lg font-semibold text-gray-700">Requirement Details</h2>
                     </div>
                 </div>
                 
                 <!-- Body -->
                 <div class="px-6 pb-4 space-y-3">
                 <!-- Context Breadcrumb -->
+
+                <div class="grid grid-cols-2 gap-y-2 gap-x-4 pt-3">
+                    <div class="col-span-1">
+                        <p class="font-semibold text-gray-700 uppercase tracking-wide text-xs">Requirement Name:</p>
+                    </div>
+                    <div class="col-span-1">
+                        <p class="text-sm text-gray-700">{{ $requirement->name }}</p>
+                    </div>
+
+                    <div class="col-span-1">
+                        <p class="font-semibold text-gray-700 uppercase tracking-wide text-xs">Due Date:</p>
+                    </div>
+                    <div class="col-span-1">
+                        <p class="text-sm text-gray-700">{{ $requirement->due->format('M j, Y \a\t g:i A') }}</p>
+                    </div>
+
+                    <div class="col-span-1">
+                        <p class="font-semibold text-gray-700 uppercase tracking-wide text-xs">Created By:</p>
+                    </div>
+                    <div class="col-span-1">
+                        <p class="text-sm text-gray-700">{{ $requirement->creator->full_name }}</p>
+                    </div>
+                    
+                    @if($requirement->description)
+                        <div class="col-span-1 self-start">
+                            <p class="font-semibold text-gray-700 uppercase tracking-wide text-xs">Description:</p>
+                        </div>
+                        <div class="col-span-1">
+                            <p class="text-sm text-gray-700 whitespace-pre-line">{{ $requirement->description }}</p>
+                        </div>
+                    @endif
+                </div>
+
                 @if($user && $course)
-                <div class="pb-4 border-b border-gray-200">
-                    <h4 class="text-xs font-semibold text-gray-800 uppercase tracking-wider mb-2">Submission Context</h4>
+                <div class="pb-2">
+                    <h4 class="text-xs font-semibold text-gray-700 uppercase tracking-wide mb-2">Submission Context:</h4>
                     <div class="space-y-2">
                         <div class="flex items-center gap-2">
-                            <i class="fa-solid fa-folder text-green-600 text-sm"></i>
-                            <span class="text-sm text-gray-500">{{ $requirement->name }}</span>
-                        </div>
-                        <div class="flex items-center gap-2">
                             <i class="fa-solid fa-user text-blue-600 text-sm"></i>
-                            <span class="text-sm text-gray-500">{{ $user->full_name }}</span>
+                            <span class="text-sm text-gray-700">{{ $user->full_name }}</span>
                         </div>
                         <div class="flex items-center gap-2">
                             <i class="fa-solid fa-book text-purple-600 text-sm"></i>
-                            <span class="text-sm text-gray-500">{{ $course->course_code }} - {{ $course->course_name }}</span>
+                            <span class="text-sm text-gray-700">{{ $course->course_code }} - {{ $course->course_name }}</span>
                         </div>
                     </div>
                 </div>
                 @endif
-
-                <div>
-                    <h4 class="text-xs font-semibold text-gray-800 uppercase tracking-wider mb-1">Requirement Name</h4>
-                    <p class="text-sm text-gray-500">{{ $requirement->name }}</p>
-                </div>
-
-                @if($requirement->description)
-                <div>
-                    <h4 class="text-xs font-semibold text-gray-800 uppercase tracking-wider mb-1">Description</h4>
-                    <p class="text-sm text-gray-500 whitespace-pre-line">{{ $requirement->description }}</p>
-                </div>
-                @endif
-
-                <div>
-                    <h4 class="text-xs font-semibold text-gray-800 uppercase tracking-wider mb-1">Due Date</h4>
-                    <p class="text-sm text-gray-500">{{ $requirement->due->format('M j, Y \a\t g:i A') }}</p>
-                </div>
-
-                <div>
-                    <h4 class="text-xs font-semibold text-gray-800 uppercase tracking-wider mb-1">Created By</h4>
-                    <p class="text-sm text-gray-500">{{ $requirement->creator->full_name }}</p>
-                </div>
-                
-                <div>
-                    <h4 class="text-xs font-semibold text-gray-800 uppercase tracking-wider mb-1">Files Submitted</h4>
-                    <p class="text-sm text-gray-500">{{ count($allFiles) }} file(s)</p>
-                </div>
             </div>
 
             <!-- Course Submission Files Section -->
             <div class="border-t border-gray-200 flex-1 flex flex-col overflow-hidden">
                 <!-- Files Header -->
-                <div class="text-gray-800 px-6 py-3 flex items-center justify-between bg-gray-50">
+                <div class="text-gray-700 px-6 py-3 flex items-center justify-between bg-gray-50 border-b border-gray-200">
                     <div class="flex items-center">
-                        <i class="fa-solid fa-files mr-2 text-lg"></i>
+                        <i class="fa-solid fa-files mr-2 text-lg text-green-600"></i>
                         <h3 class="text-base font-semibold">
                             @if($user && $course)
                                 Course Submission Files
@@ -106,20 +108,20 @@
                                         $statusBadgeClasses = $submissionModel ? $submissionModel->status_badge : 'bg-blue-100 text-blue-800';
                                     @endphp
                                     <button wire:click="selectFile('{{ $file['id'] }}')"
-                                        class="w-full text-left p-2.5 rounded-lg transition-all duration-200 flex items-center gap-2.5
+                                        class="w-full text-left p-2.5 rounded-xl transition-all duration-200 flex items-center gap-2.5
                                             {{ ($selectedFile && $selectedFile['id'] === $file['id']) ? 
-                                                'bg-green-600 text-white shadow-sm' : 
-                                                'border-1 border-gray-300 hover:border-green-700 hover:border-2' }}">
+                                                'bg-white text-gray-700 shadow-sm border-2 border-green-600' : 
+                                                'shadow-md border border-gray-300' }}">
                                         <!-- File Icon -->
-                                        <div class="flex-shrink-0 w-9 h-9 rounded-lg flex items-center justify-center bg-white">
+                                        <div class="flex-shrink-0 w-9 h-9 flex items-center justify-center">
                                             <i class="fa-solid {{ $fileIcon['icon'] }} text-base {{ $fileIcon['color'] }}"></i>
                                         </div>
                                         <!-- File Info -->
                                         <div class="min-w-0 flex-1">
-                                            <p class="font-medium truncate text-sm {{ ($selectedFile && $selectedFile['id'] === $file['id']) ? 'text-white' : 'text-gray-900' }}">
+                                            <p class="font-semibold truncate text-sm {{ ($selectedFile && $selectedFile['id'] === $file['id']) ? 'text-gray-700' : 'text-gray-700' }}">
                                                 {{ $file['file_name'] }}
                                             </p>
-                                            <div class="flex items-center gap-2 text-xs mt-0.5 {{ ($selectedFile && $selectedFile['id'] === $file['id']) ? 'text-gray-200' : 'text-gray-500' }}">
+                                            <div class="flex items-center gap-2 text-xs mt-2 {{ ($selectedFile && $selectedFile['id'] === $file['id']) ? 'text-gray-500' : 'text-gray-500' }}">
                                                 <i class="fa-solid fa-calendar"></i>
                                                 {{ $file['created_at']->format('M j, Y') }}
                                                 <i class="fa-solid fa-file"></i>
@@ -128,7 +130,7 @@
                                         </div>
                                         <!-- Status -->
                                         <div class="flex-shrink-0">
-                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold {{ $statusBadgeClasses }}">
+                                            <span class="inline-flex items-center gap-1 px-3 py-2 rounded-full text-xs font-semibold {{ $statusBadgeClasses }}">
                                                 {{ $this->formatStatus($file['status']) }}
                                             </span>
                                         </div>
@@ -184,7 +186,7 @@
                 </div>
                 @if($selectedFile)
                     <div class="flex items-center gap-3">
-                        <select wire:model="selectedStatus" class="border-gray-300 rounded-lg shadow-sm text-sm text-gray-700 focus:border-green-700 focus:ring-green-700 bg-white">
+                        <select wire:model="selectedStatus" class="border-gray-300 rounded-xl shadow-sm text-sm text-gray-700 focus:border-green-700 focus:ring-green-700 bg-white">
                             @foreach($statusOptions as $value => $label)
                                 <option value="{{ $value }}" {{ $selectedFile['status'] === $value ? 'selected' : '' }}>
                                     {{ $label }}
@@ -192,7 +194,7 @@
                             @endforeach
                         </select>
                         <button wire:click="updateStatus" 
-                            class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-lg shadow-sm text-green-700 bg-white hover:bg-green-700 hover:text-white border border-white transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-700">
+                            class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-xl shadow-sm text-green-700 bg-white hover:bg-green-700 hover:text-white border border-white transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-700">
                             <i class="fa-solid fa-check mr-1.5"></i>
                             Update
                         </button>
@@ -205,7 +207,7 @@
                 @if($selectedFile)
                     @if($isImage)
                         <div class="p-6 w-full h-full flex items-center justify-center bg-white">
-                            <img src="{{ $fileUrl }}" alt="{{ $selectedFile['file_name'] }}" class="max-w-full max-h-full object-contain rounded-lg shadow-sm">
+                            <img src="{{ $fileUrl }}" alt="{{ $selectedFile['file_name'] }}" class="max-w-full max-h-full object-contain rounded-xl shadow-sm">
                         </div>
                     @elseif($isPdf)
                         <iframe src="{{ $fileUrl }}#toolbar=0&navpanes=0" class="w-full h-full border-0 bg-white"></iframe>
@@ -222,7 +224,7 @@
                             <h3 class="text-lg font-medium text-gray-900 mb-2">Preview unavailable</h3>
                             <p class="text-sm text-gray-500 mb-4">This file type cannot be previewed in the browser</p>
                             <a href="{{ $fileUrl }}" target="_blank"
-                            class="inline-flex items-center px-4 py-2 border border-green-700 shadow-sm text-sm font-medium rounded-lg text-green-700 bg-white hover:bg-gray-50 transition-colors">
+                            class="inline-flex items-center px-4 py-2 border border-green-700 shadow-sm text-sm font-medium rounded-xl text-green-700 bg-white hover:bg-gray-50 transition-colors">
                                 <i class="fa-solid fa-download mr-2"></i>
                                 Download File
                             </a>

@@ -78,9 +78,11 @@
                         }
                     @endphp
                     
-                    <div 
-                        wire:click="markAsRead('{{ $notification->id }}')"
-                        class="p-4 mb-2 rounded-xl {{ $containerClass }} cursor-pointer transition-all duration-200 last:mb-0"
+                    {{-- Update the wire:click to navigate to notification page --}}
+                    <a 
+                        href="{{ route('user.notifications', ['notification' => $notification->id]) }}"
+                        wire:click="markAsReadAndNavigate('{{ $notification->id }}')"
+                        class="block p-4 mb-2 rounded-xl {{ $containerClass }} cursor-pointer transition-all duration-200 last:mb-0 hover:no-underline"
                     >
                         <div class="flex gap-3">
                             {{-- Icon --}}
@@ -108,7 +110,7 @@
                                 </div>
                             @endif
                         </div>
-                    </div>
+                    </a>
                 @empty
                     <div class="py-12 text-center">
                         <div class="mx-auto w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-3">
@@ -123,13 +125,13 @@
             {{-- Footer --}}
             @if($notifications->isNotEmpty())
                 <div class="px-4 py-3 border-t border-gray-200">
-                    <button 
-                        wire:click="viewAllNotifications"
-                        class="w-full text-center text-sm font-medium text-[#1C7C54] hover:text-[#1B512D] hover:bg-[#DEF4C6]/20 transition-all py-2 rounded-lg"
+                    <a 
+                        href="{{ route('user.notifications') }}" 
+                        class="block w-full text-center text-sm font-medium text-[#1C7C54] hover:text-[#1B512D] hover:bg-[#DEF4C6]/20 transition-all py-2 rounded-lg"
                     >
                         View all notifications
                         <i class="fa-solid fa-arrow-right ml-2 text-xs"></i>
-                    </button>
+                    </a>
                 </div>
             @endif
         </div>

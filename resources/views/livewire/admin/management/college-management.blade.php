@@ -12,7 +12,7 @@
             </div>
             <button 
                 wire:click="openAddCollegeModal" 
-                class="px-5 py-2 bg-green-600 text-white font-semibold rounded-full text-sm cursor-pointer"
+                class="px-5 py-2 bg-green-600 text-white font-semibold rounded-xl text-sm cursor-pointer"
             >
                 <i class="fa-solid fa-plus mr-2"></i>Add College
             </button>
@@ -147,11 +147,11 @@
                     <!-- Footer -->
                     <div class="mt-8 flex justify-end space-x-3">
                         <button type="button" wire:click="closeAddCollegeModal"
-                            class="px-5 py-2 rounded-full border border-gray-300 text-gray-500 bg-white font-semibold text-sm cursor-pointer">
+                            class="px-5 py-2 rounded-xl border border-gray-300 text-gray-500 bg-white font-semibold text-sm cursor-pointer">
                             Cancel
                         </button>
                         <button type="button" wire:click="addCollege" wire:loading.attr="disabled"
-                            class="px-5 py-2 rounded-full bg-green-600 text-white font-semibold text-sm shadow cursor-pointer">
+                            class="px-5 py-2 rounded-xl bg-green-600 text-white font-semibold text-sm shadow cursor-pointer">
                             <span wire:loading.remove wire:target="addCollege">Add College</span>
                             <span wire:loading wire:target="addCollege">
                                 <i class="fa-solid fa-spinner fa-spin mr-2"></i> Adding...
@@ -196,11 +196,11 @@
                     <!-- Footer -->
                     <div class="mt-8 flex justify-end space-x-3">
                         <button type="button" wire:click="closeEditCollegeModal"
-                            class="px-5 py-2 rounded-full border border-gray-300 text-gray-500 bg-white font-semibold text-sm cursor-pointer">
+                            class="px-5 py-2 rounded-xl border border-gray-300 text-gray-500 bg-white font-semibold text-sm cursor-pointer">
                             Cancel
                         </button>
                         <button type="button" wire:click="updateCollege" wire:loading.attr="disabled"
-                            class="px-5 py-2 rounded-full bg-green-600 text-white font-semibold text-sm shadow cursor-pointer">
+                            class="px-5 py-2 rounded-xl bg-green-600 text-white font-semibold text-sm shadow cursor-pointer">
                             <span wire:loading.remove wire:target="updateCollege">Update College</span>
                             <span wire:loading wire:target="updateCollege">
                                 <i class="fa-solid fa-spinner fa-spin mr-2"></i> Updating...
@@ -212,42 +212,42 @@
         @endif
 
         <!-- Delete Confirmation Modal -->
-    @if($showDeleteConfirmationModal && $collegeToDelete)
-        <x-modal name="delete-college-modal" :show="$showDeleteConfirmationModal" maxWidth="md">
-            <div class="bg-red-600 text-white rounded-t-xl px-6 py-4 flex items-center space-x-3">
-                <i class="fa-solid fa-triangle-exclamation text-lg"></i>
-                <h3 class="text-xl font-semibold">Confirm Deletion</h3>
-            </div>
-
-            <div class="bg-white px-6 py-6 rounded-b-xl">
-                <div class="space-y-4">
-                    <p class="text-gray-700">
-                        Are you sure you want to delete the college 
-                        <span class="font-semibold text-red-600">"{{ $collegeToDelete->name }} ({{ $collegeToDelete->acronym }})"</span>?
-                    </p>
-                    <p class="text-sm text-gray-600">
-                        This action cannot be undone. All data will be permanently removed.
-                    </p>
+        @if($showDeleteConfirmationModal && $collegeToDelete)
+            <x-modal name="delete-college-modal" :show="$showDeleteConfirmationModal" maxWidth="md">
+                <div class="bg-red-600 text-white rounded-t-xl px-6 py-4 flex items-center space-x-3">
+                    <i class="fa-solid fa-triangle-exclamation text-lg"></i>
+                    <h3 class="text-xl font-semibold">Confirm Deletion</h3>
                 </div>
 
-                <div class="mt-6 pt-4 border-t border-gray-200 flex justify-end space-x-3">
-                    <button type="button" wire:click="closeDeleteConfirmationModal" 
-                            class="px-4 py-2 border border-gray-300 rounded-full text-sm font-medium text-gray-700 hover:bg-gray-50 cursor-pointer">
-                        Cancel
-                    </button>
-                    <button type="button" wire:click="deleteCollege" 
-                            class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-full text-sm font-medium cursor-pointer"
-                            wire:loading.attr="disabled">
-                        <span wire:loading.remove wire:target="deleteCollege">
-                            <i class="fa-solid fa-trash mr-2"></i> Delete
-                        </span>
-                        <span wire:loading wire:target="deleteCollege">
-                            <i class="fa-solid fa-spinner fa-spin mr-2"></i> Deleting...
-                        </span>
-                    </button>
+                <div class="bg-white px-6 py-6 rounded-b-xl">
+                    <div class="space-y-4">
+                        <p class="text-gray-700">
+                            Are you sure you want to delete the college 
+                            <span class="font-semibold text-red-600">"{{ $collegeToDelete->name }} ({{ $collegeToDelete->acronym }})"</span>?
+                        </p>
+                        <p class="text-sm text-gray-600">
+                            This action cannot be undone. All data will be permanently removed.
+                        </p>
+                    </div>
+
+                    <div class="mt-6 pt-4 border-t border-gray-200 flex justify-end space-x-3">
+                        <button type="button" wire:click="closeDeleteConfirmationModal" 
+                                class="px-4 py-2 border border-gray-300 rounded-full text-sm font-medium text-gray-700 hover:bg-gray-50 cursor-pointer">
+                            Cancel
+                        </button>
+                        <button type="button" wire:click="deleteCollege" 
+                                class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-full text-sm font-medium cursor-pointer"
+                                wire:loading.attr="disabled">
+                            <span wire:loading.remove wire:target="deleteCollege">
+                                <i class="fa-solid fa-trash mr-2"></i> Delete
+                            </span>
+                            <span wire:loading wire:target="deleteCollege">
+                                <i class="fa-solid fa-spinner fa-spin mr-2"></i> Deleting...
+                            </span>
+                        </button>
+                    </div>
                 </div>
-            </div>
-        </x-modal>
-    @endif
+            </x-modal>
+        @endif
     </div>
 </div>

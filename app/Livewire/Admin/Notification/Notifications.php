@@ -12,9 +12,9 @@ class Notifications extends Component
     public $notifications = [];
     public $selectedNotification = null;
     public $selectedNotificationData = null;
+    public $activeTab = 'all'; // 'all', 'unread', 'read'
     
     // For status update form
-    public $selectedFileId;
     public $newStatus;
     public $adminNotes;
 
@@ -34,6 +34,28 @@ class Notifications extends Component
             ->where('type', 'App\Notifications\NewSubmissionNotification')
             ->latest()
             ->get();
+    }
+
+    public function getFilteredNotifications()
+    {
+        if ($this->activeTab === 'unread') {
+            return $this->notifications->filter(function ($notification) {
+                return $notification->unread();
+            });
+        } elseif ($this->activeTab === 'read') {
+            return $this->notifications->filter(function ($notification) {
+                return !$notification->unread();
+            });
+        }
+
+        return $this->notifications;
+    }
+
+    public function updatedActiveTab(): void
+    {
+        // Reset selection when changing tabs
+        $this->selectedNotification = null;
+        $this->selectedNotificationData = null;
     }
 
     public function selectNotification($id)
@@ -111,8 +133,8 @@ class Notifications extends Component
             $submissionIds = [$notificationData['submission_id']];
         }
 
-        // Load submissions with course information
-        $submissions = \App\Models\SubmittedRequirement::with(['reviewer', 'course'])
+        // Load submissions with course and program information
+        $submissions = \App\Models\SubmittedRequirement::with(['reviewer', 'course.program'])
             ->whereIn('id', $submissionIds)
             ->get();
 
@@ -137,6 +159,11 @@ class Notifications extends Component
                         'id' => $submission->course->id,
                         'course_code' => $submission->course->course_code,
                         'course_name' => $submission->course->course_name,
+                        'program' => $submission->course->program ? [
+                            'id' => $submission->course->program->id,
+                            'program_code' => $submission->course->program->program_code,
+                            'program_name' => $submission->course->program->program_name,
+                        ] : null,
                     ] : null,
                     'reviewer' => $submission->reviewer ? [
                         'id' => $submission->reviewer->id,
@@ -165,12 +192,17 @@ class Notifications extends Component
 
         // Load course from notification data if available
         if (isset($notificationData['course_id']) && $notificationData['course_id']) {
-            $course = \App\Models\Course::find($notificationData['course_id']);
+            $course = \App\Models\Course::with('program')->find($notificationData['course_id']);
             if ($course) {
                 $this->selectedNotificationData['course'] = [
                     'id' => $course->id,
                     'course_code' => $course->course_code,
                     'course_name' => $course->course_name,
+                    'program' => $course->program ? [
+                        'id' => $course->program->id,
+                        'program_code' => $course->program->program_code,
+                        'program_name' => $course->program->program_name,
+                    ] : null,
                 ];
             }
         }
@@ -202,6 +234,11 @@ class Notifications extends Component
                         'id' => $submission->course->id,
                         'course_code' => $submission->course->course_code,
                         'course_name' => $submission->course->course_name,
+                        'program' => $submission->course->program ? [
+                            'id' => $submission->course->program->id,
+                            'program_code' => $submission->course->program->program_code,
+                            'program_name' => $submission->course->program->program_name,
+                        ] : null,
                     ] : null,
                 ];
             }
@@ -319,10 +356,24 @@ class Notifications extends Component
                 $this->dispatch('notification-unread');
             }
             
+            // Reload notifications to get fresh data
             $this->loadNotifications();
             
+            // Update selected notification data if it's the currently selected one
             if ($this->selectedNotification === $notificationId) {
-                $this->selectedNotificationData['unread'] = $notification->unread();
+                // Find the updated notification
+                $updatedNotification = $this->notifications->firstWhere('id', $notificationId);
+                if ($updatedNotification && $this->selectedNotificationData) {
+                    $this->selectedNotificationData['unread'] = $updatedNotification->unread();
+                }
+            }
+            
+            // If we're in a filtered tab and the notification no longer belongs there,
+            // clear the selection to avoid showing a notification that's not in the current list
+            $filteredNotifications = $this->getFilteredNotifications();
+            if (!$filteredNotifications->contains('id', $notificationId)) {
+                $this->selectedNotification = null;
+                $this->selectedNotificationData = null;
             }
             
             $this->dispatch('showNotification', 
@@ -389,6 +440,11 @@ class Notifications extends Component
 
     public function render()
     {
-        return view('livewire.admin.notification.notifications');
+        $filteredNotifications = $this->getFilteredNotifications();
+        
+        return view('livewire.admin.notification.notifications', [
+            'filteredNotifications' => $filteredNotifications,
+            'activeTab' => $this->activeTab,
+        ]);
     }
 }

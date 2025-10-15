@@ -20,7 +20,7 @@
             <!-- Redirect Button -->
             <div class="w-full sm:w-auto mt-4 sm:mt-0">
                 <a href="{{ route('admin.requirements.index') }}" 
-                   class="px-4 py-1.5 bg-green-600 text-white font-semibold rounded-full hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-73E2A7 focus:ring-offset-2 transition text-sm cursor-pointer flex items-center gap-2">
+                   class="px-4 py-2 bg-green-600 text-white font-semibold rounded-xl hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-73E2A7 focus:ring-offset-2 transition text-sm cursor-pointer flex items-center gap-2">
                     Requirements Page
                     <i class="fa-solid fa-chevron-right text-xs"></i>
                 </a>

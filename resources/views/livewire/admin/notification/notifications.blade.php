@@ -14,20 +14,45 @@
     <div class="w-1/3 border-r border-gray-200 overflow-y-auto bg-gray-50">
         <!-- Header -->
         <div class="p-6" style="background: linear-gradient(148deg,rgba(18, 67, 44, 1) 0%, rgba(30, 119, 77, 1) 54%, rgba(55, 120, 64, 1) 100%);">
-            <div class="flex justify-between items-center">
+            <div class="flex justify-between items-center mb-4">
                 <div class="flex items-center">
                     <i class="fa-solid fa-bell text-white text-2xl mr-3"></i>
                     <h3 class="text-xl font-semibold text-white">Notifications</h3>
                 </div>
-                @if($notifications->where('read_at', null)->count() > 0)
+            </div>
+
+            {{-- Filter Tabs --}}
+            <div class="flex space-x-1 bg-white/10 rounded-xl p-1">
+                <button 
+                    wire:click="$set('activeTab', 'all')"
+                    class="flex-1 py-2 px-3 text-sm font-medium rounded-lg transition-all duration-200 {{ $activeTab === 'all' ? 'bg-white text-green-800 shadow-sm' : 'text-white hover:bg-white/20' }}"
+                >
+                    All
+                </button>
+                <button 
+                    wire:click="$set('activeTab', 'unread')"
+                    class="flex-1 py-2 px-3 text-sm font-medium rounded-lg transition-all duration-200 {{ $activeTab === 'unread' ? 'bg-white text-green-800 shadow-sm' : 'text-white hover:bg-white/20' }}"
+                >
+                    Unread
+                </button>
+                <button 
+                    wire:click="$set('activeTab', 'read')"
+                    class="flex-1 py-2 px-3 text-sm font-medium rounded-lg transition-all duration-200 {{ $activeTab === 'read' ? 'bg-white text-green-800 shadow-sm' : 'text-white hover:bg-white/20' }}"
+                >
+                    Read
+                </button>
+            </div>
+
+            {{-- Mark All Buttons in respective sections --}}
+            <div>
+                @if($activeTab === 'unread' && $notifications->where('read_at', null)->count() > 0)
                     <button wire:click="markAllAsRead"
-                        class="text-sm font-semibold text-green-700 bg-white hover:bg-green-50 hover:text-green-800 px-4 py-1.5 rounded-full shadow-sm transition-all duration-200">
+                        class="mt-4 w-full text-sm font-semibold text-green-700 bg-white hover:bg-green-50 hover:text-green-800 px-4 py-2 rounded-xl shadow-sm transition-all duration-200">
                         <i class="fa-regular fa-envelope-open mr-2"></i>Mark all as read
                     </button>
-                @else
+                @elseif($activeTab === 'read' && $notifications->where('read_at', '!=', null)->count() > 0)
                     <button wire:click="markAllAsUnread"
-                        class="text-sm font-semibold text-green-700 bg-white hover:bg-blue-50 
-                        hover:text-green-800 px-4 py-1.5 rounded-full shadow-sm transition-all duration-200">
+                        class="mt-4 w-full text-sm font-semibold text-green-700 bg-white hover:bg-blue-50 hover:text-green-800 px-4 py-2 rounded-xl shadow-sm transition-all duration-200">
                         <i class="fa-regular fa-envelope mr-2"></i>Mark all as unread
                     </button>
                 @endif
@@ -36,7 +61,7 @@
 
         <!-- Notifications List -->
         <div class="p-3 space-y-2">
-            @forelse($notifications as $notification)
+            @forelse($filteredNotifications as $notification)
                 @php
                     $highlight = $notification->unread()
                         ? 'bg-white border-l-5 border-green-500 shadow-md'
@@ -71,7 +96,7 @@
                                 class="dropdown-content z-[1] menu p-1 shadow-lg bg-white rounded-xl border border-gray-200 w-44">
                                 <li>
                                     <a wire:click.stop="toggleNotificationReadStatus('{{ $notification->id }}')"
-                                        class="text-sm py-2.5 px-3 cursor-pointer hover:bg-gray-100 rounded-lg font-semibold focus:outline-none">
+                                        class="text-sm py-2.5 px-3 cursor-pointer hover:bg-gray-100 rounded-xl font-semibold focus:outline-none">
                                         @if($notification->unread())
                                             <i class="fa-regular fa-envelope-open mr-2 text-green-600"></i> Mark as read
                                         @else
@@ -81,7 +106,7 @@
                                 </li>
                                 <li>
                                     <a wire:click.stop="openDeleteConfirmationModal('{{ $notification->id }}')"
-                                        class="text-sm py-2.5 px-3 text-red-600 cursor-pointer hover:bg-red-100 rounded-lg font-semibold focus:outline-none">
+                                        class="text-sm py-2.5 px-3 text-red-600 cursor-pointer hover:bg-red-100 rounded-xl font-semibold focus:outline-none">
                                         <i class="fa-regular fa-trash-can mr-2"></i> Delete
                                     </a>
                                 </li>
@@ -93,7 +118,15 @@
                 <div class="text-center py-12">
                     <div class="p-8">
                         <i class="fa-regular fa-bell-slash text-green-600 text-7xl mb-4"></i>
-                        <p class="text-gray-600 text-sm font-semibold">No notifications</p>
+                        <p class="text-gray-600 text-sm font-semibold">
+                            @if($activeTab === 'unread')
+                                No unread notifications
+                            @elseif($activeTab === 'read')
+                                No read notifications
+                            @else
+                                No notifications
+                            @endif
+                        </p>
                         <p class="text-gray-500 text-xs mt-1">You're all caught up!</p>
                     </div>
                 </div>
@@ -154,11 +187,18 @@
                                 </div>
                             </div>
 
-                            <!-- Description -->
+                            <!-- Program -->
                             <div class="space-y-2">
-                                <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Description</p>
-                                <div class="bg-gray-50 p-3 rounded-xl text-sm text-gray-700 leading-relaxed shadow-inner">
-                                    {{ $selectedNotificationData['requirement']['description'] }}
+                                <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Program</p>
+                                <div class="bg-gray-50 p-3 rounded-xl flex items-center text-sm text-gray-900 shadow-inner">
+                                    <i class="fa-solid fa-graduation-cap mr-2 text-gray-500"></i>
+                                    @if(isset($selectedNotificationData['course']['program']))
+                                        {{ $selectedNotificationData['course']['program']['program_code'] }} - {{ $selectedNotificationData['course']['program']['program_name'] }}
+                                    @elseif(isset($selectedNotificationData['files'][0]['course']['program']))
+                                        {{ $selectedNotificationData['files'][0]['course']['program']['program_code'] }} - {{ $selectedNotificationData['files'][0]['course']['program']['program_name'] }}
+                                    @else
+                                        <span class="text-gray-400">No program assigned</span>
+                                    @endif
                                 </div>
                             </div>
 
@@ -176,12 +216,12 @@
                                 </div>
                             </div>
 
-                            <!-- Assigned To -->
+                            <!-- Status -->
                             <div class="space-y-2">
-                                <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Assigned To</p>
+                                <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Status</p>
                                 <div class="bg-gray-50 p-3 rounded-xl flex items-center text-sm text-gray-900 shadow-inner">
-                                    <i class="fa-regular fa-user mr-2 text-gray-500"></i>
-                                    {{ $selectedNotificationData['requirement']['assigned_to'] }}
+                                    <i class="fa-solid fa-circle-info mr-2 text-gray-500"></i>
+                                    {{ ucfirst($selectedNotificationData['requirement']['status']) }}
                                 </div>
                             </div>
                         </div>
@@ -200,6 +240,13 @@
                                     <span class="font-semibold">{{ $selectedNotificationData['submitter']['name'] }}</span>
                                     ({{ $selectedNotificationData['submitter']['email'] }})
                                 </p>
+                                @if(isset($selectedNotificationData['course']['program']))
+                                    <p class="text-sm text-gray-600 mt-1">Program: 
+                                        <span class="font-semibold">
+                                            {{ $selectedNotificationData['course']['program']['program_code'] }} - {{ $selectedNotificationData['course']['program']['program_name'] }}
+                                        </span>
+                                    </p>
+                                @endif
                             </div>
                         </div>
                         
@@ -322,11 +369,11 @@
                                         {{-- Buttons --}}
                                         <div class="flex items-center space-x-3">
                                             <button type="button" wire:click="$set('newStatus', '')" 
-                                                class="px-5 py-2 border border-gray-300 rounded-full text-sm font-semibold text-gray-700 bg-white hover:bg-gray-50 shadow-sm hover:shadow transition-all duration-200">
-                                                <i class="fa-solid fa-times mr-2"></i>Cancel
+                                                class="px-5 py-2 border border-gray-300 rounded-xl text-sm font-semibold text-gray-700 bg-white hover:bg-gray-50 shadow-sm hover:shadow transition-all duration-200">
+                                                Cancel
                                             </button>
                                             <button type="submit" 
-                                                class="px-5 py-2 border border-transparent rounded-full text-sm font-semibold text-white bg-green-600 hover:bg-green-700 shadow-sm hover:shadow transition-all duration-200">
+                                                class="px-5 py-2 border border-transparent rounded-xl text-sm font-semibold text-white bg-green-600 hover:bg-green-700 shadow-sm hover:shadow transition-all duration-200">
                                                 <i class="fa-solid fa-check mr-2"></i>Update
                                             </button>
                                         </div>

@@ -9,7 +9,7 @@
             </div>
             <button 
                 wire:click="openAddCourseModal" 
-                class="px-5 py-2 bg-green-600 text-white font-semibold rounded-full text-sm cursor-pointer"
+                class="px-5 py-2 bg-green-600 text-white font-semibold rounded-xl text-sm cursor-pointer"
             >
                 <i class="fa-solid fa-plus mr-2"></i>Add Course
             </button>

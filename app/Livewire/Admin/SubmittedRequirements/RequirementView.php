@@ -10,6 +10,7 @@ use App\Models\Course;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Livewire\WithPagination;
 use Livewire\Attributes\Url;
+use Illuminate\Support\Facades\DB;
 
 class RequirementView extends Component
 {
@@ -87,41 +88,39 @@ class RequirementView extends Component
         $this->allFiles = collect();
         $this->allSubmissions = collect();
 
-        // Debug: Log the filter parameters
-        \Log::info('RequirementView Filters:', [
-            'requirement_id' => $this->requirement_id,
-            'user_id' => $this->user_id,
-            'course_id' => $this->course_id,
-            'user_loaded' => !is_null($this->user),
-            'course_loaded' => !is_null($this->course)
-        ]);
-
         // Check if we have all required parameters
         if (!$this->user_id || !$this->course_id) {
-            \Log::warning('Missing required parameters:', [
-                'user_id' => $this->user_id,
-                'course_id' => $this->course_id
-            ]);
             $this->selectInitialFile();
             return;
         }
 
-        // Build query with STRICT filtering
-        $query = SubmittedRequirement::where('requirement_id', $this->requirement_id)
-            ->where('user_id', $this->user_id)
-            ->where('course_id', $this->course_id);
-        
-        // Load submissions with relationships
-        $this->allSubmissions = $query
+        // Use JOIN to only get submissions that are marked as "done"
+        $submissionIds = DB::table('submitted_requirements as sr')
+            ->join('requirement_submission_indicators as rsi', function($join) {
+                $join->on('sr.requirement_id', '=', 'rsi.requirement_id')
+                    ->on('sr.user_id', '=', 'rsi.user_id')
+                    ->on('sr.course_id', '=', 'rsi.course_id');
+            })
+            ->where('sr.requirement_id', $this->requirement_id)
+            ->where('sr.user_id', $this->user_id)
+            ->where('sr.course_id', $this->course_id)
+            ->pluck('sr.id');
+
+        // Debug: Log the filtered submission IDs
+        \Log::info('Filtered Submission IDs:', [
+            'submission_ids' => $submissionIds->toArray(),
+            'filters' => [
+                'requirement_id' => $this->requirement_id,
+                'user_id' => $this->user_id,
+                'course_id' => $this->course_id
+            ]
+        ]);
+
+        // Load only the submissions that passed the JOIN filter
+        $this->allSubmissions = SubmittedRequirement::whereIn('id', $submissionIds)
             ->with(['media', 'reviewer', 'user.college', 'user.department', 'course'])
             ->latest()
             ->get();
-
-        // Debug: Log the query results
-        \Log::info('RequirementView Query Results:', [
-            'submissions_count' => $this->allSubmissions->count(),
-            'submission_ids' => $this->allSubmissions->pluck('id')->toArray()
-        ]);
 
         // Collect all files from the filtered submissions
         $this->allFiles = $this->allSubmissions->flatMap(function ($submission) {
@@ -169,6 +168,8 @@ class RequirementView extends Component
             $this->isPreviewable = false;
             $this->selectedStatus = '';
             $this->adminNotes = '';
+            
+            \Log::info('No files found after filtering');
             return;
         }
 
@@ -177,12 +178,17 @@ class RequirementView extends Component
             $file = $this->allFiles->firstWhere('id', $this->initialFileId);
             if ($file) {
                 $this->selectFile($file['id']);
+                \Log::info('Selected initial file by ID:', ['file_id' => $this->initialFileId]);
                 return;
             }
         }
 
         // Fallback to the first file
-        $this->selectFile($this->allFiles->first()['id']);
+        $firstFile = $this->allFiles->first();
+        if ($firstFile) {
+            $this->selectFile($firstFile['id']);
+            \Log::info('Selected first available file:', ['file_id' => $firstFile['id']]);
+        }
     }
 
     public function selectFile($fileId)
@@ -209,6 +215,24 @@ class RequirementView extends Component
 
     public function updateStatus()
     {
+        // First, check if this submission still exists in requirement_submission_indicators
+        $stillSubmitted = DB::table('requirement_submission_indicators as rsi')
+            ->where('rsi.requirement_id', $this->requirement_id)
+            ->where('rsi.user_id', $this->user_id)
+            ->where('rsi.course_id', $this->course_id)
+            ->exists();
+
+        if (!$stillSubmitted) {
+            $this->dispatch('showNotification', 
+                type: 'error', 
+                content: 'Cannot update status: This requirement is no longer marked as submitted.'
+            );
+            
+            // Reload files to reflect the current state
+            $this->loadFiles();
+            return;
+        }
+
         $submission = SubmittedRequirement::find($this->selectedFile['submission_id']);
         
         if ($submission) {
@@ -222,8 +246,16 @@ class RequirementView extends Component
             // Reload files to reflect changes
             $this->loadFiles();
             
-            // Reselect the current file
-            $this->selectFile($this->selectedFile['id']);
+            // Reselect the current file if it still exists
+            if ($this->allFiles->isNotEmpty()) {
+                $currentFile = $this->allFiles->firstWhere('id', $this->selectedFile['id']);
+                if ($currentFile) {
+                    $this->selectFile($currentFile['id']);
+                } else {
+                    // If current file no longer exists, select the first available file
+                    $this->selectFile($this->allFiles->first()['id']);
+                }
+            }
             
             $this->dispatch('showNotification', 
                 type: 'success', 

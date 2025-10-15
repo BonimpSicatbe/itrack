@@ -40,7 +40,7 @@
                             type="text" 
                             wire:model.live.debounce.300ms="search"
                             class="block w-sm p-2 pl-9 text-sm text-1B512D border border-gray-300 shadow-sm focus:border-green-600 focus:ring-green-600 rounded-xl" 
-                            placeholder="Search @if($category === 'overview') users... @elseif($selectedRequirementId && $selectedUserId) courses... @elseif($selectedRequirementId) users... @else requirements... @endif"
+                            placeholder="@if($category === 'overview') Search users... @elseif($selectedRequirementId && $selectedUserId) Search courses... @elseif($selectedRequirementId) Search users... @else Search requirements... @endif"
                         >
                     </div>
                 </div>
@@ -58,30 +58,28 @@
             </div>
 
             <!-- Breadcrumb Navigation for Requirement Category -->
-            @if($category === 'requirement')
+            @if($category === 'requirement' && count($breadcrumb) > 1)
                 <div class="flex items-center text-sm text-gray-600 p-3 bg-green-50 rounded-xl border border-green-600">
-                    <button 
-                        wire:click="goBack('requirement')" 
-                        class="flex items-center gap-1 px-1 py-1"
-                    >
-                        <span class=" text-green-600 hover:text-amber-500 hover:underline hover:underline-offset-4 font-semibold">Requirements</span>
-                    </button>
-                    
-                    @foreach($breadcrumb as $index => $crumb)
-                        <i class="fa-regular fa-chevron-right text-gray-300 mx-1 text-sm"></i>
-                        @if($index === count($breadcrumb) - 1)
-                            <div class="flex items-center gap-2 px-1 py-1 ">
-                                <span class="font-semibold text-green-600 hover:text-amber-500 hover:underline hover:underline-offset-4">{{ $crumb['name'] }}</span>
-                            </div>
-                        @else
-                            <button 
-                                wire:click="goBack('{{ $crumb['type'] }}')" 
-                                class="flex items-center gap-2 py-1"
-                            >
-                                <span class=" text-green-600 hover:text-amber-500 hover:underline hover:underline-offset-4 font-semibold">{{ $crumb['name'] }}</span>
-                            </button>
-                        @endif
-                    @endforeach
+                    <ol class="flex items-center space-x-1">
+                        @foreach($breadcrumb as $index => $crumb)
+                            <li class="flex items-center">
+                                @if($index > 0)
+                                    <i class="fa-regular fa-chevron-right text-gray-300 mx-1 text-sm"></i>
+                                @endif
+                                
+                                @if($loop->last)
+                                    <span class="font-semibold text-green-600">{{ $crumb['name'] }}</span>
+                                @else
+                                    <button 
+                                        wire:click="goBack('{{ $crumb['type'] }}', {{ $index }})"
+                                        class="font-semibold text-green-600 hover:text-amber-500 hover:underline hover:underline-offset-4"
+                                    >
+                                        {{ $crumb['name'] }}
+                                    </button>
+                                @endif
+                            </li>
+                        @endforeach
+                    </ol>
                 </div>
             @endif
 
@@ -116,7 +114,7 @@
                                         <div class="col-span-8 flex items-center gap-3">
                                             <i class="fas fa-folder text-green-600 text-xl"></i>
                                             <div class="flex flex-col">
-                                                <span class="font-semibold text-gray-800">{{ $requirement['name'] }}</span>
+                                                <span class="text-sm font-semibold text-gray-800">{{ $requirement['name'] }}</span>
                                             </div>
                                         </div>
                                         <div class="col-span-2 flex items-center justify-center">
@@ -160,7 +158,7 @@
                                             </div>
                                             
                                             <div class="flex-1 mb-4">
-                                                <h3 class="font-semibold text-gray-800 text-lg mb-1 line-clamp-2" title="{{ $requirement['name'] }}">
+                                                <h3 class="font-semibold text-gray-800 text-sm mb-1 line-clamp-2" title="{{ $requirement['name'] }}">
                                                     {{ $requirement['name'] }}
                                                 </h3>
                                             </div>
@@ -212,7 +210,7 @@
                                                 </div>
                                             </div>
                                             <div class="flex flex-col min-w-0">
-                                                <span class="font-semibold text-gray-800 truncate">{{ $user->full_name }}</span>
+                                                <span class="text-sm font-semibold text-gray-800 truncate">{{ $user->full_name }}</span>
                                                 <span class="text-sm text-gray-500 truncate">{{ $user->email }}</span>
                                             </div>
                                         </div>
@@ -270,7 +268,7 @@
                                             </div>
                                             
                                             <div class="flex-1 mb-4">
-                                                <h3 class="font-semibold text-gray-800 text-lg mb-1">{{ $user->full_name }}</h3>
+                                                <h3 class="font-semibold text-gray-800 text-sm mb-1">{{ $user->full_name }}</h3>
                                                 <p class="text-sm text-gray-500 truncate mb-1">{{ $user->email }}</p>
                                             </div>
                                             
@@ -321,7 +319,7 @@
                                                 </div>
                                             </div>
                                             <div class="flex flex-col min-w-0">
-                                                <span class="font-semibold text-gray-800">{{ $course->course_code }}</span>
+                                                <span class="text-sm font-semibold text-gray-800">{{ $course->course_code }}</span>
                                                 <span class="text-sm text-gray-500 truncate">{{ $course->course_name }}</span>
                                             </div>
                                         </div>
@@ -361,7 +359,7 @@
                                             </div>
                                             
                                             <div class="flex-1 mb-4">
-                                                <h3 class="font-semibold text-gray-800 text-lg mb-1">{{ $course->course_code }}</h3>
+                                                <h3 class="font-semibold text-gray-800 text-sm mb-1">{{ $course->course_code }}</h3>
                                                 <p class="text-sm text-gray-500 line-clamp-2">{{ $course->course_name }}</p>
                                             </div>
                                             

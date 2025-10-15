@@ -107,9 +107,49 @@ class SubmittedRequirementsIndex extends Component
         }
     }
     
-    public function goBack($level)
+    public function goBack($crumbType, $index = null)
     {
-        switch ($level) {
+        if ($index !== null) {
+            // Clear all selections after the clicked breadcrumb
+            $this->clearSelectionsFromIndex($index);
+        } else {
+            // Fallback to type-based navigation
+            $this->handleTypeBasedNavigation($crumbType);
+        }
+        
+        $this->updateBreadcrumb();
+        $this->resetPage();
+    }
+
+    protected function clearSelectionsFromIndex($index)
+    {
+        $breadcrumbTypes = array_column($this->breadcrumb, 'type');
+        
+        // Clear all selections that come after the clicked index
+        for ($i = $index + 1; $i < count($breadcrumbTypes); $i++) {
+            $typeToClear = $breadcrumbTypes[$i];
+            
+            switch ($typeToClear) {
+                case 'requirement':
+                    $this->selectedRequirementId = null;
+                    break;
+                case 'user':
+                    $this->selectedUserId = null;
+                    $this->selectedCourseId = null; // Clearing user also clears course
+                    break;
+                case 'course':
+                    $this->selectedCourseId = null;
+                    break;
+            }
+        }
+    }
+
+    protected function handleTypeBasedNavigation($crumbType)
+    {
+        switch ($crumbType) {
+            case 'category':
+                $this->resetNavigation();
+                break;
             case 'requirement':
                 $this->selectedRequirementId = null;
                 $this->selectedUserId = null;
@@ -123,8 +163,6 @@ class SubmittedRequirementsIndex extends Component
                 $this->selectedCourseId = null;
                 break;
         }
-        $this->updateBreadcrumb();
-        $this->resetPage();
     }
     
     private function resetNavigation()
@@ -139,6 +177,14 @@ class SubmittedRequirementsIndex extends Component
     {
         $this->breadcrumb = [];
         
+        // Always show category as first breadcrumb
+        $this->breadcrumb[] = [
+            'type' => 'category',
+            'id' => $this->category,
+            'name' => ucfirst($this->category)
+        ];
+
+        // Build navigation breadcrumbs
         if ($this->selectedRequirementId) {
             $requirement = Requirement::find($this->selectedRequirementId);
             $this->breadcrumb[] = [
@@ -263,10 +309,11 @@ class SubmittedRequirementsIndex extends Component
             return collect();
         }
 
-        // Get users who have submissions for this requirement
-        $userIds = SubmittedRequirement::where('requirement_id', $this->selectedRequirementId)
-            ->distinct('user_id')
-            ->pluck('user_id');
+        // Get users who have SUBMITTED (marked as done) requirements
+        $userIds = DB::table('requirement_submission_indicators as rsi')
+            ->where('rsi.requirement_id', $this->selectedRequirementId)
+            ->distinct()
+            ->pluck('rsi.user_id');
 
         $query = User::whereIn('id', $userIds)
             ->with(['college', 'department'])
@@ -276,23 +323,37 @@ class SubmittedRequirementsIndex extends Component
         if ($this->search) {
             $query->where(function($q) {
                 $q->where('firstname', 'like', '%'.$this->search.'%')
-                  ->orWhere('middlename', 'like', '%'.$this->search.'%')
-                  ->orWhere('lastname', 'like', '%'.$this->search.'%')
-                  ->orWhere('email', 'like', '%'.$this->search.'%');
+                ->orWhere('middlename', 'like', '%'.$this->search.'%')
+                ->orWhere('lastname', 'like', '%'.$this->search.'%')
+                ->orWhere('email', 'like', '%'.$this->search.'%');
             });
         }
 
         return $query->get()->map(function($user) {
-            // Count submissions for this user and requirement
-            $submissionCount = SubmittedRequirement::where('requirement_id', $this->selectedRequirementId)
-                ->where('user_id', $user->id)
+            // Count ONLY submissions that are marked as done
+            $submissionCount = DB::table('submitted_requirements as sr')
+                ->join('requirement_submission_indicators as rsi', function($join) use ($user) {
+                    $join->on('sr.requirement_id', '=', 'rsi.requirement_id')
+                        ->on('sr.user_id', '=', 'rsi.user_id')
+                        ->on('sr.course_id', '=', 'rsi.course_id')
+                        ->where('rsi.user_id', $user->id);
+                })
+                ->where('sr.requirement_id', $this->selectedRequirementId)
+                ->where('sr.user_id', $user->id)
                 ->count();
                 
-            // Count courses for this user and requirement
-            $courseCount = SubmittedRequirement::where('requirement_id', $this->selectedRequirementId)
-                ->where('user_id', $user->id)
-                ->distinct('course_id')
-                ->count('course_id');
+            // Count courses with submitted requirements
+            $courseCount = DB::table('submitted_requirements as sr')
+                ->join('requirement_submission_indicators as rsi', function($join) use ($user) {
+                    $join->on('sr.requirement_id', '=', 'rsi.requirement_id')
+                        ->on('sr.user_id', '=', 'rsi.user_id')
+                        ->on('sr.course_id', '=', 'rsi.course_id')
+                        ->where('rsi.user_id', $user->id);
+                })
+                ->where('sr.requirement_id', $this->selectedRequirementId)
+                ->where('sr.user_id', $user->id)
+                ->distinct('sr.course_id')
+                ->count('sr.course_id');
                 
             return [
                 'user' => $user,
@@ -311,11 +372,12 @@ class SubmittedRequirementsIndex extends Component
             return collect();
         }
 
-        // Get course IDs from submitted_requirements for this user and requirement
-        $courseIds = SubmittedRequirement::where('requirement_id', $this->selectedRequirementId)
-            ->where('user_id', $this->selectedUserId)
-            ->distinct('course_id')
-            ->pluck('course_id');
+        // Get course IDs from SUBMITTED (marked as done) requirements
+        $courseIds = DB::table('requirement_submission_indicators as rsi')
+            ->where('rsi.requirement_id', $this->selectedRequirementId)
+            ->where('rsi.user_id', $this->selectedUserId)
+            ->distinct()
+            ->pluck('rsi.course_id');
 
         $query = Course::whereIn('id', $courseIds)
             ->orderBy('course_code');
@@ -323,21 +385,32 @@ class SubmittedRequirementsIndex extends Component
         if ($this->search) {
             $query->where(function($q) {
                 $q->where('course_code', 'like', '%'.$this->search.'%')
-                  ->orWhere('course_name', 'like', '%'.$this->search.'%');
+                ->orWhere('course_name', 'like', '%'.$this->search.'%');
             });
         }
 
         return $query->get()->map(function($course) {
-            // Get the submission details for this course
-            $submission = SubmittedRequirement::where('requirement_id', $this->selectedRequirementId)
-                ->where('user_id', $this->selectedUserId)
-                ->where('course_id', $course->id)
+            // Get ONLY the submission that is marked as done
+            $submission = DB::table('submitted_requirements as sr')
+                ->join('requirement_submission_indicators as rsi', function($join) use ($course) {
+                    $join->on('sr.requirement_id', '=', 'rsi.requirement_id')
+                        ->on('sr.user_id', '=', 'rsi.user_id')
+                        ->on('sr.course_id', '=', 'rsi.course_id')
+                        ->where('rsi.course_id', $course->id);
+                })
+                ->where('sr.requirement_id', $this->selectedRequirementId)
+                ->where('sr.user_id', $this->selectedUserId)
+                ->where('sr.course_id', $course->id)
+                ->select('sr.*') // Get the submitted_requirements data
                 ->first();
+                
+            // Convert to SubmittedRequirement model if needed
+            $submissionModel = $submission ? SubmittedRequirement::find($submission->id) : null;
                 
             return [
                 'course' => $course,
-                'submission' => $submission,
-                'status' => $submission ? $submission->status : 'not_submitted'
+                'submission' => $submissionModel,
+                'status' => $submissionModel ? $submissionModel->status : 'not_submitted'
             ];
         });
     }

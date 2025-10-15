@@ -66,7 +66,7 @@
                         </div>
 
                         <!-- Create Button -->
-                        <button wire:click="createRequirement" class="btn bg-green-600 hover:bg-green-700 text-white text-sm flex items-center gap-2 border-0 rounded-full shadow-md px-4 py-1.5">
+                        <button wire:click="createRequirement" class="btn bg-green-600 cursor-pointer hover:bg-green-700 text-white text-sm flex items-center gap-2 border-0 rounded-xl shadow-md px-4 py-1.5">
                             <i class="fa-solid fa-plus"></i>
                             <span>Create</span>
                         </button>
@@ -287,11 +287,11 @@
 
                 <div class="mt-6 pt-4 border-t border-gray-200 flex justify-end space-x-3">
                     <button type="button" wire:click="$set('showDeleteModal', false)" 
-                            class="px-4 py-2 border border-gray-300 rounded-full text-sm font-medium text-gray-700 hover:bg-gray-50 cursor-pointer">
+                            class="px-4 py-2 border border-gray-300 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50 cursor-pointer">
                         Cancel
                     </button>
                     <button type="button" wire:click="deleteRequirement" 
-                            class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-full text-sm font-medium cursor-pointer"
+                            class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-sm font-medium cursor-pointer"
                             wire:loading.attr="disabled">
                         <span wire:loading.remove wire:target="deleteRequirement">
                             <i class="fa-solid fa-trash mr-2"></i> Delete

@@ -8,7 +8,7 @@
             <!-- Title -->
             <div class="flex items-center gap-3">
                 <i class="fa-solid fa-gears text-white text-xl"></i>
-                <h2 class="text-xl font-semibold text-white">mement</h2>
+                <h2 class="text-xl font-semibold text-white">System Management</h2>
             </div>
 
             <!-- Tabs Navigation -->
@@ -17,7 +17,7 @@
                     @foreach($tabs as $tabKey => $tab)
                         <a
                             href="{{ route('admin.management.index', ['tab' => $tabKey]) }}"
-                            class="px-4 py-2 rounded-full text-sm font-semibold transition-colors duration-200 shadow-sm
+                            class="px-4 py-2 rounded-xl text-sm font-semibold transition-colors duration-200 shadow-sm
                                 {{ $activeTab === $tabKey 
                                     ? 'bg-white text-1C7C54' 
                                     : 'bg-white/20 hover:bg-white text-1C7C54' }}"

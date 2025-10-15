@@ -22,10 +22,41 @@ class Notification extends Component
     public $activeTab = 'all'; // 'all', 'unread', 'read'
     public $hasUnreadNotifications = false;
 
+    public $notificationIdFromUrl = null;
+
     public function mount(): void
     {
         $this->loadNotifications();
         $this->updateUnreadStatus();
+        
+        // Check if there's a notification ID in the URL
+        $this->notificationIdFromUrl = request()->query('notification');
+        
+        // If there's a notification ID in URL, automatically select it
+        if ($this->notificationIdFromUrl) {
+            $this->selectNotification($this->notificationIdFromUrl);
+        }
+    }
+
+    public function markAsReadAndNavigate(string $notificationId): Redirector
+    {
+        // Mark as read first
+        $notification = Auth::user()
+            ->notifications()
+            ->where('id', $notificationId)
+            ->first();
+
+        if ($notification && $notification->unread()) {
+            $notification->markAsRead();
+        }
+
+        // Redirect to notification page with the specific notification selected
+        return redirect()->route('user.notifications', ['notification' => $notificationId]);
+    }
+
+    public function viewAllNotifications(): Redirector
+    {
+        return redirect()->route('user.notifications');
     }
 
     public function loadNotifications(): void

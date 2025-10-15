@@ -9,7 +9,7 @@
             </div>
         </div>
         <button wire:click="openAddUserModal"
-            class="px-5 py-2 bg-green-600 text-white font-semibold rounded-full hover:bg-green-700 text-sm cursor-pointer">
+            class="px-5 py-2 bg-green-600 text-white font-semibold rounded-xl hover:bg-green-700 text-sm cursor-pointer">
             <i class="fa-solid fa-plus mr-2"></i>Add User
         </button>
     </div>
@@ -39,18 +39,6 @@
                     class="pl-10 block w-full rounded-xl border-gray-300 shadow-sm focus:border-green-600 focus:ring-green-600 sm:text-sm"
                     placeholder="Search by name, email, or college">
             </div>
-        </div>
-
-        <!-- College Filter -->
-        <div class="w-full sm:w-1/4">
-            <label class="block text-sm font-semibold text-gray-700 mb-1">College</label>
-            <select wire:model.live="collegeFilter"
-                class="block w-full rounded-xl border-gray-300 shadow-sm focus:border-green-600 focus:ring-green-600 sm:text-sm">
-                <option value="">All Colleges</option>
-                @foreach ($colleges as $college)
-                    <option value="{{ $college->id }}">{{ $college->name }}</option>
-                @endforeach
-            </select>
         </div>
     </div>
 
@@ -297,10 +285,10 @@
 
                 <!-- Action buttons -->
                 <div class="mt-6 pt-4 border-t border-gray-200 flex justify-end space-x-3">
-                    <button type="button" wire:click="closeUserDetail" class="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 cursor-pointer">
+                    <button type="button" wire:click="closeUserDetail" class="bg-white py-2 px-4 border border-gray-300 rounded-xl shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 cursor-pointer">
                         Close
                     </button>
-                    <button type="button" wire:click="openEditUserModal({{ $selectedUser->id }})" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 cursor-pointer">
+                    <button type="button" wire:click="openEditUserModal({{ $selectedUser->id }})" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-xl shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 cursor-pointer">
                         <i class="fa-solid fa-pen-to-square mr-2"></i> Edit User
                     </button>
                 </div>
@@ -414,11 +402,11 @@
                 <!-- Action buttons -->
                 <div class="mt-6 pt-4 border-t border-gray-200 flex justify-end space-x-3">
                     <button type="button" wire:click="closeAddUserModal"
-                        class="bg-white py-2 px-4 border border-gray-300 rounded-full shadow-sm text-sm font-medium text-gray-500 cursor-pointer">
+                        class="bg-white py-2 px-4 border border-gray-300 rounded-xl shadow-sm text-sm font-medium text-gray-500 cursor-pointer">
                         Cancel
                     </button>
                     <button type="button" wire:click="addUser"
-                        class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-full shadow-sm text-white bg-green-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 cursor-pointer">
+                        class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-xl shadow-sm text-white bg-green-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 cursor-pointer">
                         <i class="fa-solid fa-user-plus mr-2"></i> Add User
                     </button>
                 </div>
@@ -537,11 +525,11 @@
                 <!-- Action buttons -->
                 <div class="mt-6 pt-4 border-t border-gray-200 flex justify-end space-x-3">
                     <button type="button" wire:click="closeEditUserModal"
-                        class="bg-white py-2 px-4 border border-gray-300 rounded-full shadow-sm text-sm font-medium text-gray-500 cursor-pointer">
+                        class="bg-white py-2 px-4 border border-gray-300 rounded-xl shadow-sm text-sm font-medium text-gray-500 cursor-pointer">
                         Cancel
                     </button>
                     <button type="button" wire:click="updateUser"
-                        class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-full shadow-sm text-white bg-green-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 cursor-pointer">
+                        class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-xl shadow-sm text-white bg-green-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 cursor-pointer">
                         <i class="fa-solid fa-user-check mr-2"></i> Update User
                     </button>
                 </div>

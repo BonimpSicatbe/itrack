@@ -5,7 +5,7 @@
             <i class="text-2xl fa-solid fa-circle-info"></i> Requirement Details
         </h2>
         <a href="{{ route('admin.requirements.edit', $requirement->id) }}"
-           class="bg-white text-green-700 px-4 py-1.5 rounded-full shadow font-semibold text-sm transition-all duration-200 flex items-center gap-2 hover:bg-gray-50">
+           class="bg-white text-green-700 px-4 py-2 rounded-xl shadow font-semibold text-sm transition-all duration-200 flex items-center gap-2 hover:bg-gray-50">
             <i class="fa-solid fa-pencil text-green-700"></i> Edit
         </a>
     </div>
@@ -54,7 +54,7 @@
 
                 <!-- Required Files -->
                 <div>
-                    <h4 class="text-md font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                    <h4 class="text-lg font-semibold text-gray-800 mb-3 flex items-center gap-2">
                         <i class="fa-solid fa-folder-open text-green-600"></i> Required Files
                     </h4>
                     <div class="space-y-2">

@@ -7,7 +7,7 @@
                 <p class="text-sm text-gray-600">| Manage academic semesters and set active semester.</p>
             </div>
         </div>
-        <label for="create_semester_modal" class="btn btn-md btn-success rounded-full text-gray-50"><i
+        <label for="create_semester_modal" class="btn btn-md bg-green-600 rounded-xl text-gray-50"><i
                 class="fa-solid fa-plus min-w-[20px] text-center"></i> Add Semester</label>
 
     </div>
@@ -125,7 +125,7 @@
                                     <!-- Archive button (deactivate) for active semester -->
                                     <button
                                         class="text-orange-600 hover:bg-orange-100 rounded-xl p-2 tooltip cursor-pointer"
-                                        data-tip="Archive Semester" wire:click="setInactive({{ $semester->id }})">
+                                        data-tip="Download Semester" wire:click="setInactive({{ $semester->id }})">
                                         <i class="fa-solid fa-box-archive"></i>
                                     </button>
                                 @else
@@ -147,7 +147,7 @@
                                 @if (!$semester->is_active)
                                     <a href="{{ route('admin.semesters.download', $semester) }}"
                                         class="text-blue-600 hover:bg-blue-100 rounded-xl p-2 tooltip cursor-pointer"
-                                        data-tip="Archive Semester" wire:click="setInactive({{ $semester->id }})">
+                                        data-tip="Download Semester" wire:click="setInactive({{ $semester->id }})">
 
                                         <i class="fa-solid fa-download"></i>
                                     </a>
@@ -173,8 +173,8 @@
     </div>
 
     <!-- Create Semester Modal -->
-    <input type="checkbox" id="create_semester_modal" class="modal-toggle" checked />
-    <div class="modal" role="dialog">
+    <input type="checkbox" id="create_semester_modal" class="modal-toggle"/>
+    <div class="modal rounded-xl" role="dialog">
         <div class="modal-box p-0 m-0">
             {{-- header --}}
             <div class="text-white px-6 py-4 flex items-center space-x-3"
@@ -196,9 +196,9 @@
 
                 <!-- Footer -->
                 <div class="flex flex-row items-center gap-4 justify-end w-full">
-                    <label for="create_semester_modal" class="btn btn-md btn-default rounded-full">Cancel</label>
+                    <label for="create_semester_modal" class="btn btn-md btn-default rounded-xl">Cancel</label>
                     <button wire:click='createSemester' type="button"
-                        class="btn btn-md bg-green-600 hover:bg-green-700 text-white rounded-full">
+                        class="btn btn-md bg-green-600 hover:bg-green-700 text-white rounded-xl">
                         <span wire:loading.remove wire:target="createSemester">Create Semester</span>
                         <span wire:loading wire:target="createSemester"><i
                                 class="fa-solid fa-spinner fa-spin mr-2"></i> Creating...</span>
@@ -208,20 +208,6 @@
         </div>
         <label class="modal-backdrop" for="create_semester_modal">Close</label>
     </div>
-
-    {{-- js for closing of modal --}}
-    <script>
-        document.addEventListener('livewire:init', () => {
-            Livewire.on('closeModal', ({
-                modalId
-            }) => {
-                const modal = document.getElementById(modalId);
-                if (modal) {
-                    modal.checked = false; // closes the daisyUI modal
-                }
-            });
-        });
-    </script>
 
     <!-- Edit Semester Modal -->
     @if ($showEditModal && $editingSemester)
@@ -273,11 +259,11 @@
                 <!-- Footer -->
                 <div class="mt-6 flex justify-end space-x-3">
                     <button type="button" wire:click="closeEditModal"
-                        class="px-5 py-2 rounded-full border border-gray-300 text-gray-500 bg-white font-semibold text-sm cursor-pointer">
+                        class="px-5 py-2 rounded-xl border border-gray-300 text-gray-500 bg-white font-semibold text-sm cursor-pointer">
                         Cancel
                     </button>
                     <button type="button" wire:click="updateSemester" wire:loading.attr="disabled"
-                        class="px-5 py-2 rounded-full bg-green-600 text-white font-semibold text-sm shadow hover:bg-1B512D cursor-pointer">
+                        class="px-5 py-2 rounded-xl bg-green-600 text-white font-semibold text-sm shadow hover:bg-1B512D cursor-pointer">
                         <span wire:loading.remove wire:target="updateSemester">Update Semester</span>
                         <span wire:loading wire:target="updateSemester">
                             <i class="fa-solid fa-spinner fa-spin mr-2"></i> Updating...
@@ -309,11 +295,11 @@
 
                 <div class="mt-6 pt-4 border-t border-gray-200 flex justify-end space-x-3">
                     <button type="button" wire:click="closeDeleteConfirmationModal"
-                        class="px-4 py-2 border border-gray-300 rounded-full text-sm font-medium text-gray-700 cursor-pointer">
+                        class="px-4 py-2 border border-gray-300 rounded-xl text-sm font-medium text-gray-700 cursor-pointer">
                         Cancel
                     </button>
                     <button type="button" wire:click="deleteSemester"
-                        class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-full text-sm font-medium cursor-pointer"
+                        class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-sm font-medium cursor-pointer"
                         wire:loading.attr="disabled">
                         <span wire:loading.remove wire:target="deleteSemester">
                             <i class="fa-solid fa-trash mr-2"></i> Delete

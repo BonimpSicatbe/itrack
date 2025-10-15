@@ -56,11 +56,14 @@ class Navigation extends Component
                     'description' => 'Review submissions'
                 ],
                 [
-                    'label' => 'Files',
+                    'label' => 'Portfolio',
                     'icon' => 'file',
                     'route' => 'admin.file-manager.index',
                     'group' => 'admin.file-manager.*',
-                    'description' => 'File management'
+                    'description' => 'File management',
+                    'icon_type' => 'custom', 
+                    'icon_path' => 'images/portfolio-gray.png', 
+                    'icon_path_active' => 'images/portfolio-green.png' 
                 ],
                 
             ],

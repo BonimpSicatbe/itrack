@@ -3,20 +3,20 @@
     <div class="overflow-x-auto bg-white rounded-xl border border-gray-200 relative" style="min-height: 200px;">
         <table class="min-w-full border-collapse">
             <!-- Table Header -->
-            <thead class="bg-green-700 text-white font-semibold text-sm sticky top-0 z-30">
+            <thead class="bg-green-600 text-white font-semibold text-sm sticky top-0 z-30">
                 <tr>
-                    <th class="p-3 border border-green-600 sticky left-0 bg-green-700 z-40 w-49 min-w-49 relative">
+                    <th class="p-3 border border-green-500 sticky left-0 bg-green-600 z-40 w-49 min-w-49 relative">
                         <div class="absolute inset-0"></div>
                         User
                     </th>
-                    <th class="p-3 border border-green-600 sticky left-48 bg-green-700 z-40 w-40 min-w-40  relative">
+                    <th class="p-3 border border-green-500 sticky left-48 bg-green-600 z-40 w-40 min-w-40  relative">
                         <div class="absolute inset-0 "></div>
                         Course
                     </th>
                     
                     <!-- Requirement Columns -->
                     @foreach($overviewData['requirements'] as $requirement)
-                        <th class="p-3 border border-green-600 text-center w-40 min-w-40 max-w-60" title="{{ $requirement->name }}">
+                        <th class="p-3 border border-green-500 text-center w-40 min-w-40 max-w-60" title="{{ $requirement->name }}">
                             <div class="truncate">
                                 {{ \Illuminate\Support\Str::limit($requirement->name, 20) }}
                             </div>

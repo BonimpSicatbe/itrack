@@ -1,4 +1,4 @@
-<div class="bg-white rounded-xl shadow p-3 h-full border border-DEF4C6"> 
+<div class="bg-white rounded-xl shadow p-3 h-full"> 
     <!-- Header -->
     <div class="flex justify-between items-center mb-6 p-4 rounded-xl text-white shadow"
          style="background: linear-gradient(148deg,rgba(18, 67, 44, 1) 0%, rgba(30, 119, 77, 1) 54%, rgba(55, 120, 64, 1) 100%);">
@@ -9,7 +9,7 @@
             <h2 class="text-xl md:text-xl font-semibold">Semester</h2>
         </div>
         <a href="{{ route('admin.management.index', ['tab' => 'semesters']) }}" 
-           class="px-4 py-2 rounded-full bg-white text-1C7C54 text-sm font-semibold hover:bg-gray-100 transition flex items-center shadow">
+           class="px-4 py-2 rounded-xl bg-white text-1C7C54 text-sm font-semibold hover:bg-gray-100 transition flex items-center shadow">
             <i class="fa-solid fa-calendar-days mr-2"></i>
             Manage
         </a>
@@ -22,7 +22,7 @@
             <div class="relative group">
                 <button 
                     wire:click="showSemesterFiles('{{ $currentSemester->id }}')"
-                    class="w-full text-left flex items-center justify-between p-4 bg-DEF4C6/60 hover:bg-DEF4C6 rounded-xl border border-green-700 transition shadow-sm"
+                    class="w-full text-left flex items-center justify-between p-4 rounded-xl border-2 border-green-600 transition shadow-sm"
                 >
                     <div>
                         <p class="font-semibold text-1B512D">{{ $currentSemester->name }}</p>

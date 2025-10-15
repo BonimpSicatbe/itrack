@@ -7,7 +7,7 @@
 
         <div class="grid gap-6">
             <div>
-                <label for="update_password_current_password" class="block text-sm font-medium text-gray-700 mb-2">
+                <label for="update_password_current_password" class="block text-xs font-medium tracking-wide uppercase text-gray-700 mb-2">
                     {{ __('Current Password') }}
                 </label>
                 <div class="relative">
@@ -29,7 +29,7 @@
             </div>
 
             <div>
-                <label for="update_password_password" class="block text-sm font-medium text-gray-700 mb-2">
+                <label for="update_password_password" class="block text-xs font-medium tracking-wide uppercase text-gray-700 mb-2">
                     {{ __('New Password') }}
                 </label>
                 <div class="relative">
@@ -52,7 +52,7 @@
             </div>
 
             <div>
-                <label for="update_password_password_confirmation" class="block text-sm font-medium text-gray-700 mb-2">
+                <label for="update_password_password_confirmation" class="block text-xs font-medium tracking-wide uppercase text-gray-700 mb-2">
                     {{ __('Confirm Password') }}
                 </label>
                 <div class="relative">
@@ -99,7 +99,7 @@
             
             <button 
                 type="submit"
-                class="inline-flex items-center px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                class="inline-flex items-center px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-xl transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
             >
                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>

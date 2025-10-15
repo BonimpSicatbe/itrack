@@ -11,7 +11,7 @@
             </div>
             <button 
                 wire:click="openAddProgramModal" 
-                class="px-5 py-2 bg-green-600 text-white font-semibold rounded-full text-sm cursor-pointer"
+                class="px-5 py-2 bg-green-600 text-white font-semibold rounded-xl text-sm cursor-pointer"
             >
                 <i class="fa-solid fa-plus mr-2"></i>Add Program
             </button>
@@ -166,11 +166,11 @@
 
                 <div class="mt-8 flex justify-end space-x-3">
                     <button type="button" wire:click="closeAddProgramModal"
-                        class="px-5 py-2 rounded-full border border-gray-300 text-gray-500 bg-white font-semibold text-sm cursor-pointer">
+                        class="px-5 py-2 rounded-xl border border-gray-300 text-gray-500 bg-white font-semibold text-sm cursor-pointer">
                         Cancel
                     </button>
                     <button type="button" wire:click="addProgram" wire:loading.attr="disabled"
-                        class="px-5 py-2 rounded-full bg-green-600 text-white font-semibold text-sm shadow cursor-pointer">
+                        class="px-5 py-2 rounded-xl bg-green-600 text-white font-semibold text-sm shadow cursor-pointer">
                         <span wire:loading.remove wire:target="addProgram">Add Program</span>
                         <span wire:loading wire:target="addProgram">
                             <i class="fa-solid fa-spinner fa-spin mr-2"></i> Adding...
@@ -230,11 +230,11 @@
 
                 <div class="mt-8 flex justify-end space-x-3">
                     <button type="button" wire:click="closeEditProgramModal"
-                        class="px-5 py-2 rounded-full border border-gray-300 text-gray-500 bg-white font-semibold text-sm cursor-pointer">
+                        class="px-5 py-2 rounded-xl border border-gray-300 text-gray-500 bg-white font-semibold text-sm cursor-pointer">
                         Cancel
                     </button>
                     <button type="button" wire:click="updateProgram" wire:loading.attr="disabled"
-                        class="px-5 py-2 rounded-full bg-green-600 text-white font-semibold text-sm shadow cursor-pointer">
+                        class="px-5 py-2 rounded-xl bg-green-600 text-white font-semibold text-sm shadow cursor-pointer">
                         <span wire:loading.remove wire:target="updateProgram">Update Program</span>
                         <span wire:loading wire:target="updateProgram">
                             <i class="fa-solid fa-spinner fa-spin mr-2"></i> Updating...

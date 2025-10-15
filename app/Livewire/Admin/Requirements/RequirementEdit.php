@@ -167,7 +167,7 @@ class RequirementEdit extends Component
     {
         $allPrograms = Program::all()->pluck('id')->toArray();
         $this->selectAllPrograms = !empty($allPrograms) && 
-                                 count($this->selectedPrograms) === count($allPrograms);
+                                count($this->selectedPrograms) === count($allPrograms);
     }
 
     // Computed property for programs
@@ -257,6 +257,20 @@ class RequirementEdit extends Component
         return str_starts_with($mimeType, 'image/') || 
                str_starts_with($mimeType, 'application/pdf') ||
                str_starts_with($mimeType, 'text/');
+    }
+
+    public function toggleProgram($programId)
+    {
+        if (in_array($programId, $this->selectedPrograms)) {
+            // Remove from selection
+            $this->selectedPrograms = array_values(array_diff($this->selectedPrograms, [$programId]));
+        } else {
+            // Add to selection
+            $this->selectedPrograms[] = $programId;
+        }
+        
+        // Update select all programs state
+        $this->selectAllPrograms = count($this->selectedPrograms) === count($this->programs);
     }
 
     public function render()

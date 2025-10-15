@@ -10,7 +10,7 @@
         <div class="p-4 sm:p-8">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <!-- Profile Information Form -->
-                <div class="bg-white sm:rounded-lg p-6">
+                <div class="bg-white sm:rounded-xl p-6">
                     <header class="p-6">
                         <div class="flex items-center space-x-3">
                             <div class="flex-shrink-0">
@@ -34,7 +34,7 @@
                 </div>
 
                 <!-- Update Password Form -->
-                <div class="bg-white sm:rounded-lg p-6">
+                <div class="bg-white sm:rounded-xl p-6">
                     <header class="pb-6">
                         <div class="flex items-center space-x-3">
                             <div class="flex-shrink-0">

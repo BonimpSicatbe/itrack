@@ -20,7 +20,7 @@ class FileManagerIndex extends Component
 
     public $selectedFile = null;
     public $viewMode = 'grid';
-    public $category = null; 
+    public $category = 'requirement'; // Default to requirement
     public $search = '';
     
     // Navigation state
@@ -37,15 +37,24 @@ class FileManagerIndex extends Component
     public $isOfficeDoc = false;
     public $isPreviewable = false;
 
+    // URL query parameters for breadcrumb navigation
+    public $semesterId = null;
+    public $requirementId = null;
+    public $userId = null;
+    public $courseId = null;
     
     protected $queryString = [
         'search' => ['except' => ''],
-        'category' => ['except' => ''],
+        'category' => ['except' => 'requirement'],
         'selectedRequirementId' => ['except' => null],
         'selectedUserId' => ['except' => null],
         'selectedCourseId' => ['except' => null],
         'viewMode' => ['except' => 'grid'],
         'showSemesterPanel' => ['except' => false],
+        'semesterId' => ['except' => null],
+        'requirementId' => ['except' => null],
+        'userId' => ['except' => null],
+        'courseId' => ['except' => null],
     ];
 
     protected $listeners = [
@@ -87,20 +96,58 @@ class FileManagerIndex extends Component
     {
         $this->viewMode = 'grid';
         $this->category = 'requirement';
+        
+        // Initialize from URL parameters if present
+        $this->initializeFromUrl();
         $this->updateBreadcrumbs();
+    }
+
+    /**
+     * Initialize component state from URL parameters
+     */
+    public function initializeFromUrl()
+    {
+        // Set semester if provided
+        if ($this->semesterId) {
+            $this->selectedSemester = Semester::find($this->semesterId);
+        }
+
+        // Set navigation state based on URL parameters
+        if ($this->requirementId) {
+            $this->selectedRequirementId = $this->requirementId;
+        }
+        if ($this->userId) {
+            $this->selectedUserId = $this->userId;
+        }
+        if ($this->courseId) {
+            $this->selectedCourseId = $this->courseId;
+        }
+    }
+
+    /**
+     * Update URL parameters based on current state
+     */
+    private function updateUrlParameters()
+    {
+        $this->semesterId = $this->selectedSemester ? $this->selectedSemester->id : null;
+        $this->requirementId = $this->selectedRequirementId;
+        $this->userId = $this->selectedUserId;
+        $this->courseId = $this->selectedCourseId;
     }
 
     // Navigation methods
     public function setCategory($category)
     {
-        $this->category = $category;
-        $this->resetNavigation();
-        $this->resetPage();
+        if ($this->category !== $category) {
+            $this->category = $category;
+            $this->resetNavigation();
+            $this->resetPage();
+        }
     }
 
     public function clearCategoryFilter()
     {
-        $this->category = null;
+        $this->category = 'requirement';
         $this->resetNavigation();
         $this->resetPage();
     }
@@ -111,29 +158,93 @@ class FileManagerIndex extends Component
         $this->selectedUserId = null;
         $this->selectedCourseId = null;
         $this->selectedFile = null;
-        $this->category = null; // Also reset category when doing full reset
         $this->updateBreadcrumbs();
+        $this->updateUrlParameters();
     }
 
+    /**
+     * Unified navigation method similar to user file manager
+     */
+    public function handleNavigation($level, $id = null)
+    {
+        try {
+            switch ($level) {
+                case 'category':
+                    $this->resetNavigation();
+                    $this->category = 'requirement';
+                    break;
+                    
+                case 'requirement':
+                    if ($this->category === 'user') {
+                        // In user category: keep user and course, set requirement
+                        $this->selectedRequirementId = $id;
+                        $this->selectedFile = null;
+                    } else {
+                        // In requirement category: set requirement, clear user and course to show users list
+                        $this->selectedRequirementId = $id;
+                        $this->selectedUserId = null;
+                        $this->selectedCourseId = null;
+                        $this->selectedFile = null;
+                    }
+                    break;
+                    
+                case 'user':
+                    if ($this->category === 'user') {
+                        // In user category: set user, clear course and requirement
+                        $this->selectedUserId = $id;
+                        $this->selectedCourseId = null;
+                        $this->selectedRequirementId = null;
+                        $this->selectedFile = null;
+                    } else {
+                        // In requirement category: set user, keep requirement, clear course
+                        $this->selectedUserId = $id;
+                        $this->selectedCourseId = null;
+                        $this->selectedFile = null;
+                    }
+                    break;
+                    
+                case 'course':
+                    if ($this->category === 'user') {
+                        // In user category: set course, keep user, clear requirement
+                        $this->selectedCourseId = $id;
+                        $this->selectedRequirementId = null;
+                        $this->selectedFile = null;
+                    } else {
+                        // In requirement category: set course, keep user and requirement
+                        $this->selectedCourseId = $id;
+                        $this->selectedFile = null;
+                    }
+                    break;
+                    
+                case 'file':
+                    $this->selectFile($id);
+                    break;
+            }
+            
+            $this->updateBreadcrumbs();
+            $this->updateUrlParameters();
+            $this->resetPage();
+            
+        } catch (\Exception $e) {
+            \Log::error('Navigation error: ' . $e->getMessage());
+            $this->resetNavigation();
+        }
+    }
+
+    // Keep existing specific methods for backward compatibility
     public function selectRequirement($requirementId)
     {
-        $this->selectedRequirementId = $requirementId;
-        $this->updateBreadcrumbs();
-        $this->resetPage();
+        $this->handleNavigation('requirement', $requirementId);
     }
 
     public function selectUser($userId)
     {
-        $this->selectedUserId = $userId;
-        $this->updateBreadcrumbs();
-        $this->resetPage();
+        $this->handleNavigation('user', $userId);
     }
 
     public function selectCourse($courseId)
     {
-        $this->selectedCourseId = $courseId;
-        $this->updateBreadcrumbs();
-        $this->resetPage();
+        $this->handleNavigation('course', $courseId);
     }
 
     public function selectFile($fileId)
@@ -154,6 +265,7 @@ class FileManagerIndex extends Component
         
         $this->showSemesterPanel = false;
         $this->updateBreadcrumbs();
+        $this->updateUrlParameters();
     }
     
     public function clearSelection()
@@ -165,27 +277,149 @@ class FileManagerIndex extends Component
         $this->isOfficeDoc = false;
         $this->isPreviewable = false;
         $this->updateBreadcrumbs();
+        $this->updateUrlParameters();
     }
 
-    public function goBack($crumbType)
+    /**
+     * Improved breadcrumb navigation that preserves context properly
+     */
+    public function goBack($crumbType, $index = null)
+    {
+        try {
+            if ($index !== null) {
+                // Clear all selections after the clicked breadcrumb
+                $this->clearSelectionsFromIndex($index);
+            } else {
+                // Fallback to type-based navigation
+                $this->handleTypeBasedNavigation($crumbType);
+            }
+            
+            $this->updateBreadcrumbs();
+            $this->updateUrlParameters();
+            $this->resetPage();
+            
+        } catch (\Exception $e) {
+            \Log::error('Breadcrumb navigation error: ' . $e->getMessage());
+            $this->resetNavigation();
+        }
+    }
+
+    /**
+     * Handle type-based navigation with proper category context
+     */
+    protected function handleTypeBasedNavigation($crumbType)
     {
         switch ($crumbType) {
             case 'category':
                 $this->resetNavigation();
-                $this->category = null;
+                $this->category = 'requirement';
                 break;
+                
             case 'requirement':
-                $this->selectedRequirementId = null;
+                if ($this->category === 'requirement') {
+                    // Requirement category: clear requirement and everything below
+                    $this->selectedRequirementId = null;
+                    $this->selectedUserId = null;
+                    $this->selectedCourseId = null;
+                } else {
+                    // User category: clear only requirement, keep user and course
+                    $this->selectedRequirementId = null;
+                }
+                $this->selectedFile = null;
                 break;
+                
             case 'user':
-                $this->selectedUserId = null;
+                if ($this->category === 'requirement') {
+                    // Requirement category: clear user and course, keep requirement
+                    $this->selectedUserId = null;
+                    $this->selectedCourseId = null;
+                } else {
+                    // User category: clear user and everything below
+                    $this->selectedUserId = null;
+                    $this->selectedCourseId = null;
+                    $this->selectedRequirementId = null;
+                }
+                $this->selectedFile = null;
                 break;
+                
             case 'course':
+                // Always clear course and file, keep higher levels based on category
                 $this->selectedCourseId = null;
+                $this->selectedFile = null;
                 break;
         }
-        $this->updateBreadcrumbs();
-        $this->resetPage();
+    }
+
+    /**
+     * Clear selections from a specific breadcrumb index with category awareness
+     */
+    protected function clearSelectionsFromIndex($index)
+    {
+        $breadcrumbTypes = array_column($this->breadcrumbs, 'type');
+        
+        // Clear all selections that come after the clicked index
+        for ($i = $index + 1; $i < count($breadcrumbTypes); $i++) {
+            $typeToClear = $breadcrumbTypes[$i];
+            
+            switch ($typeToClear) {
+                case 'requirement':
+                    $this->selectedRequirementId = null;
+                    // In requirement category, clearing requirement also clears user and course
+                    if ($this->category === 'requirement') {
+                        $this->selectedUserId = null;
+                        $this->selectedCourseId = null;
+                    }
+                    break;
+                    
+                case 'user':
+                    $this->selectedUserId = null;
+                    // Clearing user also clears course in both categories
+                    $this->selectedCourseId = null;
+                    // In user category, clearing user also clears requirement
+                    if ($this->category === 'user') {
+                        $this->selectedRequirementId = null;
+                    }
+                    break;
+                    
+                case 'course':
+                    $this->selectedCourseId = null;
+                    // In user category, clearing course also clears requirement
+                    if ($this->category === 'user') {
+                        $this->selectedRequirementId = null;
+                    }
+                    break;
+                    
+                case 'file':
+                    $this->selectedFile = null;
+                    break;
+            }
+        }
+        
+        // Ensure we don't have invalid state combinations
+        $this->validateNavigationState();
+    }
+
+    /**
+     * Validate and correct navigation state to prevent invalid combinations
+     */
+    protected function validateNavigationState()
+    {
+        // If we have a course selected but no user, clear the course
+        if ($this->selectedCourseId && !$this->selectedUserId) {
+            $this->selectedCourseId = null;
+        }
+        
+        // If we have a requirement selected in user category but no course, clear requirement
+        if ($this->category === 'user' && $this->selectedRequirementId && !$this->selectedCourseId) {
+            $this->selectedRequirementId = null;
+        }
+        
+        // Clear file if we're no longer at the file level
+        if ($this->selectedFile && 
+            (($this->category === 'requirement' && (!$this->selectedRequirementId || !$this->selectedUserId || !$this->selectedCourseId)) ||
+             ($this->category === 'user' && (!$this->selectedUserId || !$this->selectedCourseId || !$this->selectedRequirementId)))) {
+            $this->selectedFile = null;
+        }
     }
     
     public function setViewMode($mode)
@@ -193,58 +427,50 @@ class FileManagerIndex extends Component
         $this->viewMode = $mode;
     }
 
+    /**
+     * Improved breadcrumb generation
+     */
     public function updateBreadcrumbs()
     {
         $this->breadcrumbs = [];
 
-        // Start with category as the root instead of "File Manager"
-        if ($this->category) {
-            $this->breadcrumbs[] = [
-                'type' => 'category',
-                'name' => ucfirst($this->category),
-                'id' => $this->category
-            ];
-        } else {
-            // Default to requirement category if none selected
-            $this->breadcrumbs[] = [
-                'type' => 'category',
-                'name' => 'Requirement',
-                'id' => 'requirement'
-            ];
-        }
+        // Always show category as first breadcrumb
+        $this->breadcrumbs[] = [
+            'type' => 'category',
+            'name' => ucfirst($this->category),
+            'id' => $this->category
+        ];
 
-        // Requirements category breadcrumbs
+        // Build breadcrumbs based on current navigation state
         if ($this->category === 'requirement') {
-            if ($this->selectedRequirementId) {
-                $requirement = Requirement::find($this->selectedRequirementId);
-                $this->breadcrumbs[] = [
-                    'type' => 'requirement',
-                    'name' => $requirement ? $requirement->name : 'Requirement',
-                    'id' => $this->selectedRequirementId
-                ];
-
-                if ($this->selectedUserId) {
-                    $user = User::find($this->selectedUserId);
-                    $this->breadcrumbs[] = [
-                        'type' => 'user',
-                        'name' => $user ? $user->full_name : 'User',
-                        'id' => $this->selectedUserId
-                    ];
-
-                    if ($this->selectedCourseId) {
-                        $course = Course::find($this->selectedCourseId);
-                        $this->breadcrumbs[] = [
-                            'type' => 'course',
-                            'name' => $course ? $course->course_code : 'Course',
-                            'id' => $this->selectedCourseId
-                        ];
-                    }
-                }
-            }
+            $this->buildRequirementCategoryBreadcrumbs();
+        } elseif ($this->category === 'user') {
+            $this->buildUserCategoryBreadcrumbs();
         }
 
-        // Users category breadcrumbs
-        if ($this->category === 'user') {
+        // Add file breadcrumb if selected
+        if ($this->selectedFile) {
+            $this->breadcrumbs[] = [
+                'type' => 'file',
+                'name' => $this->selectedFile->file_name,
+                'id' => $this->selectedFile->id
+            ];
+        }
+    }
+
+    /**
+     * Build breadcrumbs for requirement category
+     */
+    protected function buildRequirementCategoryBreadcrumbs()
+    {
+        if ($this->selectedRequirementId) {
+            $requirement = Requirement::find($this->selectedRequirementId);
+            $this->breadcrumbs[] = [
+                'type' => 'requirement',
+                'name' => $requirement ? $requirement->name : 'Requirement',
+                'id' => $this->selectedRequirementId
+            ];
+
             if ($this->selectedUserId) {
                 $user = User::find($this->selectedUserId);
                 $this->breadcrumbs[] = [
@@ -260,48 +486,69 @@ class FileManagerIndex extends Component
                         'name' => $course ? $course->course_code : 'Course',
                         'id' => $this->selectedCourseId
                     ];
-
-                    if ($this->selectedRequirementId) {
-                        $requirement = Requirement::find($this->selectedRequirementId);
-                        $this->breadcrumbs[] = [
-                            'type' => 'requirement',
-                            'name' => $requirement ? $requirement->name : 'Requirement',
-                            'id' => $this->selectedRequirementId
-                        ];
-                    }
                 }
             }
         }
+    }
 
-        // Add file breadcrumb if selected
-        if ($this->selectedFile) {
+    /**
+     * Build breadcrumbs for user category
+     */
+    protected function buildUserCategoryBreadcrumbs()
+    {
+        if ($this->selectedUserId) {
+            $user = User::find($this->selectedUserId);
             $this->breadcrumbs[] = [
-                'type' => 'file',
-                'name' => $this->selectedFile->file_name,
-                'id' => $this->selectedFile->id
+                'type' => 'user',
+                'name' => $user ? $user->full_name : 'User',
+                'id' => $this->selectedUserId
             ];
+
+            if ($this->selectedCourseId) {
+                $course = Course::find($this->selectedCourseId);
+                $this->breadcrumbs[] = [
+                    'type' => 'course',
+                    'name' => $course ? $course->course_code : 'Course',
+                    'id' => $this->selectedCourseId
+                ];
+
+                if ($this->selectedRequirementId) {
+                    $requirement = Requirement::find($this->selectedRequirementId);
+                    $this->breadcrumbs[] = [
+                        'type' => 'requirement',
+                        'name' => $requirement ? $requirement->name : 'Requirement',
+                        'id' => $this->selectedRequirementId
+                    ];
+                }
+            }
         }
     }
 
+    /**
+     * Get requirements that have actual submitted files with media
+     */
     public function getRequirements()
     {
         $semester = $this->selectedSemester ?? Semester::getActiveSemester();
         if (!$semester) return collect();
 
-        $query = Requirement::whereHas('submissionIndicators', function($q) use ($semester) {
-            $q->whereBetween('requirement_submission_indicators.submitted_at', [
-                $semester->start_date,
-                $semester->end_date
-            ]);
-        })
-        ->withCount(['submissionIndicators as file_count' => function($q) use ($semester) {
-            $q->whereBetween('requirement_submission_indicators.submitted_at', [
-                $semester->start_date,
-                $semester->end_date
-            ]);
-        }]);
+        $query = Requirement::whereHas('submittedRequirements', function($q) use ($semester) {
+                $q->whereHas('media')
+                ->whereBetween('submitted_at', [
+                    $semester->start_date,
+                    $semester->end_date
+                ]);
+            })
+            ->withCount(['submittedRequirements as file_count' => function($q) use ($semester) {
+                $q->whereHas('media')
+                ->whereBetween('submitted_at', [
+                    $semester->start_date,
+                    $semester->end_date
+                ]);
+            }]);
 
-        if ($this->search) {
+        // Only apply search if we're at the requirements level
+        if ($this->search && !$this->selectedRequirementId && !$this->selectedUserId && !$this->selectedCourseId) {
             $query->where('name', 'like', '%'.$this->search.'%');
         }
 
@@ -314,6 +561,9 @@ class FileManagerIndex extends Component
         });
     }
 
+    /**
+     * Get users who have submitted files for the selected requirement
+     */
     public function getUsersForRequirement()
     {
         if (!$this->selectedRequirementId) return collect();
@@ -321,25 +571,28 @@ class FileManagerIndex extends Component
         $semester = $this->selectedSemester ?? Semester::getActiveSemester();
         if (!$semester) return collect();
 
-        $query = User::whereHas('submissionIndicators', function($q) use ($semester) {
+        $query = User::whereHas('submittedRequirements', function($q) use ($semester) {
                 $q->where('requirement_id', $this->selectedRequirementId)
-                ->whereBetween('requirement_submission_indicators.submitted_at', [
+                ->whereHas('media')
+                ->whereBetween('submitted_at', [
                     $semester->start_date,
                     $semester->end_date
                 ]);
             })
-            ->withCount(['submissionIndicators as file_count' => function($q) use ($semester) {
+            ->withCount(['submittedRequirements as file_count' => function($q) use ($semester) {
                 $q->where('requirement_id', $this->selectedRequirementId)
-                ->whereBetween('requirement_submission_indicators.submitted_at', [
+                ->whereHas('media')
+                ->whereBetween('submitted_at', [
                     $semester->start_date,
                     $semester->end_date
                 ]);
             }])
             ->withCount(['courses as course_count' => function($q) use ($semester) {
-                $q->whereHas('submissionIndicators', function($q2) use ($semester) {
+                $q->whereHas('submittedRequirements', function($q2) use ($semester) {
                     $q2->where('requirement_id', $this->selectedRequirementId)
                     ->where('user_id', DB::raw('users.id'))
-                    ->whereBetween('requirement_submission_indicators.submitted_at', [
+                    ->whereHas('media')
+                    ->whereBetween('submitted_at', [
                         $semester->start_date,
                         $semester->end_date
                     ]);
@@ -347,7 +600,8 @@ class FileManagerIndex extends Component
                 ->distinct();
             }]);
 
-        if ($this->search) {
+        // Only apply search if we're at the users level for requirement category
+        if ($this->search && $this->selectedRequirementId && !$this->selectedUserId && !$this->selectedCourseId) {
             $query->where(function($q) {
                 $q->where('firstname', 'like', '%'.$this->search.'%')
                 ->orWhere('lastname', 'like', '%'.$this->search.'%')
@@ -364,6 +618,9 @@ class FileManagerIndex extends Component
         });
     }
 
+    /**
+     * Get courses for selected user and requirement that have submitted files
+     */
     public function getCoursesForUserRequirement()
     {
         if (!$this->selectedRequirementId || !$this->selectedUserId) return collect();
@@ -371,16 +628,19 @@ class FileManagerIndex extends Component
         $semester = $this->selectedSemester ?? Semester::getActiveSemester();
         if (!$semester) return collect();
 
-        $query = Course::whereHas('submissionIndicators', function($q) {
+        $query = Course::whereHas('submittedRequirements', function($q) {
                 $q->where('requirement_id', $this->selectedRequirementId)
-                ->where('user_id', $this->selectedUserId);
+                ->where('user_id', $this->selectedUserId)
+                ->whereHas('media');
             })
-            ->withCount(['submissionIndicators as file_count' => function($q) {
+            ->withCount(['submittedRequirements as file_count' => function($q) {
                 $q->where('requirement_id', $this->selectedRequirementId)
-                ->where('user_id', $this->selectedUserId);
+                ->where('user_id', $this->selectedUserId)
+                ->whereHas('media');
             }]);
 
-        if ($this->search) {
+        // Only apply search if we're at the courses level for requirement category
+        if ($this->search && $this->selectedRequirementId && $this->selectedUserId && !$this->selectedCourseId) {
             $query->where(function($q) {
                 $q->where('course_code', 'like', '%'.$this->search.'%')
                 ->orWhere('course_name', 'like', '%'.$this->search.'%');
@@ -395,26 +655,32 @@ class FileManagerIndex extends Component
         });
     }
 
+    /**
+     * Get users who have submitted files (for user category)
+     */
     public function getUsers()
     {
         $semester = $this->selectedSemester ?? Semester::getActiveSemester();
         if (!$semester) return collect();
 
-        $query = User::whereHas('submissionIndicators', function($q) use ($semester) {
-                $q->whereBetween('requirement_submission_indicators.submitted_at', [
+        $query = User::whereHas('submittedRequirements', function($q) use ($semester) {
+                $q->whereHas('media')
+                ->whereBetween('submitted_at', [
                     $semester->start_date,
                     $semester->end_date
                 ]);
             })
-            ->withCount(['submissionIndicators as file_count' => function($q) use ($semester) {
-                $q->whereBetween('requirement_submission_indicators.submitted_at', [
+            ->withCount(['submittedRequirements as file_count' => function($q) use ($semester) {
+                $q->whereHas('media')
+                ->whereBetween('submitted_at', [
                     $semester->start_date,
                     $semester->end_date
                 ]);
             }])
             ->withCount(['courses as course_count' => function($q) use ($semester) {
-                $q->whereHas('submissionIndicators', function($q2) use ($semester) {
-                    $q2->whereBetween('requirement_submission_indicators.submitted_at', [
+                $q->whereHas('submittedRequirements', function($q2) use ($semester) {
+                    $q2->whereHas('media')
+                    ->whereBetween('submitted_at', [
                         $semester->start_date,
                         $semester->end_date
                     ]);
@@ -422,7 +688,8 @@ class FileManagerIndex extends Component
                 ->distinct();
             }]);
 
-        if ($this->search) {
+        // Only apply search if we're at the users level for user category
+        if ($this->search && !$this->selectedUserId && !$this->selectedCourseId && !$this->selectedRequirementId) {
             $query->where(function($q) {
                 $q->where('firstname', 'like', '%'.$this->search.'%')
                 ->orWhere('lastname', 'like', '%'.$this->search.'%')
@@ -439,6 +706,9 @@ class FileManagerIndex extends Component
         });
     }
 
+    /**
+     * Get courses for selected user that have submitted files
+     */
     public function getCoursesForUser()
     {
         if (!$this->selectedUserId) return collect();
@@ -446,14 +716,17 @@ class FileManagerIndex extends Component
         $semester = $this->selectedSemester ?? Semester::getActiveSemester();
         if (!$semester) return collect();
 
-        $query = Course::whereHas('submissionIndicators', function($q) {
-                $q->where('user_id', $this->selectedUserId);
+        $query = Course::whereHas('submittedRequirements', function($q) {
+                $q->where('user_id', $this->selectedUserId)
+                ->whereHas('media');
             })
-            ->withCount(['submissionIndicators as file_count' => function($q) {
-                $q->where('user_id', $this->selectedUserId);
+            ->withCount(['submittedRequirements as file_count' => function($q) {
+                $q->where('user_id', $this->selectedUserId)
+                ->whereHas('media');
             }]);
 
-        if ($this->search) {
+        // Only apply search if we're at the courses level for user category
+        if ($this->search && $this->selectedUserId && !$this->selectedCourseId && !$this->selectedRequirementId) {
             $query->where(function($q) {
                 $q->where('course_code', 'like', '%'.$this->search.'%')
                 ->orWhere('course_name', 'like', '%'.$this->search.'%');
@@ -468,7 +741,9 @@ class FileManagerIndex extends Component
         });
     }
 
-
+    /**
+     * Get requirements for selected user and course that have submitted files
+     */
     public function getRequirementsForUserCourse()
     {
         if (!$this->selectedUserId || !$this->selectedCourseId) return collect();
@@ -476,16 +751,19 @@ class FileManagerIndex extends Component
         $semester = $this->selectedSemester ?? Semester::getActiveSemester();
         if (!$semester) return collect();
 
-        $query = Requirement::whereHas('submissionIndicators', function($q) {
+        $query = Requirement::whereHas('submittedRequirements', function($q) {
                 $q->where('user_id', $this->selectedUserId)
-                ->where('course_id', $this->selectedCourseId);
+                ->where('course_id', $this->selectedCourseId)
+                ->whereHas('media');
             })
-            ->withCount(['submissionIndicators as file_count' => function($q) {
+            ->withCount(['submittedRequirements as file_count' => function($q) {
                 $q->where('user_id', $this->selectedUserId)
-                ->where('course_id', $this->selectedCourseId);
+                ->where('course_id', $this->selectedCourseId)
+                ->whereHas('media');
             }]);
 
-        if ($this->search) {
+        // Only apply search if we're at the requirements level for user category
+        if ($this->search && $this->selectedUserId && $this->selectedCourseId && !$this->selectedRequirementId) {
             $query->where('name', 'like', '%'.$this->search.'%');
         }
 
@@ -497,6 +775,9 @@ class FileManagerIndex extends Component
         });
     }
 
+    /**
+     * Get actual media files with proper filtering
+     */
     public function getFiles()
     {
         $semester = $this->selectedSemester ?? Semester::getActiveSemester();
@@ -504,60 +785,52 @@ class FileManagerIndex extends Component
             return new \Illuminate\Pagination\LengthAwarePaginator([], 0, $this->viewMode === 'grid' ? 24 : 10);
         }
 
-        // Get the submission indicator IDs that match our criteria
-        $indicatorQuery = RequirementSubmissionIndicator::query()
-            ->whereBetween('submitted_at', [
-                $semester->start_date,
-                $semester->end_date
-            ]);
-
-        // Apply filters based on current navigation state and category
-        if ($this->category === 'requirement') {
-            if ($this->selectedRequirementId) {
-                $indicatorQuery->where('requirement_id', $this->selectedRequirementId);
-            }
-            if ($this->selectedUserId) {
-                $indicatorQuery->where('user_id', $this->selectedUserId);
-            }
-            if ($this->selectedCourseId) {
-                $indicatorQuery->where('course_id', $this->selectedCourseId);
-            }
-        } elseif ($this->category === 'user') {
-            if ($this->selectedUserId) {
-                $indicatorQuery->where('user_id', $this->selectedUserId);
-            }
-            if ($this->selectedCourseId) {
-                $indicatorQuery->where('course_id', $this->selectedCourseId);
-            }
-            if ($this->selectedRequirementId) {
-                $indicatorQuery->where('requirement_id', $this->selectedRequirementId);
-            }
-        }
-
-        $matchingIndicators = $indicatorQuery->get();
-
-        if ($matchingIndicators->isEmpty()) {
-            return new \Illuminate\Pagination\LengthAwarePaginator([], 0, $this->viewMode === 'grid' ? 24 : 10);
-        }
-
-        // Build query for media files that belong to SubmittedRequirements matching the indicators
         $query = Media::query()
-            ->with(['model.user', 'model.requirement', 'model.course'])
-            ->whereHasMorph('model', [SubmittedRequirement::class], function($q) use ($matchingIndicators) {
-                $q->where(function($subQuery) use ($matchingIndicators) {
-                    foreach ($matchingIndicators as $indicator) {
-                        $subQuery->orWhere(function($q2) use ($indicator) {
-                            $q2->where('requirement_id', $indicator->requirement_id)
-                            ->where('user_id', $indicator->user_id)
-                            ->where('course_id', $indicator->course_id);
-                        });
+            ->with([
+                'model.user', 
+                'model.requirement', 
+                'model.course.program'
+            ])
+            ->whereHasMorph('model', [SubmittedRequirement::class], function($q) use ($semester) {
+                $q->whereBetween('submitted_at', [
+                    $semester->start_date,
+                    $semester->end_date
+                ]);
+
+                if ($this->category === 'requirement') {
+                    if ($this->selectedRequirementId) {
+                        $q->where('requirement_id', $this->selectedRequirementId);
                     }
-                });
+                    if ($this->selectedUserId) {
+                        $q->where('user_id', $this->selectedUserId);
+                    }
+                    if ($this->selectedCourseId) {
+                        $q->where('course_id', $this->selectedCourseId);
+                    }
+                } elseif ($this->category === 'user') {
+                    if ($this->selectedUserId) {
+                        $q->where('user_id', $this->selectedUserId);
+                    }
+                    if ($this->selectedCourseId) {
+                        $q->where('course_id', $this->selectedCourseId);
+                    }
+                    if ($this->selectedRequirementId) {
+                        $q->where('requirement_id', $this->selectedRequirementId);
+                    }
+                }
             })
             ->orderBy('created_at', 'desc');
 
-        // Apply search filter
-        if ($this->search) {
+        // Only apply search if we're at the files level (all selections made)
+        $isAtFilesLevel = false;
+        
+        if ($this->category === 'requirement') {
+            $isAtFilesLevel = $this->selectedRequirementId && $this->selectedUserId && $this->selectedCourseId;
+        } elseif ($this->category === 'user') {
+            $isAtFilesLevel = $this->selectedUserId && $this->selectedCourseId && $this->selectedRequirementId;
+        }
+
+        if ($this->search && $isAtFilesLevel) {
             $query->where(function($q) {
                 $q->where('file_name', 'like', '%'.$this->search.'%')
                 ->orWhereHasMorph('model', [SubmittedRequirement::class], function($modelQuery) {
@@ -571,7 +844,11 @@ class FileManagerIndex extends Component
                     })
                     ->orWhereHas('course', function($courseQuery) {
                         $courseQuery->where('course_code', 'like', '%'.$this->search.'%')
-                                ->orWhere('course_name', 'like', '%'.$this->search.'%');
+                                ->orWhere('course_name', 'like', '%'.$this->search.'%')
+                                ->orWhereHas('program', function($programQuery) {
+                                    $programQuery->where('program_name', 'like', '%'.$this->search.'%')
+                                                ->orWhere('program_code', 'like', '%'.$this->search.'%');
+                                });
                     });
                 });
             });
@@ -585,6 +862,33 @@ class FileManagerIndex extends Component
         return Semester::orderBy('created_at', 'desc')->get();
     }
 
+    public function getSearchPlaceholder()
+    {
+        if ($this->category === 'requirement') {
+            if (!$this->selectedRequirementId) {
+                return 'Search requirements...';
+            } elseif ($this->selectedRequirementId && !$this->selectedUserId) {
+                return 'Search users...';
+            } elseif ($this->selectedRequirementId && $this->selectedUserId && !$this->selectedCourseId) {
+                return 'Search courses...';
+            } else {
+                return 'Search files...';
+            }
+        } elseif ($this->category === 'user') {
+            if (!$this->selectedUserId) {
+                return 'Search users...';
+            } elseif ($this->selectedUserId && !$this->selectedCourseId) {
+                return 'Search courses...';
+            } elseif ($this->selectedUserId && $this->selectedCourseId && !$this->selectedRequirementId) {
+                return 'Search requirements...';
+            } else {
+                return 'Search files...';
+            }
+        }
+        
+        return 'Search files or users...';
+    }
+
     public function render()
     {
         $data = [
@@ -593,8 +897,8 @@ class FileManagerIndex extends Component
             'semesters' => $this->semesters,
         ];
 
-        // Add data based on current navigation state
-        if ($this->category === 'requirement' || !$this->category) {
+        // Add data based on current navigation state and category
+        if ($this->category === 'requirement') {
             if (!$this->selectedRequirementId) {
                 $data['requirements'] = $this->getRequirements();
             } elseif ($this->selectedRequirementId && !$this->selectedUserId) {

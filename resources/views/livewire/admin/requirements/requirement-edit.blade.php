@@ -5,7 +5,7 @@
             <i class="text-2xl fa-solid fa-circle-info"></i> Edit Requirement Details
         </h2>
         <button type="button" onclick="history.back()" 
-                class="bg-white text-green-700 px-4 py-1.5 rounded-full shadow font-semibold text-sm transition-all duration-200 flex items-center gap-2 hover:bg-gray-50">
+                class="bg-white text-green-700 px-4 py-1.5 rounded-xl shadow font-semibold text-sm transition-all duration-200 flex items-center gap-2 hover:bg-gray-50">
             <i class="fa-solid fa-chevron-left text-green-700"></i> Back
         </button>
     </div>
@@ -47,11 +47,11 @@
                 <!-- Required Files -->
                 <div>
                     <div class="flex items-center justify-between mb-3">
-                        <h4 class="text-md font-semibold text-gray-800 flex items-center gap-2">
+                        <h4 class="text-lg font-semibold text-gray-800 flex items-center gap-2">
                             <i class="fa-solid fa-folder-open text-green-600"></i> Required Files
                         </h4>
                         <button type="button" 
-                                class="btn btn-sm bg-blue-600 text-white hover:bg-blue-700 rounded-full transition flex items-center gap-2"
+                                class="btn btn-sm text-sm bg-blue-600 text-white border border-blue-700 hover:bg-blue-700 rounded-xl transition flex items-center gap-2"
                                 wire:click="$set('showUploadModal', true)">
                             <i class="fa-solid fa-upload"></i>
                             Upload Files
@@ -113,7 +113,7 @@
                     <!-- Programs Selection -->
                     <div class="form-control">
                         <label class="label justify-start gap-2 pb-2">
-                            <span class="label-text text-xs font-semibold text-gray-700 tracking-wider uppercase">Programs</span>
+                            <span class="etext-xs font-semibold text-gray-800 tracking-wide uppercase">Programs</span>
                             @error('selectedPrograms')
                                 <span class="label-text-alt text-red-600 ml-auto">{{ $message }}</span>
                             @enderror
@@ -132,18 +132,18 @@
                             </label>
                             <div class="grid grid-cols-1 gap-3 max-h-60 overflow-y-auto p-2 custom-scrollbar">
                                 @foreach($programs as $program)
-                                    <label class="flex items-center space-x-3 p-3 rounded-lg transition-all duration-200 {{ in_array($program->id, $selectedPrograms) ? 'bg-green-50 border border-green-200' : 'bg-white border border-transparent hover:border-gray-200' }}">
-                                        <input 
-                                            type="checkbox" 
-                                            wire:model.live="selectedPrograms"
-                                            value="{{ $program->id }}"
-                                            class="checkbox checkbox-sm checkbox-primary rounded" 
-                                        />
+                                    <div class="flex items-center space-x-3 p-3 rounded-lg transition-all duration-200 cursor-pointer {{ in_array($program->id, $selectedPrograms) ? 'bg-green-50 border border-green-200' : 'bg-white border border-transparent hover:border-gray-200' }}"
+                                        wire:click="toggleProgram({{ $program->id }})">
+                                        <div class="w-4 h-4 rounded border border-gray-400 flex items-center justify-center {{ in_array($program->id, $selectedPrograms) ? 'bg-green-500 border-green-500' : 'bg-white' }}">
+                                            @if(in_array($program->id, $selectedPrograms))
+                                                <i class="fa-solid fa-check text-white text-xs"></i>
+                                            @endif
+                                        </div>
                                         <div class="flex flex-col">
                                             <span class="text-sm font-medium text-gray-700">{{ $program->program_name }}</span>
                                             <span class="text-xs text-gray-500">{{ $program->program_code }}</span>
                                         </div>
-                                    </label>
+                                    </div>
                                 @endforeach
                             </div>
                         </div>
@@ -157,7 +157,7 @@
     <div class="px-6 pb-6 pt-4 border-t border-gray-200 bg-white">
         <div class="flex justify-end">
             <button type="submit" wire:click.prevent="updateRequirement" 
-                    class="btn px-6 py-2 bg-green-600 text-white hover:bg-green-700 rounded-full transition flex items-center gap-2"
+                    class="btn px-6 py-2 bg-green-600 text-white hover:bg-green-700 rounded-xl transition flex items-center gap-2"
                     wire:loading.attr="disabled">
                 <span wire:loading.remove wire:target="updateRequirement">
                     <i class="fa-solid fa-check mr-2"></i> Update Requirement

@@ -10,7 +10,7 @@
         <div class="grid gap-6">
             <!-- First Name Field -->
             <div>
-                <label for="firstname" class="block text-sm font-medium text-gray-700 mb-2">
+                <label for="firstname" class="block text-xs font-medium tracking-wide uppercase text-gray-700 mb-2">
                     {{ __('First Name') }}
                 </label>
                 <div class="relative">
@@ -18,7 +18,7 @@
                         id="firstname" 
                         name="firstname" 
                         type="text" 
-                        class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors duration-200 pr-10"
+                        class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors duration-200 pr-10 "
                         value="{{ old('firstname', $user->firstname) }}" 
                         required 
                         autofocus 
@@ -36,7 +36,7 @@
 
             <!-- Middle Name Field -->
             <div>
-                <label for="middlename" class="block text-sm font-medium text-gray-700 mb-2">
+                <label for="middlename" class="block text-xs font-medium tracking-wide uppercase text-gray-700 mb-2">
                     {{ __('Middle Name') }}
                 </label>
                 <div class="relative">
@@ -60,7 +60,7 @@
 
             <!-- Last Name Field -->
             <div>
-                <label for="lastname" class="block text-sm font-medium text-gray-700 mb-2">
+                <label for="lastname" class="block text-xs font-medium tracking-wide uppercase text-gray-700 mb-2">
                     {{ __('Last Name') }}
                 </label>
                 <div class="relative">
@@ -85,7 +85,7 @@
 
             <!-- Extension Name Field -->
             <div>
-                <label for="extensionname" class="block text-sm font-medium text-gray-700 mb-2">
+                <label for="extensionname" class="block text-xs font-medium tracking-wide uppercase text-gray-700 mb-2">
                     {{ __('Extension Name') }}
                 </label>
                 <div class="relative">
@@ -109,7 +109,7 @@
 
             <!-- Email Field (unchanged) -->
             <div>
-                <label for="email" class="block text-sm font-medium text-gray-700 mb-2">
+                <label for="email" class="block text-xs font-medium tracking-wide uppercase text-gray-700 mb-2">
                     {{ __('Email') }}
                 </label>
                 <div class="relative">
@@ -192,7 +192,7 @@
             
             <button 
                 type="submit"
-                class="inline-flex items-center px-5 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+                class="inline-flex items-center px-5 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-xl transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
             >
                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>

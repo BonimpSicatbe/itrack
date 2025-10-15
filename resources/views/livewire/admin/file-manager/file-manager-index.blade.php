@@ -2,6 +2,10 @@
     @php
         use App\Models\SubmittedRequirement;
         use App\Models\RequirementSubmissionIndicator;
+        
+        use Carbon\Carbon;
+        use Illuminate\Support\Str; 
+        use App\Models\User; 
     @endphp
 
     <!-- Two Column Layout -->
@@ -12,9 +16,9 @@
             <div class="flex justify-between items-center text-white p-4 rounded-xl shadow-md mb-2" style="background: linear-gradient(148deg,rgba(18, 67, 44, 1) 0%, rgba(30, 119, 77, 1) 54%, rgba(55, 120, 64, 1) 100%);">
                 <div class="flex items-center gap-3">
                     <div class="pl-3 bg-1C7C54/10 rounded-xl">
-                        <i class="fa-solid fa-file text-white text-2xl"></i>
+                        <img src="{{ asset('images/portfolio.png') }}" alt="File Manager Icon" class="w-7 h-7 object-contain">
                     </div>
-                    <h2 class="text-xl md:text-xl font-semibold">File Manager</h2>
+                    <h2 class="text-xl md:text-xl font-semibold">Portfolio</h2>
 
                     <!-- Current Status -->
                     @if($activeSemester)
@@ -75,31 +79,7 @@
                                 type="text" 
                                 wire:model.live.debounce.300ms="search"
                                 class="block w-sm p-2 pl-9 text-sm text-1B512D border border-gray-300 shadow-sm focus:border-green-600 focus:ring-green-600 rounded-xl" 
-                                placeholder="
-                                    @if($category === 'requirement')
-                                        @if(!$selectedRequirementId)
-                                            Search requirements...
-                                        @elseif($selectedRequirementId && !$selectedUserId)
-                                            Search users...
-                                        @elseif($selectedRequirementId && $selectedUserId && !$selectedCourseId)
-                                            Search courses...
-                                        @else
-                                            Search files...
-                                        @endif
-                                    @elseif($category === 'user')
-                                        @if(!$selectedUserId)
-                                            Search users...
-                                        @elseif($selectedUserId && !$selectedCourseId)
-                                            Search courses...
-                                        @elseif($selectedUserId && $selectedCourseId && !$selectedRequirementId)
-                                            Search requirements...
-                                        @else
-                                            Search files...
-                                        @endif
-                                    @else
-                                        Search files or users...
-                                    @endif
-                                "
+                                placeholder="{{ $this->getSearchPlaceholder() }}"
                             >
                         </div>
                     </div>
@@ -128,30 +108,36 @@
                     </div>
                 </div>
 
-                {{-- Breadcrumb Navigation --}}
+                {{-- Improved Breadcrumb Navigation --}}
                 @if(count($breadcrumbs) > 0)
                 <div class="flex items-center text-sm text-green-600 bg-green-50 border border-green-600 rounded-xl p-4 overflow-x-auto whitespace-nowrap scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent mb-4">
-                    @foreach($breadcrumbs as $index => $crumb)
-                        @if(!$loop->last)
-                            <button 
-                                wire:click="goBack('{{ $crumb['type'] }}')"
-                                class="font-semibold hover:text-amber-500 hover:underline hover:underline-offset-4 {{ $crumb['type'] === 'file' ? 'cursor-default' : '' }} max-w-[200px] truncate"
-                                title="{{ $crumb['name'] }}"
-                                {{ $crumb['type'] === 'file' ? 'disabled' : '' }}
-                            >
-                                {{ $crumb['name'] }}
-                            </button>
-                            <span class="mx-2">
-                                <i class="fa-regular fa-chevron-right text-xs text-gray-300 mb-2"></i>
-                            </span>
-                        @else
-                            <span 
-                                class="text-green-600 font-semibold max-w-[250px] truncate hover:text-amber-500 hover:underline hover:underline-offset-4" 
-                                title="{{ $crumb['name'] }}">
-                                {{ $crumb['name'] }}
-                            </span>
-                        @endif
-                    @endforeach
+                    <ol class="flex items-center space-x-1">
+                        @foreach($breadcrumbs as $index => $crumb)
+                            <li class="flex items-center">
+                                @if($index > 0)
+                                    <i class="fa-regular fa-chevron-right text-gray-300 text-xs mx-2"></i>
+                                @endif
+                                
+                                @if($loop->last)
+                                    {{-- Current level - not clickable --}}
+                                    <span 
+                                        class="text-green-600 font-semibold max-w-[250px] truncate" 
+                                        title="{{ $crumb['name'] }}">
+                                        {{ $crumb['name'] }}
+                                    </span>
+                                @else
+                                    {{-- Clickable breadcrumb items --}}
+                                    <button 
+                                        wire:click="goBack('{{ $crumb['type'] }}', {{ $index }})"
+                                        class="font-semibold hover:text-amber-500 hover:underline hover:underline-offset-4 max-w-[200px] truncate"
+                                        title="{{ $crumb['name'] }}"
+                                    >
+                                        {{ $crumb['name'] }}
+                                    </button>
+                                @endif
+                            </li>
+                        @endforeach
+                    </ol>
                 </div>
                 @endif
 
@@ -178,7 +164,6 @@
                                             <i class="fas fa-folder text-green-600 text-xl"></i>
                                             <div class="flex flex-col">
                                                 <span class="font-semibold text-gray-800">{{ $requirement['name'] }}</span>
-                                                <span class="text-xs text-gray-500">{{ $requirement['file_count'] }} submitted {{ $requirement['file_count'] == 1 ? 'file' : 'files' }}</span>
                                             </div>
                                         </div>
                                         <div class="col-span-2 flex items-center justify-center">
@@ -198,10 +183,10 @@
                                     </div>
                                 @empty
                                     <div class="flex flex-col items-center justify-center py-12 text-gray-400">
-                                        <i class="fa-solid fa-folder-open text-5xl text-gray-300 mb-4"></i>
-                                        <p class="text-lg font-semibold text-gray-500">No submitted requirements found</p>
+                                        <i class="fa-solid fa-folder-open text-3xl text-gray-300 mb-2"></i>
+                                        <p class="text-sm font-semibold text-gray-500">No submitted requirements found</p>
                                         @if($search)
-                                            <p class="text-sm text-amber-500 mt-2">Try adjusting your search term</p>
+                                            <p class="text-sm text-amber-500 mt-2 font-semibold">Try adjusting your search term</p>
                                         @else
                                             <p class="text-sm text-gray-500 mt-2">No requirements have been marked as submitted yet</p>
                                         @endif
@@ -235,12 +220,12 @@
                                     </div>
                                 @empty
                                     <div class="col-span-full flex flex-col items-center justify-center py-16 text-gray-400">
-                                        <i class="fas fa-folder-open text-8xl text-gray-300 mb-6"></i>
-                                        <p class="text-xl font-semibold text-gray-500 mb-2">No submitted requirements found</p>
+                                        <i class="fas fa-folder-open text-3xl text-gray-300 mb-2"></i>
+                                        <p class="text-sm font-semibold text-gray-500 mb-2">No submitted requirements found</p>
                                         @if($search)
-                                            <p class="text-amber-500">Try adjusting your search term</p>
+                                            <p class="text-amber-500 text-sm font-semibold">Try adjusting your search term</p>
                                         @else
-                                            <p class="text-gray-500">No requirements have been marked as submitted yet</p>
+                                            <p class="text-gray-500 text-sm">No requirements have been marked as submitted yet</p>
                                         @endif
                                     </div>
                                 @endforelse
@@ -254,11 +239,10 @@
                             <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
                                 <!-- Table Header -->
                                 <div class="grid grid-cols-12 gap-4 px-6 py-4 bg-gray-50 border-b border-gray-200 text-sm font-semibold text-gray-700">
-                                    <div class="col-span-6 flex items-center gap-2">
+                                    <div class="col-span-8 flex items-center gap-2">
                                         <i class="fas fa-user text-blue-600"></i>
                                         <span>User Information</span>
                                     </div>
-                                    <div class="col-span-2 text-center">Courses</div>
                                     <div class="col-span-2 text-center">Submitted Files</div>
                                     <div class="col-span-2 text-center">Actions</div>
                                 </div>
@@ -266,7 +250,7 @@
                                 @forelse ($usersForRequirement as $userData)
                                     @php $user = $userData['user']; @endphp
                                     <div class="grid grid-cols-12 gap-4 px-6 py-4 border-b border-gray-100 hover:bg-blue-50 transition-colors">
-                                        <div class="col-span-6 flex items-center gap-4">
+                                        <div class="col-span-8 flex items-center gap-4">
                                             <div class="flex-shrink-0">
                                                 <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
                                                     <i class="fas fa-user text-blue-600"></i>
@@ -276,11 +260,6 @@
                                                 <span class="font-semibold text-gray-800 truncate">{{ $user->full_name }}</span>
                                                 <span class="text-sm text-gray-500 truncate">{{ $user->email }}</span>
                                             </div>
-                                        </div>
-                                        <div class="col-span-2 flex items-center justify-center">
-                                            <span class="px-3 py-1 text-sm bg-blue-100 text-blue-800 font-semibold rounded-full">
-                                                {{ $userData['course_count'] }}
-                                            </span>
                                         </div>
                                         <div class="col-span-2 flex items-center justify-center">
                                             <span class="px-3 py-1 text-sm bg-green-100 text-green-800 font-semibold rounded-full">
@@ -302,7 +281,7 @@
                                         <i class="fa-solid fa-users text-3xl text-gray-300 mb-4"></i>
                                         <p class="text-sm font-semibold text-gray-500">No users have submitted this requirement yet</p>
                                         @if($search)
-                                            <p class="text-sm text-amber-500 mt-2">Try adjusting your search term</p>
+                                            <p class="text-sm text-amber-500 mt-2 font-semibold">Try adjusting your search term</p>
                                         @endif
                                     </div>
                                 @endforelse
@@ -337,9 +316,6 @@
                                                     </div>
                                                 </div>
                                                 <div class="flex flex-col items-end gap-1 flex-shrink-0 ml-2">
-                                                    <span class="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">
-                                                        {{ $userData['course_count'] }} courses
-                                                    </span>
                                                     <span class="px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full">
                                                         {{ $userData['file_count'] }} files
                                                     </span>
@@ -349,12 +325,12 @@
                                     </div>
                                 @empty
                                     <div class="col-span-full flex flex-col items-center justify-center py-16 text-gray-400">
-                                        <i class="fas fa-users text-8xl text-gray-300 mb-6"></i>
-                                        <p class="text-xl font-semibold text-gray-500 mb-2">No users found</p>
+                                        <i class="fas fa-users text-3xl text-gray-300 mb-2"></i>
+                                        <p class="text-sm font-semibold text-gray-500 mb-2">No users found</p>
                                         @if($search)
-                                            <p class="text-amber-500">Try adjusting your search term</p>
+                                            <p class="text-amber-500 text-sm font-semibold">Try adjusting your search term</p>
                                         @else
-                                            <p class="text-gray-500">No users have submitted this requirement yet</p>
+                                            <p class="text-gray-500 text-sm">No users have submitted this requirement yet</p>
                                         @endif
                                     </div>
                                 @endforelse
@@ -368,17 +344,18 @@
                             <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
                                 <!-- Table Header -->
                                 <div class="grid grid-cols-12 gap-4 px-6 py-4 bg-gray-50 border-b border-gray-200 text-sm font-semibold text-gray-700">
-                                    <div class="col-span-10 flex items-center gap-2">
+                                    <div class="col-span-8 flex items-center gap-2">
                                         <i class="fas fa-book text-purple-600"></i>
                                         <span>Course Information</span>
                                     </div>
+                                    <div class="col-span-2 text-center">Submitted Files</div>
                                     <div class="col-span-2 text-center">Actions</div>
                                 </div>
                                 
                                 @forelse ($coursesForUserRequirement as $courseData)
                                     @php $course = $courseData['course']; @endphp
                                     <div class="grid grid-cols-12 gap-4 px-6 py-4 border-b border-gray-100 hover:bg-purple-50 transition-colors">
-                                        <div class="col-span-10 flex items-center gap-4">
+                                        <div class="col-span-8 flex items-center gap-4">
                                             <div class="flex-shrink-0">
                                                 <div class="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
                                                     <i class="fas fa-book text-purple-600"></i>
@@ -387,8 +364,12 @@
                                             <div class="flex flex-col min-w-0">
                                                 <span class="font-semibold text-gray-800">{{ $course->course_code }}</span>
                                                 <span class="text-sm text-gray-500 truncate">{{ $course->course_name }}</span>
-                                                <span class="text-xs text-gray-400 mt-1">{{ $courseData['file_count'] }} submitted files</span>
                                             </div>
+                                        </div>
+                                        <div class="col-span-2 flex items-center justify-center">
+                                            <span class="px-3 py-1 text-sm bg-green-100 text-green-800 font-semibold rounded-full">
+                                                {{ $courseData['file_count'] }}
+                                            </span>
                                         </div>
                                         <div class="col-span-2 flex items-center justify-center">
                                             <button 
@@ -402,10 +383,10 @@
                                     </div>
                                 @empty
                                     <div class="flex flex-col items-center justify-center py-12 text-gray-400">
-                                        <i class="fa-solid fa-book text-5xl text-gray-300 mb-4"></i>
-                                        <p class="text-lg font-semibold text-gray-500">No courses found for this user</p>
+                                        <i class="fa-solid fa-book text-3xl text-gray-300 mb-2"></i>
+                                        <p class="text-sm font-semibold text-gray-500">No courses found for this user</p>
                                         @if($search)
-                                            <p class="text-sm text-amber-500 mt-2">Try adjusting your search term</p>
+                                            <p class="text-sm text-amber-500 mt-2 font-semibold">Try adjusting your search term</p>
                                         @else
                                             <p class="text-sm text-gray-500 mt-2">This user hasn't submitted this requirement for any courses</p>
                                         @endif
@@ -442,19 +423,19 @@
                                                     </div>
                                                 </div>
                                                 <span class="px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full flex-shrink-0 ml-2">
-                                                    {{ $courseData['file_count'] }}
+                                                    {{ $courseData['file_count'] }} files
                                                 </span>
                                             </div>
                                         </div>
                                     </div>
                                 @empty
                                     <div class="col-span-full flex flex-col items-center justify-center py-16 text-gray-400">
-                                        <i class="fas fa-book text-8xl text-gray-300 mb-6"></i>
-                                        <p class="text-xl font-semibold text-gray-500 mb-2">No courses found</p>
+                                        <i class="fas fa-book text-3xl text-gray-300 mb-2"></i>
+                                        <p class="text-sm font-semibold text-gray-500 mb-2">No courses found</p>
                                         @if($search)
-                                            <p class="text-amber-500">Try adjusting your search term</p>
+                                            <p class="text-amber-500 text-sm font-semibold">Try adjusting your search term</p>
                                         @else
-                                            <p class="text-gray-500">This user hasn't submitted this requirement for any courses</p>
+                                            <p class="text-gray-500 text-sm">This user hasn't submitted this requirement for any courses</p>
                                         @endif
                                     </div>
                                 @endforelse
@@ -536,7 +517,7 @@
                                     <!-- Empty State -->
                                     <div class="col-span-full text-center text-gray-500 py-10">
                                         <i class="fa-solid fa-folder-open text-3xl text-gray-300 mb-2"></i>
-                                        <p class="text-sm font-semibold text-gray-500">No files found.</p>
+                                        <p class="text-sm font-semibold text-gray-500">No files found</p>
                                         @if($search)
                                             <p class="text-sm font-semibold text-amber-500 mt-1">Try adjusting your search term</p>
                                         @endif
@@ -580,8 +561,8 @@
                                         <!-- File Icon & Name -->
                                         <div class="col-span-5 flex items-center gap-4">
                                             <div class="flex-shrink-0">
-                                                <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                                                    <i class="fas {{ $fileIcon }} {{ $fileColor }}"></i>
+                                                <div class="w-10 h-10 flex items-center justify-center">
+                                                    <i class="fas text-2xl {{ $fileIcon }} {{ $fileColor }}"></i>
                                                 </div>
                                             </div>
                                             <div class="flex flex-col min-w-0">
@@ -626,7 +607,7 @@
                                         
                                         <!-- Size -->
                                         <div class="col-span-1 text-center">
-                                            <span class="px-2 py-1 text-xs bg-gray-100 text-gray-800 font-medium rounded-full">
+                                            <span class="px-2 py-1 text-xs text-gray-800 font-medium">
                                                 @if($media->size >= 1048576)
                                                     {{ number_format($media->size / 1048576, 1) }}MB
                                                 @elseif($media->size >= 1024)
@@ -639,10 +620,10 @@
                                     </div>
                                 @empty
                                     <div class="flex flex-col items-center justify-center py-12 text-gray-400">
-                                        <i class="fa-solid fa-folder-open text-5xl text-gray-300 mb-4"></i>
-                                        <p class="text-lg font-semibold text-gray-500">No files found</p>
+                                        <i class="fa-solid fa-folder-open text-3xl text-gray-300 mb-4"></i>
+                                        <p class="text-sm font-semibold text-gray-500">No files found</p>
                                         @if($search)
-                                            <p class="text-sm text-amber-500 mt-2">Try adjusting your search term</p>
+                                            <p class="text-sm text-amber-500 mt-2 font-semibold">Try adjusting your search term</p>
                                         @else
                                             <p class="text-sm text-gray-500 mt-2">No files match the current filters</p>
                                         @endif
@@ -668,11 +649,10 @@
                             <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
                                 <!-- Table Header -->
                                 <div class="grid grid-cols-12 gap-4 px-6 py-4 bg-gray-50 border-b border-gray-200 text-sm font-semibold text-gray-700">
-                                    <div class="col-span-6 flex items-center gap-2">
+                                    <div class="col-span-8 flex items-center gap-2">
                                         <i class="fas fa-user text-blue-600"></i>
                                         <span>User Information</span>
                                     </div>
-                                    <div class="col-span-2 text-center">Courses</div>
                                     <div class="col-span-2 text-center">Submitted Files</div>
                                     <div class="col-span-2 text-center">Actions</div>
                                 </div>
@@ -680,7 +660,7 @@
                                 @forelse ($users as $userData)
                                     @php $user = $userData['user']; @endphp
                                     <div class="grid grid-cols-12 gap-4 px-6 py-4 border-b border-gray-100 hover:bg-blue-50 transition-colors">
-                                        <div class="col-span-6 flex items-center gap-4">
+                                        <div class="col-span-8 flex items-center gap-4">
                                             <div class="flex-shrink-0">
                                                 <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
                                                     <i class="fas fa-user text-blue-600"></i>
@@ -690,11 +670,6 @@
                                                 <span class="font-semibold text-gray-800 truncate">{{ $user->full_name }}</span>
                                                 <span class="text-sm text-gray-500 truncate">{{ $user->email }}</span>
                                             </div>
-                                        </div>
-                                        <div class="col-span-2 flex items-center justify-center">
-                                            <span class="px-3 py-1 text-sm bg-blue-100 text-blue-800 font-semibold rounded-full">
-                                                {{ $userData['course_count'] }}
-                                            </span>
                                         </div>
                                         <div class="col-span-2 flex items-center justify-center">
                                             <span class="px-3 py-1 text-sm bg-green-100 text-green-800 font-semibold rounded-full">
@@ -716,7 +691,7 @@
                                         <i class="fa-solid fa-users text-3xl text-gray-300 mb-4"></i>
                                         <p class="text-sm font-semibold text-gray-500">No users with submitted requirements found</p>
                                         @if($search)
-                                            <p class="text-sm text-amber-500 mt-2">Try adjusting your search term</p>
+                                            <p class="text-sm text-amber-500 mt-2 font-semibold">Try adjusting your search term</p>
                                         @else
                                             <p class="text-sm text-gray-500 mt-2">No users have submitted any requirements yet</p>
                                         @endif
@@ -753,9 +728,6 @@
                                                     </div>
                                                 </div>
                                                 <div class="flex flex-col items-end gap-1 flex-shrink-0 ml-2">
-                                                    <span class="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">
-                                                        {{ $userData['course_count'] }} courses
-                                                    </span>
                                                     <span class="px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full">
                                                         {{ $userData['file_count'] }} files
                                                     </span>
@@ -765,12 +737,12 @@
                                     </div>
                                 @empty
                                     <div class="col-span-full flex flex-col items-center justify-center py-16 text-gray-400">
-                                        <i class="fas fa-users text-8xl text-gray-300 mb-6"></i>
-                                        <p class="text-xl font-semibold text-gray-500 mb-2">No users found</p>
+                                        <i class="fas fa-users text-3xl text-gray-300 mb-2"></i>
+                                        <p class="text-sm font-semibold text-gray-500 mb-2">No users found</p>
                                         @if($search)
-                                            <p class="text-amber-500">Try adjusting your search term</p>
+                                            <p class="text-amber-500 text-sm font-semibold">Try adjusting your search term</p>
                                         @else
-                                            <p class="text-gray-500">No users have submitted any requirements yet</p>
+                                            <p class="text-gray-500 text-sm">No users have submitted any requirements yet</p>
                                         @endif
                                     </div>
                                 @endforelse
@@ -811,20 +783,20 @@
                                                 {{ $courseData['file_count'] }}
                                             </span>
                                         </div>
-                                            <button 
-                                                wire:click="selectCourse({{ $course->id }})"
-                                                class="flex m-1 col-span-2 items-center justify-center gap-2 px-4 py-2 text-sm bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition-colors"
-                                            >
-                                                <i class="fas fa-folder-open"></i>
-                                                <span>View Requirements</span>
-                                            </button>
+                                        <button 
+                                            wire:click="selectCourse({{ $course->id }})"
+                                            class="flex m-1 col-span-2 items-center justify-center gap-2 px-4 py-2 text-sm bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition-colors"
+                                        >
+                                            <i class="fas fa-folder-open"></i>
+                                            <span>View Requirements</span>
+                                        </button>
                                     </div>
                                 @empty
                                     <div class="flex flex-col items-center justify-center py-12 text-gray-400">
-                                        <i class="fa-solid fa-book text-5xl text-gray-300 mb-4"></i>
-                                        <p class="text-lg font-semibold text-gray-500">No courses found for this user</p>
+                                        <i class="fa-solid fa-book text-3xl text-gray-300 mb-2"></i>
+                                        <p class="text-sm font-semibold text-gray-500">No courses found for this user</p>
                                         @if($search)
-                                            <p class="text-sm text-amber-500 mt-2">Try adjusting your search term</p>
+                                            <p class="text-sm text-amber-500 mt-2 font-semibold">Try adjusting your search term</p>
                                         @else
                                             <p class="text-sm text-gray-500 mt-2">This user hasn't submitted any requirements for courses</p>
                                         @endif
@@ -861,19 +833,19 @@
                                                     </div>
                                                 </div>
                                                 <span class="px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full flex-shrink-0 ml-2">
-                                                    {{ $courseData['file_count'] }}
+                                                    {{ $courseData['file_count'] }} files
                                                 </span>
                                             </div>
                                         </div>
                                     </div>
                                 @empty
                                     <div class="col-span-full flex flex-col items-center justify-center py-16 text-gray-400">
-                                        <i class="fas fa-book text-8xl text-gray-300 mb-6"></i>
-                                        <p class="text-xl font-semibold text-gray-500 mb-2">No courses found</p>
+                                        <i class="fas fa-book text-3xl text-gray-300 mb-2"></i>
+                                        <p class="text-sm font-semibold text-gray-500 mb-2">No courses found</p>
                                         @if($search)
-                                            <p class="text-amber-500">Try adjusting your search term</p>
+                                            <p class="text-amber-500 text-sm font-semibold">Try adjusting your search term</p>
                                         @else
-                                            <p class="text-gray-500">This user hasn't submitted any requirements for courses</p>
+                                            <p class="text-gray-500 text-sm">This user hasn't submitted any requirements for courses</p>
                                         @endif
                                     </div>
                                 @endforelse
@@ -921,10 +893,10 @@
                                     </div>
                                 @empty
                                     <div class="flex flex-col items-center justify-center py-12 text-gray-400">
-                                        <i class="fa-solid fa-folder-open text-5xl text-gray-300 mb-4"></i>
-                                        <p class="text-lg font-semibold text-gray-500">No submitted requirements found</p>
+                                        <i class="fa-solid fa-folder-open text-3xl text-gray-300 mb-2"></i>
+                                        <p class="text-sm font-semibold text-gray-500">No submitted requirements found</p>
                                         @if($search)
-                                            <p class="text-sm text-amber-500 mt-2">Try adjusting your search term</p>
+                                            <p class="text-sm text-amber-500 mt-2 font-semibold">Try adjusting your search term</p>
                                         @else
                                             <p class="text-sm text-gray-500 mt-2">This user hasn't submitted any requirements for this course</p>
                                         @endif
@@ -966,9 +938,9 @@
                                         <i class="fas fa-folder-open text-8xl text-gray-300 mb-6"></i>
                                         <p class="text-xl font-semibold text-gray-500 mb-2">No requirements found</p>
                                         @if($search)
-                                            <p class="text-amber-500">Try adjusting your search term</p>
+                                            <p class="text-amber-500 text-sm font-semibold">Try adjusting your search term</p>
                                         @else
-                                            <p class="text-gray-500">This user hasn't submitted any requirements for this course</p>
+                                            <p class="text-gray-500 text-sm">This user hasn't submitted any requirements for this course</p>
                                         @endif
                                     </div>
                                 @endforelse
@@ -1050,7 +1022,7 @@
                                     <!-- Empty State -->
                                     <div class="col-span-full text-center text-gray-500 py-10">
                                         <i class="fa-solid fa-folder-open text-3xl text-gray-300 mb-2"></i>
-                                        <p class="text-sm font-semibold text-gray-500">No files found.</p>
+                                        <p class="text-sm font-semibold text-gray-500">No files found</p>
                                         @if($search)
                                             <p class="text-sm font-semibold text-amber-500 mt-1">Try adjusting your search term</p>
                                         @endif
@@ -1094,8 +1066,8 @@
                                         <!-- File Icon & Name -->
                                         <div class="col-span-5 flex items-center gap-4">
                                             <div class="flex-shrink-0">
-                                                <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                                                    <i class="fas {{ $fileIcon }} {{ $fileColor }}"></i>
+                                                <div class="w-10 h-10  flex items-center justify-center">
+                                                    <i class="fas text-2xl {{ $fileIcon }} {{ $fileColor }}"></i>
                                                 </div>
                                             </div>
                                             <div class="flex flex-col min-w-0">
@@ -1140,7 +1112,7 @@
                                         
                                         <!-- Size -->
                                         <div class="col-span-1 text-center">
-                                            <span class="px-2 py-1 text-xs bg-gray-100 text-gray-800 font-medium rounded-full">
+                                            <span class="px-2 py-1 text-xs text-gray-800 font-medium">
                                                 @if($media->size >= 1048576)
                                                     {{ number_format($media->size / 1048576, 1) }}MB
                                                 @elseif($media->size >= 1024)
@@ -1156,7 +1128,7 @@
                                         <i class="fa-solid fa-folder-open text-5xl text-gray-300 mb-4"></i>
                                         <p class="text-lg font-semibold text-gray-500">No files found</p>
                                         @if($search)
-                                            <p class="text-sm text-amber-500 mt-2">Try adjusting your search term</p>
+                                            <p class="text-sm text-amber-500 mt-2 font-semibold">Try adjusting your search term</p>
                                         @else
                                             <p class="text-sm text-gray-500 mt-2">No files match the current filters</p>
                                         @endif
@@ -1190,114 +1162,159 @@
 
                 {{-- FILE DETAILS --}}
                 @if($selectedFile)
-                @php
-                    $submittedRequirement = $selectedFile->model;
-                    $user = $submittedRequirement->user;
-                    $requirement = $submittedRequirement->requirement;
-                    $course = $submittedRequirement->course;
-                @endphp
-                <div class="bg-white rounded-xl border border-gray-200 shadow-md p-5 h-full flex flex-col">
-                    <div class="flex justify-between items-center mb-4">
+                    @php
+                        $submittedRequirement = $selectedFile->model;
+                        $user = $submittedRequirement->user;
+                        $requirement = $submittedRequirement->requirement;
+                        $course = $submittedRequirement->course;
+                    @endphp
+                    <div class="bg-white rounded-xl border border-gray-200 shadow-md h-full flex flex-col">
+                        @php
+                        // The variables $submittedRequirement, $user, $requirement, and $course are already defined in the surrounding @php block.
+
+                        // Status Fix: Converts 'under_review' to 'Under Review' (Requires Illuminate\Support\Str to be imported at the top)
+                        $formatStatus = function ($status) {
+                            if (!$status) return 'N/A';
+                            $formatted = str_replace('_', ' ', $status);
+                            return Illuminate\Support\Str::title($formatted);
+                        };
+
+                        // Status Color Helper (Uses constants from SubmittedRequirement.php)
+                        $getStatusColor = function ($status) {
+                            return match ($status) {
+                                \App\Models\SubmittedRequirement::STATUS_UNDER_REVIEW => 'bg-blue-100 text-blue-800 border-blue-300',
+                                \App\Models\SubmittedRequirement::STATUS_REVISION_NEEDED => 'bg-amber-100 text-amber-800 border-amber-300',
+                                \App\Models\SubmittedRequirement::STATUS_REJECTED => 'bg-red-100 text-red-800 border-red-300',
+                                \App\Models\SubmittedRequirement::STATUS_APPROVED => 'bg-green-100 text-green-800 border-green-300',
+                                default => 'bg-gray-100 text-gray-800 border-gray-300',
+                            };
+                        };
+
+                        // File Size Helper (Condensed logic from your original code)
+                        $formatSize = function ($bytes) {
+                            if ($bytes >= 1073741824) {
+                                return number_format($bytes / 1073741824, 2) . ' GB';
+                            } elseif ($bytes >= 1048576) {
+                                return number_format($bytes / 1048576, 2) . ' MB';
+                            } elseif ($bytes >= 1024) {
+                                return number_format($bytes / 1024, 2) . ' KB';
+                            } else {
+                                return $bytes . ' bytes';
+                            }
+                        };
+                        
+                        // File Icon/Color Logic (Uses constants from SubmittedRequirement.php)
+                        $extension = strtolower(pathinfo($selectedFile->file_name, PATHINFO_EXTENSION));
+                        $fileIcon = \App\Models\SubmittedRequirement::FILE_ICONS[$extension]['icon'] ?? 'fa-file';
+                        $fileColor = \App\Models\SubmittedRequirement::FILE_ICONS[$extension]['color'] ?? 'text-gray-500';
+                    @endphp
+
+                    {{-- Header & Close Button --}}
+                    <div class="flex justify-between items-center mb-4 px-4 py-6 rounded-t-xl" style="background: linear-gradient(148deg,rgba(18, 67, 44, 1) 0%, rgba(30, 119, 77, 1) 54%, rgba(55, 120, 64, 1) 100%);">
                         <div class="flex items-center gap-2">
-                            <i class="fa-solid fa-circle-info text-green-800 text-2xl"></i>
-                            <h3 class="text-xl font-semibold text-green-800">File Details</h3>
+                            <i class="fa-solid fa-circle-info text-white text-2xl"></i>
+                            <h3 class="text-xl font-semibold text-white">File Details</h3>
                         </div>
-                        <button wire:click="clearSelection" class="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center">
-                            <i class="fa-solid fa-times text-gray-600 text-sm"></i>
+                        <button wire:click="clearSelection" class="w-6 h-6 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center">
+                            <i class="fa-solid fa-times text-gray-600 text-xs"></i>
                         </button>
                     </div>
 
-                    <div class="flex flex-col gap-4 text-sm">
-                        <div>
-                            <p class="font-semibold text-gray-800 uppercase text-xs">File Name</p>
-                            <p class="text-gray-500 font-semibold break-all">{{ $selectedFile->file_name }}</p>
-                        </div>
-                        <div>
-                            <p class="font-semibold text-gray-800 uppercase text-xs">File Type</p>
-                            <p class="text-gray-500 font-semibold">{{ $selectedFile->mime_type }}</p>
-                        </div>
-                        <div>
-                            <p class="font-semibold text-gray-800 uppercase text-xs">Size</p>
-                            <p class="text-gray-500 font-semibold">
-                                @if($selectedFile->size >= 1073741824)
-                                    {{ number_format($selectedFile->size / 1073741824, 2) }} GB
-                                @elseif($selectedFile->size >= 1048576)
-                                    {{ number_format($selectedFile->size / 1048576, 2) }} MB
-                                @elseif($selectedFile->size >= 1024)
-                                    {{ number_format($selectedFile->size / 1024, 2) }} KB
-                                @else
-                                    {{ $selectedFile->size }} bytes
-                                @endif
-                            </p>
-                        </div>
-                        <div>
-                            <p class="font-semibold text-gray-800 uppercase text-xs">Uploaded At</p>
-                            <p class="text-gray-500 font-semibold">{{ $selectedFile->created_at->format('M d, Y g:i A') }}</p>
-                        </div>
+                    
 
-                        {{-- Requirement Info --}}
-                        @if($requirement)
-                        <div class="pt-3 border-t-2 border-gray-300 text-sm">
-                            <p class="font-semibold text-gray-800 uppercase text-xs">Requirement</p>
-                            <p class="text-gray-500 font-semibold">{{ $requirement->name }}</p>
-                            <div class="grid grid-cols-2 gap-2 mt-4">
-                                <div>
-                                    <p class="text-gray-800 font-semibold uppercase text-xs">Due Date</p>
-                                    <p class="text-gray-500 font-semibold text-sm">{{ $requirement->due->format('M d, Y') }}</p>
+                    {{-- Details Sections (Scrollable) --}}
+                    <div class="flex flex-col gap-5 text-sm overflow-y-auto pb-4 px-4">
+
+                        {{-- Visual separator for the file type --}}
+                        <div class="flex items-center justify-center mb-1 py-4">
+                            <div class="text-7xl {{ $fileColor }} text-center">
+                                <i class="fa-solid {{ $fileIcon }}"></i>
+                            </div>
+                        </div>
+                        
+                        {{-- 1. FILE NAME, FILE TYPE, SIZE --}}
+                        <div class="p-4 bg-gray-50 rounded-xl border border-gray-200">
+                            <h4 class="font-bold text-gray-700 uppercase mb-3 border-b border-gray-300 pb-2 text-xs flex items-center gap-1">
+                                <i class="fa-solid fa-file"></i> File Information   
+                            </h4>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div class="col-span-2 mb-3">
+                                    <p class="font-semibold text-gray-700 uppercase text-xs tracking-wide">File Name</p>
+                                    <p class="text-gray-500 break-all font-medium mt-1">{{ $selectedFile->file_name }}</p>
                                 </div>
                                 <div>
-                                    <p class="text-gray-800 font-semibold uppercase text-xs">Status</p>
-                                    <p class="text-gray-500 capitalize text-sm font-semibold">{{ $submittedRequirement->status }}</p>
+                                    <p class="font-semibold text-gray-700 uppercase text-xs tracking-wide">Size</p>
+                                    <p class="text-gray-500 font-medium mt-1">{{ $formatSize($selectedFile->size) }}</p>
+                                </div>
+                                <div>
+                                    <p class="font-semibold text-gray-700 uppercase text-xs tracking-wide">Status</p>
+                                    {{-- Status Fix Applied --}}
+                                    <span class="inline-block mt-1 px-3 py-2 text-xs font-semibold rounded-full {{ $getStatusColor($submittedRequirement->status) }}">
+                                        {{ $formatStatus($submittedRequirement->status) }}
+                                    </span>
                                 </div>
                             </div>
                         </div>
-                        @endif
 
-                        {{-- Uploader Info --}}
-                        @if($user)
-                        <div class="pt-3 border-t-2 border-gray-300">
-                            <p class="font-semibold text-gray-800 uppercase text-xs">Uploaded By</p>
-                            <p class="text-gray-500 text-sm font-semibold">{{ $user->full_name }}</p>
-                            <div class="grid grid-cols-2 gap-2 mt-4">
-                                @if($user->department)
-                                <div>
-                                    <p class="text-gray-800 font-semibold text-xs uppercase">Department</p>
-                                    <p class="text-gray-500 font-semibold text-sm">{{ $user->department->name }}</p>
+                        {{-- 2. UPLOADED BY, COURSE, PROGRAM --}}
+                        <div class="p-4 bg-blue-50 rounded-xl border border-blue-200">
+                            <h4 class="font-bold text-blue-800 uppercase mb-3 border-b border-blue-300 pb-2 text-xs flex items-center gap-1">
+                                <i class="fa-solid fa-graduation-cap"></i> Submission Context
+                            </h4>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div class="col-span-2 mb-3">
+                                    <p class="font-semibold text-gray-700 uppercase text-xs">Uploaded By</p>
+                                    <p class="text-gray-500 font-medium mt-1">{{ $user->full_name }}</p>
                                 </div>
-                                @endif
-                                @if($user->college)
-                                <div>
-                                    <p class="text-gray-800 font-semibold text-xs uppercase">College</p>
-                                    <p class="text-gray-500 font-semibold text-sm">{{ $user->college->name }}</p>
+                                
+                                @if($course)
+                                <div class="col-span-2 mb-3">
+                                    <p class="font-semibold text-gray-700 uppercase text-xs">Course</p>
+                                    <p class="text-gray-500 font-medium mt-1">{{ $course->course_code }} - {{ $course->course_name }}</p>
+                                </div>
+                                <div class="col-span-2 mb-3">
+                                    <p class="font-semibold text-gray-700 uppercase text-xs">Program of the Course</p>
+                                    {{-- Display the program information --}}
+                                    @if($course->program)
+                                        <p class="text-gray-500 font-medium mt-0.5">
+                                            {{ $course->program->program_code }} - {{ $course->program->program_name }}
+                                        </p>
+                                    @else
+                                        <p class="text-gray-500 font-medium mt-1">No program assigned</p>
+                                    @endif
                                 </div>
                                 @endif
                             </div>
                         </div>
-                        @endif
-
-                        {{-- Course Info --}}
-                        @if($course)
-                        <div class="pt-3 border-t-2 border-gray-300">
-                            <p class="font-semibold text-gray-800 uppercase text-xs">Course</p>
-                            <p class="text-gray-500 text-sm font-semibold">{{ $course->course_code }} - {{ $course->course_name }}</p>
-                        </div>
-                        @endif
+                        
                     </div>
 
                     {{-- Actions --}}
-                    <div class="flex gap-2 pt-5 border-t-2 border-gray-300 mt-auto">
-                        <a href="{{ $submittedRequirement->getFileUrl() }}" target="_blank"
-                        class="flex-1 px-4 py-2 bg-1C7C54 text-white rounded-full text-sm font-semibold shadow-sm hover:bg-73E2A7 transition flex items-center justify-center">
+                    <div class="flex gap-2 border-t border-gray-300 mt-auto px-3 py-3">
+                        @php
+                            // Keep the original preview logic
+                            $isPreviewable = Illuminate\Support\Str::startsWith($selectedFile->mime_type, 'image/') || 
+                                            Illuminate\Support\Str::startsWith($selectedFile->mime_type, 'application/pdf') ||
+                                            Illuminate\Support\Str::startsWith($selectedFile->mime_type, 'text/');
+                            
+                            // Create download URL - force download behavior
+                            $downloadUrl = route('file.download', [
+                                'submission' => $selectedFile->model_id, 
+                                'file' => $selectedFile->id
+                            ]);
+                        @endphp
+                        
+                        {{-- Download button - forces download instead of preview --}}
+                        <a href="{{ $downloadUrl }}" 
+                        class="flex-1 px-4 py-2 bg-blue-700 text-white rounded-xl text-sm font-semibold shadow-sm hover:bg-blue-800 transition flex items-center justify-center">
                             <i class="fa-solid fa-download mr-2"></i> Download
                         </a>
-                        @php
-                            $isPreviewable = Str::startsWith($selectedFile->mime_type, 'image/') || 
-                                            Str::startsWith($selectedFile->mime_type, 'application/pdf') ||
-                                            Str::startsWith($selectedFile->mime_type, 'text/');
-                        @endphp
+                        
+                        {{-- Preview/Open button - only for previewable files --}}
                         @if($isPreviewable)
-                        <a href="{{ route('file.preview', ['submission' => $selectedFile->model_id, 'file' => $selectedFile->id]) }}" target="_blank"
-                        class="flex-1 px-4 py-2 bg-DEF4C6 text-1B512D rounded-full text-sm font-semibold shadow-sm hover:bg-B1CF5F transition flex items-center justify-center">
+                        <a href="{{ route('file.preview', ['submission' => $selectedFile->model_id, 'file' => $selectedFile->id]) }}" 
+                        target="_blank"
+                        class="flex-1 px-4 py-2 bg-green-600 text-white rounded-xl text-sm font-semibold shadow-sm hover:bg-green-800 transition flex items-center justify-center">
                             <i class="fa-solid fa-eye mr-2"></i> Open File
                         </a>
                         @endif
@@ -1310,3 +1327,26 @@
         @endif
     </div>
 </div>
+
+<script>
+    document.addEventListener('livewire:initialized', () => {
+        // Handle breadcrumb navigation
+        Livewire.on('breadcrumbNavigated', (level, id) => {
+            console.log('Breadcrumb navigation:', level, id);
+        });
+    });
+
+    // Ensure click events work for dynamically loaded content
+    document.addEventListener('click', function(e) {
+        // Handle breadcrumb clicks
+        if (e.target.closest('[wire\\:click^="goBack("]')) {
+            const element = e.target.closest('[wire\\:click^="goBack("]');
+            const match = element.getAttribute('wire:click').match(/goBack\('([^']+)', (\d+)\)/);
+            if (match) {
+                const crumbType = match[1];
+                const index = parseInt(match[2]);
+                @this.goBack(crumbType, index);
+            }
+        }
+    });
+</script>

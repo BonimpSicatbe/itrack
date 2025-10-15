@@ -11,7 +11,7 @@
             </div>
         </div>
 
-        <button wire:click="cancel" class="btn bg-white/20 hover:bg-white/30 text-white text-sm flex items-center gap-2 border-0 rounded-full shadow-md px-6 py-3 transition-all duration-200">
+        <button wire:click="cancel" class="btn bg-white/20 hover:bg-white/30 text-white text-sm flex items-center gap-2 border-0 rounded-xl shadow-md px-6 py-3 transition-all duration-200">
             <i class="fa-solid fa-chevron-left"></i>
             <span>Back to Requirements</span>
         </button>
@@ -450,11 +450,11 @@
 
                     <!-- Action Buttons -->
                     <div class="flex justify-end gap-3 pt-6">
-                        <button type="button" wire:click="cancel" class="btn border-2 border-green-600 rounded-full text-gray-700 px-5 py-3 text-lg font-semibold hover:shadow-lg transition-all duration-200">
+                        <button type="button" wire:click="cancel" class="btn border-2 border-green-600 rounded-xl text-gray-700 px-5 py-3 text-sm font-semibold hover:shadow-lg transition-all duration-200">
                             Cancel
                         </button>
                         <button type="submit" 
-                                class="btn bg-green-600 hover:bg-green-700 text-white rounded-full px-5 py-3 text-lg font-medium shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+                                class="btn bg-green-600 hover:bg-green-700 text-white rounded-xl px-5 py-3 text-sm font-medium shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
                                 @if(empty($selectedRequirementTypes) && !$isOtherSelected) disabled @endif>
                             Create Requirement
                             @if(count($selectedRequirementTypes) + ($isOtherSelected ? 1 : 0) > 0)
