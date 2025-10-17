@@ -16,21 +16,17 @@
             <div class="flex justify-between items-center text-white p-4 rounded-xl shadow-md mb-2" style="background: linear-gradient(148deg,rgba(18, 67, 44, 1) 0%, rgba(30, 119, 77, 1) 54%, rgba(55, 120, 64, 1) 100%);">
                 <div class="flex items-center gap-3">
                     <div class="pl-3 bg-1C7C54/10 rounded-xl">
-                        <img src="{{ asset('images/binder-white.png') }}" alt="File Manager Icon" class="w-8 h-8 object-contain">
+                        <i class="fa-solid fa-folder text-white text-2xl"></i>
                     </div>
                     <h2 class="text-xl md:text-xl font-semibold">Portfolio</h2>
 
                     <!-- Current Status -->
-                    @if($selectedSemester)
+                    @if($activeSemester)
                         <span class="ml-3 px-4 py-1.5 rounded-full text-sm font-semibold bg-white/20 text-white">
-                            {{ $selectedSemester->is_active ? 'Current Semester: ' : 'Viewing: ' }}{{ $selectedSemester->name }}
-                        </span>
-                    @elseif($activeSemester)
-                        <span class="ml-3 px-4 py-1.5 rounded-full text-sm font-semibold bg-white/20 text-white">
-                            Current Semester: {{ $activeSemester->name }}
+                            {{ $selectedSemester ? 'Viewing: ' : 'Current Semester: ' }}{{ $activeSemester->name }}
                         </span>
                     @else
-                        <span class="ml-3 px-4 py-1.5 rounded-full text-sm font-semibold bg-white/20 text-white">
+                        <span class="ml-3 px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
                             No Active Semester
                         </span>
                     @endif

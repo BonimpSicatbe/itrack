@@ -25,7 +25,7 @@
                     <i class="fa-solid fa-magnifying-glass text-gray-400"></i>
                 </div>
                 <input type="text" wire:model.live.debounce.300ms="search"
-                    class="pl-10 block w-sm rounded-xl border-gray-300 shadow-sm focus:border-1C7C54 focus:ring-1C7C54 sm:text-sm"
+                    class="pl-10 block w-sm rounded-xl border-gray-300 shadow-sm focus:border-green-600 focus:ring-green-600 sm:text-sm"
                     placeholder="Search semester...">
             </div>
         </div>
@@ -176,8 +176,7 @@
     <div class="modal rounded-xl" role="dialog">
         <div class="modal-box p-0 m-0 rounded-xl">
             {{-- header --}}
-            <div class="text-white px-6 py-4 flex items-center space-x-3"
-                style="background: linear-gradient(148deg,rgba(18, 67, 44, 1) 0%, rgba(30, 119, 77, 1) 54%, rgba(55, 120, 64, 1) 100%);">
+            <div class="text-white px-6 py-4 flex items-center space-x-3 " style="background: linear-gradient(148deg,rgba(18, 67, 44, 1) 0%, rgba(30, 119, 77, 1) 54%, rgba(55, 120, 64, 1) 100%);">
                 <i class="fa-solid fa-calendar-plus text-lg"></i>
                 <h3 class="text-xl font-semibold">Add New Semester</h3>
             </div>
@@ -212,8 +211,7 @@
     @if ($showEditModal && $editingSemester)
         <x-modal name="edit-semester-modal" :show="$showEditModal" maxWidth="md">
             <!-- Header -->
-            <div class=" text-white rounded-t-xl px-6 py-4 flex items-center space-x-3"
-                style="background: linear-gradient(148deg,rgba(18, 67, 44, 1) 0%, rgba(30, 119, 77, 1) 54%, rgba(55, 120, 64, 1) 100%);">
+            <div class=" text-white rounded-t-xl px-6 py-4 flex items-center space-x-3" style="background: linear-gradient(148deg,rgba(18, 67, 44, 1) 0%, rgba(30, 119, 77, 1) 54%, rgba(55, 120, 64, 1) 100%);">
                 <i class="fa-solid fa-calendar text-lg"></i>
                 <h3 class="text-xl font-semibold">Edit Semester</h3>
             </div>

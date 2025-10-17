@@ -24,32 +24,14 @@
                 <div class="flex items-center space-x-1">
                     @foreach ($navLinks['main'] as $navlink)
                         <div class="relative group" 
-                            x-data="{ isActive: {{ request()->routeIs($navlink['group'] ?? $navlink['route']) ? 'true' : 'false' }} }">
+                             x-data="{ isActive: {{ request()->routeIs($navlink['group'] ?? $navlink['route']) ? 'true' : 'false' }} }">
                             <a href="{{ route($navlink['route']) }}"
-                            class="px-4 py-2 rounded-lg text-xs font-medium transition-all duration-200 flex items-center space-x-2 relative
-                                    {{ request()->routeIs($navlink['group'] ?? $navlink['route']) 
-                                        ? 'bg-green-50 text-green-700 shadow-sm' 
-                                        : 'text-gray-700 hover:bg-gray-300 hover:text-gray-900' }}"
-                            :aria-current="isActive ? 'page' : 'false'">
-                                
-                                @if(isset($navlink['icon_type']) && $navlink['icon_type'] === 'custom')
-                                    @if(request()->routeIs($navlink['group'] ?? $navlink['route']))
-                                        {{-- Active state icon --}}
-                                        <img src="{{ asset($navlink['icon_path_active'] ?? $navlink['icon_path']) }}" 
-                                            alt="{{ $navlink['label'] }} icon" 
-                                            class="w-4 h-4 object-contain"
-                                            loading="lazy">
-                                    @else
-                                        {{-- Inactive state icon --}}
-                                        <img src="{{ asset($navlink['icon_path']) }}" 
-                                            alt="{{ $navlink['label'] }} icon" 
-                                            class="w-4 h-4 object-contain"
-                                            loading="lazy">
-                                    @endif
-                                @else
-                                    <i class="fa-solid fa-{{ $navlink['icon'] }} text-sm" aria-hidden="true"></i>
-                                @endif
-                                
+                               class="px-4 py-2 rounded-lg text-xs font-medium transition-all duration-200 flex items-center space-x-2 relative
+                                      {{ request()->routeIs($navlink['group'] ?? $navlink['route']) 
+                                          ? 'bg-green-50 text-green-700 shadow-sm' 
+                                          : 'text-gray-700 hover:bg-gray-300 hover:text-gray-900' }}"
+                               :aria-current="isActive ? 'page' : 'false'">
+                                <i class="fa-solid fa-{{ $navlink['icon'] }} text-sm" aria-hidden="true"></i>
                                 <span>{{ $navlink['label'] }}</span>
                             </a>
                         </div>
@@ -191,25 +173,7 @@
                                 : 'text-gray-700 hover:bg-gray-50' }}"
                     @click="mobileMenuOpen = false"
                     :aria-current="{{ request()->routeIs($navlink['group'] ?? $navlink['route']) ? "'page'" : 'false' }}">
-                        
-                        @if(isset($navlink['icon_type']) && $navlink['icon_type'] === 'custom')
-                            @if(request()->routeIs($navlink['group'] ?? $navlink['route']))
-                                {{-- Active state icon --}}
-                                <img src="{{ asset($navlink['icon_path_active'] ?? $navlink['icon_path']) }}" 
-                                    alt="{{ $navlink['label'] }} icon" 
-                                    class="w-8 h-8 object-contain"
-                                    loading="lazy">
-                            @else
-                                {{-- Inactive state icon --}}
-                                <img src="{{ asset($navlink['icon_path']) }}" 
-                                    alt="{{ $navlink['label'] }} icon" 
-                                    class="w-8 h-8 object-contain"
-                                    loading="lazy">
-                            @endif
-                        @else
-                            <i class="fa-solid fa-{{ $navlink['icon'] }} text-sm w-5" aria-hidden="true"></i>
-                        @endif
-                        
+                        <i class="fa-solid fa-{{ $navlink['icon'] }} text-sm w-5" aria-hidden="true"></i>
                         <span class="flex-1">{{ $navlink['label'] }}</span>
                         
                         @if (request()->routeIs($navlink['group'] ?? $navlink['route']))

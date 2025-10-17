@@ -57,13 +57,10 @@ class Navigation extends Component
                 ],
                 [
                     'label' => 'Portfolio',
-                    'icon' => 'file',
+                    'icon' => 'folder',
                     'route' => 'admin.file-manager.index',
                     'group' => 'admin.file-manager.*',
-                    'description' => 'File management',
-                    'icon_type' => 'custom', 
-                    'icon_path' => 'images/binder-gray.png', 
-                    'icon_path_active' => 'images/binder-green.png' 
+                    'description' => 'View User Portfolio'
                 ],
                 
             ],

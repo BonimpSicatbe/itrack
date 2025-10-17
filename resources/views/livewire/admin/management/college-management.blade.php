@@ -164,7 +164,7 @@
         @if($showEditCollegeModal)
             <x-modal name="edit-college-modal" :show="$showEditCollegeModal" maxWidth="2xl">
                 <!-- Header -->
-                <div class=" text-white rounded-t-xl px-6 py-4 flex items-center space-x-3" style="background: linear-gradient(148deg,rgba(18, 67, 44, 1) 0%, rgba(30, 119, 77, 1) 54%, rgba(55, 120, 64, 1) 100%);">
+                <div class=" text-white rounded-t-xl px-6 py-4 flex items-center space-x-3 " style="background: linear-gradient(148deg,rgba(18, 67, 44, 1) 0%, rgba(30, 119, 77, 1) 54%, rgba(55, 120, 64, 1) 100%);">
                     <i class="fa-solid fa-building-columns text-lg"></i>
                     <h3 class="text-xl font-semibold">Edit College</h3>
                 </div>
@@ -174,18 +174,18 @@
                     <div class="space-y-6">
                         <!-- College Name -->
                         <div>
-                            <label class="block text-sm font-semibold text-gray-700">College Name *</label>
+                            <label class="block text-xs tracking-wide uppercase font-semibold text-gray-700">College Name</label>
                             <input type="text" wire:model="editingCollege.name"
-                                class="mt-2 block w-full rounded-xl border-gray-300 sm:text-sm"
+                                class="mt-2 block w-full rounded-xl border-gray-300 sm:text-sm text-gray-500"
                                 placeholder="Enter college name">
                             @error('editingCollege.name') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                         </div>
 
                         <!-- College Acronym -->
                         <div>
-                            <label class="block text-sm font-semibold text-gray-700">College Acronym *</label>
+                            <label class="block text-xs tracking-wide uppercase font-semibold text-gray-700">College Acronym</label>
                             <input type="text" wire:model="editingCollege.acronym"
-                                class="mt-2 block w-full rounded-xl border-gray-300 sm:text-sm"
+                                class="mt-2 block w-full rounded-xl border-gray-300 sm:text-sm text-gray-500"
                                 placeholder="Enter college acronym">
                             @error('editingCollege.acronym') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                         </div>

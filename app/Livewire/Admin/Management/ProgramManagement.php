@@ -6,6 +6,7 @@ namespace App\Livewire\Admin\Management;
 use Livewire\Component;
 use App\Models\Program;
 use App\Models\College;
+use App\Models\Course;
 use Illuminate\Validation\Rule;
 
 class ProgramManagement extends Component
@@ -34,6 +35,10 @@ class ProgramManagement extends Component
 
     public $showDeleteConfirmationModal = false;
     public $programToDelete = null;
+
+    public $showProgramDetailsModal = false;
+    public $selectedProgram = null;
+    public $programCourses = [];
 
     protected $queryString = [
         'search' => ['except' => ''],
@@ -90,6 +95,32 @@ class ProgramManagement extends Component
         $this->programToDelete = null;
     }
 
+    public function openProgramDetailsModal($programId)
+    {
+        $this->selectedProgram = Program::with(['college', 'courses.courseType', 'courses.assignments.professor', 'courses.assignments.semester'])->find($programId);
+        
+        if ($this->selectedProgram) {
+            $this->programCourses = $this->selectedProgram->courses->map(function($course) {
+                return [
+                    'course_code' => $course->course_code,
+                    'course_name' => $course->course_name,
+                    'course_type' => $course->courseType ? $course->courseType->name : 'N/A',
+                    'description' => $course->description,
+                    'current_assignment' => $course->assignments->sortByDesc('assignment_date')->first()
+                ];
+            });
+            
+            $this->showProgramDetailsModal = true;
+        }
+    }
+
+    public function closeProgramDetailsModal()
+    {
+        $this->showProgramDetailsModal = false;
+        $this->selectedProgram = null;
+        $this->programCourses = [];
+    }
+
     public function updateProgram()
     {
         try {
@@ -119,6 +150,20 @@ class ProgramManagement extends Component
                 'description' => $this->editingProgram['description'],
                 'college_id' => $this->editingProgram['college_id'],
             ]);
+
+            // Refresh the selected program if it's the same program being edited
+            if ($this->selectedProgram && $this->selectedProgram->id == $program->id) {
+                $this->selectedProgram = $program->fresh(['college', 'courses.courseType', 'courses.assignments.professor', 'courses.assignments.semester']);
+                $this->programCourses = $this->selectedProgram->courses->map(function($course) {
+                    return [
+                        'course_code' => $course->course_code,
+                        'course_name' => $course->course_name,
+                        'course_type' => $course->courseType ? $course->courseType->name : 'N/A',
+                        'description' => $course->description,
+                        'current_assignment' => $course->assignments->sortByDesc('assignment_date')->first()
+                    ];
+                });
+            }
 
             $this->closeEditProgramModal();
             $this->dispatch('showNotification', 

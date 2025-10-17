@@ -36,9 +36,10 @@ return new class extends Migration
 
             $table->timestamps();
 
-            // UNIQUE constraint: Ensures a course is taught by only one professor in a specific semester/year
-            // 🔥 MODIFIED: The unique constraint is updated to use semester_id instead of year and semester string
-            $table->unique(['course_id', 'semester_id'], 'unique_term_assignment'); 
+            // 🔥 MODIFIED UNIQUE constraint: 
+            // Now prevents the same professor from being assigned to the same course in the same semester multiple times
+            // But allows multiple different professors to be assigned to the same course in the same semester
+            $table->unique(['course_id', 'professor_id', 'semester_id'], 'unique_professor_assignment'); 
         });
     }
 

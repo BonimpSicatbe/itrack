@@ -38,7 +38,7 @@
                         </div>
                         <input 
                             type="text" 
-                            wire:model.live.debounce.300ms="search"
+                            wire:model.live="search"
                             class="pl-10 block w-sm rounded-xl text-gray-500 border-gray-300 shadow-sm focus:border-green-600 focus:ring-green-600 sm:text-sm" 
                             placeholder="Search requirements..."
                         >

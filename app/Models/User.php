@@ -7,7 +7,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany; // <-- NEW: Added for many-to-many relationship
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Spatie\Permission\Traits\HasRoles;
 use Spatie\MediaLibrary\HasMedia;   
 use Spatie\MediaLibrary\InteractsWithMedia;
@@ -16,8 +16,6 @@ class User extends Authenticatable implements HasMedia
 {
     use HasFactory, Notifiable, HasRoles, InteractsWithMedia;
 
-    // ... (Your existing properties: fillable, hidden, casts, appends) ...
-    
     /**
      * The attributes that are mass assignable.
      *
@@ -32,6 +30,8 @@ class User extends Authenticatable implements HasMedia
         'email_verified_at',
         'department_id',
         'college_id',
+        'is_active', // NEW
+        'deactivated_at', // NEW
         'password',
     ];
 
@@ -53,6 +53,8 @@ class User extends Authenticatable implements HasMedia
     protected $casts = [
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
+        'is_active' => 'boolean', // NEW
+        'deactivated_at' => 'datetime', // NEW
     ];
 
     /**
@@ -66,18 +68,14 @@ class User extends Authenticatable implements HasMedia
         'name',
     ];
 
-    // ==================== NEW COURSE RELATIONSHIPS ====================
+    // ==================== COURSE RELATIONSHIPS ====================
 
-    /**
-     * Get all the individual course assignment records (historical and current).
-     * The foreign key is 'professor_id' in the course_assignments table.
-     */
     public function assignments(): HasMany
     {
         return $this->hasMany(CourseAssignment::class, 'professor_id');
     }
 
-    public function taughtCourses(): BelongsToMany  // <- RENAMED from courses() to taughtCourses()
+    public function taughtCourses(): BelongsToMany
     {
         return $this->belongsToMany(Course::class, 'course_assignments', 'professor_id', 'course_id')
                     ->as('assignment')
@@ -86,11 +84,7 @@ class User extends Authenticatable implements HasMedia
                     ->withTimestamps();
     }
 
-    /**
-     * Get all the courses the professor has taught (historical and current).
-     * This uses the many-to-many relationship with the custom pivot model.
-     */
-    public function courses(): BelongsToMany  // <- NEW: For submitted requirements
+    public function courses(): BelongsToMany
     {
         return $this->belongsToMany(Course::class, 'submitted_requirements', 'user_id', 'course_id')
                     ->distinct();
@@ -100,7 +94,6 @@ class User extends Authenticatable implements HasMedia
     {
         return $this->hasMany(RequirementSubmissionIndicator::class);
     }
-
 
     // ==================== EXISTING RELATIONSHIPS ====================
 
@@ -155,11 +148,16 @@ class User extends Authenticatable implements HasMedia
         return $this->morphMany(\Illuminate\Notifications\DatabaseNotification::class, 'notifiable')->latest();
     }
 
+    public function courseAssignments()
+    {
+        return $this->hasMany(CourseAssignment::class, 'professor_id');
+    }
+
     // ==================== ACCESSORS ====================
 
     public function getNameAttribute(): string
     {
-        return $this->full_name; // or any other logic you prefer
+        return $this->full_name;
     }
 
     public function getFullNameAttribute(): string
@@ -223,6 +221,16 @@ class User extends Authenticatable implements HasMedia
         return $query->where('college_id', $collegeId);
     }
 
+    public function scopeActive($query) // NEW
+    {
+        return $query->where('is_active', true);
+    }
+
+    public function scopeInactive($query) // NEW
+    {
+        return $query->where('is_active', false);
+    }
+
     // ==================== MEDIA ====================
 
     public function registerMediaCollections(): void
@@ -230,10 +238,5 @@ class User extends Authenticatable implements HasMedia
         $this->addMediaCollection('profile_picture')
              ->singleFile()
              ->acceptsMimeTypes(['image/jpeg', 'image/png', 'image/gif']);
-    }
-
-    public function courseAssignments()
-    {
-        return $this->hasMany(CourseAssignment::class, 'professor_id');
     }
 }
