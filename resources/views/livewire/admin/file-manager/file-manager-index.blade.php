@@ -16,17 +16,21 @@
             <div class="flex justify-between items-center text-white p-4 rounded-xl shadow-md mb-2" style="background: linear-gradient(148deg,rgba(18, 67, 44, 1) 0%, rgba(30, 119, 77, 1) 54%, rgba(55, 120, 64, 1) 100%);">
                 <div class="flex items-center gap-3">
                     <div class="pl-3 bg-1C7C54/10 rounded-xl">
-                        <img src="{{ asset('images/portfolio.png') }}" alt="File Manager Icon" class="w-7 h-7 object-contain">
+                        <img src="{{ asset('images/binder-white.png') }}" alt="File Manager Icon" class="w-8 h-8 object-contain">
                     </div>
                     <h2 class="text-xl md:text-xl font-semibold">Portfolio</h2>
 
                     <!-- Current Status -->
-                    @if($activeSemester)
+                    @if($selectedSemester)
                         <span class="ml-3 px-4 py-1.5 rounded-full text-sm font-semibold bg-white/20 text-white">
-                            {{ $selectedSemester ? 'Viewing: ' : 'Current Semester: ' }}{{ $activeSemester->name }}
+                            {{ $selectedSemester->is_active ? 'Current Semester: ' : 'Viewing: ' }}{{ $selectedSemester->name }}
+                        </span>
+                    @elseif($activeSemester)
+                        <span class="ml-3 px-4 py-1.5 rounded-full text-sm font-semibold bg-white/20 text-white">
+                            Current Semester: {{ $activeSemester->name }}
                         </span>
                     @else
-                        <span class="ml-3 px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                        <span class="ml-3 px-4 py-1.5 rounded-full text-sm font-semibold bg-white/20 text-white">
                             No Active Semester
                         </span>
                     @endif
@@ -68,77 +72,96 @@
             <!-- END HEADER -->
 
             <div class="w-full bg-white shadow-md rounded-xl p-6 min-h-[calc(100vh-10rem)]">
-                <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4  pb-4">
-                    <!-- Left: Search -->
-                    <div class="flex items-center w-full md:w-auto">
-                        <div class="relative max-w-md w-full md:w-sm">
-                            <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                                <i class="fas fa-search text-gray-500 text-sm"></i>
+                {{-- Display message when no active semester --}}
+                @if($noActiveSemester)
+                    <div class="flex flex-col items-center justify-center py-16 text-gray-500">
+                        <i class="fas fa-calendar-times text-6xl text-gray-300 mb-4"></i>
+                        <h3 class="text-xl font-semibold text-gray-600 mb-2">No Active Semester</h3>
+                        <p class="text-gray-500 text-center max-w-md">
+                            There is currently no active semester. Please activate a semester to view and manage files.
+                        </p>
+                        <div class="mt-6">
+                            <button 
+                                wire:click="togglePanel"
+                                class="px-6 py-3 bg-green-600 text-white rounded-xl font-semibold hover:bg-green-700 transition-colors flex items-center gap-2"
+                            >
+                                <i class="fas fa-calendar-plus"></i>
+                                Manage Semesters
+                            </button>
+                        </div>
+                    </div>
+                @else
+                    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4  pb-4">
+                        <!-- Left: Search -->
+                        <div class="flex items-center w-full md:w-auto">
+                            <div class="relative max-w-md w-full md:w-sm">
+                                <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                                    <i class="fas fa-search text-gray-500 text-sm"></i>
+                                </div>
+                                <input 
+                                    type="text" 
+                                    wire:model.live.debounce.300ms="search"
+                                    class="block w-sm p-2 pl-9 text-sm text-1B512D border border-gray-300 shadow-sm focus:border-green-600 focus:ring-green-600 rounded-xl" 
+                                    placeholder="{{ $this->getSearchPlaceholder() }}"
+                                >
                             </div>
-                            <input 
-                                type="text" 
-                                wire:model.live.debounce.300ms="search"
-                                class="block w-sm p-2 pl-9 text-sm text-1B512D border border-gray-300 shadow-sm focus:border-green-600 focus:ring-green-600 rounded-xl" 
-                                placeholder="{{ $this->getSearchPlaceholder() }}"
-                            >
+                        </div>
+
+                        <!-- Right: Category Buttons -->
+                        <div class="ml-auto border border-gray-300 shadow-sm rounded-xl bg-white font-semibold p-1">
+                            <!-- Inner container with vertical dividers -->
+                            <div class="flex flex-wrap items-center divide-x divide-gray-300 overflow-hidden rounded-lg">
+                                <button
+                                    wire:click="setCategory('requirement')"
+                                    class="px-4 py-2 text-sm font-semibold transition-colors 
+                                        {{ $category === 'requirement' ? 'bg-green-600 text-white shadow-sm' : 'bg-white text-1C7C54 hover:bg-green-600/20 hover:text-1B512D' }}"
+                                >
+                                    <i class="fa-solid fa-folder mr-2"></i>
+                                    Requirement
+                                </button>
+                                <button
+                                    wire:click="setCategory('user')"
+                                    class="px-4 py-2 text-sm font-semibold transition-colors 
+                                        {{ $category === 'user' ? 'bg-green-600 text-white shadow-sm' : 'bg-white text-1C7C54 hover:bg-green-600/20 hover:text-1B512D' }}"
+                                >
+                                    <i class="fa-solid fa-user mr-2"></i>
+                                    User
+                                </button>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Right: Category Buttons -->
-                    <div class="ml-auto border border-gray-300 shadow-sm rounded-xl bg-white font-semibold p-1">
-                        <!-- Inner container with vertical dividers -->
-                        <div class="flex flex-wrap items-center divide-x divide-gray-300 overflow-hidden rounded-lg">
-                            <button
-                                wire:click="setCategory('requirement')"
-                                class="px-4 py-2 text-sm font-semibold transition-colors 
-                                    {{ $category === 'requirement' ? 'bg-green-600 text-white shadow-sm' : 'bg-white text-1C7C54 hover:bg-green-600/20 hover:text-1B512D' }}"
-                            >
-                                <i class="fa-solid fa-folder mr-2"></i>
-                                Requirement
-                            </button>
-                            <button
-                                wire:click="setCategory('user')"
-                                class="px-4 py-2 text-sm font-semibold transition-colors 
-                                    {{ $category === 'user' ? 'bg-green-600 text-white shadow-sm' : 'bg-white text-1C7C54 hover:bg-green-600/20 hover:text-1B512D' }}"
-                            >
-                                <i class="fa-solid fa-user mr-2"></i>
-                                User
-                            </button>
-                        </div>
+                    {{-- Improved Breadcrumb Navigation --}}
+                    @if(count($breadcrumbs) > 0)
+                    <div class="flex items-center text-sm text-green-600 bg-green-50 border border-green-600 rounded-xl p-4 overflow-x-auto whitespace-nowrap scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent mb-4">
+                        <ol class="flex items-center space-x-1">
+                            @foreach($breadcrumbs as $index => $crumb)
+                                <li class="flex items-center">
+                                    @if($index > 0)
+                                        <i class="fa-regular fa-chevron-right text-gray-300 text-xs mx-2"></i>
+                                    @endif
+                                    
+                                    @if($loop->last)
+                                        {{-- Current level - not clickable --}}
+                                        <span 
+                                            class="text-green-600 font-semibold max-w-[250px] truncate" 
+                                            title="{{ $crumb['name'] }}">
+                                            {{ $crumb['name'] }}
+                                        </span>
+                                    @else
+                                        {{-- Clickable breadcrumb items --}}
+                                        <button 
+                                            wire:click="goBack('{{ $crumb['type'] }}', {{ $index }})"
+                                            class="font-semibold hover:text-amber-500 hover:underline hover:underline-offset-4 max-w-[200px] truncate"
+                                            title="{{ $crumb['name'] }}"
+                                        >
+                                            {{ $crumb['name'] }}
+                                        </button>
+                                    @endif
+                                </li>
+                            @endforeach
+                        </ol>
                     </div>
-                </div>
-
-                {{-- Improved Breadcrumb Navigation --}}
-                @if(count($breadcrumbs) > 0)
-                <div class="flex items-center text-sm text-green-600 bg-green-50 border border-green-600 rounded-xl p-4 overflow-x-auto whitespace-nowrap scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent mb-4">
-                    <ol class="flex items-center space-x-1">
-                        @foreach($breadcrumbs as $index => $crumb)
-                            <li class="flex items-center">
-                                @if($index > 0)
-                                    <i class="fa-regular fa-chevron-right text-gray-300 text-xs mx-2"></i>
-                                @endif
-                                
-                                @if($loop->last)
-                                    {{-- Current level - not clickable --}}
-                                    <span 
-                                        class="text-green-600 font-semibold max-w-[250px] truncate" 
-                                        title="{{ $crumb['name'] }}">
-                                        {{ $crumb['name'] }}
-                                    </span>
-                                @else
-                                    {{-- Clickable breadcrumb items --}}
-                                    <button 
-                                        wire:click="goBack('{{ $crumb['type'] }}', {{ $index }})"
-                                        class="font-semibold hover:text-amber-500 hover:underline hover:underline-offset-4 max-w-[200px] truncate"
-                                        title="{{ $crumb['name'] }}"
-                                    >
-                                        {{ $crumb['name'] }}
-                                    </button>
-                                @endif
-                            </li>
-                        @endforeach
-                    </ol>
-                </div>
                 @endif
 
                 {{-- REQUIREMENTS CATEGORY HIERARCHY --}}
@@ -1145,6 +1168,7 @@
                         @endif
                     @endif
                 @endif
+            @endif
             </div>
         </div>
 

@@ -186,6 +186,10 @@
                 </div>
                 @if($selectedFile)
                     <div class="flex items-center gap-3">
+                        <!-- Status Label -->
+                        <label class="text-sm font-medium text-white">Status:</label>
+                        
+                        <!-- Status Dropdown -->
                         <select wire:model="selectedStatus" class="border-gray-300 rounded-xl shadow-sm text-sm text-gray-700 focus:border-green-700 focus:ring-green-700 bg-white">
                             @foreach($statusOptions as $value => $label)
                                 <option value="{{ $value }}" {{ $selectedFile['status'] === $value ? 'selected' : '' }}>
@@ -193,66 +197,85 @@
                                 </option>
                             @endforeach
                         </select>
+                        
+                        <!-- Update Button -->
                         <button wire:click="updateStatus" 
-                            class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-xl shadow-sm text-green-700 bg-white hover:bg-green-700 hover:text-white border border-white transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-700">
+                            class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-xl shadow-sm text-green-700 bg-white hover:bg-green-700 hover:text-white border border-white transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-700"
+                            title="Update both status and notes">
                             <i class="fa-solid fa-check mr-1.5"></i>
-                            Update
+                            Update Status & Notes
                         </button>
                     </div>
                 @endif
             </div>
 
             <!-- File Display -->
-            <div class="flex-1 bg-gray-50 flex flex-col items-center justify-center overflow-hidden">
+            <div class="flex-1 bg-gray-50 flex flex-col overflow-hidden">
                 @if($selectedFile)
-                    @if($isImage)
-                        <div class="p-6 w-full h-full flex items-center justify-center bg-white">
-                            <img src="{{ $fileUrl }}" alt="{{ $selectedFile['file_name'] }}" class="max-w-full max-h-full object-contain rounded-xl shadow-sm">
-                        </div>
-                    @elseif($isPdf)
-                        <iframe src="{{ $fileUrl }}#toolbar=0&navpanes=0" class="w-full h-full border-0 bg-white"></iframe>
-                    @elseif($isOfficeDoc)
-                        <iframe src="https://view.officeapps.live.com/op/embed.aspx?src={{ urlencode($fileUrl) }}" class="w-full h-full border-0 bg-white"></iframe>
-                    @else
-                        <div class="text-center p-8 max-w-md bg-white rounded-xl shadow-sm">
-                            @php
-                                $fileIcon = \App\Models\SubmittedRequirement::FILE_ICONS[$selectedFile['extension']] ?? \App\Models\SubmittedRequirement::FILE_ICONS['default'];
-                            @endphp
-                            <div class="mx-auto w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center mb-4">
-                                <i class="fa-solid {{ $fileIcon['icon'] }} text-3xl {{ $fileIcon['color'] }}"></i>
+                    <div class="flex-1 overflow-hidden">
+                        @if($isImage)
+                            <div class="p-6 w-full h-full flex items-center justify-center bg-white">
+                                <img src="{{ $fileUrl }}" alt="{{ $selectedFile['file_name'] }}" class="max-w-full max-h-full object-contain rounded-xl shadow-sm">
                             </div>
-                            <h3 class="text-lg font-medium text-gray-900 mb-2">Preview unavailable</h3>
-                            <p class="text-sm text-gray-500 mb-4">This file type cannot be previewed in the browser</p>
-                            <a href="{{ $fileUrl }}" target="_blank"
-                            class="inline-flex items-center px-4 py-2 border border-green-700 shadow-sm text-sm font-medium rounded-xl text-green-700 bg-white hover:bg-gray-50 transition-colors">
-                                <i class="fa-solid fa-download mr-2"></i>
-                                Download File
-                            </a>
+                        @elseif($isPdf)
+                            <iframe src="{{ $fileUrl }}#toolbar=0&navpanes=0" class="w-full h-full border-0 bg-white"></iframe>
+                        @elseif($isOfficeDoc)
+                            <iframe src="https://view.officeapps.live.com/op/embed.aspx?src={{ urlencode($fileUrl) }}" class="w-full h-full border-0 bg-white"></iframe>
+                        @else
+                            <div class="text-center p-8 max-w-md bg-white rounded-xl shadow-sm h-full flex flex-col items-center justify-center">
+                                @php
+                                    $fileIcon = \App\Models\SubmittedRequirement::FILE_ICONS[$selectedFile['extension']] ?? \App\Models\SubmittedRequirement::FILE_ICONS['default'];
+                                @endphp
+                                <div class="mx-auto w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center mb-4">
+                                    <i class="fa-solid {{ $fileIcon['icon'] }} text-3xl {{ $fileIcon['color'] }}"></i>
+                                </div>
+                                <h3 class="text-lg font-medium text-gray-900 mb-2">Preview unavailable</h3>
+                                <p class="text-sm text-gray-500 mb-4">This file type cannot be previewed in the browser</p>
+                                <a href="{{ $fileUrl }}" target="_blank"
+                                class="inline-flex items-center px-4 py-2 border border-green-700 shadow-sm text-sm font-medium rounded-xl text-green-700 bg-white hover:bg-gray-50 transition-colors">
+                                    <i class="fa-solid fa-download mr-2"></i>
+                                    Download File
+                                </a>
+                            </div>
+                        @endif
+                    </div>
+
+                    <!-- Admin Notes Section -->
+                    <div class="border-t border-gray-200 bg-white flex-shrink-0">
+                        <div class="px-2 py-2">
+                            <textarea 
+                                wire:model="adminNotes"
+                                rows="2"
+                                placeholder="Add notes or comments about this submission..."
+                                class="w-full px-3 py-2 border border-gray-300 rounded-xl shadow-sm focus:border-green-700 focus:ring focus:ring-green-700 focus:ring-opacity-50 text-sm text-gray-700 placeholder-gray-400"
+                            ></textarea>
                         </div>
-                    @endif
+                    </div>
                 @else
-                    <div class="text-center p-8 max-w-md">
-                        <div class="mx-auto w-20 h-20 rounded-full bg-green-700/10 flex items-center justify-center mb-4">
-                            <i class="fa-solid fa-file-circle-question text-3xl text-green-700"></i>
+                    <div class="flex-1 flex items-center justify-center">
+                        <div class="text-center p-8 max-w-md">
+                            <div class="mx-auto w-20 h-20 rounded-full bg-green-700/10 flex items-center justify-center mb-4">
+                                <i class="fa-solid fa-file-circle-question text-3xl text-green-700"></i>
+                            </div>
+                            <h3 class="text-lg font-medium text-gray-900 mb-2">
+                                @if($user && $course && count($allFiles) > 0)
+                                    Select a file to preview
+                                @elseif($user && $course)
+                                    No files available
+                                @else
+                                    Incomplete selection
+                                @endif
+                            </h3>
+                            <p class="text-sm text-gray-500">
+                                @if($user && $course && count($allFiles) > 0)
+                                    Choose a file from the list to view its contents
+                                @elseif($user && $course)
+                                    No files have been submitted for this selection
+                                @else
+                                    Please select a user and course to view files
+                                @endif
+                            </p>
                         </div>
-                        <h3 class="text-lg font-medium text-gray-900 mb-2">
-                            @if($user && $course && count($allFiles) > 0)
-                                Select a file to preview
-                            @elseif($user && $course)
-                                No files available
-                            @else
-                                Incomplete selection
-                            @endif
-                        </h3>
-                        <p class="text-sm text-gray-500">
-                            @if($user && $course && count($allFiles) > 0)
-                                Choose a file from the list to view its contents
-                            @elseif($user && $course)
-                                No files have been submitted for this selection
-                            @else
-                                Please select a user and course to view files
-                            @endif
-                        </p>
                     </div>
                 @endif
             </div>

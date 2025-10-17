@@ -309,6 +309,78 @@
                     </div>
                 </div>
                 @endisset
+
+                {{-- Status Update Section --}}
+                @isset($selectedNotificationData['status_update'])
+                <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
+                    <div class="flex items-center mb-4 p-3 rounded-xl" style="background: linear-gradient(to right, #DEF4C6/20, #73E2A7/10);">
+                        <div class="w-8 h-8 bg-gradient-to-br from-[#1C7C54] to-[#1B512D] rounded-xl flex items-center justify-center mr-3">
+                            <i class="fa-solid fa-arrows-rotate text-white text-sm"></i>
+                        </div>
+                        <h3 class="text-lg font-semibold text-gray-800">Status Update</h3>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                        <div>
+                            <p class="font-medium text-gray-500 text-xs uppercase tracking-wide mb-1">Previous Status</p>
+                            <div class="flex items-center">
+                                @php
+                                    $oldStatus = $selectedNotificationData['status_update']['old_status'] ?? '';
+                                    $oldStatusLabel = $selectedNotificationData['status_update']['old_status_label'] ?? '';
+                                    $oldStatusColor = match($oldStatus) {
+                                        'approved' => 'bg-green-100 text-green-800 border-green-200',
+                                        'rejected' => 'bg-red-100 text-red-800 border-red-200',
+                                        'revision_needed' => 'bg-yellow-100 text-yellow-800 border-yellow-200',
+                                        'under_review' => 'bg-blue-100 text-blue-800 border-blue-200',
+                                        default => 'bg-gray-100 text-gray-800 border-gray-200'
+                                    };
+                                @endphp
+                                <span class="px-3 py-1.5 rounded-full border text-sm font-medium {{ $oldStatusColor }}">
+                                    {{ $oldStatusLabel }}
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <p class="font-medium text-gray-500 text-xs uppercase tracking-wide mb-1">New Status</p>
+                            <div class="flex items-center">
+                                @php
+                                    $newStatus = $selectedNotificationData['status_update']['new_status'] ?? '';
+                                    $newStatusLabel = $selectedNotificationData['status_update']['new_status_label'] ?? '';
+                                    $newStatusColor = match($newStatus) {
+                                        'approved' => 'bg-green-100 text-green-800 border-green-200',
+                                        'rejected' => 'bg-red-100 text-red-800 border-red-200',
+                                        'revision_needed' => 'bg-yellow-100 text-yellow-800 border-yellow-200',
+                                        'under_review' => 'bg-blue-100 text-blue-800 border-blue-200',
+                                        default => 'bg-gray-100 text-gray-800 border-gray-200'
+                                    };
+                                @endphp
+                                <span class="px-3 py-1.5 rounded-full border text-sm font-medium {{ $newStatusColor }}">
+                                    {{ $newStatusLabel }}
+                                </span>
+                            </div>
+                        </div>
+                        
+                        @isset($selectedNotificationData['status_update']['reviewed_by'])
+                        <div>
+                            <p class="font-medium text-gray-500 text-xs uppercase tracking-wide mb-1">Reviewed By</p>
+                            <p class="text-gray-800 font-medium">
+                                {{ $selectedNotificationData['status_update']['reviewed_by'] }}
+                            </p>
+                        </div>
+                        @endisset
+                        
+                        @isset($selectedNotificationData['status_update']['reviewed_at'])
+                        <div>
+                            <p class="font-medium text-gray-500 text-xs uppercase tracking-wide mb-1">Reviewed At</p>
+                            <p class="text-gray-800 font-medium">
+                                {{ \Carbon\Carbon::parse($selectedNotificationData['status_update']['reviewed_at'])->format('M d, Y g:i A') }}
+                            </p>
+                        </div>
+                        @endisset
+                    </div>
+                </div>
+                @endisset
             </div>
         @else
             <div class="h-full flex flex-col items-center justify-center text-center py-12">

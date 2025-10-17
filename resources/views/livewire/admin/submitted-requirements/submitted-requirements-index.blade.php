@@ -31,7 +31,7 @@
         @if($activeSemester)
             <!-- Filter Bar -->
             <div class="rounded-xl flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                <div class="flex flex-col sm:flex-row items-center gap-4 p-2">
+                <div class="flex flex-col sm:flex-row items-center gap-4">
                     <div class="relative max-w-md w-full md:w-sm">
                         <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
                             <i class="fas fa-search text-gray-500 text-sm"></i>
@@ -44,7 +44,7 @@
                         >
                     </div>
                 </div>
-                <div class="flex flex-wrap items-center gap-1 border border-gray-300 shadow-sm p-1 rounded-xl bg-white font-semibold ml-auto mr-2">
+                <div class="flex flex-wrap items-center gap-1 border border-gray-300 shadow-sm p-1 rounded-xl bg-white font-semibold ml-auto">
                     @foreach($categories as $key => $label)
                         <button
                             wire:click="setCategory('{{ $key }}')"

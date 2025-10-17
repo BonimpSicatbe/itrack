@@ -123,7 +123,8 @@ class RequirementIndex extends Component
     {
         $activeSemester = $this->activeSemester();
         
-        if (!$activeSemester) {
+        // Return empty collection if no active semester
+        if (!$activeSemester || !$activeSemester->is_active) {
             return collect();
         }
 

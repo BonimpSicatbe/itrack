@@ -62,8 +62,8 @@ class Navigation extends Component
                     'group' => 'admin.file-manager.*',
                     'description' => 'File management',
                     'icon_type' => 'custom', 
-                    'icon_path' => 'images/portfolio-gray.png', 
-                    'icon_path_active' => 'images/portfolio-green.png' 
+                    'icon_path' => 'images/binder-gray.png', 
+                    'icon_path_active' => 'images/binder-green.png' 
                 ],
                 
             ],

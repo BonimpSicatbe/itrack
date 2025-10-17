@@ -1,5 +1,3 @@
-{{-- resources/views/livewire/admin/management/program-management.blade.php --}}
-
 <div class="w-full flex">
     <div class="w-full transition-all duration-300 ease-in-out">
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-2 gap-4 px-6 pt-6">
@@ -20,16 +18,7 @@
         <div class="border-b border-gray-200 mb-4"></div>
 
         <div class="flex flex-col sm:flex-row items-center justify-between gap-4 mb-4 px-6">
-            
-            <div class="flex items-center gap-2 bg-green-50 border border-green-600 px-4 py-2 rounded-xl shadow-sm">
-                <i class="fa-solid fa-graduation-cap text-green-700"></i>
-                <span class="text-sm font-semibold text-green-700">
-                    Total Programs: {{ $programs->count() }}
-                </span>
-            </div>
-
             <div class="w-full sm:w-1/2">
-                <label for="search" class="block text-sm font-semibold text-gray-700 mb-1">Search Programs</label>
                 <div class="relative">
                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                         <i class="fa-solid fa-magnifying-glass text-gray-400"></i>
@@ -37,10 +26,16 @@
                     <input 
                         type="text" 
                         wire:model.live.debounce.300ms="search"
-                        class="pl-10 block w-full rounded-xl border-gray-300 shadow-sm focus:border-green-600 focus:ring-green-600 sm:text-sm" 
+                        class="pl-10 block w-sm rounded-xl border-gray-300 shadow-sm focus:border-green-600 focus:ring-green-600 sm:text-sm" 
                         placeholder="Search by code, name, description, or college"
                     >
                 </div>
+            </div>
+            <div class="flex items-center gap-2 bg-green-50 border border-green-600 px-4 py-2 rounded-xl shadow-sm">
+                <i class="fa-solid fa-graduation-cap text-green-700"></i>
+                <span class="text-sm font-semibold text-green-700">
+                    Total Programs: {{ $programs->count() }}
+                </span>
             </div>
         </div>
 

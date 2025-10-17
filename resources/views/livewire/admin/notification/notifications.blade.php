@@ -70,7 +70,7 @@
 
                 <div class="relative group">
                     <div wire:click="selectNotification('{{ $notification->id }}')"
-                        class="block p-4 pr-12 rounded-xl {{ $highlight }} cursor-pointer transition-all duration-200 {{ $selectedNotification === $notification->id ? 'ring-2 ring-green-500 ring-opacity-50 shadow-lg' : '' }}">
+                        class="block p-4 rounded-xl {{ $highlight }} cursor-pointer transition-all duration-200 {{ $selectedNotification === $notification->id ? 'ring-2 ring-green-500 ring-opacity-50 shadow-lg' : '' }}">
                         <div class="flex justify-between items-start">
                             <div class="min-w-0 flex-1">
                                 <p class="text-sm font-semibold text-gray-900 truncate mb-1">
@@ -82,35 +82,6 @@
                                     </p>
                                 </div>
                             </div>
-                        </div>
-                    </div>
-
-                    {{-- Three dots menu --}}
-                    <div class="absolute top-3 right-3 opacity-0 group-hover:opacity-100">
-                        <div class="dropdown dropdown-left">
-                            <label tabindex="0"
-                                class="btn btn-xs text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-full w-8 h-8 flex items-center justify-center">
-                                <i class="fa-solid fa-ellipsis-vertical"></i>
-                            </label>
-                            <ul tabindex="0"
-                                class="dropdown-content z-[1] menu p-1 shadow-lg bg-white rounded-xl border border-gray-200 w-44">
-                                <li>
-                                    <a wire:click.stop="toggleNotificationReadStatus('{{ $notification->id }}')"
-                                        class="text-sm py-2.5 px-3 cursor-pointer hover:bg-gray-100 rounded-xl font-semibold focus:outline-none">
-                                        @if($notification->unread())
-                                            <i class="fa-regular fa-envelope-open mr-2 text-green-600"></i> Mark as read
-                                        @else
-                                            <i class="fa-regular fa-envelope mr-2 text-blue-600"></i> Mark as unread
-                                        @endif
-                                    </a>
-                                </li>
-                                <li>
-                                    <a wire:click.stop="openDeleteConfirmationModal('{{ $notification->id }}')"
-                                        class="text-sm py-2.5 px-3 text-red-600 cursor-pointer hover:bg-red-100 rounded-xl font-semibold focus:outline-none">
-                                        <i class="fa-regular fa-trash-can mr-2"></i> Delete
-                                    </a>
-                                </li>
-                            </ul>
                         </div>
                     </div>
                 </div>
@@ -134,7 +105,6 @@
         </div>
     </div>
 
-
     {{-- Notification Detail (Right) --}}
     <div class="w-2/3 bg-gray-50 overflow-y-auto h-[calc(100vh-6rem)]">
         @if ($selectedNotification && $selectedNotificationData)
@@ -151,7 +121,13 @@
                                 <span class="ml-2">{{ $selectedNotificationData['created_at']->format('M d, Y g:i A') }}</span>
                             </div>
                         </div>
-                        
+                        {{-- Mark as Unread Button --}}
+                        @if(!$selectedNotificationData['unread'])
+                            <button wire:click="markAsUnread('{{ $selectedNotification }}')"
+                                class="flex items-center px-4 py-2 text-sm font-semibold text-green-700 bg-white hover:bg-green-50 rounded-xl shadow-sm transition-all duration-200">
+                                <i class="fa-regular fa-envelope mr-2"></i>Mark as Unread
+                            </button>
+                        @endif
                     </div>
                 </div>
 
@@ -170,12 +146,64 @@
                     {{-- Requirement Details --}}
                     <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-md">
                         <!-- Header -->
-                        <div class="flex items-center mb-6 border-b border-gray-100 pb-4">
+                        <div class="flex items-center mb-6 border-b border-gray-200 pb-4">
                             <div class="rounded-xl mr-2">
                                 <i class="fa-solid fa-clipboard-list text-green-700 text-2xl"></i>
                             </div>
                             <h3 class="text-xl font-bold text-gray-900">Requirement Details</h3>
                         </div>
+
+                        {{-- Status Update Information --}}
+                        @if(isset($selectedNotificationData['status_update']))
+                        <div class="bg-blue-50 border border-blue-200 rounded-xl p-6 shadow-sm">
+                            <div class="flex items-center mb-4">
+                                <i class="fa-solid fa-arrows-rotate text-blue-600 text-xl mr-3"></i>
+                                <h3 class="text-lg font-semibold text-blue-900">Status Update</h3>
+                            </div>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div class="space-y-2">
+                                    <p class="text-sm font-semibold text-blue-700">Previous Status</p>
+                                    <div class="bg-white p-3 rounded-xl border border-blue-200">
+                                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold 
+                                            @if($selectedNotificationData['status_update']['old_status'] === 'approved') bg-green-100 text-green-800
+                                            @elseif($selectedNotificationData['status_update']['old_status'] === 'rejected') bg-red-100 text-red-800
+                                            @elseif($selectedNotificationData['status_update']['old_status'] === 'revision_needed') bg-yellow-100 text-yellow-800
+                                            @else bg-blue-100 text-blue-800 @endif">
+                                            {{ $this->formatStatus($selectedNotificationData['status_update']['old_status']) }}
+                                        </span>
+                                    </div>
+                                </div>
+                                
+                                <div class="space-y-2">
+                                    <p class="text-sm font-semibold text-blue-700">New Status</p>
+                                    <div class="bg-white p-3 rounded-xl border border-blue-200">
+                                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold 
+                                            @if($selectedNotificationData['status_update']['new_status'] === 'approved') bg-green-100 text-green-800
+                                            @elseif($selectedNotificationData['status_update']['new_status'] === 'rejected') bg-red-100 text-red-800
+                                            @elseif($selectedNotificationData['status_update']['new_status'] === 'revision_needed') bg-yellow-100 text-yellow-800
+                                            @else bg-blue-100 text-blue-800 @endif">
+                                            {{ $this->formatStatus($selectedNotificationData['status_update']['new_status']) }}
+                                        </span>
+                                    </div>
+                                </div>
+                                
+                                <div class="space-y-2">
+                                    <p class="text-sm font-semibold text-blue-700">Reviewed By</p>
+                                    <div class="bg-white p-3 rounded-xl border border-blue-200 text-sm text-gray-700">
+                                        {{ $selectedNotificationData['status_update']['reviewed_by'] }}
+                                    </div>
+                                </div>
+                                
+                                <div class="space-y-2">
+                                    <p class="text-sm font-semibold text-blue-700">Reviewed At</p>
+                                    <div class="bg-white p-3 rounded-xl border border-blue-200 text-sm text-gray-700">
+                                        {{ \Carbon\Carbon::parse($selectedNotificationData['status_update']['reviewed_at'])->format('M d, Y g:i A') }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        @endif
 
                         <!-- Grid Layout -->
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -227,35 +255,40 @@
                         </div>
                     </div>
 
-
                     {{-- Submissions Section --}}
                     <div class="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
-                        <div class="flex items-center mb-6">
+                        
+                        {{-- Main Header --}}
+                        <div class="flex items-center mb-4">
                             <div class="rounded-xl mr-2">
                                 <i class="fa-solid fa-folder-open text-green-700 text-2xl"></i>
                             </div>
-                            <div>
-                                <h3 class="text-xl font-semibold text-gray-900">Submissions</h3>
-                                <p class="text-sm text-gray-600 mt-1">Submitted by: 
-                                    <span class="font-semibold">{{ $selectedNotificationData['submitter']['name'] }}</span>
-                                    ({{ $selectedNotificationData['submitter']['email'] }})
-                                </p>
-                                @if(isset($selectedNotificationData['course']['program']))
-                                    <p class="text-sm text-gray-600 mt-1">Program: 
-                                        <span class="font-semibold">
-                                            {{ $selectedNotificationData['course']['program']['program_code'] }} - {{ $selectedNotificationData['course']['program']['program_name'] }}
-                                        </span>
-                                    </p>
-                                @endif
-                            </div>
+                            <h3 class="text-xl font-semibold text-gray-900">Submissions</h3>
                         </div>
-                        
+
+                        {{-- Submission Context Block (Submitted by and Program) --}}
+                        <div class="mb-6 pb-4 border-b border-gray-100">
+                            <p class="text-sm text-gray-600 mb-1">
+                                <span class="font-bold text-gray-700 mr-1">Submitted By:</span>
+                                <span class="font-semibold">{{ $selectedNotificationData['submitter']['name'] }}</span>
+                                ({{ $selectedNotificationData['submitter']['email'] }})
+                            </p>
+                            @if(isset($selectedNotificationData['course']['program']))
+                                <p class="text-sm text-gray-600">
+                                    <span class="font-bold text-gray-700 mr-1">Program:</span>
+                                    <span class="font-semibold">
+                                        {{ $selectedNotificationData['course']['program']['program_code'] }} - {{ $selectedNotificationData['course']['program']['program_name'] }}
+                                    </span>
+                                </p>
+                            @endif
+                        </div>
+
                         {{-- Files List --}}
                         @if(count($selectedNotificationData['files'] ?? []))
-                        <div class="space-y-4">
+                        <div class="space-y-6">
                             @foreach($selectedNotificationData['files'] as $file)
                             @php
-                                // Get the submission status for this file
+                                $submission = collect($selectedNotificationData['submissions'] ?? [])->firstWhere('id', $file['submission_id']);
                                 $fileStatus = $file['status'];
                                 $fileStatusLabel = match($fileStatus) {
                                     'under_review' => 'Under Review',
@@ -265,65 +298,48 @@
                                     default => ucfirst($fileStatus),
                                 };
                                 $statusColor = match($fileStatus) {
-                                    'approved' => 'bg-green-100 text-green-700',
-                                    'rejected' => 'bg-red-100 text-red-700',
-                                    'revision_needed' => 'bg-yellow-100 text-yellow-700',
-                                    default => 'bg-blue-100 text-blue-700',
+                                    'approved' => 'bg-green-100 text-green-700 border-green-300',
+                                    'rejected' => 'bg-red-100 text-red-700 border-red-300',
+                                    'revision_needed' => 'bg-yellow-100 text-yellow-700 border-yellow-300',
+                                    default => 'bg-blue-100 text-blue-700 border-blue-300',
                                 };
-                                
-                                // Get submission details
-                                $submission = collect($selectedNotificationData['submissions'] ?? [])->firstWhere('id', $file['submission_id']);
                             @endphp
-                            
-                            <div class="border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200">
-                                {{-- File Header with Submission Info --}}
-                                <div class="bg-green-50 px-7 py-3 border-b border-gray-300">
-                                    <div class="flex justify-between items-center">
-                                        <div>
-                                            <p class="text-sm font-semibold text-gray-700">Submitted At</p>
-                                            <p class="text-sm text-gray-900 flex items-center mt-1">
-                                                <i class="fa-regular fa-calendar-check mr-2 text-gray-500"></i>
-                                                {{ $submission['submitted_at']->format('M d, Y g:i A') ?? 'N/A' }}
-                                            </p>
-                                        </div>
+
+                            {{-- Submission Card --}}
+                            <div class="border border-gray-200 rounded-xl overflow-hidden shadow-md">
+                                {{-- Submission Header/Context --}}
+                                <div class="bg-green-700 px-5 py-3 border-b border-gray-200">
+                                    <div class="flex flex-wrap justify-between items-center gap-2 text-sm text-white">
+                                        @if($file['course'] ?? null)
+                                        <p class="font-medium flex items-center">
+                                            <i class="fa-solid fa-book-open mr-2 text-white"></i>
+                                            Course: {{ $file['course']['course_code'] }} - {{ $file['course']['course_name'] }}
+                                        </p>
+                                        @endif
                                         @if($submission['reviewed_at'] ?? null)
-                                        <div>
-                                            <p class="text-sm font-semibold text-gray-700">Reviewed At</p>
-                                            <p class="text-sm text-gray-900 flex items-center mt-1">
-                                                <i class="fa-regular fa-eye mr-2 text-gray-500"></i>
-                                                {{ $submission['reviewed_at']->format('M d, Y g:i A') }}
+                                            <p class="font-medium flex items-center">
+                                                Reviewed: {{ $submission['reviewed_at']->format('M d, Y g:i A') }}
                                             </p>
-                                        </div>
                                         @endif
                                     </div>
-                                    {{-- Course Information --}}
-                                    @if($file['course'] ?? null)
-                                    <div class="mt-2 pt-2 border-t border-gray-200">
-                                        <p class="text-sm font-semibold text-gray-700">Course</p>
-                                        <p class="text-sm text-gray-900 flex items-center mt-1">
-                                            <i class="fa-solid fa-book-open mr-2 text-gray-500"></i>
-                                            {{ $file['course']['course_code'] }} - {{ $file['course']['course_name'] }}
-                                        </p>
-                                    </div>
-                                    @endif
                                 </div>
-                                
-                                {{-- File Details --}}
-                                <div class="flex items-center justify-between p-5 bg-gray-50 hover:bg-gray-100 transition-colors duration-200">
+
+                                {{-- File Detail (More compact) --}}
+                                <div class="p-5 flex items-center justify-between bg-white">
                                     <div class="flex items-center space-x-4 min-w-0">
-                                        <div class="flex-shrink-0 p-4 bg-white rounded-xl shadow-sm">
+                                        <div class="flex-shrink-0 p-3 bg-gray-100 rounded-xl shadow-inner">
                                             @switch($file['extension'])
-                                                @case('pdf') <i class="fa-regular fa-file-pdf text-red-500 text-2xl"></i> @break
-                                                @case('doc') @case('docx') <i class="fa-regular fa-file-word text-blue-500 text-2xl"></i> @break
-                                                @case('xls') @case('xlsx') <i class="fa-regular fa-file-excel text-green-500 text-2xl"></i> @break
-                                                @case('jpg') @case('jpeg') @case('png') @case('gif') <i class="fa-regular fa-file-image text-purple-500 text-2xl"></i> @break
-                                                @default <i class="fa-regular fa-file text-gray-500 text-2xl"></i>
+                                                @case('pdf') <i class="fa-regular fa-file-pdf text-red-500 text-xl"></i> @break
+                                                @case('doc') @case('docx') <i class="fa-regular fa-file-word text-blue-500 text-xl"></i> @break
+                                                @case('xls') @case('xlsx') <i class="fa-regular fa-file-excel text-green-500 text-xl"></i> @break
+                                                @case('jpg') @case('jpeg') @case('png') @case('gif') <i class="fa-regular fa-file-image text-purple-500 text-xl"></i> @break
+                                                @default <i class="fa-regular fa-file text-gray-500 text-xl"></i>
                                             @endswitch
                                         </div>
                                         <div class="min-w-0">
                                             <p class="text-sm font-semibold text-gray-900 truncate mb-1">{{ $file['name'] }}</p>
-                                            <div class="flex items-center gap-3 mt-2">
-                                                <span class="text-xs text-gray-500 font-semibold bg-gray-200 px-2 py-1 rounded-full">
+                                            <div class="flex items-center gap-3">
+                                                <span class="text-xs text-gray-500 font-semibold bg-gray-200 px-2 py-0.5 rounded-full">
                                                     {{ strtoupper($file['extension']) }} • {{ $file['size'] }}
                                                 </span>
                                                 <span class="text-xs px-3 py-1 rounded-full {{ $statusColor }} font-semibold">
@@ -332,49 +348,73 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="flex space-x-1">
+                                    <div class="flex space-x-1 flex-shrink-0">
+                                        <a href="{{ route('file.download', ['submission' => $file['submission_id'], 'file' => $file['id']]) }}"
+                                        class="p-2 text-blue-500 hover:text-blue-700 hover:bg-blue-100 rounded-lg transition-colors"
+                                        title="Download">
+                                            <i class="fa-solid fa-download"></i>
+                                        </a>
                                         @if($file['is_previewable'])
-                                        <a href="{{ route('file.preview', ['submission' => $file['submission_id'], 'file' => $file['id']]) }}" 
+                                        <a href="{{ route('file.preview', ['submission' => $file['submission_id'], 'file' => $file['id']]) }}"
                                         target="_blank"
-                                        class="p-3 text-blue-600 hover:text-blue-700 hover:bg-blue-100 rounded-xl"
+                                        class="p-2 text-green-600 hover:text-green-700 hover:bg-green-100 rounded-lg transition-colors"
                                         title="Preview">
                                             <i class="fa-solid fa-eye"></i>
                                         </a>
                                         @endif
-                                        <a href="{{ route('file.download', ['submission' => $file['submission_id'], 'file' => $file['id']]) }}" 
-                                        class="p-3 text-green-600 hover:text-green-700 hover:bg-green-100 rounded-xl"
-                                        title="Download">
-                                            <i class="fa-solid fa-download"></i>
-                                        </a>
                                     </div>
                                 </div>
-                                
-                                {{-- Status update form --}}
-                                <div class="p-5 border-t bg-white">
-                                    <form wire:submit.prevent="updateFileStatus('{{ $file['submission_id'] }}')" class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4">
+
+                                {{-- Status Update and Review History (Always Visible) --}}
+                                <div class="p-5 border-t bg-gray-50">
+                                    
+                                    {{-- Current Review Notes Display (for context) --}}
+                                    <div class="space-y-2 mb-6">
+                                        <p class="text-sm font-semibold text-gray-700">Current Review Notes</p>
+                                        <p class="text-sm text-gray-600 bg-white p-6 rounded-xl border border-gray-200 shadow-inner ">
+                                            {{ $submission['admin_notes'] ?? 'No notes provided for this status.' }}
+                                        </p>
+                                    </div>
+                                    
+                                    {{-- Status Update Form (Always Visible) --}}
+                                    <form wire:submit.prevent="updateFileStatus('{{ $file['submission_id'] }}')" class="space-y-4">
+                                        <h4 class="text-md font-bold text-gray-900 mb-4 border-b pb-2">Update Submission Status</h4>
                                         
-                                        {{-- Dropdown --}}
-                                        <div class="w-full lg:w-1/2 space-y-2">
-                                            <label for="newStatus" class="block text-sm font-semibold text-gray-700">Update Status</label>
-                                            <select wire:model="newStatus" id="newStatus" 
-                                                class="w-full rounded-xl border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 text-sm py-3 px-4 bg-gray-50">
-                                                @foreach(\App\Models\SubmittedRequirement::statuses() as $value => $label)
-                                                    <option value="{{ $value }}" {{ $fileStatus == $value ? 'selected' : '' }}>
-                                                        {{ $label }}
-                                                    </option>
-                                                @endforeach
-                                            </select>
+                                        <div class="flex flex-col md:flex-row gap-4">
+                                            {{-- Status Dropdown --}}
+                                            <div class="w-full md:w-1/2 space-y-2">
+                                                <label for="newStatus-{{ $file['submission_id'] }}" class="block text-sm font-semibold text-gray-700">Select New Status</label>
+                                                <select wire:model="newStatus.{{ $file['submission_id'] }}" id="newStatus-{{ $file['submission_id'] }}"
+                                                    class="w-full rounded-xl border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 text-sm py-2.5 px-4 bg-white">
+                                                    <option value="">Select new status</option>
+                                                    @foreach(\App\Models\SubmittedRequirement::statuses() as $value => $label)
+                                                        <option value="{{ $value }}">
+                                                            {{ $label }}
+                                                        </option>
+                                                    @endforeach
+                                                </select>
+                                                @error("newStatus.{$file['submission_id']}")
+                                                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                                                @enderror
+                                            </div>
+
+                                            {{-- Admin Notes Textarea --}}
+                                            <div class="w-full md:w-1/2 space-y-2">
+                                                <label for="adminNotes-{{ $file['submission_id'] }}" class="block text-sm font-semibold text-gray-700">New Admin Notes (Optional)</label>
+                                                <textarea wire:model="adminNotes.{{ $file['submission_id'] }}" id="adminNotes-{{ $file['submission_id'] }}" rows="1"
+                                                    placeholder="Add notes for the submitter..."
+                                                    class="w-full rounded-xl border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 text-sm py-2.5 px-4 bg-white resize-none"></textarea>
+                                                @error("adminNotes.{$file['submission_id']}")
+                                                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                                                @enderror
+                                            </div>
                                         </div>
 
-                                        {{-- Buttons --}}
-                                        <div class="flex items-center space-x-3">
-                                            <button type="button" wire:click="$set('newStatus', '')" 
-                                                class="px-5 py-2 border border-gray-300 rounded-xl text-sm font-semibold text-gray-700 bg-white hover:bg-gray-50 shadow-sm hover:shadow transition-all duration-200">
-                                                Cancel
-                                            </button>
-                                            <button type="submit" 
-                                                class="px-5 py-2 border border-transparent rounded-xl text-sm font-semibold text-white bg-green-600 hover:bg-green-700 shadow-sm hover:shadow transition-all duration-200">
-                                                <i class="fa-solid fa-check mr-2"></i>Update
+                                        {{-- Update Button --}}
+                                        <div class="flex justify-end">
+                                            <button type="submit"
+                                                class="px-5 py-2 border border-transparent rounded-xl text-sm font-semibold text-white bg-green-600 hover:bg-green-700 shadow-lg hover:shadow-xl transition-all duration-200">
+                                                <i class="fa-solid fa-check mr-2"></i>Apply Status Update
                                             </button>
                                         </div>
                                     </form>
@@ -405,42 +445,4 @@
             </div>
         @endif
     </div>
-
-    {{-- Delete Confirmation Modal --}}
-    @if($showDeleteConfirmationModal && $notificationToDelete)
-        <x-modal name="delete-notification-confirmation-modal" :show="$showDeleteConfirmationModal" maxWidth="md">
-            <div class="bg-red-600 text-white rounded-t-xl px-6 py-4 flex items-center space-x-3">
-                <i class="fa-solid fa-triangle-exclamation text-lg"></i>
-                <h3 class="text-xl font-semibold">Confirm Deletion</h3>
-            </div>
-
-            <div class="bg-white px-6 py-6 rounded-b-xl">
-                <div class="space-y-4">
-                    <p class="text-gray-700">
-                        Are you sure you want to delete this notification?
-                    </p>
-                    <p class="text-sm text-gray-600">
-                        This action cannot be undone. The notification will be permanently removed.
-                    </p>
-                </div>
-
-                <div class="mt-6 pt-4 border-t border-gray-200 flex justify-end space-x-3">
-                    <button type="button" wire:click="closeDeleteConfirmationModal" 
-                            class="px-4 py-2 border border-gray-300 rounded-full text-sm font-medium text-gray-700 hover:bg-gray-50 cursor-pointer">
-                        Cancel
-                    </button>
-                    <button type="button" wire:click="confirmDeleteNotification" 
-                            class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-full text-sm font-medium cursor-pointer"
-                            wire:loading.attr="disabled">
-                        <span wire:loading.remove wire:target="confirmDeleteNotification">
-                            <i class="fa-solid fa-trash mr-2"></i> Delete
-                        </span>
-                        <span wire:loading wire:target="confirmDeleteNotification">
-                            <i class="fa-solid fa-spinner fa-spin mr-2"></i> Deleting...
-                        </span>
-                    </button>
-                </div>
-            </div>
-        </x-modal>
-    @endif
 </div>

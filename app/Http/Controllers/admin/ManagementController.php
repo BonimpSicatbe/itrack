@@ -11,8 +11,8 @@ class ManagementController extends Controller
     {
         $tabs = [
             'semesters' => ['label' => 'Semesters', 'icon' => 'calendar'],
-            'colleges' => ['label' => 'Colleges', 'icon' => 'building-columns'],
             'users' => ['label' => 'Users', 'icon' => 'users'],
+            'colleges' => ['label' => 'Colleges', 'icon' => 'building-columns'],
             'programs' => ['label' => 'Programs', 'icon' => 'graduation-cap'],
             'courses' => ['label' => 'Courses', 'icon' => 'book'],
         ];

@@ -7,6 +7,7 @@ use App\Models\Requirement;
 use App\Models\SubmittedRequirement;
 use App\Models\User;
 use App\Models\Course;
+use App\Notifications\SubmissionStatusUpdated;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Livewire\WithPagination;
 use Livewire\Attributes\Url;
@@ -236,12 +237,23 @@ class RequirementView extends Component
         $submission = SubmittedRequirement::find($this->selectedFile['submission_id']);
         
         if ($submission) {
+            // Store old status for notification
+            $oldStatus = $submission->status;
+            
             $submission->update([
                 'status' => $this->selectedStatus,
                 'admin_notes' => $this->adminNotes,
                 'reviewed_by' => auth()->id(),
                 'reviewed_at' => now(),
             ]);
+            
+            // Send notification to user if status changed
+            if ($oldStatus !== $this->selectedStatus) {
+                $user = User::find($submission->user_id);
+                if ($user) {
+                    $user->notify(new SubmissionStatusUpdated($submission, $oldStatus, $this->selectedStatus));
+                }
+            }
             
             // Reload files to reflect changes
             $this->loadFiles();

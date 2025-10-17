@@ -23,18 +23,8 @@
 
         <!-- Search and Total Colleges -->
         <div class="flex flex-col sm:flex-row items-center justify-between gap-4 mb-4 px-6">
-            
-            <!-- Total Colleges Badge -->
-            <div class="flex items-center gap-2 bg-green-50 border border-green-600 px-4 py-2 rounded-xl shadow-sm">
-                <i class="fa-solid fa-building-columns text-green-700"></i>
-                <span class="text-sm font-semibold text-green-700">
-                    Total Colleges: {{ $colleges->count() }}
-                </span>
-            </div>
-
             <!-- Search Box -->
             <div class="w-full sm:w-1/2">
-                <label for="search" class="block text-sm font-semibold text-gray-700 mb-1">Search Colleges</label>
                 <div class="relative">
                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                         <i class="fa-solid fa-magnifying-glass text-gray-400"></i>
@@ -42,11 +32,19 @@
                     <input 
                         type="text" 
                         wire:model.live.debounce.300ms="search"
-                        class="pl-10 block w-full rounded-xl border-gray-300 shadow-sm focus:border-green-600 focus:ring-green-600 sm:text-sm" 
-                        placeholder="Search by name or acronym"
+                        class="pl-10 block w-sm rounded-xl border-gray-300 shadow-sm focus:border-green-600 focus:ring-green-600 sm:text-sm" 
+                        placeholder="Search by college name or acronym..."
                     >
                 </div>
             </div>
+            
+            <!-- Total Colleges Badge -->
+            <div class="flex items-center gap-2 bg-green-50 border border-green-600 px-4 py-2 rounded-xl shadow-sm">
+                <i class="fa-solid fa-building-columns text-green-700"></i>
+                <span class="text-sm font-semibold text-green-700">
+                    Total Colleges: {{ $colleges->count() }}
+                </span>
+            </div>     
         </div>
 
         <!-- Colleges Table -->
@@ -78,7 +76,7 @@
                                 </div>
                             </div>
                         </th>
-                        <th class="p-4 text-right bg-green-700" style="color: white; width: 10%;">Actions</th>
+                        <th class="p-4 text-center bg-green-700" style="color: white; width: 10%;">Actions</th>                    
                     </tr>
                 </thead>
                 <tbody>
@@ -95,13 +93,13 @@
                                 </div>
                             </td>
                             <td class="whitespace-nowrap p-4">
-                                <div class="flex justify-end space-x-2 text-base">
-                                    <!-- Edit button -->
+                                <div class="flex justify-center space-x-2 text-base">
                                     <button class="text-amber-500 hover:bg-amber-100 rounded-lg p-2 tooltip cursor-pointer" 
                                             data-tip="Edit" 
                                             wire:click="openEditCollegeModal({{ $college->id }})">
                                         <i class="fa-solid fa-pen-to-square"></i>
                                     </button>
+                                </div>
                             </td>
                         </tr>
                     @empty
@@ -127,7 +125,7 @@
                     <div class="space-y-6">
                         <!-- College Name -->
                         <div>
-                            <label class="block text-sm font-semibold text-gray-700">College Name *</label>
+                            <label class="block text-xs font-semibold text-gray-700 tracking-wide uppercase">College Name</label>
                             <input type="text" wire:model="newCollege.name"
                                 class="mt-2 block w-full rounded-xl border-gray-300 sm:text-sm"
                                 placeholder="Enter college name">
@@ -136,7 +134,7 @@
 
                         <!-- College Acronym -->
                         <div>
-                            <label class="block text-sm font-semibold text-gray-700">College Acronym *</label>
+                            <label class="block text-xs font-semibold text-gray-700 tracking-wide uppercase">College Acronym</label>
                             <input type="text" wire:model="newCollege.acronym"
                                 class="mt-2 block w-full rounded-xl border-gray-300 sm:text-sm"
                                 placeholder="Enter college acronym">

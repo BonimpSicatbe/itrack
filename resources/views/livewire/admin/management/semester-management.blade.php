@@ -18,25 +18,24 @@
     <!-- Search and Total Semesters -->
     <div class="flex flex-col sm:flex-row items-center justify-between gap-4 mb-4 px-6">
 
+        <!-- Search Box -->
+        <div class="w-full sm:w-1/2">
+            <div class="relative">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <i class="fa-solid fa-magnifying-glass text-gray-400"></i>
+                </div>
+                <input type="text" wire:model.live.debounce.300ms="search"
+                    class="pl-10 block w-sm rounded-xl border-gray-300 shadow-sm focus:border-1C7C54 focus:ring-1C7C54 sm:text-sm"
+                    placeholder="Search semester...">
+            </div>
+        </div>
+
         <!-- Total Semesters Badge -->
         <div class="flex items-center gap-2 bg-green-50 border border-green-600 px-4 py-2 rounded-xl shadow-sm">
             <i class="fa-solid fa-calendar-check text-green-700"></i>
             <span class="text-sm font-semibold text-green-700">
                 Total Semesters: {{ $semesters->count() }}
             </span>
-        </div>
-
-        <!-- Search Box -->
-        <div class="w-full sm:w-1/2">
-            <label for="search" class="block text-sm font-semibold text-gray-700 mb-1">Search Semesters</label>
-            <div class="relative">
-                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <i class="fa-solid fa-magnifying-glass text-gray-400"></i>
-                </div>
-                <input type="text" wire:model.live.debounce.300ms="search"
-                    class="pl-10 block w-full rounded-xl border-gray-300 shadow-sm focus:border-1C7C54 focus:ring-1C7C54 sm:text-sm"
-                    placeholder="Search by name or acronym">
-            </div>
         </div>
     </div>
 
@@ -138,7 +137,7 @@
                                 @endif --}}
 
                                 <!-- Edit button (always enabled) -->
-                                <button class="text-amber-500 hover:bg-blue-100 rounded-xl p-2 tooltip cursor-pointer"
+                                <button class="text-amber-500 hover:bg-amber-100 rounded-xl p-2 tooltip cursor-pointer"
                                     data-tip="Edit" wire:click="openEditModal({{ $semester->id }})">
                                     <i class="fa-solid fa-pen-to-square"></i>
                                 </button>
@@ -154,7 +153,7 @@
                                 @else
                                     <a href="{{ route('admin.semesters.download', $semester) }}"
                                         class="text-blue-600 hover:bg-blue-100 rounded-xl p-2 tooltip cursor-pointer"
-                                        data-tip="Archive Semester" wire:click="setInactive({{ $semester->id }})"
+                                        data-tip="Download Semester" wire:click="setInactive({{ $semester->id }})"
                                         disabled>
 
                                         <i class="fa-solid fa-download"></i>
@@ -175,7 +174,7 @@
     <!-- Create Semester Modal -->
     <input type="checkbox" id="create_semester_modal" class="modal-toggle"/>
     <div class="modal rounded-xl" role="dialog">
-        <div class="modal-box p-0 m-0">
+        <div class="modal-box p-0 m-0 rounded-xl">
             {{-- header --}}
             <div class="text-white px-6 py-4 flex items-center space-x-3"
                 style="background: linear-gradient(148deg,rgba(18, 67, 44, 1) 0%, rgba(30, 119, 77, 1) 54%, rgba(55, 120, 64, 1) 100%);">
@@ -184,8 +183,8 @@
             </div>
 
             {{-- body --}}
-            <div class="flex flex-col p-4">
-                <x-select-fieldset label="semester" name="semester" wire:model="semester">
+            <div class="flex flex-col p-6">
+                <x-select-fieldset label="Semester" name="semester" wire:model="semester">
                     <option value="first">First Semester</option>
                     <option value="second">Second Semester</option>
                     <option value="midyear">Midyear</option>
@@ -195,7 +194,7 @@
                 <x-text-fieldset type="date" name="end_date" wire:model="end_date" label="Ending Date" :min="now()->format('Y-m-d')" required />
 
                 <!-- Footer -->
-                <div class="flex flex-row items-center gap-4 justify-end w-full">
+                <div class="flex flex-row items-center gap-4 justify-end w-full mt-7">
                     <label for="create_semester_modal" class="btn btn-md btn-default rounded-xl">Cancel</label>
                     <button wire:click='createSemester' type="button"
                         class="btn btn-md bg-green-600 hover:bg-green-700 text-white rounded-xl">
@@ -223,27 +222,27 @@
             <div class="bg-white px-6 py-6 rounded-b-xl">
                 <div class="space-y-4">
                     <div>
-                        <label class="block text-sm font-semibold text-gray-700">Semester Name *</label>
+                        <label class="block text-xs tracking-wide uppercase font-semibold text-gray-700">Semester Name</label>
                         <input type="text" wire:model="name"
-                            class="mt-1 block w-full rounded-xl border-gray-300 focus:border-1C7C54 focus:ring-1C7C54 sm:text-sm">
+                            class="mt-1 block w-full rounded-xl border-gray-300 text-gray-500 sm:text-sm">
                         @error('name')
                             <span class="text-red-500 text-xs">{{ $message }}</span>
                         @enderror
                     </div>
 
                     <div>
-                        <label class="block text-sm font-semibold text-gray-700">Start Date *</label>
+                        <label class="block text-xs tracking-wide uppercase font-semibold text-gray-700">Start Date</label>
                         <input type="date" wire:model="start_date"
-                            class="mt-1 block w-full rounded-xl border-gray-300 focus:border-1C7C54 focus:ring-1C7C54 sm:text-sm">
+                            class="mt-1 block w-full rounded-xl border-gray-300 text-gray-500 sm:text-sm">
                         @error('start_date')
                             <span class="text-red-500 text-xs">{{ $message }}</span>
                         @enderror
                     </div>
 
                     <div>
-                        <label class="block text-sm font-semibold text-gray-700">End Date *</label>
+                        <label class="block text-xs tracking-wide uppercase font-semibold text-gray-700">End Date</label>
                         <input type="date" wire:model="end_date"
-                            class="mt-1 block w-full rounded-xl border-gray-300 focus:border-1C7C54 focus:ring-1C7C54 sm:text-sm">
+                            class="mt-1 block w-full rounded-xl border-gray-300 text-gray-500 sm:text-sm">
                         @error('end_date')
                             <span class="text-red-500 text-xs">{{ $message }}</span>
                         @enderror

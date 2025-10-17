@@ -19,18 +19,8 @@
 
     <!-- Search, Total Users, and Filters -->
     <div class="flex flex-col sm:flex-row items-center justify-between gap-4 mb-4 px-6">
-
-        <!-- Total Users Badge -->
-        <div class="flex items-center gap-2 bg-green-50 border border-green-600 px-4 py-2 rounded-xl shadow-sm">
-            <i class="fa-solid fa-users text-green-700"></i>
-            <span class="text-sm font-semibold text-green-700">
-                Total Users: {{ $users->total() }}
-            </span>
-        </div>
-
         <!-- Search Box -->
         <div class="w-full sm:w-1/3">
-            <label for="search" class="block text-sm font-semibold text-gray-700 mb-1">Search Users</label>
             <div class="relative">
                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <i class="fa-solid fa-magnifying-glass text-gray-400"></i>
@@ -40,6 +30,13 @@
                     placeholder="Search by name, email, or college">
             </div>
         </div>
+        <!-- Total Users Badge -->
+        <div class="flex items-center gap-2 bg-green-50 border border-green-600 px-4 py-2 rounded-xl shadow-sm">
+            <i class="fa-solid fa-users text-green-700"></i>
+            <span class="text-sm font-semibold text-green-700">
+                Total Users: {{ $users->total() }}
+            </span>
+        </div>     
     </div>
 
     <!-- Users Table -->
@@ -312,7 +309,7 @@
                     <!-- First/Last Name -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                         <div>
-                            <label class="block text-sm font-semibold text-gray-700">First Name *</label>
+                            <label class="block text-xs font-semibold text-gray-700 tracking-wide uppercase">First Name</label>
                             <input type="text" wire:model="newUser.firstname"
                                 class="mt-2 block w-full rounded-xl border-gray-300 sm:text-sm"
                                 placeholder="Enter first name">
@@ -321,7 +318,7 @@
                             @enderror
                         </div>
                         <div>
-                            <label class="block text-sm font-semibold text-gray-700">Last Name *</label>
+                            <label class="block text-xs font-semibold text-gray-700 tracking-wide uppercase">Last Name</label>
                             <input type="text" wire:model="newUser.lastname"
                                 class="mt-2 block w-full rounded-xl border-gray-300 sm:text-sm"
                                 placeholder="Enter last name">
@@ -334,13 +331,13 @@
                     <!-- Middle/Extension -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                         <div>
-                            <label class="block text-sm font-semibold text-gray-700">Middle Name</label>
+                            <label class="block text-xs font-semibold text-gray-700 tracking-wide uppercase">Middle Name</label>
                             <input type="text" wire:model="newUser.middlename"
                                 class="mt-2 block w-full rounded-xl border-gray-300 sm:text-sm"
                                 placeholder="Enter middle name">
                         </div>
                         <div>
-                            <label class="block text-sm font-semibold text-gray-700">Extension Name</label>
+                            <label class="block text-xs font-semibold text-gray-700 tracking-wide uppercase">Extension Name</label>
                             <input type="text" wire:model="newUser.extensionname"
                                 class="mt-2 block w-full rounded-xl border-gray-300 sm:text-sm"
                                 placeholder="e.g., Jr., Sr., III">
@@ -349,7 +346,7 @@
 
                     <!-- Email -->
                     <div>
-                        <label class="block text-sm font-semibold text-gray-700">Email Address *</label>
+                        <label class="block text-xs tracking-wide uppercase font-semibold text-gray-700">Email Address</label>
                         <input type="email" wire:model="newUser.email"
                             class="mt-2 block w-full rounded-xl border-gray-300 sm:text-sm"
                             placeholder="Enter email address">
@@ -360,9 +357,9 @@
 
                     <!-- College -->
                     <div>
-                        <label class="block text-sm font-semibold text-gray-700">College</label>
+                        <label class="block text-xs tracking-wide uppercase font-semibold text-gray-700">College</label>
                         <select wire:model="newUser.college_id"
-                            class="mt-2 block w-full rounded-xl border-gray-300 sm:text-sm">
+                            class="mt-2 block w-full rounded-xl border-gray-300 sm:text-sm text-gray-500">
                             <option value="">Select College</option>
                             @foreach ($colleges as $college)
                                 <option value="{{ $college->id }}">{{ $college->name }}</option>
@@ -371,9 +368,9 @@
                     </div>
 
                     <div>
-                        <label class="block text-sm font-semibold text-gray-700">Role *</label>
+                        <label class="block text-xs tracking-wide uppercase font-semibold text-gray-700">Role</label>
                         <select wire:model="newUser.role"
-                            class="mt-2 block w-full rounded-xl border-gray-300 sm:text-sm">
+                            class="mt-2 block w-full rounded-xl border-gray-300 sm:text-sm text-gray-500">
                             <option value="">Select Role</option>
                             @foreach ($roles as $role)
                                 <option value="{{ $role->id }}">{{ ucfirst($role->name) }}</option>
@@ -390,9 +387,9 @@
                                 <i class="fa-solid fa-info-circle text-blue-500 mt-1"></i>
                             </div>
                             <div class="ml-3">
-                                <h3 class="text-sm font-medium text-blue-800">Auto-generated Password</h3>
+                                <h3 class="text-sm font-medium text-blue-800">Account Activation and Password Setup</h3>
                                 <div class="mt-1 text-sm text-blue-700">
-                                    <p>A secure password will be automatically generated and sent to the user's email address.</p>
+                                    <p>An email will be sent to the user to verify their email address and allow them to set their new password.</p>
                                 </div>
                             </div>
                         </div>

@@ -889,12 +889,44 @@ class FileManagerIndex extends Component
         return 'Search files or users...';
     }
 
+    /**
+     * Get the currently active semester for display
+     */
+    public function getActiveSemesterProperty()
+    {
+        // If we have a selected semester, use that
+        if ($this->selectedSemester) {
+            return $this->selectedSemester;
+        }
+        
+        // Otherwise get the actually active semester
+        return Semester::where('is_active', true)->first();
+    }
+
     public function render()
     {
+        // Check if there's no active semester
+        $activeSemester = $this->activeSemester;
+        if (!$activeSemester) {
+            return view('livewire.admin.file-manager.file-manager-index', [
+                'noActiveSemester' => true,
+                'activeSemester' => null,
+                'semesters' => $this->semesters,
+                'files' => collect(),
+                'requirements' => collect(),
+                'users' => collect(),
+                'usersForRequirement' => collect(),
+                'coursesForUserRequirement' => collect(),
+                'coursesForUser' => collect(),
+                'requirementsForUserCourse' => collect(),
+            ])->extends('layouts.app');
+        }
+
         $data = [
             'files' => $this->getFiles(),
-            'activeSemester' => $this->selectedSemester ?? Semester::getActiveSemester(),
+            'activeSemester' => $activeSemester, 
             'semesters' => $this->semesters,
+            'noActiveSemester' => false,
         ];
 
         // Add data based on current navigation state and category

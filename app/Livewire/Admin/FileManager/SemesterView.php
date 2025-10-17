@@ -18,13 +18,30 @@ class SemesterView extends Component
 
     public function mount()
     {
+        \Log::debug('Active semester check:', [
+            'getActiveSemester' => Semester::getActiveSemester(),
+            'all_semesters' => Semester::all()->toArray()
+        ]);
+        
         $this->refreshData();
     }
 
     public function refreshData()
     {
-        $this->currentSemester = Semester::getActiveSemester();
-        $this->previousSemesters = Semester::where('is_active', false)->orderBy('end_date', 'desc')->get();
+        // Clear any potential caching
+        $this->currentSemester = null;
+        $this->previousSemesters = collect();
+        
+        // Fresh database queries
+        $this->currentSemester = Semester::where('is_active', true)->first();
+        $this->previousSemesters = Semester::where('is_active', false)
+            ->orderBy('end_date', 'desc')
+            ->get();
+            
+        \Log::debug('Refreshed data:', [
+            'current' => $this->currentSemester?->id,
+            'previous_count' => $this->previousSemesters->count()
+        ]);
     }
 
     public function showSemesterFiles($semesterId)

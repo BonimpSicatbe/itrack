@@ -38,14 +38,14 @@
                         @livewire('admin.management.semester-management')
                     </div>
                 @break
-                @case('colleges')
-                    <div>
-                        @livewire('admin.management.college-management')
-                    </div>
-                @break
                 @case('users')
                     <div>
                         @livewire('admin.management.user-management')
+                    </div>
+                @break
+                @case('colleges')
+                    <div>
+                        @livewire('admin.management.college-management')
                     </div>
                 @break
                 @case('programs')

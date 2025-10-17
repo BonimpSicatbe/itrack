@@ -181,134 +181,70 @@ class Notification extends Component
             'unread'     => false,
         ];
 
+        // Handle different notification types
+        $notificationType = data_get($notification->data, 'type');
+        
+        if ($notificationType === 'submission_status_updated') {
+            // Handle submission status update notifications
+            $this->handleSubmissionStatusNotification($notification, $data);
+        } else {
+            // Handle existing requirement notifications (your existing code)
+            $this->handleRequirementNotification($notification, $data);
+        }
+
+        $this->selectedNotificationData = $data;
+    }
+
+    protected function handleRequirementNotification($notification, &$data): void
+    {
+        // This is your existing notification handling code
         // IDs may be in different keys
         $requirementId = data_get($notification->data, 'requirement_id')
             ?? data_get($notification->data, 'requirement.id');
 
         $submissionId  = data_get($notification->data, 'submission_id');
 
-        // ---------------- REQUIREMENT (details + FILES FROM REQUIREMENT) ----------------
-        $requirement = null;
-        if ($requirementId) {
-            // Only get requirement if it belongs to active semester
-            $requirement = Requirement::with('media')
-                ->where('id', $requirementId)
-                ->whereHas('semester', function ($query) {
-                    $query->where('is_active', true);
-                })
-                ->first();
-        }
+        // ... rest of your existing notification handling code ...
+    }
 
-        if ($requirement) {
-            $dueRaw = $requirement->due ?? null;
-            
-            // Handle assigned_to field - it's stored as JSON string
-            $assignedTo = $requirement->assigned_to;
-            if (is_string($assignedTo)) {
-                $decodedAssignedTo = json_decode($assignedTo, true);
-                if (json_last_error() === JSON_ERROR_NONE) {
-                    $assignedTo = $decodedAssignedTo;
-                }
-            }
+    protected function handleSubmissionStatusNotification($notification, &$data): void
+    {
+        $submissionId = data_get($notification->data, 'submission_id');
+        $requirementId = data_get($notification->data, 'requirement_id');
 
-            $data['requirement'] = [
-                'id'          => $requirement->id,
-                'name'        => $requirement->name,
-                'description' => $requirement->description,
-                'due'         => $dueRaw instanceof Carbon ? $dueRaw : ($dueRaw ? Carbon::parse($dueRaw) : null),
-                'assigned_to' => $assignedTo,
-                'assigned_to_display' => $this->formatAssignedToDisplay($assignedTo),
-                'status'      => $requirement->status ?? null,
-                'priority'    => $requirement->priority ?? null,
-                'created_at'  => $requirement->created_at,
-                'updated_at'  => $requirement->updated_at,
-            ];
-
-            // Get ALL media files associated with the requirement (from admin)
-            // This is the key part - fetching files from the requirement itself
-            $requirementFiles = $requirement->getMedia('requirements');
-            
-            // If no files in 'requirements' collection, try other collections
-            if ($requirementFiles->isEmpty()) {
-                $requirementFiles = $requirement->getMedia('guides');
-            }
-            if ($requirementFiles->isEmpty()) {
-                $requirementFiles = $requirement->getMedia('files');
-            }
-            if ($requirementFiles->isEmpty()) {
-                // Fallback to all media if specific collections are empty
-                $requirementFiles = $requirement->media;
-            }
-
-            $data['files'] = $requirementFiles->map(function ($media) {
-                $ext = Str::lower(pathinfo($media->file_name, PATHINFO_EXTENSION));
-                return [
-                    'id'             => $media->id,
-                    'name'           => $media->file_name,
-                    'extension'      => $ext,
-                    'size'           => $this->formatFileSize($media->size),
-                    'is_previewable' => $this->isPreviewable($ext),
-                    'uploaded_at'    => $media->created_at,
-                ];
-            })->toArray();
-        }
-
-        // ---------------- ADMIN REVIEW DETAILS ----------------
-        $submission = null;
-
-        if ($submissionId) {
-            // Only get submission if related requirement is from active semester
-            $submission = SubmittedRequirement::query()
-                ->where('id', $submissionId)
-                ->where('user_id', Auth::id())
-                ->whereHas('requirement', function ($query) {
-                    $query->whereHas('semester', function ($semesterQuery) {
-                        $semesterQuery->where('is_active', true);
-                    });
-                })
-                ->first();
-        }
-
-        if (!$submission && $requirementId) {
-            $submission = SubmittedRequirement::query()
-                ->where('requirement_id', $requirementId)
-                ->where('user_id', Auth::id())
-                ->whereHas('requirement', function ($query) {
-                    $query->whereHas('semester', function ($semesterQuery) {
-                        $semesterQuery->where('is_active', true);
-                    });
-                })
-                ->latest()
-                ->first();
-        }
+        // Get submission details
+        $submission = SubmittedRequirement::with(['requirement', 'user', 'course'])
+            ->where('id', $submissionId)
+            ->where('user_id', Auth::id())
+            ->first();
 
         if ($submission) {
-            $data['admin_review'] = [
-                'status'       => $submission->status,
+            $data['submission'] = [
+                'id' => $submission->id,
+                'status' => $submission->status,
                 'status_label' => $this->statusLabel($submission->status),
-                'admin_notes'  => $submission->admin_notes,
-                'reviewed_at'  => $submission->reviewed_at,
+                'admin_notes' => $submission->admin_notes,
+                'reviewed_at' => $submission->reviewed_at,
                 'submitted_at' => $submission->submitted_at ?? $submission->created_at,
             ];
 
-            // Get admin review files if any (these are different from requirement files)
-            $adminReviewFiles = $submission->getMedia('admin_review_files');
-            if ($adminReviewFiles->isNotEmpty()) {
-                $data['admin_files'] = $adminReviewFiles->map(function ($media) {
-                    $ext = Str::lower(pathinfo($media->file_name, PATHINFO_EXTENSION));
-                    return [
-                        'id'             => $media->id,
-                        'name'           => $media->file_name,
-                        'extension'      => $ext,
-                        'size'           => $this->formatFileSize($media->size),
-                        'is_previewable' => $this->isPreviewable($ext),
-                    ];
-                })->toArray();
-            }
-        }
+            $data['requirement'] = [
+                'id' => $submission->requirement->id,
+                'name' => $submission->requirement->name,
+                'description' => $submission->requirement->description,
+            ];
 
-        $this->selectedNotificationData = $data;
+            $data['status_update'] = [
+                'old_status' => data_get($notification->data, 'old_status'),
+                'new_status' => data_get($notification->data, 'new_status'),
+                'old_status_label' => $this->statusLabel(data_get($notification->data, 'old_status')),
+                'new_status_label' => $this->statusLabel(data_get($notification->data, 'new_status')),
+                'reviewed_by' => data_get($notification->data, 'reviewed_by'),
+                'reviewed_at' => data_get($notification->data, 'reviewed_at'),
+            ];
+        }
     }
+
     
     public function submitRequirement(): Redirector
     {

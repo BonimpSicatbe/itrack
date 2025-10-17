@@ -197,13 +197,13 @@
                                 {{-- Active state icon --}}
                                 <img src="{{ asset($navlink['icon_path_active'] ?? $navlink['icon_path']) }}" 
                                     alt="{{ $navlink['label'] }} icon" 
-                                    class="w-5 h-5 object-contain"
+                                    class="w-8 h-8 object-contain"
                                     loading="lazy">
                             @else
                                 {{-- Inactive state icon --}}
                                 <img src="{{ asset($navlink['icon_path']) }}" 
                                     alt="{{ $navlink['label'] }} icon" 
-                                    class="w-5 h-5 object-contain"
+                                    class="w-8 h-8 object-contain"
                                     loading="lazy">
                             @endif
                         @else

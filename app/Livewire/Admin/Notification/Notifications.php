@@ -12,15 +12,11 @@ class Notifications extends Component
     public $notifications = [];
     public $selectedNotification = null;
     public $selectedNotificationData = null;
-    public $activeTab = 'all'; // 'all', 'unread', 'read'
+    public $activeTab = 'all';
     
-    // For status update form
-    public $newStatus;
-    public $adminNotes;
-
-    // For delete confirmation modal
-    public $showDeleteConfirmationModal = false;
-    public $notificationToDelete = null;
+    // Change to array properties to handle multiple files
+    public $newStatus = [];
+    public $adminNotes = [];
 
     public function mount()
     {
@@ -31,7 +27,7 @@ class Notifications extends Component
     {
         $this->notifications = Auth::user()
             ->notifications()
-            ->where('type', 'App\Notifications\NewSubmissionNotification')
+            ->whereIn('type', ['App\Notifications\NewSubmissionNotification', 'App\Notifications\SubmissionStatusUpdated'])
             ->latest()
             ->get();
     }
@@ -39,13 +35,9 @@ class Notifications extends Component
     public function getFilteredNotifications()
     {
         if ($this->activeTab === 'unread') {
-            return $this->notifications->filter(function ($notification) {
-                return $notification->unread();
-            });
+            return $this->notifications->filter(fn($notification) => $notification->unread());
         } elseif ($this->activeTab === 'read') {
-            return $this->notifications->filter(function ($notification) {
-                return !$notification->unread();
-            });
+            return $this->notifications->filter(fn($notification) => !$notification->unread());
         }
 
         return $this->notifications;
@@ -53,29 +45,26 @@ class Notifications extends Component
 
     public function updatedActiveTab(): void
     {
-        // Reset selection when changing tabs
         $this->selectedNotification = null;
         $this->selectedNotificationData = null;
+        // Reset form data when tab changes
+        $this->reset(['newStatus', 'adminNotes']);
     }
 
     public function selectNotification($id)
     {
-        // Decode the ID if it's encoded
         $id = urldecode($id);
         $this->selectedNotification = $id;
         
-        // Find the notification by ID
         $notification = DatabaseNotification::find($id);
         
         if ($notification) {
-            // Mark as read when selected only if unread
             if ($notification->unread()) {
                 $notification->markAsRead();
-                $this->dispatch('notification-read'); // Fixed event name to match navigation
-                $this->loadNotifications(); // Reload to update read status
+                $this->dispatch('notification-read');
+                $this->loadNotifications();
             }
 
-            // Prepare basic notification data
             $this->selectedNotificationData = [
                 'type' => $notification->data['type'] ?? null,
                 'message' => $notification->data['message'] ?? '',
@@ -83,114 +72,130 @@ class Notifications extends Component
                 'unread' => $notification->unread(),
             ];
 
-            // Load requirement and submission details with related user data
             $this->loadDetails($notification->data);
         }
+        
+        // Reset form data when selecting a new notification
+        $this->reset(['newStatus', 'adminNotes']);
     }
 
     protected function loadDetails($notificationData)
     {
-        // Load requirement with creator, updater, and archiver information
-        $requirement = \App\Models\Requirement::with(['creator', 'updater', 'archiver'])
-            ->find($notificationData['requirement_id']);
+        // Load requirement details for both notification types
+        $requirementId = $notificationData['requirement_id'] ?? null;
+        if ($requirementId) {
+            $requirement = \App\Models\Requirement::with(['creator', 'updater', 'archiver'])
+                ->find($requirementId);
 
-        if ($requirement) {
-            $this->selectedNotificationData['requirement'] = [
-                'id' => $requirement->id,
-                'name' => $requirement->name,
-                'description' => $requirement->description,
-                'due' => $requirement->due,
-                'assigned_to' => $requirement->assigned_to_display,
-                'status' => $requirement->status,
-                'created_at' => $requirement->created_at,
-                'updated_at' => $requirement->updated_at,
-                'creator' => $requirement->creator ? [
-                    'id' => $requirement->creator->id,
-                    'name' => $requirement->creator->name,
-                    'email' => $requirement->creator->email,
-                ] : null,
-                'updater' => $requirement->updater ? [
-                    'id' => $requirement->updater->id,
-                    'name' => $requirement->updater->name,
-                    'email' => $requirement->updater->email,
-                ] : null,
-                'archiver' => $requirement->archiver ? [
-                    'id' => $requirement->archiver->id,
-                    'name' => $requirement->archiver->name,
-                    'email' => $requirement->archiver->email,
-                ] : null,
-            ];
-        }
-
-        // Handle both old (single submission) and new (multiple submissions) formats
-        $submissionIds = [];
-        
-        if (isset($notificationData['submission_ids'])) {
-            // New format with multiple submissions
-            $submissionIds = $notificationData['submission_ids'];
-        } elseif (isset($notificationData['submission_id'])) {
-            // Old format with single submission
-            $submissionIds = [$notificationData['submission_id']];
-        }
-
-        // Load submissions with course and program information
-        $submissions = \App\Models\SubmittedRequirement::with(['reviewer', 'course.program'])
-            ->whereIn('id', $submissionIds)
-            ->get();
-
-        if ($submissions->count() > 0) {
-            $this->selectedNotificationData['submissions'] = $submissions->map(function ($submission) {
-                $statusLabel = match($submission->status) {
-                    SubmittedRequirement::STATUS_UNDER_REVIEW => 'Under Review',
-                    SubmittedRequirement::STATUS_REVISION_NEEDED => 'Revision Required',
-                    SubmittedRequirement::STATUS_REJECTED => 'Rejected',
-                    SubmittedRequirement::STATUS_APPROVED => 'Approved',
-                    default => ucfirst($submission->status),
-                };
-
-                return [
-                    'id' => $submission->id,
-                    'status' => $submission->status,
-                    'status_label' => $statusLabel,
-                    'admin_notes' => $submission->admin_notes,
-                    'submitted_at' => $submission->submitted_at,
-                    'reviewed_at' => $submission->reviewed_at,
-                    'course' => $submission->course ? [
-                        'id' => $submission->course->id,
-                        'course_code' => $submission->course->course_code,
-                        'course_name' => $submission->course->course_name,
-                        'program' => $submission->course->program ? [
-                            'id' => $submission->course->program->id,
-                            'program_code' => $submission->course->program->program_code,
-                            'program_name' => $submission->course->program->program_name,
-                        ] : null,
+            if ($requirement) {
+                $this->selectedNotificationData['requirement'] = [
+                    'id' => $requirement->id,
+                    'name' => $requirement->name,
+                    'description' => $requirement->description,
+                    'due' => $requirement->due,
+                    'assigned_to' => $requirement->assigned_to_display,
+                    'status' => $requirement->status,
+                    'created_at' => $requirement->created_at,
+                    'updated_at' => $requirement->updated_at,
+                    'creator' => $requirement->creator ? [
+                        'id' => $requirement->creator->id,
+                        'name' => $requirement->creator->name,
+                        'email' => $requirement->creator->email,
                     ] : null,
-                    'reviewer' => $submission->reviewer ? [
-                        'id' => $submission->reviewer->id,
-                        'name' => $submission->reviewer->name,
-                        'email' => $submission->reviewer->email,
+                    'updater' => $requirement->updater ? [
+                        'id' => $requirement->updater->id,
+                        'name' => $requirement->updater->name,
+                        'email' => $requirement->updater->email,
                     ] : null,
-                    'needs_review' => $submission->status === SubmittedRequirement::STATUS_UNDER_REVIEW,
+                    'archiver' => $requirement->archiver ? [
+                        'id' => $requirement->archiver->id,
+                        'name' => $requirement->archiver->name,
+                        'email' => $requirement->archiver->email,
+                    ] : null,
                 ];
-            })->toArray();
-
-            $this->loadFiles($submissions);
+            }
         }
 
-        // Load submitting user
+        // Handle different notification types
+        if ($notificationData['type'] === 'submission_status_updated') {
+            $this->loadStatusUpdateDetails($notificationData);
+        } else {
+            $this->loadNewSubmissionDetails($notificationData);
+        }
+    }
+
+    protected function loadStatusUpdateDetails($notificationData)
+    {
+        // For status update notifications
+        $submissionId = $notificationData['submission_id'] ?? null;
+        
+        if ($submissionId) {
+            $submission = SubmittedRequirement::with(['reviewer', 'course.program', 'user', 'media'])
+                ->find($submissionId);
+
+            if ($submission) {
+                $this->selectedNotificationData['submissions'] = [$this->formatSubmission($submission)];
+                $this->loadFiles([$submission]);
+                
+                // Add status update specific data
+                $this->selectedNotificationData['status_update'] = [
+                    'old_status' => $notificationData['old_status'],
+                    'new_status' => $notificationData['new_status'],
+                    'reviewed_by' => $notificationData['reviewed_by'],
+                    'reviewed_at' => $notificationData['reviewed_at'],
+                ];
+            }
+        }
+
+        // Load user data
         $userId = $notificationData['user_id'] ?? null;
         if ($userId) {
             $user = \App\Models\User::find($userId);
             if ($user) {
                 $this->selectedNotificationData['submitter'] = [
                     'id' => $user->id,
-                    'name' => $user->name,
+                    'name' => $user->full_name ?? $user->name,
+                    'email' => $user->email,
+                ];
+            }
+        }
+    }
+
+    protected function loadNewSubmissionDetails($notificationData)
+    {
+        // Original logic for new submission notifications
+        $submissionIds = [];
+        
+        if (isset($notificationData['submission_ids'])) {
+            $submissionIds = $notificationData['submission_ids'];
+        } elseif (isset($notificationData['submission_id'])) {
+            $submissionIds = [$notificationData['submission_id']];
+        }
+
+        $submissions = SubmittedRequirement::with(['reviewer', 'course.program', 'user', 'media'])
+            ->whereIn('id', $submissionIds)
+            ->get();
+
+        if ($submissions->count() > 0) {
+            $this->selectedNotificationData['submissions'] = $submissions->map(function ($submission) {
+                return $this->formatSubmission($submission);
+            })->toArray();
+
+            $this->loadFiles($submissions);
+        }
+
+        $userId = $notificationData['user_id'] ?? null;
+        if ($userId) {
+            $user = \App\Models\User::find($userId);
+            if ($user) {
+                $this->selectedNotificationData['submitter'] = [
+                    'id' => $user->id,
+                    'name' => $user->full_name ?? $user->name,
                     'email' => $user->email,
                 ];
             }
         }
 
-        // Load course from notification data if available
         if (isset($notificationData['course_id']) && $notificationData['course_id']) {
             $course = \App\Models\Course::with('program')->find($notificationData['course_id']);
             if ($course) {
@@ -206,6 +211,42 @@ class Notifications extends Component
                 ];
             }
         }
+    }
+
+    protected function formatSubmission($submission)
+    {
+        $statusLabel = match($submission->status) {
+            SubmittedRequirement::STATUS_UNDER_REVIEW => 'Under Review',
+            SubmittedRequirement::STATUS_REVISION_NEEDED => 'Revision Required',
+            SubmittedRequirement::STATUS_REJECTED => 'Rejected',
+            SubmittedRequirement::STATUS_APPROVED => 'Approved',
+            default => ucfirst($submission->status),
+        };
+
+        return [
+            'id' => $submission->id,
+            'status' => $submission->status,
+            'status_label' => $statusLabel,
+            'admin_notes' => $submission->admin_notes,
+            'submitted_at' => $submission->submitted_at,
+            'reviewed_at' => $submission->reviewed_at,
+            'course' => $submission->course ? [
+                'id' => $submission->course->id,
+                'course_code' => $submission->course->course_code,
+                'course_name' => $submission->course->course_name,
+                'program' => $submission->course->program ? [
+                    'id' => $submission->course->program->id,
+                    'program_code' => $submission->course->program->program_code,
+                    'program_name' => $submission->course->program->program_name,
+                ] : null,
+            ] : null,
+            'reviewer' => $submission->reviewer ? [
+                'id' => $submission->reviewer->id,
+                'name' => $submission->reviewer->name,
+                'email' => $submission->reviewer->email,
+            ] : null,
+            'needs_review' => $submission->status === SubmittedRequirement::STATUS_UNDER_REVIEW,
+        ];
     }
 
     protected function loadFiles($submissions)
@@ -249,21 +290,31 @@ class Notifications extends Component
 
     public function updateFileStatus($submissionId)
     {
+        // Validate the specific submission's data
         $this->validate([
-            'newStatus' => 'required|in:' . implode(',', array_keys(SubmittedRequirement::statuses())),
-            'adminNotes' => 'nullable|string',
+            "newStatus.{$submissionId}" => 'required|in:' . implode(',', array_keys(SubmittedRequirement::statuses())),
+            "adminNotes.{$submissionId}" => 'nullable|string',
         ]);
 
         $submission = SubmittedRequirement::findOrFail($submissionId);
         
+        // Store old status for notification
+        $oldStatus = $submission->status;
+        
         $submission->update([
-            'status' => $this->newStatus,
-            'admin_notes' => $this->adminNotes,
+            'status' => $this->newStatus[$submissionId],
+            'admin_notes' => $this->adminNotes[$submissionId] ?? null,
             'reviewed_by' => auth()->id(),
             'reviewed_at' => now(),
         ]);
 
-        // Reload data
+        // Send notification to user about status update
+        $user = \App\Models\User::find($submission->user_id);
+        if ($user) {
+            $user->notify(new \App\Notifications\SubmissionStatusUpdated($submission, $oldStatus, $this->newStatus[$submissionId]));
+        }
+
+        // Reload the notification data to reflect changes
         if ($this->selectedNotification) {
             $notification = DatabaseNotification::find($this->selectedNotification);
             if ($notification) {
@@ -271,8 +322,13 @@ class Notifications extends Component
             }
         }
 
-        // Reset and show success message
-        $this->reset(['newStatus', 'adminNotes']);
+        // Reset only the specific submission's form data
+        if (isset($this->newStatus[$submissionId])) {
+            unset($this->newStatus[$submissionId]);
+        }
+        if (isset($this->adminNotes[$submissionId])) {
+            unset($this->adminNotes[$submissionId]);
+        }
         
         $this->dispatch('showNotification', 
             type: 'success',
@@ -296,12 +352,13 @@ class Notifications extends Component
     public function markAllAsRead()
     {
         Auth::user()->unreadNotifications()
-            ->where('type', 'App\Notifications\NewSubmissionNotification')
+            ->whereIn('type', ['App\Notifications\NewSubmissionNotification', 'App\Notifications\SubmissionStatusUpdated'])
             ->update(['read_at' => now()]);
         
         $this->loadNotifications();
         $this->selectedNotification = null;
         $this->selectedNotificationData = null;
+        $this->reset(['newStatus', 'adminNotes']);
         
         $this->dispatch('notifications-marked-read');
         
@@ -315,7 +372,7 @@ class Notifications extends Component
     public function markAllAsUnread()
     {
         $readNotifications = Auth::user()->readNotifications()
-            ->where('type', 'App\Notifications\NewSubmissionNotification')
+            ->whereIn('type', ['App\Notifications\NewSubmissionNotification', 'App\Notifications\SubmissionStatusUpdated'])
             ->get();
         
         $readNotifications->each(function ($notification) {
@@ -325,6 +382,7 @@ class Notifications extends Component
         $this->loadNotifications();
         $this->selectedNotification = null;
         $this->selectedNotificationData = null;
+        $this->reset(['newStatus', 'adminNotes']);
         
         $this->dispatch('notifications-marked-unread', count: $readNotifications->count());
         
@@ -335,107 +393,40 @@ class Notifications extends Component
         );
     }
 
-    public function toggleNotificationReadStatus($notificationId)
+    public function markAsUnread($id)
     {
-        $notificationId = urldecode($notificationId);
+        $id = urldecode($id);
+        $notification = DatabaseNotification::find($id);
         
-        // Get the notification scoped to the current user
-        $notification = Auth::user()->notifications()
-            ->where('id', $notificationId)
-            ->where('type', 'App\Notifications\NewSubmissionNotification')
-            ->first();
-        
-        if ($notification) {
-            if ($notification->unread()) {
-                $notification->markAsRead();
-                $message = 'Notification marked as read';
-                $this->dispatch('notification-read');
-            } else {
-                $notification->markAsUnread();
-                $message = 'Notification marked as unread';
-                $this->dispatch('notification-unread');
-            }
-            
-            // Reload notifications to get fresh data
+        if ($notification && !$notification->unread()) {
+            $notification->markAsUnread();
             $this->loadNotifications();
             
-            // Update selected notification data if it's the currently selected one
-            if ($this->selectedNotification === $notificationId) {
-                // Find the updated notification
-                $updatedNotification = $this->notifications->firstWhere('id', $notificationId);
-                if ($updatedNotification && $this->selectedNotificationData) {
-                    $this->selectedNotificationData['unread'] = $updatedNotification->unread();
-                }
+            // Update the current notification data if it's the selected one
+            if ($this->selectedNotification === $id) {
+                $this->selectedNotificationData['unread'] = true;
             }
             
-            // If we're in a filtered tab and the notification no longer belongs there,
-            // clear the selection to avoid showing a notification that's not in the current list
-            $filteredNotifications = $this->getFilteredNotifications();
-            if (!$filteredNotifications->contains('id', $notificationId)) {
-                $this->selectedNotification = null;
-                $this->selectedNotificationData = null;
-            }
+            // Add this dispatch to update the navigation count
+            $this->dispatch('notification-unread');
             
             $this->dispatch('showNotification', 
                 type: 'success',
-                content: $message,
+                content: 'Notification marked as unread!',
                 duration: 3000
             );
         }
     }
 
-    // Delete confirmation modal methods
-    public function openDeleteConfirmationModal($notificationId)
+    public function formatStatus($status)
     {
-        $this->notificationToDelete = $notificationId;
-        $this->showDeleteConfirmationModal = true;
-    }
-
-    public function closeDeleteConfirmationModal()
-    {
-        $this->showDeleteConfirmationModal = false;
-        $this->notificationToDelete = null;
-    }
-
-    public function confirmDeleteNotification()
-    {
-        if ($this->notificationToDelete) {
-            $this->deleteNotification($this->notificationToDelete);
-            $this->closeDeleteConfirmationModal();
-        }
-    }
-
-    public function deleteNotification($notificationId)
-    {
-        $notificationId = urldecode($notificationId);
-        
-        // Get the notification scoped to the current user
-        $notification = Auth::user()->notifications()
-            ->where('id', $notificationId)
-            ->where('type', 'App\Notifications\NewSubmissionNotification')
-            ->first();
-        
-        if ($notification) {
-            $wasUnread = $notification->unread();
-            $notification->delete();
-            
-            $this->loadNotifications();
-            
-            if ($this->selectedNotification === $notificationId) {
-                $this->selectedNotification = null;
-                $this->selectedNotificationData = null;
-            }
-            
-            if ($wasUnread) {
-                $this->dispatch('notification-read');
-            }
-            
-            $this->dispatch('showNotification', 
-                type: 'success',
-                content: 'Notification deleted successfully!',
-                duration: 3000
-            );
-        }
+        return match($status) {
+            'under_review' => 'Under Review',
+            'revision_needed' => 'Revision Required',
+            'rejected' => 'Rejected',
+            'approved' => 'Approved',
+            default => ucfirst(str_replace('_', ' ', $status))
+        };
     }
 
     public function render()

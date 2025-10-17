@@ -25,7 +25,7 @@ class Semester extends Model
 
     public static function getActiveSemester()
     {
-        return self::latest()->first();
+        return self::where('is_active', true)->latest()->first();
     }
 
     public static function getArchivedSemester()
