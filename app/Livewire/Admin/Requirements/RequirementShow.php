@@ -42,14 +42,13 @@ class RequirementShow extends Component
 
     private function getAssignedUsers()
     {
-        // assigned_to is already an array due to the cast in Requirement model
         $assignedTo = $this->requirement->assigned_to ?? [];
         
         $userQuery = User::query()->with([
             'department', 
             'college',
             'courseAssignments.course.program.college'
-        ]);
+        ])->where('is_active', true); // Only active users
         
         $hasConditions = false;
         

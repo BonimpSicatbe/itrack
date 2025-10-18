@@ -3,8 +3,8 @@
         {{-- Active Semester Card with Notification --}}
         @livewire('user.dashboard.active-semester')
 
-        {{-- Conditionally display sections only when there's an active semester --}}
-        @if(\App\Models\Semester::getActiveSemester())
+        {{-- Conditionally display sections only when there's an active semester AND user is active --}}
+        @if(\App\Models\Semester::getActiveSemester() && auth()->user()->is_active)
             {{-- progress --}}
             @livewire('user.dashboard.progress')
 

@@ -20,7 +20,7 @@ class FileManagerIndex extends Component
 
     public $selectedFile = null;
     public $viewMode = 'grid';
-    public $category = 'requirement'; // Default to requirement
+    public $category = 'requirement';
     public $search = '';
     
     // Navigation state
@@ -163,7 +163,7 @@ class FileManagerIndex extends Component
     }
 
     /**
-     * Unified navigation method similar to user file manager
+     * Unified navigation method
      */
     public function handleNavigation($level, $id = null)
     {
@@ -525,29 +525,29 @@ class FileManagerIndex extends Component
     }
 
     /**
-     * Get requirements that have actual submitted files with media
+     * SIMPLIFIED: Get requirements that have submission indicators
      */
     public function getRequirements()
     {
         $semester = $this->selectedSemester ?? Semester::getActiveSemester();
         if (!$semester) return collect();
 
-        $query = Requirement::whereHas('submittedRequirements', function($q) use ($semester) {
-                $q->whereHas('media')
-                ->whereBetween('submitted_at', [
-                    $semester->start_date,
-                    $semester->end_date
-                ]);
-            })
-            ->withCount(['submittedRequirements as file_count' => function($q) use ($semester) {
-                $q->whereHas('media')
-                ->whereBetween('submitted_at', [
+        // Get requirements that have submission indicators in the current semester
+        $requirementIds = RequirementSubmissionIndicator::whereBetween('submitted_at', [
+                $semester->start_date,
+                $semester->end_date
+            ])
+            ->distinct()
+            ->pluck('requirement_id');
+
+        $query = Requirement::whereIn('id', $requirementIds)
+            ->withCount(['submissionIndicators as file_count' => function($q) use ($semester) {
+                $q->whereBetween('submitted_at', [
                     $semester->start_date,
                     $semester->end_date
                 ]);
             }]);
 
-        // Only apply search if we're at the requirements level
         if ($this->search && !$this->selectedRequirementId && !$this->selectedUserId && !$this->selectedCourseId) {
             $query->where('name', 'like', '%'.$this->search.'%');
         }
@@ -562,7 +562,7 @@ class FileManagerIndex extends Component
     }
 
     /**
-     * Get users who have submitted files for the selected requirement
+     * SIMPLIFIED: Get users who have submission indicators for the selected requirement
      */
     public function getUsersForRequirement()
     {
@@ -571,14 +571,16 @@ class FileManagerIndex extends Component
         $semester = $this->selectedSemester ?? Semester::getActiveSemester();
         if (!$semester) return collect();
 
-        $query = User::whereHas('submittedRequirements', function($q) use ($semester) {
-                $q->where('requirement_id', $this->selectedRequirementId)
-                ->whereHas('media')
-                ->whereBetween('submitted_at', [
-                    $semester->start_date,
-                    $semester->end_date
-                ]);
-            })
+        // Get users who have submission indicators for this requirement in the current semester
+        $userIds = RequirementSubmissionIndicator::where('requirement_id', $this->selectedRequirementId)
+            ->whereBetween('submitted_at', [
+                $semester->start_date,
+                $semester->end_date
+            ])
+            ->distinct()
+            ->pluck('user_id');
+
+        $query = User::whereIn('id', $userIds)
             ->withCount(['submittedRequirements as file_count' => function($q) use ($semester) {
                 $q->where('requirement_id', $this->selectedRequirementId)
                 ->whereHas('media')
@@ -586,40 +588,18 @@ class FileManagerIndex extends Component
                     $semester->start_date,
                     $semester->end_date
                 ]);
-            }])
-            ->withCount(['courses as course_count' => function($q) use ($semester) {
-                $q->whereHas('submittedRequirements', function($q2) use ($semester) {
-                    $q2->where('requirement_id', $this->selectedRequirementId)
-                    ->where('user_id', DB::raw('users.id'))
-                    ->whereHas('media')
-                    ->whereBetween('submitted_at', [
-                        $semester->start_date,
-                        $semester->end_date
-                    ]);
-                })
-                ->distinct();
             }]);
-
-        // Only apply search if we're at the users level for requirement category
-        if ($this->search && $this->selectedRequirementId && !$this->selectedUserId && !$this->selectedCourseId) {
-            $query->where(function($q) {
-                $q->where('firstname', 'like', '%'.$this->search.'%')
-                ->orWhere('lastname', 'like', '%'.$this->search.'%')
-                ->orWhere('email', 'like', '%'.$this->search.'%');
-            });
-        }
 
         return $query->get()->map(function($user) {
             return [
                 'user' => $user,
-                'file_count' => $user->file_count,
-                'course_count' => $user->course_count
+                'file_count' => $user->file_count
             ];
         });
     }
 
     /**
-     * Get courses for selected user and requirement that have submitted files
+     * SIMPLIFIED: Get courses for selected user and requirement that have submission indicators
      */
     public function getCoursesForUserRequirement()
     {
@@ -628,18 +608,23 @@ class FileManagerIndex extends Component
         $semester = $this->selectedSemester ?? Semester::getActiveSemester();
         if (!$semester) return collect();
 
-        $query = Course::whereHas('submittedRequirements', function($q) {
-                $q->where('requirement_id', $this->selectedRequirementId)
-                ->where('user_id', $this->selectedUserId)
-                ->whereHas('media');
-            })
+        // Get courses that have submission indicators for this user and requirement
+        $courseIds = RequirementSubmissionIndicator::where('requirement_id', $this->selectedRequirementId)
+            ->where('user_id', $this->selectedUserId)
+            ->whereBetween('submitted_at', [
+                $semester->start_date,
+                $semester->end_date
+            ])
+            ->distinct()
+            ->pluck('course_id');
+
+        $query = Course::whereIn('id', $courseIds)
             ->withCount(['submittedRequirements as file_count' => function($q) {
                 $q->where('requirement_id', $this->selectedRequirementId)
                 ->where('user_id', $this->selectedUserId)
                 ->whereHas('media');
             }]);
 
-        // Only apply search if we're at the courses level for requirement category
         if ($this->search && $this->selectedRequirementId && $this->selectedUserId && !$this->selectedCourseId) {
             $query->where(function($q) {
                 $q->where('course_code', 'like', '%'.$this->search.'%')
@@ -656,39 +641,30 @@ class FileManagerIndex extends Component
     }
 
     /**
-     * Get users who have submitted files (for user category)
+     * SIMPLIFIED: Get users who have submission indicators
      */
     public function getUsers()
     {
         $semester = $this->selectedSemester ?? Semester::getActiveSemester();
         if (!$semester) return collect();
 
-        $query = User::whereHas('submittedRequirements', function($q) use ($semester) {
-                $q->whereHas('media')
-                ->whereBetween('submitted_at', [
-                    $semester->start_date,
-                    $semester->end_date
-                ]);
-            })
+        // Get users who have submission indicators in the current semester
+        $userIds = RequirementSubmissionIndicator::whereBetween('submitted_at', [
+                $semester->start_date,
+                $semester->end_date
+            ])
+            ->distinct()
+            ->pluck('user_id');
+
+        $query = User::whereIn('id', $userIds)
             ->withCount(['submittedRequirements as file_count' => function($q) use ($semester) {
                 $q->whereHas('media')
                 ->whereBetween('submitted_at', [
                     $semester->start_date,
                     $semester->end_date
                 ]);
-            }])
-            ->withCount(['courses as course_count' => function($q) use ($semester) {
-                $q->whereHas('submittedRequirements', function($q2) use ($semester) {
-                    $q2->whereHas('media')
-                    ->whereBetween('submitted_at', [
-                        $semester->start_date,
-                        $semester->end_date
-                    ]);
-                })
-                ->distinct();
             }]);
 
-        // Only apply search if we're at the users level for user category
         if ($this->search && !$this->selectedUserId && !$this->selectedCourseId && !$this->selectedRequirementId) {
             $query->where(function($q) {
                 $q->where('firstname', 'like', '%'.$this->search.'%')
@@ -700,14 +676,13 @@ class FileManagerIndex extends Component
         return $query->get()->map(function($user) {
             return [
                 'user' => $user,
-                'file_count' => $user->file_count,
-                'course_count' => $user->course_count
+                'file_count' => $user->file_count
             ];
         });
     }
 
     /**
-     * Get courses for selected user that have submitted files
+     * SIMPLIFIED: Get courses for selected user that have submission indicators
      */
     public function getCoursesForUser()
     {
@@ -716,16 +691,21 @@ class FileManagerIndex extends Component
         $semester = $this->selectedSemester ?? Semester::getActiveSemester();
         if (!$semester) return collect();
 
-        $query = Course::whereHas('submittedRequirements', function($q) {
-                $q->where('user_id', $this->selectedUserId)
-                ->whereHas('media');
-            })
+        // Get courses that have submission indicators for this user
+        $courseIds = RequirementSubmissionIndicator::where('user_id', $this->selectedUserId)
+            ->whereBetween('submitted_at', [
+                $semester->start_date,
+                $semester->end_date
+            ])
+            ->distinct()
+            ->pluck('course_id');
+
+        $query = Course::whereIn('id', $courseIds)
             ->withCount(['submittedRequirements as file_count' => function($q) {
                 $q->where('user_id', $this->selectedUserId)
                 ->whereHas('media');
             }]);
 
-        // Only apply search if we're at the courses level for user category
         if ($this->search && $this->selectedUserId && !$this->selectedCourseId && !$this->selectedRequirementId) {
             $query->where(function($q) {
                 $q->where('course_code', 'like', '%'.$this->search.'%')
@@ -742,7 +722,7 @@ class FileManagerIndex extends Component
     }
 
     /**
-     * Get requirements for selected user and course that have submitted files
+     * SIMPLIFIED: Get requirements for selected user and course that have submission indicators
      */
     public function getRequirementsForUserCourse()
     {
@@ -751,18 +731,23 @@ class FileManagerIndex extends Component
         $semester = $this->selectedSemester ?? Semester::getActiveSemester();
         if (!$semester) return collect();
 
-        $query = Requirement::whereHas('submittedRequirements', function($q) {
-                $q->where('user_id', $this->selectedUserId)
-                ->where('course_id', $this->selectedCourseId)
-                ->whereHas('media');
-            })
+        // Get requirements that have submission indicators for this user and course
+        $requirementIds = RequirementSubmissionIndicator::where('user_id', $this->selectedUserId)
+            ->where('course_id', $this->selectedCourseId)
+            ->whereBetween('submitted_at', [
+                $semester->start_date,
+                $semester->end_date
+            ])
+            ->distinct()
+            ->pluck('requirement_id');
+
+        $query = Requirement::whereIn('id', $requirementIds)
             ->withCount(['submittedRequirements as file_count' => function($q) {
                 $q->where('user_id', $this->selectedUserId)
                 ->where('course_id', $this->selectedCourseId)
                 ->whereHas('media');
             }]);
 
-        // Only apply search if we're at the requirements level for user category
         if ($this->search && $this->selectedUserId && $this->selectedCourseId && !$this->selectedRequirementId) {
             $query->where('name', 'like', '%'.$this->search.'%');
         }
@@ -776,7 +761,7 @@ class FileManagerIndex extends Component
     }
 
     /**
-     * Get actual media files with proper filtering
+     * SIMPLIFIED: Get actual media files with submission indicators
      */
     public function getFiles()
     {
@@ -785,43 +770,48 @@ class FileManagerIndex extends Component
             return new \Illuminate\Pagination\LengthAwarePaginator([], 0, $this->viewMode === 'grid' ? 24 : 10);
         }
 
+        // First get the submission IDs that have indicators
+        $submissionIds = RequirementSubmissionIndicator::whereBetween('submitted_at', [
+                $semester->start_date,
+                $semester->end_date
+            ])
+            ->when($this->selectedRequirementId, function($q) {
+                $q->where('requirement_id', $this->selectedRequirementId);
+            })
+            ->when($this->selectedUserId, function($q) {
+                $q->where('user_id', $this->selectedUserId);
+            })
+            ->when($this->selectedCourseId, function($q) {
+                $q->where('course_id', $this->selectedCourseId);
+            })
+            ->pluck('id');
+
+        if ($submissionIds->isEmpty()) {
+            return new \Illuminate\Pagination\LengthAwarePaginator([], 0, $this->viewMode === 'grid' ? 24 : 10);
+        }
+
+        // Now get media files for these submissions
         $query = Media::query()
             ->with([
                 'model.user', 
                 'model.requirement', 
                 'model.course.program'
             ])
-            ->whereHasMorph('model', [SubmittedRequirement::class], function($q) use ($semester) {
-                $q->whereBetween('submitted_at', [
-                    $semester->start_date,
-                    $semester->end_date
-                ]);
-
-                if ($this->category === 'requirement') {
-                    if ($this->selectedRequirementId) {
-                        $q->where('requirement_id', $this->selectedRequirementId);
-                    }
-                    if ($this->selectedUserId) {
-                        $q->where('user_id', $this->selectedUserId);
-                    }
-                    if ($this->selectedCourseId) {
-                        $q->where('course_id', $this->selectedCourseId);
-                    }
-                } elseif ($this->category === 'user') {
-                    if ($this->selectedUserId) {
-                        $q->where('user_id', $this->selectedUserId);
-                    }
-                    if ($this->selectedCourseId) {
-                        $q->where('course_id', $this->selectedCourseId);
-                    }
-                    if ($this->selectedRequirementId) {
-                        $q->where('requirement_id', $this->selectedRequirementId);
-                    }
-                }
+            ->whereHasMorph('model', [SubmittedRequirement::class], function($q) use ($submissionIds) {
+                $q->whereIn('id', function($subQuery) use ($submissionIds) {
+                    $subQuery->select('submitted_requirements.id')
+                        ->from('submitted_requirements')
+                        ->join('requirement_submission_indicators', function($join) {
+                            $join->on('submitted_requirements.requirement_id', '=', 'requirement_submission_indicators.requirement_id')
+                                ->on('submitted_requirements.user_id', '=', 'requirement_submission_indicators.user_id')
+                                ->on('submitted_requirements.course_id', '=', 'requirement_submission_indicators.course_id');
+                        })
+                        ->whereIn('requirement_submission_indicators.id', $submissionIds);
+                });
             })
             ->orderBy('created_at', 'desc');
 
-        // Only apply search if we're at the files level (all selections made)
+        // Apply search if at files level
         $isAtFilesLevel = false;
         
         if ($this->category === 'requirement') {

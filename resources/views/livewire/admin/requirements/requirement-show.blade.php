@@ -1,6 +1,6 @@
 <div class="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden mb-5">
     <!-- Header -->
-    <div class="flex items-center justify-between px-6 py-4 sticky top-0 z-10 bg-gradient-to-r from-green-800 to-green-600">
+    <div class="flex items-center justify-between px-6 py-4 sticky top-0 z-10" style="background: linear-gradient(148deg,rgba(18, 67, 44, 1) 0%, rgba(30, 119, 77, 1) 54%, rgba(55, 120, 64, 1) 100%);">
         <h2 class="text-xl font-bold text-white flex items-center gap-2">
             <i class="text-2xl fa-solid fa-circle-info"></i> Requirement Details
         </h2>
@@ -24,7 +24,7 @@
                     <!-- Name -->
                     <div>
                         <p class="text-xs font-semibold text-gray-700 uppercase tracking-wide mb-1">Name</p>
-                        <div class="bg-white p-3 rounded-lg border border-gray-300 text-gray-900 font-medium">
+                        <div class="bg-white p-3 rounded-xl border border-gray-300 text-gray-900 font-medium">
                             {{ $requirement->name }}
                         </div>
                     </div>
@@ -32,7 +32,7 @@
                     <!-- Due Date -->
                     <div>
                         <p class="text-xs font-semibold text-gray-700 uppercase tracking-wide mb-1">Due Date</p>
-                        <div class="bg-white p-3 rounded-lg border border-gray-300 flex items-center justify-between">
+                        <div class="bg-white p-3 rounded-xl border border-gray-300 flex items-center justify-between">
                             <div class="flex items-center gap-2">
                                 <i class="fa-regular fa-calendar text-gray-500"></i>
                                 <span class="text-gray-900 font-medium">{{ $requirement->due->format('M d, Y g:i A') }}</span>
@@ -40,14 +40,6 @@
                             @if($requirement->due->isPast())
                                 <span class="px-2 py-1 text-xs font-semibold text-red-700 bg-red-100 rounded-full">Overdue</span>
                             @endif
-                        </div>
-                    </div>
-
-                    <!-- Description -->
-                    <div>
-                        <p class="text-xs font-semibold text-gray-700 uppercase tracking-wide mb-1">Description</p>
-                        <div class="bg-white p-3 rounded-lg border border-gray-300">
-                            <p class="text-gray-700 leading-relaxed">{{ $requirement->description ?? 'No description provided.' }}</p>
                         </div>
                     </div>
                 </div>
@@ -59,7 +51,7 @@
                     </h4>
                     <div class="space-y-2">
                         @forelse ($requiredFiles as $file)
-                            <div class="bg-white rounded-lg p-3 border border-gray-300 hover:bg-gray-50 transition duration-200">
+                            <div class="bg-white rounded-xl p-3 border border-gray-300 hover:bg-gray-50 transition duration-200">
                                 <div class="flex items-center justify-between">
                                     <div class="flex items-center gap-3">
                                         <i class="fa-solid fa-file text-green-600"></i>
@@ -83,7 +75,7 @@
                                 </div>
                             </div>
                         @empty
-                            <div class="bg-white rounded-lg p-3 border border-gray-300 text-center">
+                            <div class="bg-white rounded-xl p-3 border border-gray-300 text-center">
                                 <p class="text-gray-500 text-sm">No required files attached.</p>
                             </div>
                         @endforelse
@@ -97,7 +89,7 @@
                 <div class="space-y-4">
                     @if($assignedPrograms->isNotEmpty())
                         <!-- Display programs directly without college grouping -->
-                        <div class="bg-white rounded-lg border border-gray-300 overflow-hidden">
+                        <div class="bg-white rounded-xl border border-gray-300 overflow-hidden">
                             <!-- Programs Header -->
                             <div class="bg-green-100 px-4 py-3 border-b border-green-200">
                                 <div class="flex items-center gap-2">
@@ -124,7 +116,7 @@
                             </div>
                         </div>
                     @else
-                        <div class="bg-white rounded-lg p-4 border border-gray-300 text-center">
+                        <div class="bg-white rounded-xl p-4 border border-gray-300 text-center">
                             <p class="text-gray-500">No programs assigned.</p>
                         </div>
                     @endif
@@ -139,7 +131,7 @@
                 Assigned Users ({{ $assignedUsers->count() }})
             </h3>
             
-            <div class="bg-white rounded-lg border border-gray-300 overflow-hidden">
+            <div class="bg-white rounded-xl border border-gray-300 overflow-hidden">
                 <div class="overflow-x-auto">
                     <table class="min-w-full divide-y divide-gray-300">
                         <thead class="bg-green-700">

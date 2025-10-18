@@ -543,7 +543,7 @@
                                                     @if($currentCourseAssignments->count() > 0)
                                                         <i class="fa-solid fa-user-check mr-1"></i> All available faculty are already assigned to this course
                                                     @else
-                                                        No faculty members found
+                                                        No active faculty members found
                                                     @endif
                                                 </div>
                                             @endforelse
@@ -589,7 +589,6 @@
                     </div>
                 </div>
 
-                <!-- 🔥 UPDATED: Footer buttons - Removed duplicate Assign Faculty button -->
                 <div class="mt-8 flex justify-end space-x-3 border-t pt-4">
                     <button type="button" 
                         wire:click="closeEditCourseModal"

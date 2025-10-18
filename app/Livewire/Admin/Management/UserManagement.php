@@ -152,6 +152,17 @@ class UserManagement extends Component
     // Assign Course Methods
     public function openAssignCourseModal($userId)
     {
+        $user = User::find($userId);
+        
+        // Check if user is active
+        if (!$user->is_active) {
+            $this->dispatch('showNotification', 
+                type: 'error', 
+                content: 'Cannot assign courses to inactive users. Please activate the user first.'
+            );
+            return;
+        }
+        
         $this->userToAssignCourse = User::with(['courseAssignments.course.program', 'courseAssignments.semester'])->find($userId);
         
         // Reset search and tab when opening modal
@@ -695,6 +706,11 @@ class UserManagement extends Component
         }
     }
 
+    public function canAssignCourse($userId)
+    {
+        $user = User::find($userId);
+        return $user && $user->is_active;
+    }
 
     public function render()
     {

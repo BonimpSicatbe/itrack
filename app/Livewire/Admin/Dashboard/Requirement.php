@@ -57,10 +57,13 @@ class Requirement extends Component
 
         // Check if programs are assigned to this requirement
         if (isset($assignedTo['programs']) && is_array($assignedTo['programs']) && !empty($assignedTo['programs'])) {
-            // Get unique professors assigned to courses in the specified programs for active semester
+            // Get unique ACTIVE professors assigned to courses in the specified programs for active semester
             $professorIds = CourseAssignment::where('semester_id', $activeSemester->id)
                 ->whereHas('course', function ($query) use ($assignedTo) {
                     $query->whereIn('program_id', $assignedTo['programs']);
+                })
+                ->whereHas('professor', function ($query) {
+                    $query->where('is_active', true); // Only active users
                 })
                 ->distinct()
                 ->pluck('professor_id')
@@ -70,8 +73,11 @@ class Requirement extends Component
         } 
         // Check if "select all programs" is enabled
         elseif (isset($assignedTo['selectAllPrograms']) && $assignedTo['selectAllPrograms']) {
-            // Get unique professors assigned to any course in active semester
+            // Get unique ACTIVE professors assigned to any course in active semester
             $professorIds = CourseAssignment::where('semester_id', $activeSemester->id)
+                ->whereHas('professor', function ($query) {
+                    $query->where('is_active', true); // Only active users
+                })
                 ->distinct()
                 ->pluck('professor_id')
                 ->toArray();

@@ -10,6 +10,7 @@
     {{-- Horizontal scroll cards --}}
     <div class="flex gap-4 overflow-x-auto pb-2 scrollbar-hide">
         @forelse($pendingFoldersByCourse as $folderData)
+            {{-- Existing folder card code --}}
             @php    
                 $folder = $folderData['folder'];
                 $course = $folderData['course'];
@@ -92,20 +93,35 @@
                 </div>
             </div>
         @empty
-            <div class="flex items-center justify-center w-full text-center">
-                <div class="space-y-2">
-                    <div class="rounded-full w-fit mx-auto">
-                        <i class="fa-solid fa-folder-open text-3xl text-gray-300"></i>
+            {{-- Show different messages based on user status --}}
+            @auth
+                @if(!Auth::user()->is_active)
+                    <div class="flex items-center justify-center w-full text-center">
+                        <div class="space-y-2">
+                            <div class="rounded-full w-fit mx-auto">
+                                <i class="fa-solid fa-user-slash text-3xl text-gray-400"></i>
+                            </div>
+                            <div class="text-sm font-semibold text-gray-500">Account Inactive</div>
+                            <div class="text-xs text-gray-400">Requirements are not available for inactive accounts</div>
+                        </div>
                     </div>
-                    <div class="text-sm font-semibold text-gray-500">No pending requirements</div>
-                    <div class="text-xs text-gray-400">All requirements are completed or submitted!</div>
-                </div>
-            </div>
+                @else
+                    <div class="flex items-center justify-center w-full text-center">
+                        <div class="space-y-2">
+                            <div class="rounded-full w-fit mx-auto">
+                                <i class="fa-solid fa-folder-open text-3xl text-gray-300"></i>
+                            </div>
+                            <div class="text-sm font-semibold text-gray-500">No pending requirements</div>
+                            <div class="text-xs text-gray-400">All requirements are completed or submitted!</div>
+                        </div>
+                    </div>
+                @endif
+            @endauth
         @endforelse
     </div>
 
     {{-- Information Panel about Auto-Removal --}}
-    @if($pendingFoldersByCourse->count() > 0)
+    @if($pendingFoldersByCourse->count() > 0 && Auth::user()->is_active)
         <div class="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
             <div class="flex items-start gap-2">
                 <i class="fa-solid fa-lightbulb text-blue-500"></i>

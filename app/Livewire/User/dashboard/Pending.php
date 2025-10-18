@@ -16,6 +16,14 @@ class Pending extends Component
     {
         $user = Auth::user();
         
+        // Check if user is active - if not, return empty data
+        if (!$user->is_active) {
+            return view('livewire.user.dashboard.pending', [
+                'pendingFoldersByCourse' => collect(),
+                'pendingRequirementsCount' => 0
+            ]);
+        }
+        
         // Get all pending requirements for active semester
         $allPendingRequirements = Requirement::where('status', 'pending')
             ->whereHas('semester', function($query) {
@@ -24,7 +32,7 @@ class Pending extends Component
             ->orderBy('due', 'asc')
             ->get();
         
-        // Filter requirements that are assigned to the user based on program assignment
+        // Rest of the existing code remains the same...
         $assignedRequirements = $allPendingRequirements->filter(function($requirement) use ($user) {
             return $this->isUserAssignedToRequirement($requirement, $user);
         });
@@ -66,7 +74,6 @@ class Pending extends Component
             }
         }
 
-        // NEW LOGIC: Filter out Midterm/Finals if TOS+Examination partnership OR Rubrics are submitted
         $filteredPendingRequirements = $this->filterCompletedMidtermFinals($pendingRequirementsWithCourse, $user);
 
         // Group requirements by course and then by root folders

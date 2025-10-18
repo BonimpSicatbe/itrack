@@ -29,7 +29,7 @@
 
         {{-- Table Content --}}
         <div class="max-h-[500px] overflow-x-auto shadow-sm mb-4">
-            <table class="min-w-full divide-y divide-gray-200 rounded-lg"> 
+            <table class="min-w-full divide-y divide-gray-200"> 
                 <thead>
                     <tr class="bg-green-700">
                         @php
@@ -106,7 +106,7 @@
             </table>
         </div>
     @else
-        <div class="flex items-center p-4 bg-[#DEF4C6] text-[#1B512D] rounded-lg shadow-lg mx-6">
+        <div class="flex items-center p-4 bg-[#DEF4C6] text-[#1B512D] rounded-xl shadow-lg mx-6">
             <i class="fa-solid fa-triangle-exclamation text-lg mr-3"></i>
             <div>
                 <h3 class="font-bold">No Active Semester</h3>

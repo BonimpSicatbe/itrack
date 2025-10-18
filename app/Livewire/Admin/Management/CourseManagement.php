@@ -174,6 +174,7 @@ class CourseManagement extends Component
             return User::whereHas('roles', function($query) {
                     $query->where('name', 'user');
                 })
+                ->where('is_active', true) // 🔥 ADDED: Only active users
                 ->whereNotIn('id', $assignedProfessorIds) // 🔥 EXCLUDE ALREADY ASSIGNED PROFESSORS
                 ->orderBy('firstname')
                 ->orderBy('lastname')
@@ -190,6 +191,7 @@ class CourseManagement extends Component
         return User::whereHas('roles', function($query) {
                 $query->where('name', 'user');
             })
+            ->where('is_active', true) // 🔥 ADDED: Only active users
             ->whereNotIn('id', $assignedProfessorIds) // 🔥 EXCLUDE ALREADY ASSIGNED PROFESSORS
             ->where(function($query) {
                 $query->where('firstname', 'like', '%' . $this->facultySearch . '%')
@@ -225,6 +227,16 @@ class CourseManagement extends Component
                 'assignmentData.semester_id.required' => 'Semester selection is required.',
                 'assignmentData.semester_id.exists' => 'Invalid semester selected.',
             ]);
+
+            // 🔥 ADDED: Check if the selected professor is active
+            $professor = User::find($this->assignmentData['professor_id']);
+            if (!$professor || !$professor->is_active) {
+                $this->dispatch('showNotification', 
+                    type: 'error', 
+                    content: 'Cannot assign courses to inactive faculty members. Please select an active faculty member.'
+                );
+                return false;
+            }
 
             // Check if this specific professor is already assigned to this course in this semester
             $existingProfessorAssignment = CourseAssignment::where('course_id', $this->editingCourse['id'])

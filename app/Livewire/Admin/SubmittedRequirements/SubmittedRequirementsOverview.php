@@ -41,8 +41,9 @@ class SubmittedRequirementsOverview extends Component
             ->orderBy('name')
             ->get();
 
-        // Get all non-admin users with search functionality
-        $usersQuery = User::whereDoesntHave('roles', function($q) {
+        // Get all non-admin users with search functionality - ONLY ACTIVE USERS
+        $usersQuery = User::where('is_active', true) // Only active users
+            ->whereDoesntHave('roles', function($q) {
                 $q->whereIn('name', ['admin', 'super-admin']);
             })
             ->with(['college', 'department'])
@@ -53,15 +54,15 @@ class SubmittedRequirementsOverview extends Component
         if ($this->search) {
             $usersQuery->where(function($q) {
                 $q->where('firstname', 'like', '%'.$this->search.'%')
-                  ->orWhere('middlename', 'like', '%'.$this->search.'%')
-                  ->orWhere('lastname', 'like', '%'.$this->search.'%')
-                  ->orWhere('email', 'like', '%'.$this->search.'%')
-                  ->orWhereHas('college', function($collegeQuery) {
-                      $collegeQuery->where('name', 'like', '%'.$this->search.'%');
-                  })
-                  ->orWhereHas('department', function($deptQuery) {
-                      $deptQuery->where('name', 'like', '%'.$this->search.'%');
-                  });
+                ->orWhere('middlename', 'like', '%'.$this->search.'%')
+                ->orWhere('lastname', 'like', '%'.$this->search.'%')
+                ->orWhere('email', 'like', '%'.$this->search.'%')
+                ->orWhereHas('college', function($collegeQuery) {
+                    $collegeQuery->where('name', 'like', '%'.$this->search.'%');
+                })
+                ->orWhereHas('department', function($deptQuery) {
+                    $deptQuery->where('name', 'like', '%'.$this->search.'%');
+                });
             });
         }
 

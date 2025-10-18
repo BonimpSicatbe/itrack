@@ -1,6 +1,6 @@
 <div class="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden mb-5">
     <!-- Header -->
-    <div class="flex items-center justify-between px-6 py-4 sticky top-0 z-10 bg-gradient-to-r from-green-800 to-green-600">
+    <div class="flex items-center justify-between px-6 py-4 sticky top-0 z-10" style="background: linear-gradient(148deg,rgba(18, 67, 44, 1) 0%, rgba(30, 119, 77, 1) 54%, rgba(55, 120, 64, 1) 100%);">
         <h2 class="text-xl font-bold text-white flex items-center gap-2">
             <i class="text-2xl fa-solid fa-circle-info"></i> Edit Requirement Details
         </h2>
@@ -35,13 +35,6 @@
                             :min="now()->format('Y-m-d\TH:i')" />
                         @error('due') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
                     </div>
-
-                    <!-- Description -->
-                    <div>
-                        <p class="text-xs font-semibold text-gray-700 uppercase tracking-wide mb-1">Description</p>
-                        <x-textarea-fieldset name="description" wire:model="description" placeholder="Enter requirement description" />
-                        @error('description') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
-                    </div>
                 </div>
 
                 <!-- Required Files -->
@@ -59,7 +52,7 @@
                     </div>
                     <div class="space-y-2">
                         @forelse ($requiredFiles as $file)
-                            <div class="bg-white rounded-lg p-3 border border-gray-300 hover:bg-gray-50 transition duration-200">
+                            <div class="bg-white rounded-xl p-3 border border-gray-300 hover:bg-gray-50 transition duration-200">
                                 <div class="flex items-center justify-between">
                                     <div class="flex items-center gap-3">
                                         <i class="fa-solid fa-file text-green-600"></i>
@@ -95,7 +88,7 @@
                                 </div>
                             </div>
                         @empty
-                            <div class="bg-white rounded-lg p-3 border border-gray-300 text-center">
+                            <div class="bg-white rounded-xl p-3 border border-gray-300 text-center">
                                 <p class="text-gray-500 text-sm">No required files attached.</p>
                             </div>
                         @endforelse
@@ -171,7 +164,7 @@
 
     {{-- Upload Modal --}}
     <input type="checkbox" id="upload_required_files_modal" class="modal-toggle" @checked($showUploadModal) />
-    <div class="modal" role="dialog" wire:ignore.self>
+    <div class="modal rounded-xl" role="dialog" wire:ignore.self>
         <form wire:submit.prevent="uploadRequiredFiles" class="modal-box flex flex-col gap-3 rounded-xl">
             <div class="flex justify-between items-center">
                 <h3 class="text-lg font-semibold">Upload Required Files</h3>
@@ -201,13 +194,13 @@
             
             <div class="flex justify-end gap-3 pt-4">
                 <button type="button" 
-                        class="btn btn-outline btn-gray rounded-full px-4 py-1.5"
+                        class="btn btn-outline btn-gray rounded-xl px-4 py-1.5"
                         wire:click="$set('showUploadModal', false)"
                         wire:loading.attr="disabled">
                     Cancel
                 </button>
                 <button type="submit" 
-                        class="btn px-4 py-1.5 bg-green-600 text-white hover:bg-green-700 rounded-full transition flex items-center gap-2"
+                        class="btn px-4 py-1.5 bg-green-600 text-white hover:bg-green-700 rounded-xl transition flex items-center gap-2"
                         wire:loading.attr="disabled">
                     <span wire:loading.remove wire:target="uploadRequiredFiles">
                         <i class="fa-solid fa-upload mr-1"></i> Upload Files

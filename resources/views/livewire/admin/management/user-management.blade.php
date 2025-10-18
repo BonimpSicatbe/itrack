@@ -139,8 +139,10 @@
                                     data-tip="Generate Report">
                                     <i class="fa-solid fa-file-chart-column"></i>
                                 </a>
-                                <button class="text-indigo-800 hover:bg-blue-100 rounded-xl p-2 tooltip cursor-pointer"
-                                    data-tip="Manage Course" wire:click="openAssignCourseModal({{ $user->id }})">
+                                <button class="{{ $user->is_active ? 'text-indigo-800 hover:bg-blue-100' : 'text-gray-400 cursor-not-allowed' }} rounded-xl p-2 tooltip cursor-pointer"
+                                    data-tip="{{ $user->is_active ? 'Manage Course' : 'User must be active to manage courses' }}" 
+                                    wire:click="{{ $user->is_active ? "openAssignCourseModal($user->id)" : '' }}"
+                                    {{ !$user->is_active ? 'disabled' : '' }}>
                                     <i class="fa-solid fa-book"></i>
                                 </button>
                                 <button class="text-amber-500 hover:bg-amber-100 rounded-xl p-2 tooltip cursor-pointer"
@@ -425,7 +427,10 @@
                         </button>
                     @endif
                     
-                    <button type="button" wire:click="openAssignCourseModal({{ $selectedUser->id }})" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-xl shadow-sm text-white bg-indigo-800 hover:bg-indigo-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 cursor-pointer">
+                    <button type="button" 
+                        wire:click="{{ $selectedUser->is_active ? "openAssignCourseModal($selectedUser->id)" : '' }}"
+                        class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-xl shadow-sm text-white {{ $selectedUser->is_active ? 'bg-indigo-800 hover:bg-indigo-900' : 'bg-gray-400 cursor-not-allowed' }} focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 cursor-pointer"
+                        {{ !$selectedUser->is_active ? 'disabled' : '' }}>
                         <i class="fa-solid fa-book mr-2"></i> Manage Course
                     </button>
                     <button type="button" wire:click="openEditUserModal({{ $selectedUser->id }})" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-xl shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 cursor-pointer">

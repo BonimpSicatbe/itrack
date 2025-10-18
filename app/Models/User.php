@@ -30,8 +30,8 @@ class User extends Authenticatable implements HasMedia
         'email_verified_at',
         'department_id',
         'college_id',
-        'is_active', // NEW
-        'deactivated_at', // NEW
+        'is_active', 
+        'deactivated_at',
         'password',
     ];
 

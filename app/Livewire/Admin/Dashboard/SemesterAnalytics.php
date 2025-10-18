@@ -53,72 +53,7 @@ class SemesterAnalytics extends Component
             return;
         }
 
-        // Get users who have submitted at least one requirement using requirement_submission_indicators
-        $activeSubmitters = User::query()
-            ->select('users.id', 'users.firstname', 'users.lastname')
-            ->join('requirement_submission_indicators', 'users.id', '=', 'requirement_submission_indicators.user_id')
-            ->join('requirements', 'requirement_submission_indicators.requirement_id', '=', 'requirements.id')
-            ->whereBetween('requirement_submission_indicators.submitted_at', [
-                $semester->start_date,
-                $semester->end_date
-            ])
-            ->groupBy('users.id', 'users.firstname', 'users.lastname')
-            ->get();
-
-        $this->userActivityStats = collect();
-        
-        foreach ($activeSubmitters as $user) {
-            $totalSubmitted = 0;
-            $totalApproved = 0;
-            $completionRate = 0;
-
-            foreach ($requirements as $requirement) {
-                // Check if user has submitted this requirement using requirement_submission_indicators
-                $submissionIndicator = RequirementSubmissionIndicator::where('user_id', $user->id)
-                    ->where('requirement_id', $requirement->id)
-                    ->whereBetween('submitted_at', [
-                        $semester->start_date,
-                        $semester->end_date
-                    ])
-                    ->first();
-
-                if ($submissionIndicator) {
-                    $totalSubmitted++;
-
-                    // Check if there's an approved submission in submitted_requirements
-                    // that matches the requirement_id and course_id from the indicator
-                    $approvedSubmission = DB::table('submitted_requirements')
-                        ->where('user_id', $user->id)
-                        ->where('requirement_id', $requirement->id)
-                        ->where('course_id', $submissionIndicator->course_id)
-                        ->where('status', 'approved')
-                        ->whereBetween('submitted_at', [
-                            $semester->start_date,
-                            $semester->end_date
-                        ])
-                        ->exists();
-
-                    if ($approvedSubmission) {
-                        $totalApproved++;
-                    }
-
-                    // Calculate completion rate
-                    $reqPercentage = 100 / $totalRequirements;
-                    $completionRate += $approvedSubmission ? $reqPercentage : 0;
-                }
-            }
-
-            $this->userActivityStats->push([
-                'name' => $user->firstname . ' ' . $user->lastname,
-                'submitted' => $totalSubmitted,
-                'approved' => $totalApproved,
-                'total_requirements' => $totalRequirements,
-                'completion_rate' => round($completionRate, 2)
-            ]);
-        }
-
-        // Alternative approach using a single query for better performance
-        // You can replace the above loop with this more efficient query:
+        // Use the more efficient query method that includes active user filter
         $this->userActivityStats = $this->calculateUserStatsWithQuery($semester, $requirements, $totalRequirements);
 
         // Sort by completion rate descending
@@ -147,7 +82,7 @@ class SemesterAnalytics extends Component
     }
 
     /**
-     * Alternative more efficient method using SQL joins
+     * Alternative more efficient method using SQL joins with active user filter
      */
     private function calculateUserStatsWithQuery($semester, $requirements, $totalRequirements)
     {
@@ -179,6 +114,7 @@ class SemesterAnalytics extends Component
                 $semester->end_date
             ])
             ->whereIn('rsi.requirement_id', $requirements->pluck('id'))
+            ->where('users.is_active', true) // Only active users
             ->groupBy('users.id', 'users.firstname', 'users.lastname')
             ->get();
 

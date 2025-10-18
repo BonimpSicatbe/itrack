@@ -493,23 +493,25 @@ class RequirementCreate extends Component
 
         // If all programs are selected, get all users from courses in all programs for the active semester
         if ($assignedData['selectAllPrograms']) {
-            $users = User::whereHas('courseAssignments', function ($query) use ($activeSemester) {
-                    $query->where('semester_id', $activeSemester->id)
-                        ->whereHas('course', function ($courseQuery) {
-                            $courseQuery->whereNotNull('program_id');
-                        });
-                })
-                ->get();
+            $users = User::where('is_active', true) // Only active users
+                    ->whereHas('courseAssignments', function ($query) use ($activeSemester) {
+                        $query->where('semester_id', $activeSemester->id)
+                            ->whereHas('course', function ($courseQuery) {
+                                $courseQuery->whereNotNull('program_id');
+                            });
+                    })
+                    ->get();
         } 
         // If specific programs are selected
         elseif (!empty($assignedData['programs'])) {
-            $users = User::whereHas('courseAssignments', function ($query) use ($activeSemester, $assignedData) {
-                    $query->where('semester_id', $activeSemester->id)
-                        ->whereHas('course', function ($courseQuery) use ($assignedData) {
-                            $courseQuery->whereIn('program_id', $assignedData['programs']);
-                        });
-                })
-                ->get();
+            $users = User::where('is_active', true) // Only active users
+                    ->whereHas('courseAssignments', function ($query) use ($activeSemester, $assignedData) {
+                        $query->where('semester_id', $activeSemester->id)
+                            ->whereHas('course', function ($courseQuery) use ($assignedData) {
+                                $courseQuery->whereIn('program_id', $assignedData['programs']);
+                            });
+                    })
+                    ->get();
         }
         
         // Remove duplicates and filter out admin users

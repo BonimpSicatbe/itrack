@@ -17,11 +17,11 @@
                         <table class="table w-full">
                             <thead>
                                 <tr class="border-b-2 border-gray-100">
-                                    <th class="text-left font-semibold text-gray-700 bg-gray-50 rounded-l-lg">User</th>
-                                    <th class="text-center font-semibold text-gray-700 bg-gray-50">Submitted</th>
-                                    <th class="text-center font-semibold text-gray-700 bg-gray-50">Approved</th>
-                                    <th class="text-center font-semibold text-gray-700 bg-gray-50">Total Requirements</th>
-                                    <th class="text-center font-semibold text-gray-700 bg-gray-50 rounded-r-lg">Completion</th>
+                                    <th class="text-left font-semibold text-gray-700 bg-green-200 rounded-tl-xl">User</th>
+                                    <th class="text-center font-semibold text-gray-700 bg-green-200">Submitted</th>
+                                    <th class="text-center font-semibold text-gray-700 bg-green-200">Approved</th>
+                                    <th class="text-center font-semibold text-gray-700 bg-green-200">Total Requirements</th>
+                                    <th class="text-center font-semibold text-gray-700 bg-green-200 rounded-tr-xl">Completion</th>
                                 </tr>
                             </thead>
                             <tbody>

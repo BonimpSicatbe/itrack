@@ -46,9 +46,15 @@ class RequirementsList extends Component
 
     public function mount()
     {
+        // Check if user is active
+        if (!Auth::user()->is_active) {
+            \Log::info('Inactive user accessed RequirementsList');
+            return;
+        }
+
         $this->activeSemester = Semester::getActiveSemester();
         
-        // Manually get URL parameters if Livewire URL attributes don't work
+        // Rest of the existing mount method...
         $request = request();
         $this->selectedCourse = $request->query('course', $this->selectedCourse);
         $this->selectedFolder = $request->query('folder', $this->selectedFolder);
@@ -1110,6 +1116,19 @@ class RequirementsList extends Component
 
     public function render()
     {
+        // Check if user is active - if not, return empty data
+        if (!Auth::user()->is_active) {
+            \Log::info('User is inactive, showing empty requirements list');
+            return view('livewire.user.requirements.requirements-list', [
+                'assignedCourses' => collect(),
+                'activeSemester' => $this->activeSemester,
+                'hasAssignedRequirements' => false,
+                'currentCourse' => null,
+                'currentFolder' => null,
+                'currentSubFolder' => null,
+            ]);
+        }
+
         \Log::info('RequirementsList render', [
             'selectedCourse' => $this->selectedCourse,
             'selectedFolder' => $this->selectedFolder,
