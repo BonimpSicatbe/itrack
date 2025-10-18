@@ -35,7 +35,7 @@ class DatabaseSeeder extends Seeder
             'middlename' => 'H.',
             'lastname' => 'Ricalde',
             'extensionname' => '',
-            'email' => 'domingricalde@gmail.com',
+            'email' => 'dominghilaporicalde@gmail.com',
             'college_id' => '1',
             'email_verified_at' => now(),
             'password' => bcrypt('password'),
