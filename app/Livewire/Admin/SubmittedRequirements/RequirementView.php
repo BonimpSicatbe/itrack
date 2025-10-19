@@ -299,7 +299,7 @@ class RequirementView extends Component
     public function render()
     {
         return view('livewire.admin.submitted-requirements.requirement-view', [
-            'statusOptions' => SubmittedRequirement::statuses()
+            'statusOptions' => SubmittedRequirement::statusesForReview()
         ]);
     }
 }

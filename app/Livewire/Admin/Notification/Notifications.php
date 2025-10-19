@@ -292,7 +292,7 @@ class Notifications extends Component
     {
         // Validate the specific submission's data
         $this->validate([
-            "newStatus.{$submissionId}" => 'required|in:' . implode(',', array_keys(SubmittedRequirement::statuses())),
+            "newStatus.{$submissionId}" => 'required|in:' . implode(',', array_keys(SubmittedRequirement::statusesForReview())),
             "adminNotes.{$submissionId}" => 'nullable|string',
         ]);
 

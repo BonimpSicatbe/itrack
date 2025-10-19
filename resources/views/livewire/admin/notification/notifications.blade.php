@@ -387,7 +387,7 @@
                                                 <select wire:model="newStatus.{{ $file['submission_id'] }}" id="newStatus-{{ $file['submission_id'] }}"
                                                     class="w-full rounded-xl border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 text-sm py-2.5 px-4 bg-white">
                                                     <option value="">Select new status</option>
-                                                    @foreach(\App\Models\SubmittedRequirement::statuses() as $value => $label)
+                                                    @foreach(\App\Models\SubmittedRequirement::statusesForReview() as $value => $label)
                                                         <option value="{{ $value }}">
                                                             {{ $label }}
                                                         </option>

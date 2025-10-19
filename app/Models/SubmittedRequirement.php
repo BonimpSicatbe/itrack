@@ -467,6 +467,16 @@ class SubmittedRequirement extends Model implements HasMedia
         return $this->status === self::STATUS_UNDER_REVIEW;
     }
 
+    public static function statusesForReview()
+    {
+        return [
+            self::STATUS_UNDER_REVIEW => 'Under Review',
+            self::STATUS_REVISION_NEEDED => 'Revision Required',
+            self::STATUS_REJECTED => 'Rejected',
+            self::STATUS_APPROVED => 'Approved',
+        ];
+    }
+
     /* ========== BOOT ========== */
 
     protected static function booted()
