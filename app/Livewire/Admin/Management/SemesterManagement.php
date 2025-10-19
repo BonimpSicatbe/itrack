@@ -8,6 +8,8 @@ use Illuminate\Support\Facades\Log;
 
 class SemesterManagement extends Component
 {
+    public $errorMessage = null;
+
     public $search = '';
 
     public $sortField = 'start_date';
@@ -119,6 +121,18 @@ class SemesterManagement extends Component
             $endYear = date('Y', strtotime($this->end_date));
             $yearRange = $startYear . '-' . $endYear;
 
+            // Prevent older year ranges than the latest semester
+            $latestSemester = Semester::orderByRaw("YEAR(end_date) DESC")->first();
+
+            if ($latestSemester) {
+                $latestEndYear = date('Y', strtotime($latestSemester->end_date));
+
+                if ($endYear < $latestEndYear) {
+                    $this->errorMessage = "You cannot create a semester earlier than the latest semester ($latestSemester->name).";
+                    return;
+                }
+            }
+
             // Check for duplicate semester in the same year range
             $existingSemester = Semester::whereRaw("DATE_FORMAT(start_date, '%Y') = ?", [$startYear])
                 ->whereRaw("DATE_FORMAT(end_date, '%Y') = ?", [$endYear])
@@ -129,7 +143,7 @@ class SemesterManagement extends Component
                 ->first();
 
             if ($existingSemester && $this->semester !== 'midyear') {
-                $this->dispatch('showNotification', 'error', 'A semester with the same year range already exists.');
+                $this->errorMessage = 'A semester with the same year range already exists.';
                 return;
             }
 
@@ -141,20 +155,21 @@ class SemesterManagement extends Component
                     ->first();
 
                 if ($existingMidyear) {
-                    $this->dispatch('showNotification', 'error', 'A midyear semester with the same year range already exists.');
+                    $this->errorMessage = 'A midyear semester with the same year range already exists.';
                     return;
                 }
             }
 
+            // Construct name
             $semesterName = $this->semester . ($this->semester == 'midyear' ? '' : ' Semester') . ' | ' . $yearRange;
 
-            // If isActive is true, deactivate all other semesters first
+            // Deactivate previous active semesters
             $setPrevSemester = Semester::where('is_active', true)->update(['is_active' => false]);
-
             Log::info('Previous active semesters deactivated', [
                 'updated_rows' => $setPrevSemester,
             ]);
 
+            // Create new semester
             $semester = Semester::create([
                 'name' => ucwords($semesterName),
                 'start_date' => $this->start_date,
@@ -168,7 +183,7 @@ class SemesterManagement extends Component
                 'user_id' => auth()->id() ?? null,
             ]);
 
-            $this->reset(['semester', 'start_date', 'end_date']); // clears inputs
+            $this->reset(['semester', 'start_date', 'end_date', 'errorMessage']); // clears inputs
             $this->dispatch('closeModal', modalId: 'create_semester_modal');
             $this->dispatch('showNotification', 'success', 'Semester created successfully!');
         } catch (\Exception $e) {
@@ -179,6 +194,7 @@ class SemesterManagement extends Component
             $this->dispatch('showNotification', 'error', 'Failed to create semester. Please try again.');
         }
     }
+
 
     public function editSemester($id)
     {

@@ -23,11 +23,11 @@ class UserManagement extends Component
 {
     public $search = '';
     public $collegeFilter = '';
-    
+
     public $sortField = 'lastname';
     public $sortDirection = 'asc';
     public $selectedUser = null;
-    
+
     public $showAddUserModal = false;
     public $newUser = [
         'firstname' => '',
@@ -74,7 +74,7 @@ class UserManagement extends Component
     public $userToDeactivate = null;
     public $showActivateConfirmationModal = false;
     public $userToActivate = null;
-    
+
     // Course Search Property
     public $courseSearch = '';
     public $activeAssignCourseTab = 'existing';
@@ -111,7 +111,7 @@ class UserManagement extends Component
     public function openEditUserModal($userId)
     {
         $user = User::find($userId);
-        
+
         $this->editingUser = [
             'id' => $user->id,
             'firstname' => $user->firstname,
@@ -124,7 +124,7 @@ class UserManagement extends Component
             'password' => '',
             'password_confirmation' => ''
         ];
-        
+
         $this->showEditUserModal = true;
         $this->resetErrorBag();
     }
@@ -153,36 +153,36 @@ class UserManagement extends Component
     public function openAssignCourseModal($userId)
     {
         $user = User::find($userId);
-        
+
         // Check if user is active
         if (!$user->is_active) {
-            $this->dispatch('showNotification', 
-                type: 'error', 
+            $this->dispatch('showNotification',
+                type: 'error',
                 content: 'Cannot assign courses to inactive users. Please activate the user first.'
             );
             return;
         }
-        
+
         $this->userToAssignCourse = User::with(['courseAssignments.course.program', 'courseAssignments.semester'])->find($userId);
-        
+
         // Reset search and tab when opening modal
         $this->courseSearch = '';
         $this->activeAssignCourseTab = 'existing';
-        
+
         // Load all available courses (without search filter)
         $this->loadAllAvailableCourses();
-        
+
         // Load filtered available courses
         $this->loadAvailableCourses();
-            
+
         $this->availableSemesters = Semester::orderBy('start_date', 'desc')
             ->get();
-            
+
         $this->assignCourseData = [
             'course_ids' => [],
             'semester_id' => ''
         ];
-        
+
         $this->showAssignCourseModal = true;
         $this->resetErrorBag();
     }
@@ -209,7 +209,7 @@ class UserManagement extends Component
         $assignedCourseIds = CourseAssignment::where('professor_id', $this->userToAssignCourse->id)
             ->pluck('course_id')
             ->toArray();
-        
+
         $this->allAvailableCourses = Course::with('program')
             ->whereNotIn('id', $assignedCourseIds)
             ->orderBy('course_code')
@@ -223,10 +223,10 @@ class UserManagement extends Component
         $assignedCourseIds = CourseAssignment::where('professor_id', $this->userToAssignCourse->id)
             ->pluck('course_id')
             ->toArray();
-        
+
         $query = Course::with('program')
             ->whereNotIn('id', $assignedCourseIds);
-        
+
         // Apply search filter if provided
         if (!empty($this->courseSearch)) {
             $searchTerm = '%' . $this->courseSearch . '%';
@@ -239,7 +239,7 @@ class UserManagement extends Component
                   });
             });
         }
-        
+
         $this->availableCourses = $query->orderBy('course_code')->get();
     }
 
@@ -270,7 +270,7 @@ class UserManagement extends Component
     {
         try {
             \Log::info('Starting course assignment process');
-            
+
             $this->validate([
                 'assignCourseData.course_ids' => 'required|array|min:1',
                 'assignCourseData.course_ids.*' => 'exists:courses,id',
@@ -292,7 +292,7 @@ class UserManagement extends Component
 
             foreach ($this->assignCourseData['course_ids'] as $courseId) {
                 \Log::info('Processing course', ['course_id' => $courseId]);
-                
+
                 // Check if the course is already assigned to this professor in the same semester
                 $existingAssignment = CourseAssignment::where('professor_id', $this->userToAssignCourse->id)
                     ->where('course_id', $courseId)
@@ -339,7 +339,7 @@ class UserManagement extends Component
                 if (count($assignedCourses) <= 3) {
                     $notificationMessage .= " Assigned: " . implode(', ', $assignedCourses);
                 }
-                
+
                 // If there are also already assigned courses, show warning
                 if (!empty($alreadyAssignedCourses)) {
                     $notificationType = 'warning';
@@ -362,9 +362,9 @@ class UserManagement extends Component
             $assignedUserId = $this->userToAssignCourse->id;
 
             $this->closeAssignCourseModal();
-            
-            $this->dispatch('showNotification', 
-                type: $notificationType, 
+
+            $this->dispatch('showNotification',
+                type: $notificationType,
                 content: $notificationMessage
             );
 
@@ -382,9 +382,9 @@ class UserManagement extends Component
                 'exception' => $e,
                 'trace' => $e->getTraceAsString()
             ]);
-            
-            $this->dispatch('showNotification', 
-                type: 'error', 
+
+            $this->dispatch('showNotification',
+                type: 'error',
                 content: 'Failed to assign courses. Please try again. Error: ' . $e->getMessage()
             );
         }
@@ -396,13 +396,14 @@ class UserManagement extends Component
             $userName = $this->userToDelete->firstname . ' ' . $this->userToDelete->lastname;
             $userId = $this->userToDelete->id;
             $this->userToDelete->delete();
-            
+
             $this->closeDeleteConfirmationModal();
-            $this->dispatch('showNotification', 
-                type: 'success', 
+            $this->dispatch(
+                'showNotification',
+                type: 'success',
                 content: "User '{$userName}' deleted successfully!"
             );
-            
+
             if ($this->selectedUser && $this->selectedUser->id == $userId) {
                 $this->closeUserDetail();
             }
@@ -436,10 +437,11 @@ class UserManagement extends Component
                 ->where('lastname', $this->editingUser['lastname'])
                 ->where('id', '!=', $this->editingUser['id'])
                 ->first();
-                
+
             if ($existingUser) {
-                $this->dispatch('showNotification', 
-                    type: 'warning', 
+                $this->dispatch(
+                    'showNotification',
+                    type: 'warning',
                     content: "Another user with the name '{$this->editingUser['firstname']} {$this->editingUser['lastname']}' already exists."
                 );
                 return;
@@ -447,7 +449,7 @@ class UserManagement extends Component
 
             $user = User::find($this->editingUser['id']);
             $userName = $user->firstname . ' ' . $user->lastname;
-            
+
             $updateData = [
                 'firstname' => $this->editingUser['firstname'],
                 'middlename' => $this->editingUser['middlename'],
@@ -469,9 +471,10 @@ class UserManagement extends Component
             $user->syncRoles([$role->name]);
 
             $this->closeEditUserModal();
-            
-            $this->dispatch('showNotification', 
-                type: 'success', 
+
+            $this->dispatch(
+                'showNotification',
+                type: 'success',
                 content: "User '{$userName}' updated successfully!"
             );
 
@@ -479,10 +482,10 @@ class UserManagement extends Component
             if ($this->selectedUser && $this->selectedUser->id == $user->id) {
                 $this->selectedUser = $user->fresh(['college']);
             }
-
         } catch (\Exception $e) {
-            $this->dispatch('showNotification', 
-                type: 'error', 
+            $this->dispatch(
+                'showNotification',
+                type: 'error',
                 content: 'Failed to update user. Please try again.'
             );
         }
@@ -511,10 +514,11 @@ class UserManagement extends Component
             $existingUser = User::where('firstname', $this->newUser['firstname'])
                 ->where('lastname', $this->newUser['lastname'])
                 ->first();
-                
+
             if ($existingUser) {
-                $this->dispatch('showNotification', 
-                    type: 'warning', 
+                $this->dispatch(
+                    'showNotification',
+                    type: 'warning',
                     content: "A user with the name '{$this->newUser['firstname']} {$this->newUser['lastname']}' already exists."
                 );
                 return;
@@ -538,24 +542,36 @@ class UserManagement extends Component
             $role = Role::find($this->newUser['role']);
             $user->assignRole($role->name);
 
+            // Generate password reset token and URL - UPDATED ROUTE
+            $token = Password::createToken($user);
+            $setupUrl = URL::temporarySignedRoute(
+                'account.setup', // Changed from 'password.reset'
+                now()->addHours(24),
+                [
+                    'token' => $token,
+                    'email' => $user->email
+                ]
+            );
+
             // Send email with credentials
             try {
-                Mail::to($user->email)->send(new AccountSetupMail($user, $generatedPassword));
+                Mail::to($user->email)->queue(new AccountSetupMail($user, $setupUrl));
             } catch (\Exception $mailException) {
                 // Log mail error but don't fail the user creation
                 \Log::error('Failed to send account setup email: ' . $mailException->getMessage());
             }
 
             $this->closeAddUserModal();
-            
-            $this->dispatch('showNotification', 
-                type: 'success', 
+
+            $this->dispatch(
+                'showNotification',
+                type: 'success',
                 content: "User '{$user->firstname} {$user->lastname}' created successfully! Account setup email sent."
             );
-
         } catch (\Exception $e) {
-            $this->dispatch('showNotification', 
-                type: 'error', 
+            $this->dispatch(
+                'showNotification',
+                type: 'error',
                 content: 'Failed to create user. Please try again.'
             );
         }
@@ -568,7 +584,7 @@ class UserManagement extends Component
         } else {
             $this->sortDirection = 'asc';
         }
-        
+
         $this->sortField = $field;
     }
 
@@ -594,10 +610,10 @@ class UserManagement extends Component
 
             $userName = $this->userToDeactivate->firstname . ' ' . $this->userToDeactivate->lastname;
             $userId = $this->userToDeactivate->id;
-            
+
             $this->closeDeactivateConfirmationModal();
-            $this->dispatch('showNotification', 
-                type: 'success', 
+            $this->dispatch('showNotification',
+                type: 'success',
                 content: "User '{$userName}' has been deactivated successfully!"
             );
 
@@ -630,10 +646,10 @@ class UserManagement extends Component
 
             $userName = $this->userToActivate->firstname . ' ' . $this->userToActivate->lastname;
             $userId = $this->userToActivate->id;
-            
+
             $this->closeActivateConfirmationModal();
-            $this->dispatch('showNotification', 
-                type: 'success', 
+            $this->dispatch('showNotification',
+                type: 'success',
                 content: "User '{$userName}' has been activated successfully!"
             );
 
@@ -648,13 +664,13 @@ class UserManagement extends Component
     {
         try {
             \Log::info("Removing course assignment with ID: {$assignmentId}");
-            
+
             $assignment = CourseAssignment::where('assignment_id', $assignmentId)->first();
-            
+
             if (!$assignment) {
                 \Log::error("Course assignment not found with ID: {$assignmentId}");
-                $this->dispatch('showNotification', 
-                    type: 'error', 
+                $this->dispatch('showNotification',
+                    type: 'error',
                     content: 'Course assignment not found.'
                 );
                 return;
@@ -662,11 +678,11 @@ class UserManagement extends Component
 
             // Load the course relationship to ensure we can access course details
             $assignment->load('course');
-            
+
             if (!$assignment->course) {
                 \Log::error("Course not found for assignment ID: {$assignmentId}");
-                $this->dispatch('showNotification', 
-                    type: 'error', 
+                $this->dispatch('showNotification',
+                    type: 'error',
                     content: 'Course details not found.'
                 );
                 return;
@@ -674,14 +690,14 @@ class UserManagement extends Component
 
             $courseName = $assignment->course->course_code . ' - ' . $assignment->course->course_name;
             \Log::info("Removing course: {$courseName}");
-            
+
             $assignment->delete();
-            
+
             // Refresh the user data
             if ($this->selectedUser) {
                 $this->selectedUser = $this->selectedUser->fresh(['courseAssignments.course.program', 'courseAssignments.semester']);
             }
-            
+
             // Also refresh the user in assign course modal if it's open
             if ($this->showAssignCourseModal && $this->userToAssignCourse) {
                 $this->userToAssignCourse = $this->userToAssignCourse->fresh(['courseAssignments.course.program', 'courseAssignments.semester']);
@@ -689,18 +705,18 @@ class UserManagement extends Component
                 $this->loadAllAvailableCourses();
                 $this->loadAvailableCourses();
             }
-            
-            $this->dispatch('showNotification', 
-                type: 'success', 
+
+            $this->dispatch('showNotification',
+                type: 'success',
                 content: "Course '{$courseName}' removed successfully!"
             );
-            
+
         } catch (\Exception $e) {
             \Log::error('Failed to remove course assignment: ' . $e->getMessage());
             \Log::error($e->getTraceAsString());
-            
-            $this->dispatch('showNotification', 
-                type: 'error', 
+
+            $this->dispatch('showNotification',
+                type: 'error',
                 content: 'Failed to remove course. Please try again. Error: ' . $e->getMessage()
             );
         }

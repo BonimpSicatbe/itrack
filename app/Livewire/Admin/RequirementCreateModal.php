@@ -50,8 +50,8 @@ class RequirementCreateModal extends Component
             return collect();
         }
 
-        return $this->sector === 'college' 
-            ? College::all() 
+        return $this->sector === 'college'
+            ? College::all()
             : Department::all();
     }
 
@@ -59,7 +59,7 @@ class RequirementCreateModal extends Component
     {
         return [
             'required_files' => ['nullable', 'array', 'max:5'],
-            'required_files.*' => ['file', 'max:15360', 'mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,jpg,jpeg,png,gif,txt,zip,rar,7z,mp4,avi,mkv,mp3,wav'],
+            'required_files.*' => ['file', 'max:15360', 'mimes:pdf,jpg,jpeg,png,gif,webp'],
         ];
     }
 
@@ -107,20 +107,20 @@ class RequirementCreateModal extends Component
             }
 
             $this->reset();
-            $this->dispatch('showNotification', 
-                type: 'success', 
+            $this->dispatch('showNotification',
+                type: 'success',
                 content: 'Requirement created successfully.',
                 duration: 3000
             );
             $this->dispatch('requirement-created');
-            
+
             // Close modal
             $this->js("setTimeout(() => document.getElementById('createRequirement').checked = false, 1500)");
-            
+
         } catch (\Exception $e) {
             Log::error('Requirement creation failed', ['error' => $e->getMessage()]);
-            $this->dispatch('showNotification', 
-                type: 'error', 
+            $this->dispatch('showNotification',
+                type: 'error',
                 content: 'Failed to create requirement: ' . $e->getMessage(),
                 duration: 5000
             );

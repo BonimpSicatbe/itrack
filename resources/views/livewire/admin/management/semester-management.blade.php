@@ -182,15 +182,24 @@
             </div>
 
             {{-- body --}}
-            <div class="flex flex-col p-6">
-                <x-select-fieldset label="Semester" name="semester" wire:model="semester">
+            <form wire:submit='createSemester' class="flex flex-col p-4">
+                {{-- error messages --}}
+                @if ($errorMessage)
+                    <div class="alert alert-error bg-red-100 border border-red-400 text-red-700">
+                        <i class="fa-solid fa-circle-exclamation mr-2"></i> {{ $errorMessage }}
+                    </div>
+                @endif
+
+                <x-select-fieldset label="semester" name="semester" wire:model="semester">
                     <option value="first">First Semester</option>
                     <option value="second">Second Semester</option>
                     <option value="midyear">Midyear</option>
                 </x-select-fieldset>
 
-                <x-text-fieldset type="date" name="start_date" wire:model="start_date" label="Starting Date" :min="now()->format('Y-m-d')" required />
-                <x-text-fieldset type="date" name="end_date" wire:model="end_date" label="Ending Date" :min="now()->format('Y-m-d')" required />
+                <x-text-fieldset type="date" name="start_date" wire:model="start_date" label="Starting Date"
+                    :min="now()->format('Y-m-d')" required />
+                <x-text-fieldset type="date" name="end_date" wire:model="end_date" label="Ending Date"
+                    :min="now()->format('Y-m-d')" required />
 
                 <!-- Footer -->
                 <div class="flex flex-row items-center gap-4 justify-end w-full mt-7">
@@ -202,7 +211,7 @@
                                 class="fa-solid fa-spinner fa-spin mr-2"></i> Creating...</span>
                     </button>
                 </div>
-            </div>
+            </form>
         </div>
         <label class="modal-backdrop" for="create_semester_modal">Close</label>
     </div>
