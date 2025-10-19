@@ -25,7 +25,7 @@
 
         {{-- Status Breakdown --}}
         <div>
-            <div class="grid grid-cols-2 gap-3">
+            <div class="grid grid-cols-3 gap-3">
                 @foreach($statusCounts as $status => $count)
                     @if($count > 0)
                         <div class="flex items-center justify-between text-sm p-2 bg-gray-50 rounded">

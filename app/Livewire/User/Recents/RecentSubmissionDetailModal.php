@@ -108,6 +108,20 @@ class RecentSubmissionDetailModal extends Component
         return in_array($extension, $previewableTypes);
     }
 
+    /**
+     * Get requirement folder URL
+     */
+    public function getRequirementFolderUrl()
+    {
+        if ($this->submission && $this->submission->course && $this->requirement) {
+            return route('user.requirements', [
+                'course' => $this->submission->course->id,
+                'folder' => $this->requirement->id
+            ]);
+        }
+        return null;
+    }
+
     public function render()
     {
         return view('livewire.user.recents.recent-submission-detail-modal');

@@ -10,8 +10,8 @@
         </div>
         <a href="{{ route('admin.management.index', ['tab' => 'semesters']) }}" 
            class="px-4 py-2 rounded-xl bg-white text-1C7C54 text-sm font-semibold hover:bg-gray-100 transition flex items-center shadow">
-            <i class="fa-solid fa-calendar-days mr-2"></i>
             Manage
+            <i class="fa-solid fa-arrow-up-right-from-square ml-2"></i>
         </a>
     </div>
     

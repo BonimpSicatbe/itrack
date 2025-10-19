@@ -12,8 +12,18 @@
     </div>
 
     {{-- Main Content Container --}}
-    <div class="flex-1 bg-white rounded-xl overflow-y-auto p-6" style="max-height: calc(100vh - 125px);">
-        @if(!$activeSemester)
+    <div class="flex-1 bg-white rounded-xl overflow-y-auto p-6" style="max-height: calc(100vh - 140px);">
+        {{-- Check if user is inactive --}}
+        @if(!$isUserActive)
+            <div class="flex items-center p-4 bg-amber-100 border border-amber-300 text-amber-800 rounded-xl">
+                <i class="fa-solid fa-user-slash text-lg mr-3"></i>
+                <div>
+                    <h3 class="font-bold">Account Inactive</h3>
+                    <div class="text-sm">Course requirements are not available for inactive accounts. Please contact the administrator.</div>
+                </div>
+            </div>
+        {{-- Check if no active semester --}}
+        @elseif(!$activeSemester)
             <div class="flex items-center p-4 bg-[#DEF4C6] text-[#1B512D] rounded-lg shadow-lg">
                 <i class="fa-solid fa-triangle-exclamation text-lg mr-3"></i>
                 <div>
@@ -38,7 +48,7 @@
                                     type="text" 
                                     wire:model.live.debounce.300ms="search"
                                     placeholder="Search by name or file..."
-                                    class="pl-11 block w-full rounded-xl text-gray-500 border-gray-300 shadow-sm focus:border-green-600 focus:ring-green-600 text-sm" 
+                                    class="pl-11 block w-sm rounded-xl text-gray-500 border-gray-300 shadow-sm focus:border-green-600 focus:ring-green-600 text-sm" 
                                 >
                                 <div wire:loading wire:target="search" class="absolute inset-y-3 right-0 pr-4 flex items-center">
                                     <div class="animate-spin rounded-full h-4 w-4 border-2 border-[#1C7C54] border-t-transparent"></div>
@@ -53,6 +63,7 @@
                                 class="block w-[150px] rounded-xl text-gray-500 border-gray-300 shadow-sm focus:border-green-600 focus:ring-green-600 sm:text-sm"
                             >
                                 <option value="">All Statuses</option>
+                                <option value="uploaded">Uploaded</option>
                                 <option value="under_review">Under Review</option>
                                 <option value="revision_needed">Revision Required</option>
                                 <option value="rejected">Rejected</option>

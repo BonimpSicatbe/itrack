@@ -61,7 +61,7 @@
                 <li>
                     {{-- Regular navigation links --}}
                     <a href="{{ route($navlink['route']) }}"
-                       class="relative flex items-center px-3 py-2.5 text-sm font-medium rounded-md transition-colors duration-200 group {{ Route::currentRouteName() === $navlink['route'] ? 'bg-green-100 text-gray-900' : 'text-gray-700 hover:bg-gray-300 hover:text-gray-900' }}"
+                       class="relative flex items-center px-3 py-2.5 text-sm font-medium rounded-md transition-colors duration-200 group {{ Route::currentRouteName() === $navlink['route'] ? 'bg-green-50 text-green-700' : 'text-gray-700 hover:bg-gray-300 hover:text-gray-900' }}"
                        :class="collapsed ? 'justify-center space-x-0' : 'space-x-3'">
                         
                         <div class="relative flex-shrink-0">
@@ -111,7 +111,7 @@
                         @if (isset($navlink['is_profile']) && $navlink['is_profile'])
                             {{-- Profile link with special styling --}}
                             <a href="{{ route($navlink['route']) }}"
-                               class="relative flex items-center px-3 py-2.5 text-sm font-medium rounded-md transition-colors duration-200 group {{ Route::currentRouteName() === $navlink['route'] ? 'bg-green-100 text-gray-900' : 'text-gray-700 hover:bg-gray-300 hover:text-gray-900' }}"
+                               class="relative flex items-center px-3 py-2.5 text-sm font-medium rounded-md transition-colors duration-200 group {{ Route::currentRouteName() === $navlink['route'] ? 'bg-green-50 text-green-700' : 'text-gray-700 hover:bg-gray-300 hover:text-gray-900' }}"
                                :class="collapsed ? 'justify-center space-x-0' : 'space-x-3'">
                                 
                                 <div class="w-8 h-8 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center flex-shrink-0">
@@ -125,7 +125,7 @@
                         @else
                             {{-- Regular navigation links --}}
                             <a href="{{ route($navlink['route']) }}"
-                               class="relative flex items-center px-3 py-2.5 text-sm font-medium rounded-md transition-colors duration-200 group {{ Route::currentRouteName() === $navlink['route'] ? 'bg-green-100 text-gray-900' : 'text-gray-700 hover:bg-gray-300 hover:text-gray-900' }}"
+                               class="relative flex items-center px-3 py-2.5 text-sm font-medium rounded-md transition-colors duration-200 group {{ Route::currentRouteName() === $navlink['route'] ? 'bg-green-50 text-green-700' : 'text-gray-700 hover:bg-gray-300 hover:text-gray-900' }}"
                                :class="collapsed ? 'justify-center space-x-0' : 'space-x-3'">
                                 
                                 <div class="relative flex-shrink-0">

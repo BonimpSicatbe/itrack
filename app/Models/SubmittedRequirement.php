@@ -32,6 +32,7 @@ class SubmittedRequirement extends Model implements HasMedia
     ];
 
     // Status Constants
+    const STATUS_UPLOADED = 'uploaded'; // New default status
     const STATUS_UNDER_REVIEW = 'under_review';
     const STATUS_REVISION_NEEDED = 'revision_needed';
     const STATUS_REJECTED = 'rejected';
@@ -163,6 +164,24 @@ class SubmittedRequirement extends Model implements HasMedia
     }
 
     /**
+     * Scope for uploaded submissions
+     */
+    public function scopeUploaded($query)
+    {
+        return $query->where('status', self::STATUS_UPLOADED);
+    }
+
+    /**
+     * Scope for submissions that need to be moved to under review
+     * (uploaded submissions that are tracked in indicator table)
+     */
+    public function scopeReadyForReview($query)
+    {
+        return $query->where('status', self::STATUS_UPLOADED)
+            ->whereHas('submissionIndicator');
+    }
+
+    /**
      * Scope for submissions in active semester
      */
     public function scopeInActiveSemester($query)
@@ -197,6 +216,7 @@ class SubmittedRequirement extends Model implements HasMedia
     public static function statuses()
     {
         return [
+            self::STATUS_UPLOADED => 'Uploaded',
             self::STATUS_UNDER_REVIEW => 'Under Review',
             self::STATUS_REVISION_NEEDED => 'Revision Required',
             self::STATUS_REJECTED => 'Rejected',
@@ -218,7 +238,14 @@ class SubmittedRequirement extends Model implements HasMedia
 
     public function addSubmissionFile($file)
     {
-        return $this->addMedia($file)->toMediaCollection('submission_files');
+        $media = $this->addMedia($file)->toMediaCollection('submission_files');
+        
+        // Automatically update status to uploaded when file is added
+        if ($this->status !== self::STATUS_UPLOADED) {
+            $this->update(['status' => self::STATUS_UPLOADED]);
+        }
+        
+        return $media;
     }
 
     public function getFileUrl()
@@ -255,8 +282,51 @@ class SubmittedRequirement extends Model implements HasMedia
 
     public function canBeDeletedBy($user)
     {
-        return $user->id === $this->user_id &&
-               $this->status !== self::STATUS_APPROVED;
+        // Check user ownership
+        $isOwner = $user->id === $this->user_id;
+        
+        // Check if file is from active semester
+        $isActiveSemester = $this->requirement && 
+                        $this->requirement->semester && 
+                        $this->requirement->semester->is_active;
+        
+        // Check if file has uploaded status
+        $isUploadedStatus = $this->status === self::STATUS_UPLOADED;
+        
+        return $isOwner && $isActiveSemester && $isUploadedStatus;
+    }
+
+    /**
+     * Check if this submission should be moved to under review
+     * Based on being uploaded AND stored in requirement submission indicator table
+     */
+    public function shouldBeMovedToUnderReview()
+    {
+        return $this->status === self::STATUS_UPLOADED && 
+               $this->isTrackedInSubmissionIndicator();
+    }
+
+    /**
+     * Move this submission from uploaded to under review status
+     */
+    public function moveToUnderReview()
+    {
+        if ($this->shouldBeMovedToUnderReview()) {
+            return $this->update(['status' => self::STATUS_UNDER_REVIEW]);
+        }
+        return false;
+    }
+
+    /**
+     * Check if this submission is tracked in the requirement submission indicator table
+     */
+    public function isTrackedInSubmissionIndicator()
+    {
+        if (!$this->relationLoaded('submissionIndicator')) {
+            return $this->submissionIndicator()->exists();
+        }
+        
+        return !is_null($this->submissionIndicator);
     }
 
     /* ========== FILE TYPE METHODS ========== */
@@ -354,7 +424,9 @@ class SubmittedRequirement extends Model implements HasMedia
             self::STATUS_APPROVED => 'bg-green-100 text-green-800',
             self::STATUS_REJECTED => 'bg-red-100 text-red-800',
             self::STATUS_REVISION_NEEDED => 'bg-yellow-100 text-yellow-800',
-            default => 'bg-blue-100 text-blue-800',
+            self::STATUS_UNDER_REVIEW => 'bg-blue-100 text-blue-800',
+            self::STATUS_UPLOADED => 'bg-purple-100 text-purple-800',
+            default => 'bg-gray-100 text-gray-800',
         };
     }
 
@@ -364,7 +436,9 @@ class SubmittedRequirement extends Model implements HasMedia
             self::STATUS_APPROVED => 'bg-green-100 text-green-800',
             self::STATUS_REJECTED => 'bg-red-100 text-red-800',
             self::STATUS_REVISION_NEEDED => 'bg-yellow-100 text-yellow-800',
-            default => 'bg-blue-100 text-blue-800',
+            self::STATUS_UNDER_REVIEW => 'bg-blue-100 text-blue-800',
+            self::STATUS_UPLOADED => 'bg-purple-100 text-purple-800',
+            default => 'bg-gray-100 text-gray-800',
         };
     }
 
@@ -383,6 +457,16 @@ class SubmittedRequirement extends Model implements HasMedia
         return $this->status === self::STATUS_REVISION_NEEDED;
     }
 
+    public function getIsUploadedAttribute()
+    {
+        return $this->status === self::STATUS_UPLOADED;
+    }
+
+    public function getIsUnderReviewAttribute()
+    {
+        return $this->status === self::STATUS_UNDER_REVIEW;
+    }
+
     /* ========== BOOT ========== */
 
     protected static function booted()
@@ -394,7 +478,7 @@ class SubmittedRequirement extends Model implements HasMedia
         static::creating(function ($model) {
             $model->submitted_at = now();
             if (empty($model->status)) {
-                $model->status = self::STATUS_UNDER_REVIEW;
+                $model->status = self::STATUS_UPLOADED; // Changed to UPLOADED as default
             }
         });
 
@@ -427,6 +511,13 @@ class SubmittedRequirement extends Model implements HasMedia
                         )
                     );
                 }
+            }
+        });
+
+        // Automatically move uploaded submissions to under review when they get tracked in indicator
+        static::saved(function ($model) {
+            if ($model->shouldBeMovedToUnderReview()) {
+                $model->moveToUnderReview();
             }
         });
     }

@@ -41,7 +41,7 @@ class SubmissionStatusUpdated extends Notification implements ShouldQueue
 
         return [
             'type' => 'submission_status_updated',
-            'message' => "Your submission for '{$this->submission->requirement->name}' has been updated from {$oldStatusLabel} to {$newStatusLabel}",
+            'message' => "New Status Update: {$this->submission->requirement->name}",
             'submission_id' => $this->submission->id,
             'requirement_id' => $this->submission->requirement_id,
             'user_id' => $this->submission->user_id,

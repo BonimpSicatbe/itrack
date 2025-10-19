@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Livewire\user\Dashboard;
+namespace App\Livewire\User\Dashboard;
 
 use Livewire\Component;
 use App\Models\Requirement;

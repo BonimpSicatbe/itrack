@@ -324,14 +324,14 @@ class RequirementsList extends Component
         try {
             $requirement = Requirement::findOrFail($requirementId);
             
-            // Create the submission with course_id
+            // Create the submission with course_id - REMOVE the explicit status
             $submittedRequirement = SubmittedRequirement::create([
                 'requirement_id' => $requirementId,
                 'user_id' => Auth::id(),
                 'course_id' => $this->selectedCourse, // This is crucial - link to specific course
                 'submitted_at' => now(),
                 'admin_notes' => $this->submissionNotes,
-                'status' => SubmittedRequirement::STATUS_UNDER_REVIEW,
+                // Remove this line: 'status' => SubmittedRequirement::STATUS_UNDER_REVIEW,
             ]);
 
             // Add the file
@@ -882,6 +882,10 @@ class RequirementsList extends Component
             if ($existingIndicator) {
                 // Toggle off - mark as undone (for all partners too if it's a partnership)
                 $this->markPartnershipAsUndone($requirement, $user->id);
+                
+                // NEW: Revert under_review submissions back to uploaded (only for under_review status)
+                $this->revertUnderReviewToUploaded($requirementId, $user->id);
+                
                 $message = 'Requirement marked as undone!';
                 
                 // Delete notification for admins
@@ -890,6 +894,10 @@ class RequirementsList extends Component
             } else {
                 // Toggle on - mark as done FOR THIS COURSE (and all partners if it's a partnership)
                 $this->markPartnershipAsDone($requirement, $user->id);
+                
+                // Update all uploaded submissions to under_review status for this requirement and course
+                $this->updateSubmissionsToUnderReview($requirementId, $user->id);
+                
                 $message = 'Requirement marked as done!';
                 
                 // Get ALL submissions for this requirement by this user FOR THIS COURSE
@@ -933,6 +941,48 @@ class RequirementsList extends Component
                 content: 'Failed to update status: ' . $e->getMessage()
             );
         }
+    }
+
+    /**
+     * Update all uploaded submissions to under_review status
+     */
+    protected function updateSubmissionsToUnderReview($requirementId, $userId)
+    {
+        // Update all uploaded submissions for this requirement, user, and course to under_review
+        $updatedCount = SubmittedRequirement::where('requirement_id', $requirementId)
+            ->where('user_id', $userId)
+            ->where('course_id', $this->selectedCourse)
+            ->where('status', SubmittedRequirement::STATUS_UPLOADED)
+            ->update(['status' => SubmittedRequirement::STATUS_UNDER_REVIEW]);
+        
+        \Log::info("Updated submissions to under_review", [
+            'requirement_id' => $requirementId,
+            'user_id' => $userId,
+            'course_id' => $this->selectedCourse,
+            'updated_count' => $updatedCount
+        ]);
+    }
+
+    /**
+     * Revert under_review submissions back to uploaded status
+     * Only affects under_review status, leaves other statuses unchanged
+     */
+    protected function revertUnderReviewToUploaded($requirementId, $userId)
+    {
+        // Revert only under_review submissions back to uploaded
+        // Leave revision_needed, rejected, and approved statuses unchanged
+        $revertedCount = SubmittedRequirement::where('requirement_id', $requirementId)
+            ->where('user_id', $userId)
+            ->where('course_id', $this->selectedCourse)
+            ->where('status', SubmittedRequirement::STATUS_UNDER_REVIEW)
+            ->update(['status' => SubmittedRequirement::STATUS_UPLOADED]);
+        
+        \Log::info("Reverted under_review submissions to uploaded", [
+            'requirement_id' => $requirementId,
+            'user_id' => $userId,
+            'course_id' => $this->selectedCourse,
+            'reverted_count' => $revertedCount
+        ]);
     }
 
     /**
@@ -995,8 +1045,15 @@ class RequirementsList extends Component
                     ->where('user_id', $userId)
                     ->where('course_id', $this->selectedCourse)
                     ->delete();
+                
+                // NEW: Revert under_review submissions back to uploaded for each partner
+                SubmittedRequirement::where('requirement_id', $partnerRequirement->id)
+                    ->where('user_id', $userId)
+                    ->where('course_id', $this->selectedCourse)
+                    ->where('status', SubmittedRequirement::STATUS_UNDER_REVIEW)
+                    ->update(['status' => SubmittedRequirement::STATUS_UPLOADED]);
                     
-                \Log::info("Marked partner requirement as undone", [
+                \Log::info("Marked partner requirement as undone and reverted status", [
                     'main_requirement_id' => $requirement->id,
                     'partner_requirement_id' => $partnerRequirement->id,
                     'user_id' => $userId,
@@ -1009,6 +1066,13 @@ class RequirementsList extends Component
                 ->where('user_id', $userId)
                 ->where('course_id', $this->selectedCourse)
                 ->delete();
+            
+            // NEW: Revert under_review submissions back to uploaded
+            SubmittedRequirement::where('requirement_id', $requirement->id)
+                ->where('user_id', $userId)
+                ->where('course_id', $this->selectedCourse)
+                ->where('status', SubmittedRequirement::STATUS_UNDER_REVIEW)
+                ->update(['status' => SubmittedRequirement::STATUS_UPLOADED]);
         }
     }
 

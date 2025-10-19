@@ -16,7 +16,7 @@
 
     <!-- Content Area -->
     <div class="w-full bg-white rounded-xl p-6 space-y-4 grow overflow-y-auto"
-        style="max-height: calc(100vh - 125px);">
+        style="max-height: calc(100vh - 140px);">
 
         <!-- Inactive User Message -->
         @auth
@@ -193,7 +193,7 @@
                                                     class="btn btn-sm btn-outline z-1 rounded-full {{ $user_marked_done ? 'btn-warning' : ($can_mark_done ? 'btn-success' : 'btn-disabled') }}">
                                                     <span wire:loading.remove wire:target="toggleMarkAsDone({{ $requirement->id }})">
                                                         <i class="fa-solid fa-check-double min-w-[20px] text-center"></i>
-                                                        {{ $user_marked_done ? 'Mark as undone' : 'Mark as done' }}
+                                                        {{ $user_marked_done ? 'Unsubmit' : 'Submit' }}
                                                     </span>
                                                     <span wire:loading wire:target="toggleMarkAsDone({{ $requirement->id }})">
                                                         <i class="fa-solid fa-spinner fa-spin"></i>
@@ -203,7 +203,7 @@
                                             @else
                                                 <button class="btn btn-sm btn-outline btn-disabled bg-white rounded-full">
                                                     <i class="fa-solid fa-check-double"></i>
-                                                    Mark as Done
+                                                    Submit
                                                 </button>
                                             @endif
                                         </div>
@@ -217,7 +217,7 @@
                                                 <div class="flex items-center gap-2 mb-2">
                                                 </div>
                                                 <div class="text-sm text-blue-700">
-                                                    <p class="mb-2">This requirement must be submitted together with its partner. When you mark this requirement as done/undone, the partner requirement will also be marked as done/undone.</p>
+                                                    <p class="mb-2">This requirement must be submitted together with its partner. When you mark this requirement as submit/unsubmit, the partner requirement will also be marked as submit/unsubmit.</p>
                                                     <ul class="space-y-1 ml-4">
                                                         @foreach($partnership_status['partners'] as $partner)
                                                             <li class="flex items-center gap-2">
@@ -287,7 +287,7 @@
 
                                             {{-- Submit Requirement --}}
                                             <input type="radio" name="{{ $requirement->id }}"
-                                                class="tab focus:ring-0 focus:outline-0" aria-label="Submit Requirement"
+                                                class="tab focus:ring-0 focus:outline-0" aria-label="Upload File"
                                                 {{ $this->isTabActive($requirement->id, 'submit') ? 'checked' : '' }} />
                                             <div class="tab-content space-y-4 border-0 border-t border-base-300 pt-4 rounded-none">
                                                 <div class="mb-6">
@@ -295,7 +295,7 @@
                                                         <div class="alert bg-amber-300 border-amber-300">
                                                             <div class="flex items-center gap-2">
                                                                 <i class="fa-solid fa-circle-info"></i>
-                                                                <span>Requirement completed. Click "<b>Mark as undone</b>" above to submit additional files.</span>
+                                                                <span>Click "<b>Unsubmit</b>" above to submit additional files.</span>
                                                             </div>
                                                         </div>
                                                         @else
@@ -340,7 +340,7 @@
                                                                 <button type="submit"
                                                                     class="btn w-full bg-green-600 text-white hover:bg-green-700"
                                                                     wire:loading.attr="disabled" :disabled="!$file">
-                                                                    <span wire:loading.remove>Submit Requirement</span>
+                                                                    <span wire:loading.remove>Upload File</span>
                                                                     <span wire:loading>
                                                                         <i class="fa-solid fa-spinner animate-spin"></i>
                                                                         Uploading...
@@ -353,7 +353,7 @@
 
                                             {{-- Previous Submissions --}}
                                             <input type="radio" name="{{ $requirement->id }}"
-                                                class="tab focus:ring-0 focus:outline-0" aria-label="Previous Submissions"
+                                                class="tab focus:ring-0 focus:outline-0" aria-label="Submissions"
                                                 {{ $this->isTabActive($requirement->id, 'submissions') ? 'checked' : '' }} />
                                             <div class="tab-content space-y-4 border-0 border-t border-base-300 pt-4 rounded-none">
                                                 <div>
@@ -451,7 +451,7 @@
                                                                                             ->exists();
                                                                                     @endphp
 
-                                                                                    @if (($submission->status === 'under_review' || $submission->status === 'rejected' || $submission->status === 'revision_needed') && !$isMarkedDone)
+                                                                                    @if (($submission->status === 'uploaded' || $submission->status === 'under_review' || $submission->status === 'rejected' || $submission->status === 'revision_needed') && !$isMarkedDone)
                                                                                         <button wire:click="confirmDelete({{ $submission->id }})"
                                                                                             class="text-sm text-red-600"
                                                                                             title="Delete submission">
@@ -559,7 +559,7 @@
                                                         class="btn btn-sm btn-outline z-1 rounded-full {{ $user_marked_done ? 'btn-warning' : ($can_mark_done ? 'btn-success' : 'btn-disabled') }}">
                                                         <span wire:loading.remove wire:target="toggleMarkAsDone({{ $requirement->id }})">
                                                             <i class="fa-solid fa-check-double min-w-[20px] text-center"></i>
-                                                            {{ $user_marked_done ? 'Mark as undone' : 'Mark as done' }}
+                                                            {{ $user_marked_done ? 'Unsubmit' : 'Submit' }}
                                                         </span>
                                                         <span wire:loading wire:target="toggleMarkAsDone({{ $requirement->id }})">
                                                             <i class="fa-solid fa-spinner fa-spin"></i>
@@ -569,7 +569,7 @@
                                                 @else
                                                     <button class="btn btn-sm btn-outline btn-disabled bg-white rounded-full">
                                                         <i class="fa-solid fa-check-double"></i>
-                                                        Mark as Done
+                                                        Submit
                                                     </button>
                                                 @endif
                                             </div>
@@ -583,7 +583,7 @@
                                                 <div class="flex items-center gap-2 mb-2">
                                                 </div>
                                                 <div class="text-sm text-blue-700">
-                                                    <p class="mb-2">This requirement must be submitted together with its partner. When you mark this requirement as done/undone, the partner requirement will also be marked as done/undone.</p>
+                                                    <p class="mb-2">This requirement must be submitted together with its partner. When you mark this requirement as submit/unsubmit, the partner requirement will also be marked as submit/unsubmit.</p>
                                                     <ul class="space-y-1 ml-4">
                                                         @foreach($partnership_status['partners'] as $partner)
                                                             @php
@@ -668,7 +668,7 @@
 
                                                 {{-- Submit Requirement --}}
                                                 <input type="radio" name="{{ $requirement->id }}"
-                                                    class="tab focus:ring-0 focus:outline-0" aria-label="Submit Requirement"
+                                                    class="tab focus:ring-0 focus:outline-0" aria-label="Upload File"
                                                     {{ $this->isTabActive($requirement->id, 'submit') ? 'checked' : '' }} />
                                                 <div class="tab-content space-y-4 border-0 border-t border-base-300 pt-4 rounded-none">
                                                     <div class="mb-6">
@@ -676,7 +676,7 @@
                                                             <div class="alert bg-amber-300 border-amber-300">
                                                                 <div class="flex items-center gap-2">
                                                                     <i class="fa-solid fa-circle-info"></i>
-                                                                    <span>Requirement completed. Click "<b>Mark as undone</b>" above to submit additional files.</span>
+                                                                    <span>Click "<b>Unsubmit</b>" above to submit additional files.</span>
                                                                 </div>
                                                             </div>
                                                         @else
@@ -721,7 +721,7 @@
                                                                 <button type="submit"
                                                                     class="btn w-full bg-green-600 text-white hover:bg-green-700"
                                                                     wire:loading.attr="disabled" :disabled="!$file">
-                                                                    <span wire:loading.remove>Submit Requirement</span>
+                                                                    <span wire:loading.remove>Upload File</span>
                                                                     <span wire:loading>
                                                                         <i class="fa-solid fa-spinner animate-spin"></i>
                                                                         Uploading...
@@ -734,7 +734,7 @@
 
                                                 {{-- Previous Submissions --}}
                                                 <input type="radio" name="{{ $requirement->id }}"
-                                                    class="tab focus:ring-0 focus:outline-0" aria-label="Previous Submissions"
+                                                    class="tab focus:ring-0 focus:outline-0" aria-label="Submissions"
                                                     {{ $this->isTabActive($requirement->id, 'submissions') ? 'checked' : '' }} />
                                                 <div class="tab-content space-y-4 border-0 border-t border-base-300 pt-4 rounded-none">
                                                     <div>
@@ -832,7 +832,7 @@
                                                                                                 ->exists();
                                                                                         @endphp
 
-                                                                                        @if (($submission->status === 'under_review' || $submission->status === 'rejected' || $submission->status === 'revision_needed') && !$isMarkedDone)
+                                                                                        @if (($submission->status === 'uploaded' || $submission->status === 'under_review' || $submission->status === 'rejected' || $submission->status === 'revision_needed') && !$isMarkedDone)
                                                                                             <button wire:click="confirmDelete({{ $submission->id }})"
                                                                                                 class="text-sm text-red-600"
                                                                                                 title="Delete submission">
@@ -912,11 +912,11 @@
                     @endif
                 @else
                     <!-- No Active Semester -->
-                    <div class="flex items-center p-4 bg-amber-100 border border-amber-300 text-amber-800 rounded-xl">
+                    <div class="flex items-center p-4 bg-[#DEF4C6] text-[#1B512D] rounded-lg shadow-lg">
                         <i class="fa-solid fa-triangle-exclamation text-lg mr-3"></i>
                         <div>
-                            <h3 class="font-bold">No active semester</h3>
-                            <div class="text-sm">Courses and requirements will be available once you have an active semester.</div>
+                            <h3 class="font-semibold text-sm">No active semester</h3>
+                            <div class="text-xs">Recent submissions will appear here once you have an active semester.</div>
                         </div>
                     </div>
                 @endif

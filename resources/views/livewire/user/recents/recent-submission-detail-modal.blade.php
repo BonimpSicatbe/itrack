@@ -10,17 +10,17 @@
                 wire:click.stop
             >
                 {{-- Header --}}
-                <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
-                    <h2 class="text-xl font-semibold text-gray-800 flex items-center gap-1">
-                        <i class="fa-solid fa-circle-info text-green-600 text-2xl"></i>
+                <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center" style="background: linear-gradient(148deg,rgba(18, 67, 44, 1) 0%, rgba(30, 119, 77, 1) 54%, rgba(55, 120, 64, 1) 100%);">
+                    <h2 class="text-xl font-semibold text-white flex items-center gap-1">
+                        <i class="fa-solid fa-circle-info text-white text-2xl"></i>
                         Submission Details
                     </h2>
                     <button 
                         wire:click="closeModal"
-                        class="h-8 w-8 rounded-full text-gray-400 hover:bg-gray-100 transition-colors duration-200 flex items-center justify-center"
+                        class="h-8 w-8 rounded-full text-gray-400 transition-colors duration-200 flex items-center justify-center"
                         aria-label="Close modal"
                     >
-                        <i class="fa-solid fa-times text-base"></i>
+                        <i class="fa-solid fa-times text-base text-white"></i>
                     </button>
                 </div>
 
@@ -28,7 +28,7 @@
                 <div class="max-h-[70vh] overflow-y-auto bg-gray-50 p-6 space-y-6">
                     
                     {{-- Requirement Summary Section --}}
-                    <div class="bg-white rounded-lg p-5 border border-gray-200 shadow-sm space-y-2">
+                    <div class="bg-white rounded-xl p-5 border border-gray-200 shadow-sm space-y-2">
                         <div class="flex justify-between items-start">
                             <div>
                                 <h3 class="text-lg font-semibold text-gray-800">{{ $requirement->name }}</h3>
@@ -55,7 +55,7 @@
 
                     <div class="grid md:grid-cols-2 gap-6">
                         {{-- Submitted File Section --}}
-                        <div class="bg-white rounded-lg p-5 border border-gray-200 shadow-sm space-y-4">
+                        <div class="bg-white rounded-xl p-5 border border-gray-200 shadow-sm space-y-4">
                             <div class="flex justify-between items-center">
                                 <h4 class="text-base font-semibold text-gray-700">Submitted File</h4>
                                 <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium {{ $submission->status_badge }}">
@@ -123,7 +123,7 @@
 
                     {{-- Admin Notes Section --}}
                     @if($submission->admin_notes)
-                        <div class="bg-white rounded-lg p-5 border border-gray-200 shadow-sm space-y-4">
+                        <div class="bg-white rounded-xl p-5 border border-gray-200 shadow-sm space-y-4">
                             <h4 class="text-base font-semibold text-gray-700">Admin Notes</h4>
                             <div class="p-3 bg-gray-50 rounded-lg border border-gray-200">
                                 <p class="text-sm text-gray-600 leading-relaxed">{{ $submission->admin_notes }}</p>
@@ -133,29 +133,45 @@
                 </div>
 
                 {{-- Footer --}}
-                <div class="bg-gray-50 border-t border-gray-100 px-6 py-4 flex justify-end gap-3">
-                    @if($submission->submissionFile)
-                        {{-- Download Button --}}
-                        <button 
-                            wire:click="downloadFile"
-                            class="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-full hover:bg-blue-700 transition-colors duration-200"
-                        >
-                            <i class="fa-solid fa-download text-xs mr-2"></i>
-                            Download
-                        </button>
-
-                        {{-- Preview Button (opens in new tab) --}}
-                        @if($this->isPreviewable)
+                <div class="bg-gray-50 border-t border-gray-100 px-6 py-4 flex justify-between items-center">
+                    {{-- Left side: Folder button --}}
+                    <div>
+                        @if($this->getRequirementFolderUrl())
                             <a 
-                                href="{{ $this->getPreviewUrl() }}"
-                                target="_blank"
-                                class="inline-flex items-center px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-full hover:bg-green-700 transition-colors duration-200"
+                                href="{{ $this->getRequirementFolderUrl() }}"
+                                class="inline-flex items-center px-3 py-2 bg-amber-500 hover:bg-amber-600 text-white text-sm font-medium rounded-xl transition-colors duration-200"
                             >
-                                <i class="fa-solid fa-eye text-xs mr-2"></i>
-                                Preview
+                                Open Requirement Folder
+                                <i class="fa-solid fa-arrow-up-right-from-square text-xs ml-2"></i>
                             </a>
-                        @endif 
-                    @endif
+                        @endif
+                    </div>
+
+                    {{-- Right side: File actions --}}
+                    <div class="flex gap-3">
+                        @if($submission->submissionFile)
+                            {{-- Download Button --}}
+                            <button 
+                                wire:click="downloadFile"
+                                class="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-xl hover:bg-blue-700 transition-colors duration-200"
+                            >
+                                <i class="fa-solid fa-download text-xs mr-2"></i>
+                                Download
+                            </button>
+
+                            {{-- Preview Button (opens in new tab) --}}
+                            @if($this->isPreviewable)
+                                <a 
+                                    href="{{ $this->getPreviewUrl() }}"
+                                    target="_blank"
+                                    class="inline-flex items-center px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-xl hover:bg-green-700 transition-colors duration-200"
+                                >
+                                    <i class="fa-solid fa-eye text-xs mr-2"></i>
+                                    Preview
+                                </a>
+                            @endif 
+                        @endif
+                    </div>
                 </div>
             </div>
         </div>

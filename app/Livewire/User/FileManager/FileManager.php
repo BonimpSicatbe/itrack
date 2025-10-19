@@ -87,10 +87,13 @@ class FileManager extends Component
         
         $this->viewMode = session()->get('fileManagerViewMode', 'grid');
         
-        if (!$this->semesterId && $this->activeSemester) {
-            $this->selectedSemesterId = $this->activeSemester->id;
-            $this->currentSemester = $this->activeSemester;
-            $this->loadAssignedCourses();
+        // Only initialize default navigation if no URL parameters are present
+        if (!$this->semesterId && !$this->courseId && !$this->folderId && !$this->subFolderId) {
+            if ($this->activeSemester) {
+                $this->selectedSemesterId = $this->activeSemester->id;
+                $this->currentSemester = $this->activeSemester;
+                $this->loadAssignedCourses();
+            }
             $this->initializeBreadcrumb();
         }
     }
@@ -113,7 +116,7 @@ class FileManager extends Component
             // We're at a semester level
             $this->handleNavigationFromUrl('courses', $this->semesterId, true);
         } else {
-            // We're at the root level
+            // We're at the root level (no URL parameters)
             $this->currentLevel = 'semesters';
             $this->initializeBreadcrumb();
         }
@@ -133,19 +136,8 @@ class FileManager extends Component
             $this->currentLevel = $level;
             
             if ($level === 'semesters') {
-                $this->currentSemester = null;
-                $this->currentCourse = null;
-                $this->currentParentFolder = null;
-                $this->currentSubFolder = null;
-                $this->selectedSemesterId = null;
-                $this->assignedCourses = [];
-                $this->deselectFile();
-                $this->breadcrumb = [['name' => 'File Manager', 'level' => 'semesters', 'id' => null]];
+                // ... existing code ...
                 
-                // Clear URL parameters
-                if (!$fromUrl) {
-                    $this->updateUrlParameters('', '', '', '');
-                }
             } elseif ($level === 'courses' && $id) {
                 // Load semester with assigned courses
                 $this->currentSemester = Semester::find($id);
@@ -156,7 +148,7 @@ class FileManager extends Component
                 }
                 
                 $this->selectedSemesterId = $id;
-                $this->loadAssignedCourses();
+                $this->loadAssignedCourses(); // Ensure courses are loaded
                 $this->currentCourse = null;
                 $this->currentParentFolder = null;
                 $this->currentSubFolder = null;
@@ -164,7 +156,7 @@ class FileManager extends Component
                 
                 // Update breadcrumb
                 $this->breadcrumb = [
-                    ['name' => 'File Manager', 'level' => 'semesters', 'id' => null],
+                    ['name' => 'Portfolio', 'level' => 'semesters', 'id' => null],
                     ['name' => $this->currentSemester->name, 'level' => 'courses', 'id' => $id]
                 ];
                 
@@ -172,6 +164,7 @@ class FileManager extends Component
                 if (!$fromUrl) {
                     $this->updateUrlParameters($id, null, null, null);
                 }
+                
             } elseif ($level === 'parent_folders' && $id) {
                 // Load course
                 $this->currentCourse = Course::with('program')->find($id);
@@ -189,6 +182,7 @@ class FileManager extends Component
                 if (!$this->currentSemester) {
                     $this->currentSemester = $this->activeSemester;
                     $this->selectedSemesterId = $this->currentSemester->id;
+                    $this->loadAssignedCourses(); // Load courses if not already loaded
                 }
                 
                 $this->currentParentFolder = null;
@@ -197,7 +191,7 @@ class FileManager extends Component
                 
                 // Update breadcrumb
                 $this->breadcrumb = [
-                    ['name' => 'File Manager', 'level' => 'semesters', 'id' => null],
+                    ['name' => 'Portfolio', 'level' => 'semesters', 'id' => null],
                     ['name' => $this->currentSemester->name, 'level' => 'courses', 'id' => $this->currentSemester->id],
                     ['name' => $this->currentCourse->course_code, 'level' => 'parent_folders', 'id' => $id]
                 ];
@@ -206,6 +200,7 @@ class FileManager extends Component
                 if (!$fromUrl) {
                     $this->updateUrlParameters($this->currentSemester->id, $id, null, null);
                 }
+                
             } elseif ($level === 'parent_folder_contents' && $id) {
                 // Check if this is a parent folder or sub-folder
                 $folder = \App\Models\RequirementType::find($id);
@@ -219,6 +214,16 @@ class FileManager extends Component
                     // This is a parent folder
                     $this->currentParentFolder = $folder;
                     $this->currentSubFolder = null;
+                    
+                    // Ensure we have course and semester context
+                    if (!$this->currentCourse && $this->courseId) {
+                        $this->currentCourse = Course::with('program')->find($this->courseId);
+                    }
+                    if (!$this->currentSemester && $this->semesterId) {
+                        $this->currentSemester = Semester::find($this->semesterId);
+                        $this->selectedSemesterId = $this->semesterId;
+                        $this->loadAssignedCourses();
+                    }
                     
                     // Update URL parameters for parent folder
                     if (!$fromUrl) {
@@ -234,6 +239,16 @@ class FileManager extends Component
                     $this->currentSubFolder = $folder;
                     $this->currentParentFolder = \App\Models\RequirementType::find($folder->parent_id);
                     
+                    // Ensure we have course and semester context
+                    if (!$this->currentCourse && $this->courseId) {
+                        $this->currentCourse = Course::with('program')->find($this->courseId);
+                    }
+                    if (!$this->currentSemester && $this->semesterId) {
+                        $this->currentSemester = Semester::find($this->semesterId);
+                        $this->selectedSemesterId = $this->semesterId;
+                        $this->loadAssignedCourses();
+                    }
+                    
                     // Update URL parameters for sub-folder
                     if (!$fromUrl) {
                         $this->updateUrlParameters(
@@ -245,14 +260,14 @@ class FileManager extends Component
                     }
                 }
                 
-                // Determine if this folder has sub-folders or direct files
+                // Load folder contents
                 $this->loadParentFolderContents($id);
                 
                 $this->deselectFile();
                 
                 // Update breadcrumb with proper hierarchy
                 $this->breadcrumb = [
-                    ['name' => 'File Manager', 'level' => 'semesters', 'id' => null],
+                    ['name' => 'Portfolio', 'level' => 'semesters', 'id' => null],
                     ['name' => $this->currentSemester->name, 'level' => 'courses', 'id' => $this->currentSemester->id],
                     ['name' => $this->currentCourse->course_code, 'level' => 'parent_folders', 'id' => $this->currentCourse->id],
                 ];
@@ -284,7 +299,7 @@ class FileManager extends Component
             $this->currentCourse = null;
             $this->currentParentFolder = null;
             $this->currentSubFolder = null;
-            $this->breadcrumb = [['name' => 'File Manager', 'level' => 'semesters', 'id' => null]];
+            $this->breadcrumb = [['name' => 'Portfolio', 'level' => 'semesters', 'id' => null]];
             $this->updateUrlParameters(null, null, null, null);
         } finally {
             $this->isNavigating = false;
@@ -305,7 +320,7 @@ class FileManager extends Component
     public function initializeBreadcrumb()
     {
         $this->breadcrumb = [
-            ['name' => 'File Manager', 'level' => 'semesters', 'id' => null]
+            ['name' => 'Portfolio', 'level' => 'semesters', 'id' => null]
         ];
         
         if ($this->currentLevel === 'courses' && $this->currentSemester) {
@@ -687,8 +702,24 @@ class FileManager extends Component
 
     public function confirmDelete($fileId)
     {
-        $this->fileToDelete = $fileId;
-        $this->showDeleteModal = true;
+        try {
+            $file = SubmittedRequirement::where('user_id', Auth::id())
+                ->with(['requirement.semester'])
+                ->findOrFail($fileId);
+            
+            // Check if file can be deleted
+            if (!$this->canDeleteFile($file)) {
+                session()->flash('error', 'Only uploaded files from active semesters can be deleted.');
+                return;
+            }
+            
+            $this->fileToDelete = $fileId;
+            $this->showDeleteModal = true;
+            
+        } catch (\Exception $e) {
+            \Log::error('Error confirming delete: ' . $e->getMessage());
+            session()->flash('error', 'Error preparing file for deletion.');
+        }
     }
 
     public function cancelDelete()
@@ -702,7 +733,16 @@ class FileManager extends Component
         if ($this->fileToDelete) {
             try {
                 $submission = SubmittedRequirement::where('user_id', Auth::id())
+                    ->with(['requirement.semester'])
                     ->findOrFail($this->fileToDelete);
+                
+                // Double-check if file can be deleted
+                if (!$this->canDeleteFile($submission)) {
+                    session()->flash('error', 'This file cannot be deleted. Only uploaded files from active semesters can be deleted.');
+                    $this->showDeleteModal = false;
+                    $this->fileToDelete = null;
+                    return;
+                }
                 
                 // Delete the associated file from storage
                 if ($submission->submissionFile) {
@@ -724,48 +764,6 @@ class FileManager extends Component
                 session()->flash('error', 'Error deleting file: ' . $e->getMessage());
             }
         }
-    }
-
-    public function render()
-    {
-        $this->ensureNavigationData();
-
-        $allSemesters = $this->allSemesters;
-        $currentSemester = $this->currentSemester;
-        $currentCourse = $this->currentCourse;
-        $currentParentFolder = $this->currentParentFolder;
-        $currentSubFolder = $this->currentSubFolder;
-        $parentFolders = [];
-        $parentFolderContents = $this->parentFolderContents;
-        $contentType = $this->contentType;
-
-        // Load parent folders for current course if at parent_folders level
-        if ($this->currentLevel === 'parent_folders' && $currentCourse && $currentSemester) {
-            $parentFolders = $this->getParentFoldersWithSubmissions();
-        }
-
-        // Filter files if at parent_folder_contents level with files content type
-        if ($this->currentLevel === 'parent_folder_contents' && $contentType === 'files' && !empty($this->statusFilter)) {
-            $parentFolderContents = $parentFolderContents->filter(function ($submission) {
-                return $submission->status === $this->statusFilter;
-            });
-        }
-        
-        return view('livewire.user.file-manager.file-manager', [
-            'totalFiles' => $this->getTotalFiles(),
-            'totalSize' => $this->getTotalSize(),
-            'statuses' => SubmittedRequirement::statuses(),
-            'allSemesters' => $allSemesters,
-            'currentSemester' => $currentSemester,
-            'currentCourse' => $currentCourse,
-            'currentParentFolder' => $currentParentFolder,
-            'currentSubFolder' => $currentSubFolder,
-            'parentFolders' => $parentFolders,
-            'parentFolderContents' => $parentFolderContents,
-            'contentType' => $contentType,
-            'assignedCourses' => $this->assignedCourses,
-            'archiveRoute' => route('user.archive'),
-        ]);
     }
 
     /**
@@ -1364,6 +1362,25 @@ class FileManager extends Component
 
     public function ensureNavigationData()
     {
+        // If we have URL parameters but missing data, try to restore it
+        if ($this->semesterId && !$this->currentSemester) {
+            $this->currentSemester = Semester::find($this->semesterId);
+            $this->selectedSemesterId = $this->semesterId;
+        }
+        
+        if ($this->courseId && !$this->currentCourse) {
+            $this->currentCourse = Course::with('program')->find($this->courseId);
+        }
+        
+        if ($this->folderId && !$this->currentParentFolder) {
+            $this->currentParentFolder = \App\Models\RequirementType::find($this->folderId);
+        }
+        
+        if ($this->subFolderId && !$this->currentSubFolder) {
+            $this->currentSubFolder = \App\Models\RequirementType::find($this->subFolderId);
+        }
+        
+        // Load necessary data based on current level
         if ($this->currentLevel === 'courses' && $this->currentSemester) {
             $this->loadAssignedCourses();
         }
@@ -1371,12 +1388,127 @@ class FileManager extends Component
         if (($this->currentLevel === 'parent_folders' || $this->currentLevel === 'parent_folder_contents') && !$this->currentSemester) {
             $this->currentSemester = $this->activeSemester;
             $this->selectedSemesterId = $this->currentSemester->id;
+            $this->loadAssignedCourses();
         }
         
         // Reload parent folder contents if needed
-        if ($this->currentLevel === 'parent_folder_contents' && ($this->currentParentFolder || $this->currentSubFolder)) {
-            $folderId = $this->currentSubFolder ? $this->currentSubFolder->id : $this->currentParentFolder->id;
-            $this->loadParentFolderContents($folderId);
+        if ($this->currentLevel === 'parent_folder_contents') {
+            $folderId = $this->currentSubFolder ? $this->currentSubFolder->id : ($this->currentParentFolder ? $this->currentParentFolder->id : null);
+            if ($folderId) {
+                $this->loadParentFolderContents($folderId);
+            }
         }
+    }
+
+    /**
+     * Check if the selected file belongs to the current active semester
+     */
+    public function isFileFromCurrentSemester($file)
+    {
+        if (!$file || !$file->requirement) {
+            return false;
+        }
+
+        $currentSemester = $this->activeSemester;
+        
+        return $currentSemester && $file->requirement->semester_id === $currentSemester->id;
+    }
+
+    /**
+     * Generate the URL to the requirement folder for the selected file
+     */
+    public function getRequirementFolderUrl($file)
+    {
+        if (!$file || !$file->requirement) {
+            return '#';
+        }
+
+        $courseId = $file->course_id;
+        $folderId = $this->getPrimaryFolderId($file->requirement);
+        
+        return route('user.requirements', [
+            'course' => $courseId,
+            'folder' => $folderId
+        ]);
+    }
+
+    /**
+     * Get the primary folder ID from requirement's requirement_type_ids
+     */
+    private function getPrimaryFolderId($requirement)
+    {
+        $requirementTypeIds = $requirement->requirement_type_ids ?? [];
+        
+        if (empty($requirementTypeIds)) {
+            return null;
+        }
+        
+        // Convert to array if it's a JSON string
+        if (is_string($requirementTypeIds)) {
+            $requirementTypeIds = json_decode($requirementTypeIds, true);
+        }
+        
+        // Return the first folder ID as the primary folder
+        return !empty($requirementTypeIds) ? $requirementTypeIds[0] : null;
+    }
+
+    /**
+     * Check if a file can be deleted (only uploaded status files from active semesters)
+     */
+    public function canDeleteFile($file)
+    {
+        if (!$file || !$file->requirement) {
+            return false;
+        }
+
+        // Check if file is from active semester
+        $isActiveSemester = $file->requirement->semester && $file->requirement->semester->is_active;
+        
+        // Check if file has uploaded status
+        $isUploadedStatus = $file->status === 'uploaded';
+        
+        return $isActiveSemester && $isUploadedStatus;
+    }
+
+    public function render()
+    {
+        $this->ensureNavigationData();
+
+        $allSemesters = $this->allSemesters;
+        $currentSemester = $this->currentSemester;
+        $currentCourse = $this->currentCourse;
+        $currentParentFolder = $this->currentParentFolder;
+        $currentSubFolder = $this->currentSubFolder;
+        $parentFolders = [];
+        $parentFolderContents = $this->parentFolderContents;
+        $contentType = $this->contentType;
+
+        // Load parent folders for current course if at parent_folders level
+        if ($this->currentLevel === 'parent_folders' && $currentCourse && $currentSemester) {
+            $parentFolders = $this->getParentFoldersWithSubmissions();
+        }
+
+        // Filter files if at parent_folder_contents level with files content type
+        if ($this->currentLevel === 'parent_folder_contents' && $contentType === 'files' && !empty($this->statusFilter)) {
+            $parentFolderContents = $parentFolderContents->filter(function ($submission) {
+                return $submission->status === $this->statusFilter;
+            });
+        }
+        
+        return view('livewire.user.file-manager.file-manager', [
+            'totalFiles' => $this->getTotalFiles(),
+            'totalSize' => $this->getTotalSize(),
+            'statuses' => SubmittedRequirement::statuses(),
+            'allSemesters' => $allSemesters,
+            'currentSemester' => $currentSemester,
+            'currentCourse' => $currentCourse,
+            'currentParentFolder' => $currentParentFolder,
+            'currentSubFolder' => $currentSubFolder,
+            'parentFolders' => $parentFolders,
+            'parentFolderContents' => $parentFolderContents,
+            'contentType' => $contentType,
+            'assignedCourses' => $this->assignedCourses,
+            'archiveRoute' => route('user.archive'),
+        ]);
     }
 }

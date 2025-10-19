@@ -40,6 +40,7 @@ class Progress extends Component
             SubmittedRequirement::STATUS_REJECTED => 'bg-red-500',
             SubmittedRequirement::STATUS_REVISION_NEEDED => 'bg-yellow-500',
             SubmittedRequirement::STATUS_UNDER_REVIEW => 'bg-blue-500',
+            SubmittedRequirement::STATUS_UPLOADED => 'bg-purple-500', // Added uploaded status color
             default => 'bg-gray-300'
         };
     }
@@ -51,6 +52,7 @@ class Progress extends Component
             SubmittedRequirement::STATUS_REJECTED => 'Rejected',
             SubmittedRequirement::STATUS_REVISION_NEEDED => 'Revision Required',
             SubmittedRequirement::STATUS_UNDER_REVIEW => 'Under Review',
+            SubmittedRequirement::STATUS_UPLOADED => 'Uploaded', // Added uploaded status label
             default => ucfirst(str_replace('_', ' ', $status))
         };
     }

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Livewire\user\Requirements;
+namespace App\Livewire\User\Requirements;
 
 use Livewire\Component;
 use App\Models\Requirement;

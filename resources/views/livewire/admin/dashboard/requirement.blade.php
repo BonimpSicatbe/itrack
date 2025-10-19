@@ -22,7 +22,7 @@
                 <a href="{{ route('admin.requirements.index') }}" 
                    class="px-4 py-2 bg-green-600 text-white font-semibold rounded-xl hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-73E2A7 focus:ring-offset-2 transition text-sm cursor-pointer flex items-center gap-2">
                     Requirements Page
-                    <i class="fa-solid fa-chevron-right text-xs"></i>
+                    <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i>
                 </a>
             </div>
         </div>

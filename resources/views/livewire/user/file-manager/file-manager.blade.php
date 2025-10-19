@@ -5,7 +5,7 @@
             <div class="flex items-center justify-between">
             <div class="flex items-center gap-3">
                 <i class="fa-solid fa-folder text-white text-2xl"></i>
-                <h1 class="text-xl font-bold text-white">File Manager</h1>
+                <h1 class="text-xl font-bold text-white">Portfolio</h1>
             </div>
             @livewire('user.dashboard.notification')
         </div>
@@ -13,7 +13,7 @@
     </div>
 
     <!-- Main Content Container -->
-    <div class="flex-1 flex flex-col lg:flex-row gap-3" style="max-height: calc(100vh - 120px);">
+    <div class="flex-1 flex flex-col lg:flex-row gap-3" style="max-height: calc(100vh - 140px);">
         <!-- Left Panel - File List -->
         <div class="bg-white rounded-xl overflow-auto {{ $selectedFile ? 'lg:flex-1' : 'flex-1' }}">
             <!-- Breadcrumb Section - Always Visible -->
@@ -45,7 +45,7 @@
                             @endforeach
                         @else
                             <li class="flex items-center">
-                                <span class="text-sm font-semibold text-green-600">File Manager</span>
+                                <span class="text-sm font-semibold text-green-600">Portfolio</span>
                             </li>
                         @endif
                     </ol>
@@ -762,12 +762,25 @@
                     </div>
                 </div>
 
+                <!-- Requirement Folder Button - Only show for current semester files -->
+                @if($this->isFileFromCurrentSemester($selectedFile))
+                    <div class="px-6 py-3 border-t bg-white">
+                        <a 
+                            href="{{ $this->getRequirementFolderUrl($selectedFile) }}"
+                            class="w-full flex items-center justify-center gap-2 px-4 py-3 bg-amber-500 hover:bg-amber-600 text-white rounded-xl transition-colors shadow-sm"
+                        >
+                            <span class="font-semibold text-sm">Open Requirement Folder</span>
+                            <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                        </a>
+                    </div>
+                @endif
+
                 <!-- Action Buttons -->
                 <div class="px-6 py-4 border-t bg-white flex gap-3">
                     @if($selectedFile->submissionFile)
                         <a 
                             href="{{ $this->getDownloadRoute($selectedFile->id) }}"
-                            class="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-full transition-colors shadow-sm"
+                            class="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl transition-colors shadow-sm"
                             target="_blank"
                         >
                             <i class="fa-solid fa-download"></i>
@@ -778,7 +791,7 @@
                     @if($selectedFile->submissionFile && $this->canPreview($selectedFile->submissionFile->file_name))
                         <a 
                             href="{{ $this->getPreviewRoute($selectedFile->id) }}"
-                            class="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white hover:bg-green-700 rounded-full transition-colors"
+                            class="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white hover:bg-green-700 rounded-xl transition-colors"
                             target="_blank"
                         >
                             <i class="fa-solid fa-eye"></i>
@@ -787,17 +800,18 @@
                     @endif
 
                     {{-- Delete Button (Conditionally disable) --}}
-                    @if(isset($selectedFile->requirement->semester) && $selectedFile->requirement->semester->is_active)
+                    @if(isset($selectedFile->requirement->semester) && $selectedFile->requirement->semester->is_active && $selectedFile->status === 'uploaded')
                         <button
                             wire:click="confirmDelete({{ $selectedFile->id }})"
-                            class="flex-1 flex items-center justify-center gap-2 px-4 py-2 border-2 border-red-600 text-red-700 hover:bg-red-50 rounded-full transition-colors"
+                            class="flex-1 flex items-center justify-center gap-2 px-4 py-2 border-2 border-red-600 text-red-700 hover:bg-red-50 rounded-xl transition-colors"
                         >
                             <i class="fa-solid fa-trash-can"></i>
                         </button>
                     @else
                         <button
                             disabled
-                            class="flex-1 flex items-center justify-center gap-2 px-4 py-2 border-2 border-gray-300 text-gray-500 rounded-full cursor-not-allowed"
+                            class="flex-1 flex items-center justify-center gap-2 px-4 py-2 border-2 border-gray-300 text-gray-500 rounded-xl cursor-not-allowed"
+                            title="{{ $selectedFile->status !== 'uploaded' ? 'Only uploaded files can be deleted' : 'Cannot delete files from archived semesters' }}"
                         >
                             <i class="fa-solid fa-trash-can"></i>
                         </button>

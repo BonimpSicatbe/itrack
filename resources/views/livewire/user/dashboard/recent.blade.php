@@ -13,7 +13,7 @@
         <div class="space-y-3 max-h-96 overflow-y-auto">
             @foreach($recentSubmissions as $submission)
                 <div wire:click="showRequirementDetail({{ $submission->id }})"
-                     class="flex items-center justify-between p-3 bg-gray-50 rounded-xl cursor-pointer transition-colors hover:bg-green-50">
+                     class="flex items-center border border-gray-200 justify-between p-3 bg-gray-50 rounded-xl cursor-pointer transition-colors hover:bg-green-50 hover:border-2 hover:border-green-600">
                     
                     <div class="flex items-center gap-3 flex-1 min-w-0">
                         {{-- File Icon --}}

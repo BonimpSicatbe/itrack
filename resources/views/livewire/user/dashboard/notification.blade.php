@@ -85,16 +85,10 @@
                         class="block p-4 mb-2 rounded-xl {{ $containerClass }} cursor-pointer transition-all duration-200 last:mb-0 hover:no-underline"
                     >
                         <div class="flex gap-3">
-                            {{-- Icon --}}
-                            <div class="flex-shrink-0">
-                                <div class="flex items-center justify-center w-10 h-10 rounded-lg {{ $iconBgClass }} transition-colors">
-                                    <i class="fas {{ $iconClass }} text-base"></i>
-                                </div>
-                            </div>
 
                             {{-- Content --}}
                             <div class="flex-1 min-w-0">
-                                <p class="text-sm {{ $textClass }} mb-1 {{ $isUnread ? 'font-semibold' : 'font-normal' }}">
+                                <p class="text-sm truncate {{ $textClass }} mb-1 {{ $isUnread ? 'font-semibold' : 'font-normal' }}">
                                     {{ $message }}
                                 </p>
                                 <p class="text-xs {{ $timeClass }} flex items-center">

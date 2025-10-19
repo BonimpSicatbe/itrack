@@ -25,8 +25,7 @@ class Navigation extends Component
             ['label' => 'Dashboard', 'route' => 'user.dashboard', 'icon' => 'home'],
             ['label' => 'Recents', 'route' => 'user.recents', 'icon' => 'clock-rotate-left'],
             ['label' => 'Requirements', 'route' => 'user.requirements', 'icon' => 'clipboard-list'],
-            ['label' => 'File Manager', 'icon' => 'folder', 'route' => 'user.file-manager'],
-            ['label' => 'Notifications', 'icon' => 'bell', 'route' => 'user.notifications'],
+            ['label' => 'Portfolio', 'icon' => 'folder', 'route' => 'user.file-manager'],
         ];
 
         // Bottom navigation links (profile and logout)

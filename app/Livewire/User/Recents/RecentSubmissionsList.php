@@ -20,6 +20,7 @@ class RecentSubmissionsList extends Component
         'approved' => 'Approved'
     ];
     public $activeSemester; // NEW PROPERTY
+    public $isUserActive; // NEW PROPERTY
 
     protected $queryString = [
         'statusFilter',
@@ -29,6 +30,7 @@ class RecentSubmissionsList extends Component
 
     public function mount()
     {
+        $this->isUserActive = Auth::user()->is_active; // CHECK USER ACTIVE STATUS
         $this->activeSemester = Semester::getActiveSemester(); // CHECK FOR ACTIVE SEMESTER
         $this->loadRecentSubmissions();
     }
@@ -53,6 +55,12 @@ class RecentSubmissionsList extends Component
 
     public function loadRecentSubmissions()
     {
+        // Don't load submissions if user is inactive
+        if (!$this->isUserActive) {
+            $this->recentSubmissions = collect(); // Set to empty collection
+            return;
+        }
+
         // Only load submissions if an active semester exists
         if (!$this->activeSemester) {
             $this->recentSubmissions = collect(); // Set to empty collection
