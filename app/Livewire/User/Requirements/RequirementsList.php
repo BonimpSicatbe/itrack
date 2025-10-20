@@ -893,10 +893,8 @@ class RequirementsList extends Component
                 
             } else {
                 // Toggle on - mark as done FOR THIS COURSE (and all partners if it's a partnership)
+                // REMOVED: The separate call to updateSubmissionsToUnderReview since it's now handled in markPartnershipAsDone
                 $this->markPartnershipAsDone($requirement, $user->id);
-                
-                // Update all uploaded submissions to under_review status for this requirement and course
-                $this->updateSubmissionsToUnderReview($requirementId, $user->id);
                 
                 $message = 'Requirement marked as done!';
                 
@@ -1017,6 +1015,9 @@ class RequirementsList extends Component
                         'course_id' => $this->selectedCourse
                     ]);
                 }
+                
+                // NEW: Update all uploaded submissions to under_review for EACH partner requirement
+                $this->updateSubmissionsToUnderReview($partnerRequirement->id, $userId);
             }
         } else {
             // For non-partnership requirements, just mark the single requirement
@@ -1026,6 +1027,9 @@ class RequirementsList extends Component
                 'course_id' => $this->selectedCourse,
                 'submitted_at' => now(),
             ]);
+            
+            // Update submissions to under_review for the single requirement
+            $this->updateSubmissionsToUnderReview($requirement->id, $userId);
         }
     }
 

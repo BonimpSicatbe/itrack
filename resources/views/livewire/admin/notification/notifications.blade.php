@@ -11,9 +11,9 @@
 
 <div class="flex h-full gap-0 rounded-xl overflow-hidden shadow-lg">
     {{-- Notifications List (Left) --}}
-    <div class="w-1/3 border-r border-gray-200 overflow-y-auto bg-gray-50">
+    <div class="w-1/3 border-r border-gray-200 bg-gray-50 flex flex-col">
         <!-- Header -->
-        <div class="p-6" style="background: linear-gradient(148deg,rgba(18, 67, 44, 1) 0%, rgba(30, 119, 77, 1) 54%, rgba(55, 120, 64, 1) 100%);">
+        <div class="flex-shrink-0 p-6" style="background: linear-gradient(148deg,rgba(18, 67, 44, 1) 0%, rgba(30, 119, 77, 1) 54%, rgba(55, 120, 64, 1) 100%);">
             <div class="flex justify-between items-center mb-4">
                 <div class="flex items-center">
                     <i class="fa-solid fa-bell text-white text-2xl mr-3"></i>
@@ -60,7 +60,7 @@
         </div>
 
         <!-- Notifications List -->
-        <div class="p-3 space-y-2">
+        <div class="flex-1 overflow-y-auto p-3 space-y-2">
             @forelse($filteredNotifications as $notification)
                 @php
                     $highlight = $notification->unread()
