@@ -316,7 +316,7 @@ class SubmittedRequirementsIndex extends Component
             ->pluck('rsi.user_id');
 
         $query = User::whereIn('id', $userIds)
-            ->with(['college', 'department'])
+            ->with(['college'])
             ->orderBy('lastname')
             ->orderBy('firstname');
 

@@ -69,7 +69,6 @@ class RequirementEdit extends Component
         $assignedTo = $this->requirement->assigned_to ?? [];
         
         $userQuery = \App\Models\User::query()->with([
-            'department', 
             'college',
             'courseAssignments.course.program.college'
         ]);

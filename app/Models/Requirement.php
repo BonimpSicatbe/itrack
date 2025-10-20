@@ -359,19 +359,6 @@ class Requirement extends Model implements HasMedia
         return Requirement::where('assigned_to', $this->assigned_to);
     }
 
-    public function assignedTargets()
-    {
-        if (College::where('name', $this->assigned_to)->exists()) {
-            $college = College::where('name', $this->assigned_to)->first();
-            return User::where('college_id', $college->id)->get();
-        } elseif (Department::where('name', $this->assigned_to)->exists()) {
-            $department = Department::where('name', $this->assigned_to)->first();
-            return User::where('department_id', $department->id)->get();
-        }
-
-        return collect();
-    }
-
     public function getStatusColorAttribute()
     {
         return [
@@ -388,26 +375,6 @@ class Requirement extends Model implements HasMedia
             'normal' => 'warning',
             'high' => 'error',
         ][$this->priority] ?? 'neutral';
-    }
-
-    public function assignedToType()
-    {
-        if ($this->target === 'college') {
-            return College::find($this->target_id);
-        } elseif ($this->target === 'department') {
-            return Department::find($this->target_id);
-        }
-        return null;
-    }
-
-    public function targetUsers()
-    {
-        if ($this->target === 'college') {
-            return User::where('college_id', $this->target_id)->get();
-        } elseif ($this->target === 'department') {
-            return User::where('department_id', $this->target_id)->get();
-        }
-        return collect();
     }
 
     public function isOverdue(): bool

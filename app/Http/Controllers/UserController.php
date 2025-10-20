@@ -149,17 +149,50 @@ class UserController extends Controller
 
     public function downloadUserReport(User $user)
     {
-        $submittedRequirements = SubmittedRequirement::where('user_id', $user->id)->get();
-        $requirements = $user->requirements()->get();
+        // Get active semester
         $semester = Semester::getActiveSemester();
+        
+        // Get user's assigned courses for the active semester
+        $assignedCourses = \App\Models\CourseAssignment::where('professor_id', $user->id)
+            ->where('semester_id', $semester->id)
+            ->with(['course.program', 'course.courseType'])
+            ->get();
+        
+        // Get all requirements for the active semester
+        $requirements = \App\Models\Requirement::where('semester_id', $semester->id)
+            ->orderBy('id')
+            ->get();
+        
+        // Get ALL submitted requirements for this user in active semester
+        $allSubmissions = \App\Models\SubmittedRequirement::where('user_id', $user->id)
+            ->whereHas('requirement', function($query) use ($semester) {
+                $query->where('semester_id', $semester->id);
+            })
+            ->where('status', '!=', 'uploaded')
+            ->with(['requirement', 'course.program', 'media'])
+            ->get();
+
+        // Group by course_id AND requirement_id to ensure proper grouping
+        $groupedSubmissions = [];
+        foreach ($allSubmissions as $submission) {
+            $key = $submission->course_id . '_' . $submission->requirement_id;
+            if (!isset($groupedSubmissions[$key])) {
+                $groupedSubmissions[$key] = [];
+            }
+            $groupedSubmissions[$key][] = $submission;
+        }
 
         $pdf = Pdf::loadView('testPage', [
+            'assignedCourses' => $assignedCourses,
             'requirements' => $requirements,
-            'submittedRequirements' => $submittedRequirements,
+            'groupedSubmissions' => $groupedSubmissions, // Use the new grouped array
             'user' => $user,
             'semester' => $semester,
         ]);
 
-        return $pdf->download("User_Report_{$user->name}_" . now()->format('F_d_Y_hia') . ".pdf");
+        // Set paper size and orientation
+        $pdf->setPaper('A4', 'portrait');
+        
+        return $pdf->download("Faculty_Report_{$user->lastname}_{$user->firstname}_" . now()->format('F_d_Y') . ".pdf");
     }
 }

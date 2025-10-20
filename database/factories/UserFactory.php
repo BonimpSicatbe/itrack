@@ -30,7 +30,6 @@ class UserFactory extends Factory
             'email' => fake()->unique()->safeEmail(),
             'email_verified_at' => now(),
             'college_id' => $collegeId = \App\Models\College::inRandomOrder()->value('id'),
-            'department_id' => \App\Models\Department::where('college_id', $collegeId)->inRandomOrder()->value('id'),
             'password' => static::$password ??= Hash::make('password'),
         ];
     }

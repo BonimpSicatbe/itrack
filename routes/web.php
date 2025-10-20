@@ -4,13 +4,10 @@ use App\Http\Controllers\admin\RequirementController;
 use App\Http\Controllers\admin\SubmittedRequirementController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\UserController;
-use App\Http\Controllers\UserRequirementController;
 use App\Http\Controllers\FileController;
 use App\Http\Controllers\FileManagerController;
-use App\Http\Controllers\FileUploadController;
 use App\Http\Controllers\admin\SemesterController;
 use App\Http\Controllers\Admin\ManagementController;
-use App\Models\SubmittedRequirement;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -112,14 +109,13 @@ Route::middleware(['auth', 'role:admin|super-admin'])
         });
 
         Route::get('/test', function () {
-            $user = App\Models\User::where('id', 1)->with('college', 'department')->first();
+            $user = App\Models\User::where('id', 1)->with('college')->first();
             $semester = App\Models\Semester::where('is_active', true)->first();
 
             $submittedRequirements = App\Models\SubmittedRequirement::where('user_id', 1)
                 ->with([
                     'requirement',
                     'user.college',
-                    'user.department',
                     'semester',
                 ])->get();
 

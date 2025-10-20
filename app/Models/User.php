@@ -28,7 +28,6 @@ class User extends Authenticatable implements HasMedia
         'extensionname',
         'email',
         'email_verified_at',
-        'department_id',
         'college_id',
         'is_active', 
         'deactivated_at',
@@ -101,31 +100,11 @@ class User extends Authenticatable implements HasMedia
         return $this->belongsToMany(Semester::class, 'user_semester', 'user_id', 'semester_id');
     }
 
-    public function department(): BelongsTo
-    {
-        return $this->belongsTo(Department::class)->withDefault([
-            'name' => 'N/A',
-        ]);
-    }
-
     public function college(): BelongsTo
     {
         return $this->belongsTo(College::class)->withDefault([
             'name' => 'N/A',
         ]);
-    }
-
-    public function requirements()
-    {
-        return \App\Models\Requirement::where(function ($query) {
-            if ($this->college) {
-                $query->orWhere('assigned_to', $this->college->name);
-            }
-
-            if ($this->department) {
-                $query->orWhere('assigned_to', $this->department->name);
-            }
-        });
     }
 
     public function createdRequirements(): HasMany
@@ -189,11 +168,6 @@ class User extends Authenticatable implements HasMedia
         return $name;
     }
 
-    public function getDepartmentNameAttribute(): string
-    {
-        return $this->department->name ?? 'N/A';
-    }
-
     public function getCollegeNameAttribute(): string
     {
         return $this->college->name ?? 'N/A';
@@ -209,11 +183,6 @@ class User extends Authenticatable implements HasMedia
               ->orWhere('lastname', 'like', "%{$search}%")
               ->orWhere('email', 'like', "%{$search}%");
         });
-    }
-
-    public function scopeByDepartment($query, int $departmentId)
-    {
-        return $query->where('department_id', $departmentId);
     }
 
     public function scopeByCollege($query, int $collegeId)

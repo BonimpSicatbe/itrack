@@ -119,7 +119,7 @@ class RequirementView extends Component
 
         // Load only the submissions that passed the JOIN filter
         $this->allSubmissions = SubmittedRequirement::whereIn('id', $submissionIds)
-            ->with(['media', 'reviewer', 'user.college', 'user.department', 'course'])
+            ->with(['media', 'reviewer', 'user.college', 'course'])
             ->latest()
             ->get();
 

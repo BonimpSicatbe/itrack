@@ -46,7 +46,7 @@ class SubmittedRequirementsOverview extends Component
             ->whereDoesntHave('roles', function($q) {
                 $q->whereIn('name', ['admin', 'super-admin']);
             })
-            ->with(['college', 'department'])
+            ->with(['college'])
             ->orderBy('lastname')
             ->orderBy('firstname');
 
@@ -59,9 +59,6 @@ class SubmittedRequirementsOverview extends Component
                 ->orWhere('email', 'like', '%'.$this->search.'%')
                 ->orWhereHas('college', function($collegeQuery) {
                     $collegeQuery->where('name', 'like', '%'.$this->search.'%');
-                })
-                ->orWhereHas('department', function($deptQuery) {
-                    $deptQuery->where('name', 'like', '%'.$this->search.'%');
                 });
             });
         }

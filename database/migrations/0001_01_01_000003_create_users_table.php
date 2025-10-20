@@ -19,7 +19,6 @@ return new class extends Migration
             $table->string('extensionname')->nullable();
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
-            $table->foreignId('department_id')->nullable()->constrained('departments');
             $table->foreignId('college_id')->nullable()->constrained('colleges');
             $table->boolean('is_active')->default(true); 
             $table->timestamp('deactivated_at')->nullable(); 

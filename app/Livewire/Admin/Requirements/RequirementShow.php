@@ -45,7 +45,6 @@ class RequirementShow extends Component
         $assignedTo = $this->requirement->assigned_to ?? [];
         
         $userQuery = User::query()->with([
-            'department', 
             'college',
             'courseAssignments.course.program.college'
         ])->where('is_active', true); // Only active users

@@ -3,7 +3,6 @@
 namespace App\Livewire\Admin\Requirements;
 
 use App\Models\College;
-use App\Models\Department;
 use App\Models\Requirement;
 use App\Models\Semester;
 use App\Models\User;

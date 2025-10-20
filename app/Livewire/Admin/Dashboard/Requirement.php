@@ -3,7 +3,6 @@
 namespace App\Livewire\Admin\Dashboard;
 
 use App\Models\College;
-use App\Models\Department;
 use App\Models\Requirement as ModelsRequirement;
 use App\Models\Semester;
 use App\Models\User;
@@ -21,15 +20,6 @@ class Requirement extends Component
     public $sortDirection = 'asc';
 
     protected $listeners = ['requirementCreated' => '$refresh'];
-
-    #[Computed()]
-    public function sectors()
-    {
-        return collect([
-            'college' => 'College',
-            'department' => 'Department',
-        ]);
-    }
 
     public function sortBy($field)
     {
@@ -121,7 +111,6 @@ class Requirement extends Component
         return view('livewire.admin.dashboard.requirement', [
             'requirements' => $requirements,
             'colleges' => College::all(),
-            'departments' => Department::all(),
             'activeSemester' => $activeSemester, // Pass to view
         ]);
     }
