@@ -23,6 +23,8 @@ class RequirementCreate extends Component
     public $otherRequirementName = '';
     public $isOtherSelected = false;
 
+    public $isCreating = false;
+
     // --- CORE PROPERTIES ---
     #[Validate('required|date|after_or_equal:today')]
     public $due = '';
@@ -524,6 +526,7 @@ class RequirementCreate extends Component
     public function createRequirement()
     {
         $this->validate();
+        $this->isCreating = true;
 
         try {
             if (!$activeSemester = $this->activeSemester) {
@@ -632,61 +635,134 @@ class RequirementCreate extends Component
             // 3. Get assigned users for notifications
             $assignedUsers = $this->getAssignedUsers($assignedData);
 
-            // 4. Loop and Create Requirements
+            // 4. Store uploaded files permanently first to prevent cleanup issues
+            $storedFiles = [];
+            if (!empty($this->required_files)) {
+                foreach ($this->required_files as $file) {
+                    // Generate a unique filename to avoid conflicts
+                    $fileName = time() . '_' . uniqid() . '_' . $file->getClientOriginalName();
+                    $path = $file->storeAs('temp/requirements', $fileName, 'public');
+                    
+                    $storedFiles[] = [
+                        'path' => $path,
+                        'original_name' => $file->getClientOriginalName(),
+                        'name' => $file->getClientOriginalName(),
+                        'full_path' => storage_path('app/public/' . $path)
+                    ];
+                }
+            }
+
+            // 5. Loop and Create Requirements
             $createdCount = 0;
-            $filesToUpload = $this->required_files; 
-            $firstRequirement = null;
 
             foreach ($requirementsToCreate as $data) {
                 $requirement = Requirement::create([
                     'name' => $data['name'], 
                     'due' => $this->due,
                     'assigned_to' => $assignedData, 
-                    'requirement_type_ids' => $data['type_ids'], // This will be automatically cast to JSON
-                    'requirement_group' => $data['requirement_group'], // Add partnership group
+                    'requirement_type_ids' => $data['type_ids'],
+                    'requirement_group' => $data['requirement_group'],
                     'created_by' => Auth::id(),
                     'semester_id' => $activeSemester->id,
                     'status' => 'pending'
                 ]);
+
+                // Add stored files to each requirement - CREATE COPIES for each requirement
+                if (!empty($storedFiles)) {
+                    foreach ($storedFiles as $storedFile) {
+                        // Verify file exists before trying to add it
+                        if (file_exists($storedFile['full_path'])) {
+                            // Create a temporary copy for this requirement
+                            $tempCopyPath = storage_path('app/public/temp/copy_' . uniqid() . '_' . $storedFile['original_name']);
+                            copy($storedFile['full_path'], $tempCopyPath);
+                            
+                            $requirement->addMedia($tempCopyPath)
+                                ->usingName($storedFile['name'])
+                                ->usingFileName($storedFile['original_name'])
+                                ->toMediaCollection('guides');
+                            
+                            // Clean up the temporary copy after it's been processed
+                            if (file_exists($tempCopyPath)) {
+                                unlink($tempCopyPath);
+                            }
+                        } else {
+                            Log::warning("File not found during requirement creation: " . $storedFile['full_path']);
+                        }
+                    }
+                }
 
                 // Send notifications to assigned users
                 foreach ($assignedUsers as $user) {
                     $user->notify(new \App\Notifications\NewRequirementNotification($requirement));
                 }
 
-                if ($createdCount === 0) {
-                    $firstRequirement = $requirement;
-                }
                 $createdCount++;
             }
 
-            // 5. Handle file uploads (to the first created record)
-            if ($firstRequirement && !empty($filesToUpload)) {
-                foreach ($filesToUpload as $file) {
-                    $firstRequirement->addMedia($file->getRealPath())
-                        ->usingName($file->getClientOriginalName())
-                        ->usingFileName($file->getClientOriginalName())
-                        ->toMediaCollection('guides');
+            // 6. Clean up original stored files after successful creation
+            if (!empty($storedFiles)) {
+                foreach ($storedFiles as $storedFile) {
+                    if (file_exists($storedFile['full_path'])) {
+                        unlink($storedFile['full_path']);
+                    }
                 }
             }
 
-            $this->reset();
-            
             session()->flash('notification', [
                 'type' => 'success',
                 'content' => "Successfully created {$createdCount} requirement(s). Notifications sent to {$assignedUsers->count()} users.",
                 'duration' => 3000
             ]);
 
+            // Reset form fields
+            $this->selectedRequirementTypes = [];
+            $this->otherRequirementName = '';
+            $this->isOtherSelected = false;
+            $this->due = '';
+            $this->selectedPrograms = [];
+            $this->selectAllPrograms = false;
+            $this->selectAllRequirements = false;
+            $this->selectAllMidterm = false;
+            $this->selectAllFinals = false;
+            $this->required_files = [];
+            $this->previousRequirementTypes = [];
+
+            $this->isCreating = false;
+
             return redirect()->route('admin.requirements.index');
             
         } catch (\Exception $e) {
+            $this->isCreating = false;
+            
+            // Clean up any stored files if error occurred
+            if (isset($storedFiles) && !empty($storedFiles)) {
+                foreach ($storedFiles as $storedFile) {
+                    if (file_exists($storedFile['full_path'])) {
+                        unlink($storedFile['full_path']);
+                    }
+                }
+            }
+            
             Log::error('Requirement creation failed', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
             session()->flash('notification', [
                 'type' => 'error',
                 'content' => 'Failed to create requirement: ' . $e->getMessage(),
                 'duration' => 5000
             ]);
+        }
+    }
+
+    // Helper method to copy media from one requirement to another
+    protected function copyMediaFromRequirement(Requirement $target, Requirement $source)
+    {
+        $mediaItems = $source->getMedia('guides');
+        
+        foreach ($mediaItems as $mediaItem) {
+            // This creates a new media record pointing to the same file
+            $target->addMedia($mediaItem->getPath())
+                ->usingName($mediaItem->name)
+                ->usingFileName($mediaItem->file_name)
+                ->toMediaCollection('guides');
         }
     }
 

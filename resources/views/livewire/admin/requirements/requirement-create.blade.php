@@ -450,18 +450,36 @@
 
                     <!-- Action Buttons -->
                     <div class="flex justify-end gap-3 pt-6">
-                        <button type="button" wire:click="cancel" class="btn border-2 border-green-600 rounded-xl text-gray-700 px-5 py-3 text-sm font-semibold hover:shadow-lg transition-all duration-200">
+                        <button type="button" 
+                                wire:click="cancel" 
+                                wire:loading.attr="disabled"
+                                class="btn border-2 border-green-600 rounded-xl text-gray-700 px-5 py-3 text-sm font-semibold hover:shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
                             Cancel
                         </button>
                         <button type="submit" 
-                                class="btn bg-green-600 hover:bg-green-700 text-white rounded-xl px-5 py-3 text-sm font-medium shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+                                class="btn bg-green-600 hover:bg-green-700 text-white rounded-xl px-5 py-3 text-sm font-medium shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center min-w-32"
+                                wire:loading.attr="disabled"
+                                wire:target="createRequirement"
                                 @if(empty($selectedRequirementTypes) && !$isOtherSelected) disabled @endif>
-                            Create Requirement
-                            @if(count($selectedRequirementTypes) + ($isOtherSelected ? 1 : 0) > 0)
-                                <span class="ml-2 bg-white/20 px-2 py-1 rounded-full text-sm">
-                                    ({{ count($selectedRequirementTypes) + ($isOtherSelected ? 1 : 0) }})
-                                </span>
-                            @endif
+                            
+                            <span wire:loading.remove wire:target="createRequirement">
+                                Create Requirement
+                                @if(count($selectedRequirementTypes) + ($isOtherSelected ? 1 : 0) > 0)
+                                    <span class="ml-2 bg-white/20 px-2 py-1 rounded-full text-sm">
+                                        ({{ count($selectedRequirementTypes) + ($isOtherSelected ? 1 : 0) }})
+                                    </span>
+                                @endif
+                            </span>
+                            
+                            <span wire:loading wire:target="createRequirement" class="flex items-center gap-2">
+                                <i class="fa-solid fa-spinner fa-spin"></i>
+                                Creating...
+                                @if(count($selectedRequirementTypes) + ($isOtherSelected ? 1 : 0) > 0)
+                                    <span class="bg-white/20 px-2 py-1 rounded-full text-sm">
+                                        ({{ count($selectedRequirementTypes) + ($isOtherSelected ? 1 : 0) }})
+                                    </span>
+                                @endif
+                            </span>
                         </button>
                     </div>
                 </form>
