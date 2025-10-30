@@ -147,6 +147,62 @@ class UserController extends Controller
         return redirect()->away($fullUrl);
     }
 
+    /**
+     * Preview user report in browser
+     */
+    public function previewUserReport(User $user)
+    {
+        // Get active semester
+        $semester = Semester::getActiveSemester();
+        
+        // Get user's assigned courses for the active semester
+        $assignedCourses = \App\Models\CourseAssignment::where('professor_id', $user->id)
+            ->where('semester_id', $semester->id)
+            ->with(['course.program', 'course.courseType'])
+            ->get();
+        
+        // Get all requirements for the active semester
+        $requirements = \App\Models\Requirement::where('semester_id', $semester->id)
+            ->orderBy('id')
+            ->get();
+        
+        // Get ALL submitted requirements for this user in active semester
+        $allSubmissions = \App\Models\SubmittedRequirement::where('user_id', $user->id)
+            ->whereHas('requirement', function($query) use ($semester) {
+                $query->where('semester_id', $semester->id);
+            })
+            ->where('status', '!=', 'uploaded')
+            ->with(['requirement', 'course.program', 'media'])
+            ->get();
+
+        // Group by course_id AND requirement_id to ensure proper grouping
+        $groupedSubmissions = [];
+        foreach ($allSubmissions as $submission) {
+            $key = $submission->course_id . '_' . $submission->requirement_id;
+            if (!isset($groupedSubmissions[$key])) {
+                $groupedSubmissions[$key] = [];
+            }
+            $groupedSubmissions[$key][] = $submission;
+        }
+
+        $pdf = Pdf::loadView('reports.testPage', [
+            'assignedCourses' => $assignedCourses,
+            'requirements' => $requirements,
+            'groupedSubmissions' => $groupedSubmissions,
+            'user' => $user,
+            'semester' => $semester,
+        ]);
+
+        // Set paper size and orientation
+        $pdf->setPaper('A4', 'portrait');
+        
+        // Preview in browser instead of downloading
+        return $pdf->stream("Faculty_Report_{$user->lastname}_{$user->firstname}_" . now()->format('F_d_Y') . ".pdf");
+    }
+
+    /**
+     * Download user report (kept for backward compatibility)
+     */
     public function downloadUserReport(User $user)
     {
         // Get active semester
@@ -185,7 +241,7 @@ class UserController extends Controller
         $pdf = Pdf::loadView('reports.testPage', [
             'assignedCourses' => $assignedCourses,
             'requirements' => $requirements,
-            'groupedSubmissions' => $groupedSubmissions, // Use the new grouped array
+            'groupedSubmissions' => $groupedSubmissions,
             'user' => $user,
             'semester' => $semester,
         ]);

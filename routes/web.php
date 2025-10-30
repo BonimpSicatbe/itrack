@@ -108,13 +108,13 @@ Route::middleware(['auth', 'role:admin|super-admin'])
         Route::get('/semesters/{semester}/preview-report/{requirementId}', [SemesterController::class, 'previewSemesterReport'])
             ->name('semesters.preview-report-specific');
 
+        Route::get('/users/{user}/preview-report', [UserController::class, 'previewUserReport'])->name('users.preview-report');
+        Route::get('/users/{user}/report', [UserController::class, 'downloadUserReport'])->name('users.report');
+
         Route::prefix('management')->group(function () {
             // Main management dashboard
             Route::get('/', [ManagementController::class, 'index'])
                 ->name('management.index');
-            
-            // User reports
-            Route::get('/users/{user}/report', [UserController::class, 'downloadUserReport'])->name('users.report');
         });
 
         Route::get('/test', function () {

@@ -144,7 +144,7 @@
                                     data-tip="Edit" wire:click="openEditUserModal({{ $user->id }})">
                                     <i class="fa-solid fa-pen-to-square"></i>
                                 </button>
-                                <a href="{{ route('admin.users.report', $user) }}"
+                                <a href="{{ route('admin.users.preview-report', $user) }}" target="_blank"
                                     class="text-purple-500 hover:bg-purple-100 rounded-xl p-2 tooltip cursor-pointer"
                                     data-tip="Report">
                                     <i class="fa-solid fa-file-chart-column"></i>
