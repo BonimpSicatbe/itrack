@@ -28,122 +28,256 @@
         }
 
         body {
-            /* Calibri Font */
-            font-family: 'Calibri', 'Helvetica', sans-serif;
-            font-size: 10px;
-            line-height: 1.5;
-            color: var(--dark-text);
-            padding: 40px 30px;
+            /* Arial Font Only */
+            font-family: 'Arial', sans-serif;
+            font-size: 12px; /* Increased from 10px */
+            color: black;
+            margin: 0.4in 1in; /* 0.4 inch top/bottom, 1 inch left/right */
         }
 
-        /* --- Header Styling (Clean and Separated) --- */
+        /* --- Updated Header Styling (Letterhead Style) --- */
         .header {
+            width: 100%;
+            margin-bottom: 25px; /* Increased from 20px */
+            text-align: center;
+            font-family: 'Arial', sans-serif;
+        }
+
+        .header-content {
             display: table;
             width: 100%;
-            margin-bottom: 30px;
-            padding-bottom: 10px;
-            border-bottom: 4px solid var(--primary-green);
+            margin: 0;
+            padding: 0;
+            table-layout: fixed;
+            font-family: 'Arial', sans-serif;
         }
 
-        .header-left {
+        .logo-left {
             display: table-cell;
-            vertical-align: middle;
-            width: 60%;
-        }
-
-        .header-right {
-            display: table-cell;
-            vertical-align: middle;
-            width: 40%;
+            vertical-align: right;
+            width: 25%; 
             text-align: right;
-            color: var(--light-text);
+            font-family: 'Arial', sans-serif;
+        }
+
+        .header-center {
+            display: table-cell;
+            vertical-align: middle;
+            width: 50%; 
+            text-align: center; 
+            padding: 0 1px; 
+            font-family: 'Arial', sans-serif;
+        }
+
+        .logo-right {
+            display: table-cell;
+            vertical-align: left;
+            width: 25%; 
+            text-align: left;
+            padding-left: 13px; 
+            font-family: 'Arial', sans-serif;
         }
 
         .logo {
-            max-width: 150px;
-            height: auto;
-            margin-bottom: 5px;
+            max-height: 100px; 
+            padding-top: 5px;
+        }
+
+        /* CHANGED: Added text-align: center to university-info to center all text */
+        .university-info {
+            margin: 0;
+            padding: 0;
+            line-height: 0.9;
+            text-align: center;
+            font-family: 'Arial', sans-serif;
+        }
+
+        .republic {
+            font-size: 12px;
+            font-weight: normal;
+            margin: 0;
+            padding: 0;
+            font-family: 'Arial', sans-serif;
+        }
+
+        .university-name {
+            font-size: 17px; 
+            font-weight: bold;
+            margin: 4px 0 0 0; 
+            text-transform: uppercase;
+            padding: 0;
+            font-family: 'Arial', sans-serif;
+        }
+
+        .campus-name {
+            font-size: 12px; 
+            font-weight: bold;
+            margin: 5px 0 0 0; 
+            padding: 0;
+            font-family: 'Arial', sans-serif;
+        }
+
+        .address {
+            font-size: 12px; 
+            margin: 4px 0 0 0; 
+            font-family: 'Arial', sans-serif;
+        }
+
+        .contact-info {
+            font-size: 12px; 
+            margin: 3px 0 0 0; 
+            font-family: 'Arial', sans-serif;
+        }
+
+        .website {
+            font-size: 12px; /* Increased from 9px */
+            margin: 3px 0 0 0; /* Increased from 2px */
+            font-style: italic;
+            font-family: 'Arial', sans-serif;
+        }
+
+        .college-name {
+            font-size: 16px; /* Same as university-name */
+            font-weight: bold;
+            margin: 10px 0 0 0; /* Increased from 8px */
+            text-transform: uppercase;
+            white-space: nowrap;
+            font-family: 'Arial', sans-serif;
+        }
+
+        .college-divider {
+            width: 100%;
+            height: 2.5px;
+            background-color: black;
+            margin: 15px 0 0 0;
+            border: none;
         }
 
         .report-title {
-            font-size: 18px;
-            font-weight: 700;
-            color: #000;
-            letter-spacing: 0.3px;
+            font-size: 14px; /* Changed from 18px to 14px */
+            font-weight: bold;
+            margin: 18px 0 0 0; /* Increased from 15px */
+            text-transform: uppercase;
+            font-family: 'Arial', sans-serif;
         }
 
-        .date-time {
-            font-size: 9px;
-            margin-top: 5px;
+        /* Footer Styling */
+        .footer {
+            width: 100%;
+            margin-top: 35px; /* Increased from 30px */
+            padding-top: 12px; /* Increased from 10px */
+            border-top: 2px solid #1f2937;
+            font-family: 'Arial', sans-serif;
+        }
+
+        .footer-content {
+            display: table;
+            width: 100%;
+            font-family: 'Arial', sans-serif;
+        }
+
+        .footer-left {
+            display: table-cell;
+            vertical-align: middle;
+            width: 50%;
+            text-align: left;
+            font-family: 'Arial', sans-serif;
+        }
+
+        .footer-right {
+            display: table-cell;
+            vertical-align: middle;
+            width: 50%;
+            text-align: right;
+            color: var(--light-text);
+            font-family: 'Arial', sans-serif;
+        }
+
+        .footer-logo {
+            max-width: 120px; /* Increased from 100px */
+            height: auto;
+        }
+
+        .footer-info {
+            font-size: 11px; /* Increased from 9px */
+            font-family: 'Arial', sans-serif;
         }
 
         /* --- Section Titles (Minimalist) --- */
         .section-title {
-            font-size: 14px;
+            font-size: 14px; /* Changed from 16px to 14px */
             font-weight: bold;
             text-transform: uppercase;
             color: #000;
-            margin: 30px 0 10px 0;
+            margin: 30px 0 12px 0; /* Increased from 25px/10px */
             border-bottom: 1px solid var(--border-color);
-            padding-bottom: 5px;
+            padding-bottom: 6px; /* Increased from 5px */
             page-break-after: avoid;
             letter-spacing: 0.8px;
+            font-family: 'Arial', sans-serif;
         }
 
         /* --- Info Boxes (Inline Display) --- */
         .info-container {
             display: table;
             width: 100%;
-            margin-bottom: 20px;
+            margin-bottom: 25px; /* Increased from 20px */
             border-collapse: collapse;
+            font-family: 'Arial', sans-serif;
         }
 
         .info-box {
             display: table-cell;
             width: 50%;
-            padding: 10px 0;
+            padding: 12px 0; /* Increased from 10px */
             vertical-align: top;
+            font-family: 'Arial', sans-serif;
         }
 
         .info-box:first-child {
-            padding-right: 20px;
+            padding-right: 25px; /* Increased from 20px */
         }
 
         .info-header {
-            font-size: 11px;
+            font-size: 13px; /* Increased from 11px */
             font-weight: bold;
             color: #000;
-            margin-bottom: 5px;
+            margin-bottom: 6px; /* Increased from 5px */
             border-bottom: 1px dashed var(--border-color);
-            padding-bottom: 3px;
+            padding-bottom: 4px; /* Increased from 3px */
+            font-family: 'Arial', sans-serif;
         }
 
         .info-details {
-            font-size: 10px;
-            margin-bottom: 2px;
+            font-size: 12px; /* Increased from 10px */
+            margin-bottom: 3px; /* Increased from 2px */
+            font-family: 'Arial', sans-serif;
         }
         
         .info-details strong {
             font-weight: 700;
+            font-family: 'Arial', sans-serif;
         }
 
         /* --- Summary Grid (Inline) --- */
         .summary-grid {
             display: table;
             width: 100%;
-            margin-top: 15px;
+            margin-top: 18px; /* Increased from 15px */
             border: 1px solid #16A34A;
             overflow: hidden;
             border-collapse: collapse;
+            font-family: 'Arial', sans-serif;
         }
         
         .summary-item {
             display: table-cell;
             width: 25%;
-            padding: 10px 5px;
+            padding: 12px 6px; /* Increased from 10px/5px */
             text-align: center;
             border-right: 1px solid #16A34A;
             border-radius: 4px;
+            font-family: 'Arial', sans-serif;
         }
 
         .summary-item:last-child {
@@ -151,70 +285,79 @@
         }
 
         .summary-name {
-            font-size: 9px;
+            font-size: 11px; /* Increased from 9px */
             font-weight: 700;
             color: var(--dark-text);
             text-transform: uppercase;
             letter-spacing: 0.5px;
+            font-family: 'Arial', sans-serif;
         }
 
         .summary-value {
-            font-size: 18px;
+            font-size: 20px; /* Increased from 18px */
             font-weight: bold;
-            margin-top: 3px;
+            margin-top: 4px; /* Increased from 3px */
             color: var(--primary-green);
+            font-family: 'Arial', sans-serif;
         }
 
         /* --- Course and Requirement Table (Primary Data View) --- */
         .program-title {
-            font-size: 12px;
+            font-size: 14px; /* Changed from 14px to 14px (no change but keeping for consistency) */
             font-weight: bold;
-            margin: 20px 0 10px 0;
+            margin: 25px 0 12px 0; /* Increased from 20px/10px */
             color: #000;
-            padding: 5px 0;
+            padding: 6px 0; /* Increased from 5px */
             border-bottom: 2px solid var(--accent-green);
             page-break-after: avoid;
             letter-spacing: 0.2px;
+            font-family: 'Arial', sans-serif;
         }
         
         .course-table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 20px;
+            margin-bottom: 25px; /* Increased from 20px */
             page-break-inside: auto;
+            font-family: 'Arial', sans-serif;
         }
 
         .course-header-row {
             background-color: var(--light-green);
-            font-size: 10px;
+            font-size: 12px; /* Increased from 10px */
             font-weight: bold;
             color: var(--primary-green);
             border-top: 1px solid var(--border-color);
             border-bottom: 1px solid var(--border-color);
+            font-family: 'Arial', sans-serif;
         }
         
         .course-header-row th {
-             padding: 8px 10px;
+             padding: 10px 12px; /* Increased from 8px/10px */
              text-align: left;
+             font-family: 'Arial', sans-serif;
         }
 
         .course-row-details {
             background-color: #f3f4f6;
             font-weight: 700;
             border-top: 1px solid var(--border-color);
+            font-family: 'Arial', sans-serif;
         }
 
         .course-row-details td {
-            padding: 6px 10px;
-            font-size: 10px;
+            padding: 8px 12px; /* Increased from 6px/10px */
+            font-size: 12px; /* Increased from 10px */
             color: var(--dark-text);
+            font-family: 'Arial', sans-serif;
         }
         
         .req-row td {
-            padding: 8px 10px;
+            padding: 10px 12px; /* Increased from 8px/10px */
             border-bottom: 1px solid var(--border-color);
             vertical-align: top;
-            font-size: 9px;
+            font-size: 11px; /* Increased from 9px */
+            font-family: 'Arial', sans-serif;
         }
         
         .req-row:last-child td {
@@ -224,40 +367,46 @@
         .req-name {
             font-weight: 700;
             color: var(--dark-text);
+            font-family: 'Arial', sans-serif;
         }
 
         .req-due {
-            font-size: 8px;
+            font-size: 10px; /* Increased from 8px */
             color: var(--light-text);
+            font-family: 'Arial', sans-serif;
         }
 
         .file-list {
-            margin-top: 5px;
-            padding-left: 10px;
+            margin-top: 6px; /* Increased from 5px */
+            padding-left: 12px; /* Increased from 10px */
             border-left: 2px solid var(--accent-green);
+            font-family: 'Arial', sans-serif;
         }
 
         .file-item {
-            font-size: 8px;
+            font-size: 10px; /* Increased from 8px */
             color: #555;
             word-break: break-all;
+            font-family: 'Arial', sans-serif;
         }
         
         .no-files {
              font-style: italic;
              color: var(--light-text);
+             font-family: 'Arial', sans-serif;
         }
 
         /* --- Status Styling (Aligned to the right in the table) --- */
         .status {
             text-transform: uppercase;
-            font-size: 8px;
-            padding: 4px 8px;
+            font-size: 10px; /* Increased from 8px */
+            padding: 5px 9px; /* Increased from 4px/8px */
             border-radius: 3px;
             display: inline-block;
             font-weight: bold;
             letter-spacing: 0.5px;
             white-space: nowrap;
+            font-family: 'Arial', sans-serif;
         }
 
         /* New Status Colors - Green Theme */
@@ -268,33 +417,42 @@
         .status-no-submission { background-color: #f3f4f6; color: #1f2937; }
 
         .submission-date {
-            font-size: 7px;
+            font-size: 9px; /* Increased from 7px */
             color: #666;
-            margin-top: 4px;
+            margin-top: 5px; /* Increased from 4px */
             display: block;
+            font-family: 'Arial', sans-serif;
         }
 
         .no-data {
             text-align: center;
             color: #888;
             font-style: italic;
-            padding: 20px;
+            padding: 25px; /* Increased from 20px */
             border: 1px dashed var(--border-color);
             background-color: #fafbfc;
+            font-family: 'Arial', sans-serif;
         }
 
         .course-table table {
-            font-family: 'Calibri', 'Helvetica', sans-serif;
+            font-family: 'Arial', sans-serif;
         }
 
         /* Print Specifics */
         @media print {
-            .header { border-bottom: 4px solid #000; }
-            .program-title { border-bottom: 2px solid #000; }
+            body {
+                margin: 0.5in 1in;
+                font-family: 'Arial', sans-serif;
+            }
+            
+            .header { border-bottom: none; font-family: 'Arial', sans-serif; }
+            .footer { border-top: 2px solid #000; font-family: 'Arial', sans-serif; }
+            .program-title { border-bottom: 2px solid #000; font-family: 'Arial', sans-serif; }
             
             .course-header-row, .req-row, .summary-item {
                  -webkit-print-color-adjust: exact;
                  color-adjust: exact;
+                 font-family: 'Arial', sans-serif;
             }
             
             .course-header-row {
@@ -302,24 +460,29 @@
                  color: #000 !important;
                  border-top: 1px solid #000;
                  border-bottom: 1px solid #000;
+                 font-family: 'Arial', sans-serif;
             }
             
             .course-row-details {
                  background-color: #f0f0f0 !important;
+                 font-family: 'Arial', sans-serif;
             }
 
             .summary-item {
                  border: 1px solid #000;
+                 font-family: 'Arial', sans-serif;
             }
             
             .status {
                 border: 1px solid #333 !important;
                 background-color: #fff !important;
                 color: #000 !important;
+                font-family: 'Arial', sans-serif;
             }
             
             .file-list {
                 border-left: 2px solid #333;
+                font-family: 'Arial', sans-serif;
             }
         }
     </style>
@@ -327,17 +490,34 @@
 
 <body>
     <div class="header">
-        <div class="header-left">
-            <img src="{{ public_path('images/logo-title.png') }}" alt="iTrack Logo" class="logo">
-            <div class="report-title">FACULTY END-OF-SEMESTER REPORT</div>
+        <div class="header-content">
+            <div class="logo-left">
+                <img src="{{ public_path('images/sample.png') }}" alt="CVSU Logo" class="logo">
+            </div>
+            <div class="header-center">
+                <div class="university-info">
+                    <div class="republic">Republic of the Philippines</div>
+                    <div class="university-name">CAVITE STATE UNIVERSITY</div>
+                    <div class="campus-name">Don Severino de las Alas Campus</div>
+                    <div class="address">Indang, Cavite</div>
+                    <div class="contact-info">(046) 483-9250</div>
+                    <div class="website">www.cvsu.edu.ph</div>
+                </div>
+
+                <br>
+                
+                <div class="college-name">GRADUATE SCHOOL AND OPEN LEARNING COLLEGE</div>
+            </div>
+            <div class="logo-right">
+                <img src="{{ public_path('images/1.png') }}" alt="BP Logo" class="logo">
+            </div>
         </div>
-        <div class="header-right">
-            <div class="date-time">Generated By: {{ config('app.name', 'System') }}</div>
-            <div class="date-time">Generated On: {{ now()->format('l, F j, Y \a\t g:i A') }}</div>
-        </div>
+
+        <hr class="college-divider">
+        
+        <div class="report-title">FACULTY END-OF-SEMESTER REPORT</div>
     </div>
 
-    <div class="section-title">General Information</div>
     <div class="info-container">
         <div class="info-box">
             <div class="info-header">Faculty Details</div>
@@ -354,7 +534,7 @@
         </div>
     </div>
 
-    <div class="section-title">Overall Submission Summary</div>
+    <div class="section-title">OVERALL SUBMISSION SUMMARY</div>
     @php
         $totalRequirements = $requirements->count() * $assignedCourses->count();
         $submittedCount = 0;
@@ -399,7 +579,7 @@
         </div>
     </div>
 
-    <div class="section-title">Detailed Requirements Checklist</div>
+    <div class="section-title">DETAILED REQUIREMENTS CHECKLIST</div>
 
     @php
         $coursesByProgram = $assignedCourses->groupBy(function($assignment) {
@@ -415,24 +595,24 @@
             <table class="course-table">
                 <thead>
                     <tr class="course-row-details">
-                        <td colspan="4" style="padding: 6px 10px; font-size: 10px; color: var(--dark-text);">
-                            <table style="width: 100%; border-collapse: collapse; font-family: 'Calibri', 'Helvetica', sans-serif;">
+                        <td colspan="4" style="padding: 8px 12px; font-size: 12px; color: var(--dark-text); font-family: 'Arial', sans-serif;">
+                            <table style="width: 100%; border-collapse: collapse; font-family: 'Arial', sans-serif;">
                                 <tr>
-                                    <td style="width: 60%; padding: 0; border: none; font-weight: 700;">
-                                        <strong>COURSE:</strong> {{ $assignment->course->course_code }} - {{ $assignment->course->course_name }}
+                                    <td style="width: 60%; padding: 0; border: none; font-weight: 700; font-family: 'Arial', sans-serif;">
+                                         {{ $assignment->course->course_code }} - {{ $assignment->course->course_name }}
                                     </td>
-                                    <td style="width: 40%; padding: 0; border: none; text-align: right; font-weight: 700;">
-                                        <strong>TYPE:</strong> {{ $assignment->course->courseType->name ?? 'N/A' }}
+                                    <td style="width: 40%; padding: 0; border: none; text-align: right; font-weight: 700; font-family: 'Arial', sans-serif;">
+                                         {{ $assignment->course->courseType->name ?? 'N/A' }}
                                     </td>
                                 </tr>
                             </table>
                         </td>
                     </tr>
                     <tr class="course-header-row">
-                        <th style="width: 30%;">Requirement</th>
-                        <th style="width: 15%;">Due Date</th>
-                        <th style="width: 40%;">Submitted Files</th>
-                        <th style="width: 15%; text-align: center;">Status</th>
+                        <th style="width: 30%; font-family: 'Arial', sans-serif;">Requirement</th>
+                        <th style="width: 15%; font-family: 'Arial', sans-serif;">Due Date</th>
+                        <th style="width: 40%; font-family: 'Arial', sans-serif;">Submitted Files</th>
+                        <th style="width: 15%; text-align: center; font-family: 'Arial', sans-serif;">Status</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -512,5 +692,17 @@
     @empty
         <div class="no-data">No assigned courses found for this semester.</div>
     @endforelse
+
+    <div class="footer">
+        <div class="footer-content">
+            <div class="footer-left">
+                <img src="{{ public_path('images/logo-title.png') }}" alt="iTrack Logo" class="footer-logo">
+            </div>
+            <div class="footer-right">
+                <div class="footer-info">Generated By: iTrack</div>
+                <div class="footer-info">Generated On: {{ now()->format('l, F j, Y \a\t g:i A') }}</div>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

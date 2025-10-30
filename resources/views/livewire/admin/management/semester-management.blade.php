@@ -120,45 +120,40 @@
                         </td>
                         <td class="whitespace-nowrap p-4">
                             <div class="flex justify-center space-x-2 text-base">
-                                {{-- @if ($semester->is_active)
-                                    <!-- Archive button (deactivate) for active semester -->
-                                    <button
-                                        class="text-orange-600 hover:bg-orange-100 rounded-xl p-2 tooltip cursor-pointer"
-                                        data-tip="Download Semester" wire:click="setInactive({{ $semester->id }})">
-                                        <i class="fa-solid fa-box-archive"></i>
-                                    </button>
-                                @else
-                                    <!-- Activate button for inactive semester -->
-                                    <button
-                                        class="text-green-600 hover:bg-green-100 rounded-xl p-2 tooltip cursor-pointer"
-                                        data-tip="Activate Semester" wire:click="setActive({{ $semester->id }})">
-                                        <i class="fa-solid fa-square-check"></i>
-                                    </button>
-                                @endif --}}
-
-                                <!-- Edit button (always enabled) -->
+                                <!-- Edit button -->
                                 <button class="text-amber-500 hover:bg-amber-100 rounded-xl p-2 tooltip cursor-pointer"
                                     data-tip="Edit" wire:click="openEditModal({{ $semester->id }})">
                                     <i class="fa-solid fa-pen-to-square"></i>
                                 </button>
 
-                                <!-- Delete button (disabled for active semester) -->
+                                <!-- Download Semester button -->
                                 @if (!$semester->is_active)
                                     <a href="{{ route('admin.semesters.download', $semester) }}"
                                         class="text-blue-600 hover:bg-blue-100 rounded-xl p-2 tooltip cursor-pointer"
-                                        data-tip="Download Semester" wire:click="setInactive({{ $semester->id }})">
-
+                                        data-tip="Download Semester">
                                         <i class="fa-solid fa-download"></i>
                                     </a>
                                 @else
-                                    <a href="{{ route('admin.semesters.download', $semester) }}"
-                                        class="text-blue-600 hover:bg-blue-100 rounded-xl p-2 tooltip cursor-pointer"
-                                        data-tip="Download Semester" wire:click="setInactive({{ $semester->id }})"
-                                        disabled>
-
+                                    <span class="text-blue-300 rounded-xl p-2 tooltip cursor-not-allowed"
+                                        data-tip="Cannot download active semester">
                                         <i class="fa-solid fa-download"></i>
-                                    </a>
+                                    </span>
                                 @endif
+
+                                <!-- PREVIEW BUTTON - Add this -->
+                                <!-- <a href="{{ route('admin.semesters.preview-report', $semester) }}" 
+                                target="_blank"
+                                class="text-green-600 hover:bg-green-100 rounded-xl p-2 tooltip cursor-pointer"
+                                data-tip="Preview Report">
+                                    <i class="fa-solid fa-eye"></i>
+                                </a> -->
+
+                                <!-- Report button -->
+                                <a href="{{ route('admin.semesters.report', $semester) }}"
+                                    class="text-purple-500 hover:bg-purple-100 rounded-xl p-2 tooltip cursor-pointer"
+                                    data-tip="Download Report">
+                                    <i class="fa-solid fa-file-chart-column"></i>
+                                </a>
                             </div>
                         </td>
                     </tr>

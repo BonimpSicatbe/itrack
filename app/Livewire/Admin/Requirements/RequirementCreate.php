@@ -24,12 +24,14 @@ class RequirementCreate extends Component
     public $isOtherSelected = false;
 
     public $isCreating = false;
+    public $showConfirmationModal = false;
 
     // --- CORE PROPERTIES ---
     #[Validate('required|date|after_or_equal:today')]
     public $due = '';
 
     // --- ASSIGNMENT PROPERTIES ---
+    public $selectedCollege = '';
     public $selectedPrograms = [];
     public $selectAllPrograms = false;
 
@@ -84,28 +86,28 @@ class RequirementCreate extends Component
     // Check if a requirement type is already created
     public function isRequirementCreated($requirementType)
     {
+        // For folders, check if ALL children are already created
         if ($requirementType->is_folder && $requirementType->children->isNotEmpty()) {
-            // For folders, check if any child requirement name exists
             foreach ($requirementType->children as $child) {
                 $childWithRelations = RequirementType::with('children')->find($child->id);
                 
                 if ($childWithRelations->children->isNotEmpty()) {
-                    // Grandchild level
+                    // Grandchild level - check if any grandchild is NOT created
                     foreach ($childWithRelations->children as $grandchild) {
                         $fullName = $grandchild->name . ' ' . $child->name . ' ' . $requirementType->name;
-                        if (in_array($fullName, $this->existingRequirementNames)) {
-                            return true;
+                        if (!in_array($fullName, $this->existingRequirementNames)) {
+                            return false; // Found at least one not created
                         }
                     }
                 } else {
-                    // Child level
+                    // Child level - check if child is NOT created
                     $fullName = $child->name . ' ' . $requirementType->name;
-                    if (in_array($fullName, $this->existingRequirementNames)) {
-                        return true;
+                    if (!in_array($fullName, $this->existingRequirementNames)) {
+                        return false; // Found at least one not created
                     }
                 }
             }
-            return false;
+            return true; // ALL children are created
         } else {
             // For individual requirements
             if ($requirementType->parent_id) {
@@ -170,8 +172,18 @@ class RequirementCreate extends Component
     }
 
     #[Computed]
+    public function colleges()
+    {
+        return \App\Models\College::all();
+    }
+
+    #[Computed]
     public function programs()
     {
+        if ($this->selectedCollege) {
+            return Program::where('college_id', $this->selectedCollege)->get();
+        }
+        
         return Program::all();
     }
 
@@ -207,7 +219,6 @@ class RequirementCreate extends Component
                 'string', 
                 'max:255', 
                 function ($attribute, $value, $fail) {
-                    // Only validate uniqueness if "Other" is selected AND we have a value
                     if ($this->isOtherSelected && !empty($value)) {
                         $exists = \App\Models\Requirement::where('name', $value)->exists();
                         if ($exists) {
@@ -222,7 +233,7 @@ class RequirementCreate extends Component
 
             'due' => ['required', 'date', 'after_or_equal:today'],
             
-            'selectedPrograms' => ['required', 'array', 'min:1'],
+            'selectedPrograms' => ['nullable', 'array'],
             'selectedPrograms.*' => ['exists:programs,id'],
             
             'required_files' => ['nullable', 'array', 'max:5'],
@@ -237,6 +248,11 @@ class RequirementCreate extends Component
             'otherRequirementName' => 'requirement name',
             'selectedRequirementTypes' => 'requirement type selection',
         ];
+    }
+
+    public function updatedSelectedCollege()
+    {
+        $this->selectAllPrograms = false;
     }
     
     // --- REQUIREMENT SELECTION HOOKS ---
@@ -358,8 +374,15 @@ class RequirementCreate extends Component
             $this->selectedPrograms[] = $programId;
         }
         
-        // Update select all programs state
-        $this->selectAllPrograms = count($this->selectedPrograms) === count($this->programs);
+        // Update select all programs state based on CURRENTLY VISIBLE programs
+        $this->updateSelectAllProgramsState();
+    }
+
+    public function updateSelectAllProgramsState()
+    {
+        $currentProgramIds = $this->programs->pluck('id')->toArray();
+        $this->selectAllPrograms = !empty($currentProgramIds) && 
+            count(array_intersect($this->selectedPrograms, $currentProgramIds)) === count($currentProgramIds);
     }
 
     public function toggleRequirement($requirementId)
@@ -419,7 +442,6 @@ class RequirementCreate extends Component
         $this->updateSelectAllStates();
     }
 
-
     // Select All Midterm - This selects only Midterm children
     public function updatedSelectAllMidterm($value)
     {
@@ -475,11 +497,18 @@ class RequirementCreate extends Component
     // --- ASSIGNMENT HOOKS ---
     public function updatedSelectAllPrograms($value)
     {
+        $currentProgramIds = $this->programs->pluck('id')->toArray();
+        
         if ($value) {
-            $this->selectedPrograms = $this->programs->pluck('id')->toArray();
+            // Select only the currently visible/filtered programs
+            $this->selectedPrograms = array_values(array_unique(array_merge($this->selectedPrograms, $currentProgramIds)));
         } else {
-            $this->selectedPrograms = [];
+            // Deselect only the currently visible/filtered programs
+            $this->selectedPrograms = array_values(array_diff($this->selectedPrograms, $currentProgramIds));
         }
+        
+        // Update the state
+        $this->updateSelectAllProgramsState();
     }
 
     // --- HELPER METHOD TO GET ASSIGNED USERS ---
@@ -495,7 +524,7 @@ class RequirementCreate extends Component
 
         // If all programs are selected, get all users from courses in all programs for the active semester
         if ($assignedData['selectAllPrograms']) {
-            $users = User::where('is_active', true) // Only active users
+            $users = User::where('is_active', true)
                     ->whereHas('courseAssignments', function ($query) use ($activeSemester) {
                         $query->where('semester_id', $activeSemester->id)
                             ->whereHas('course', function ($courseQuery) {
@@ -506,7 +535,7 @@ class RequirementCreate extends Component
         } 
         // If specific programs are selected
         elseif (!empty($assignedData['programs'])) {
-            $users = User::where('is_active', true) // Only active users
+            $users = User::where('is_active', true)
                     ->whereHas('courseAssignments', function ($query) use ($activeSemester, $assignedData) {
                         $query->where('semester_id', $activeSemester->id)
                             ->whereHas('course', function ($courseQuery) use ($assignedData) {
@@ -522,11 +551,53 @@ class RequirementCreate extends Component
         });
     }
 
+    // --- MODAL METHODS ---
+    public function openConfirmationModal()
+    {
+        // Run validation before showing the modal
+        $this->validate([
+            'due' => ['required', 'date', 'after_or_equal:today'],
+            'selectedPrograms' => ['required', 'array', 'min:1'],
+        ], [
+            'due.required' => 'Please set a due date and time.',
+            'selectedPrograms.required' => 'Please select at least one program.',
+            'selectedPrograms.min' => 'Please select at least one program.',
+        ]);
+
+        // Validate requirement selection
+        if (empty($this->selectedRequirementTypes) && !$this->isOtherSelected) {
+            session()->flash('notification', [
+                'type' => 'error',
+                'content' => 'Please select at least one requirement type or specify a custom requirement.',
+                'duration' => 3000
+            ]);
+            return;
+        }
+
+        if ($this->isOtherSelected && empty($this->otherRequirementName)) {
+            session()->flash('notification', [
+                'type' => 'error',
+                'content' => 'Please enter a custom requirement name.',
+                'duration' => 3000
+            ]);
+            return;
+        }
+
+        // If we passed validation, show the modal
+        $this->showConfirmationModal = true;
+    }
+
+    public function closeConfirmationModal()
+    {
+        $this->showConfirmationModal = false;
+    }
+
     // --- CREATE METHOD ---
     public function createRequirement()
     {
         $this->validate();
         $this->isCreating = true;
+        $this->showConfirmationModal = false;
 
         try {
             if (!$activeSemester = $this->activeSemester) {
@@ -733,6 +804,7 @@ class RequirementCreate extends Component
             
         } catch (\Exception $e) {
             $this->isCreating = false;
+            $this->showConfirmationModal = false;
             
             // Clean up any stored files if error occurred
             if (isset($storedFiles) && !empty($storedFiles)) {

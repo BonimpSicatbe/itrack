@@ -98,13 +98,22 @@ Route::middleware(['auth', 'role:admin|super-admin'])
             ]);
         })->name('submitted-requirements.requirement-context');
 
+        // Semester Routes (moved outside management group for better naming)
+        Route::get('/semesters/{semester}/download', [SemesterController::class, 'downloadZippedSemester'])
+            ->name('semesters.download');
+        Route::get('/semesters/{semester}/report', [SemesterController::class, 'downloadSemesterReport'])
+            ->name('semesters.report');
+        Route::get('/semesters/{semester}/preview-report', [SemesterController::class, 'previewSemesterReport'])
+            ->name('semesters.preview-report');
+        Route::get('/semesters/{semester}/preview-report/{requirementId}', [SemesterController::class, 'previewSemesterReport'])
+            ->name('semesters.preview-report-specific');
+
         Route::prefix('management')->group(function () {
             // Main management dashboard
             Route::get('/', [ManagementController::class, 'index'])
                 ->name('management.index');
-            // Semester management (archive)
-            Route::get('/semesters/{semester}/download', [SemesterController::class, 'downloadZippedSemester'])
-                ->name('semesters.download');
+            
+            // User reports
             Route::get('/users/{user}/report', [UserController::class, 'downloadUserReport'])->name('users.report');
         });
 
@@ -121,7 +130,7 @@ Route::middleware(['auth', 'role:admin|super-admin'])
 
             $requirements = App\Models\User::where('id', 1)->first()->requirements()->get();
 
-            return view('testPage', [
+            return view('reports.testPage', [
                 'submittedRequirements' => $submittedRequirements,
                 'requirements' => $requirements,
                 'user' => $user,

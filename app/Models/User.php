@@ -131,6 +131,21 @@ class User extends Authenticatable implements HasMedia
     {
         return $this->hasMany(CourseAssignment::class, 'professor_id');
     }
+    
+    public function r()
+    {
+        $currentSemester = Semester::where('is_active', true)->first();
+        
+        if (!$currentSemester) {
+            return collect();
+        }
+
+        return $this->courseAssignments()
+            ->where('semester_id', $currentSemester->id)
+            ->with('course.program')
+            ->get()
+            ->pluck('course');
+    }
 
     // ==================== ACCESSORS ====================
 

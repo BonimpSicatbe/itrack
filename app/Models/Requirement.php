@@ -39,7 +39,7 @@ class Requirement extends Model implements HasMedia
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
         'requirement_type_ids' => 'array',
-        'assigned_to' => 'array', // Add this cast for JSON data
+        'assigned_to' => 'array',
     ];
 
     protected $appends = ['assigned_to_display'];
@@ -58,21 +58,17 @@ class Requirement extends Model implements HasMedia
     // Custom accessor for assigned_to to ensure proper JSON handling
     public function getAssignedToAttribute($value)
     {
-        // If it's already an array, return it (this happens due to the cast)
         if (is_array($value)) {
             return $value;
         }
         
-        // If it's null or empty, return empty array
         if (empty($value)) {
             return [];
         }
         
-        // Try to decode JSON (for legacy data or when cast is not used)
         if (is_string($value)) {
             $decoded = json_decode($value, true);
             
-            // If JSON decode failed, return empty array
             if (json_last_error() !== JSON_ERROR_NONE) {
                 logger("Failed to decode assigned_to for requirement {$this->id}: " . $value);
                 return [];
@@ -81,7 +77,6 @@ class Requirement extends Model implements HasMedia
             return $decoded ?? [];
         }
         
-        // Fallback for any other data type
         return [];
     }
 
@@ -115,6 +110,81 @@ class Requirement extends Model implements HasMedia
         }
 
         return !empty($parts) ? implode('; ', $parts) : 'Not assigned';
+    }
+
+    /**
+     * Check if a user is assigned to this requirement based on their course assignments
+     */
+    public function isAssignedToUser(User $user): bool
+    {
+        $assignedTo = $this->assigned_to ?? [];
+        
+        $programs = $assignedTo['programs'] ?? [];
+        $selectAllPrograms = $assignedTo['selectAllPrograms'] ?? false;
+
+        // If select all programs is true, all users are assigned
+        if ($selectAllPrograms) {
+            return true;
+        }
+
+        // If no specific programs are selected, no users are assigned
+        if (empty($programs)) {
+            return false;
+        }
+
+        // Check if user has any course assignments in the assigned programs for the current semester
+        $currentSemester = Semester::where('is_active', true)->first();
+        
+        if (!$currentSemester) {
+            return false;
+        }
+
+        // Get user's course assignments for current semester that belong to the assigned programs
+        $userAssignedCourses = CourseAssignment::where('professor_id', $user->id)
+            ->where('semester_id', $currentSemester->id)
+            ->whereHas('course', function($query) use ($programs) {
+                $query->whereIn('program_id', $programs);
+            })
+            ->exists();
+
+        return $userAssignedCourses;
+    }
+
+    /**
+     * Get all users assigned to this requirement based on course assignments
+     */
+    public function getAssignedUsers()
+    {
+        $assignedTo = $this->assigned_to ?? [];
+        
+        $programs = $assignedTo['programs'] ?? [];
+        $selectAllPrograms = $assignedTo['selectAllPrograms'] ?? false;
+
+        $currentSemester = Semester::where('is_active', true)->first();
+        
+        if (!$currentSemester) {
+            return collect();
+        }
+
+        $query = User::whereHas('courseAssignments', function($query) use ($currentSemester, $programs, $selectAllPrograms) {
+            $query->where('semester_id', $currentSemester->id);
+            
+            if (!$selectAllPrograms && !empty($programs)) {
+                $query->whereHas('course', function($q) use ($programs) {
+                    $q->whereIn('program_id', $programs);
+                });
+            }
+        });
+
+        return $query->get();
+    }
+
+    /**
+     * Get assigned users count for reporting
+     */
+    public function getAssignedUsersCount()
+    {
+        return $this->getAssignedUsers()->count();
     }
 
     public function requirementTypes()
@@ -176,7 +246,7 @@ class Requirement extends Model implements HasMedia
     public function areAllPartnersSubmitted($userId = null, $courseId = null)
     {
         if (!$this->isPartOfPartnership()) {
-            return true; // Not part of partnership, so considered "complete"
+            return true;
         }
 
         $userId = $userId ?? Auth::id();
@@ -188,7 +258,6 @@ class Requirement extends Model implements HasMedia
 
         $partners = $this->getPartnerRequirements();
         
-        // Check if this requirement and all partners have submissions
         $allRequirements = $partners->push($this);
         
         foreach ($allRequirements as $requirement) {
@@ -307,50 +376,6 @@ class Requirement extends Model implements HasMedia
     public function guides(): MorphMany
     {
         return $this->media()->where('collection_name', 'guides');
-    }
-
-    // ========== Methods ==========
-
-    /**
-     * Check if a user belongs to this requirement's assigned programs
-     */
-    public function isAssignedToUser(User $user): bool
-    {
-        $assignedTo = $this->assigned_to ?? [];
-        
-        $programs = $assignedTo['programs'] ?? [];
-        $selectAllPrograms = $assignedTo['selectAllPrograms'] ?? false;
-
-        // Check if user has a program
-        if (!$user->program_id) {
-            return false;
-        }
-
-        // Convert user program ID to string for comparison (since JSON stores them as strings)
-        $userProgramId = (string)$user->program_id;
-
-        // Check program assignment - user's program must be in the programs array OR selectAllPrograms is true
-        return $selectAllPrograms || 
-               (is_array($programs) && in_array($userProgramId, $programs));
-    }
-
-    /**
-     * Get all users assigned to this requirement
-     */
-    public function getAssignedUsers()
-    {
-        $assignedTo = $this->assigned_to ?? [];
-        
-        $programs = $assignedTo['programs'] ?? [];
-        $selectAllPrograms = $assignedTo['selectAllPrograms'] ?? false;
-
-        $query = User::query();
-
-        if (!$selectAllPrograms && !empty($programs)) {
-            $query->whereIn('program_id', $programs);
-        }
-
-        return $query->get();
     }
 
     // Legacy methods (keeping for backward compatibility)

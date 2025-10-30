@@ -4,6 +4,10 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Semester;
+use App\Models\User;
+use App\Models\Requirement;
+use App\Models\SubmittedRequirement;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use ZipArchive;
 
@@ -144,5 +148,163 @@ class SemesterController extends Controller
         $semester->update(['is_active' => false]);
 
         return response()->download($zipFilePath)->deleteFileAfterSend(true);
+    }
+
+    public function downloadSemesterReport(Semester $semester)
+    {
+        $zipFileName = preg_replace('/[^A-Za-z0-9_\- ]/', '_', $semester->name) . '_reports.zip';
+        $zipFilePath = storage_path('app/temp/reports/' . $zipFileName);
+
+        // Ensure directory exists
+        $directory = storage_path('app/temp/reports');
+        if (!file_exists($directory)) {
+            mkdir($directory, 0755, true);
+        }
+
+        $zip = new ZipArchive();
+        $result = $zip->open($zipFilePath, ZipArchive::CREATE | ZipArchive::OVERWRITE);
+
+        if ($result !== TRUE) {
+            abort(500, 'Failed to create zip file. Error code: ' . $result);
+        }
+
+        $fileCount = 0;
+
+        // Generate report for each requirement in the semester
+        foreach ($semester->requirements as $requirement) {
+            // Get assigned users for this requirement using the corrected method
+            $assignedUsers = $requirement->getAssignedUsers()->load([
+                'courseAssignments.course.program',
+                'courseAssignments.course.courseType',
+                'college'
+            ]);
+            
+            // Get users who have submitted this requirement
+            $submittedUsers = SubmittedRequirement::where('requirement_id', $requirement->id)
+                ->with([
+                    'user.courseAssignments.course.program',
+                    'user.courseAssignments.course.courseType',
+                    'user.college',
+                    'media'
+                ])
+                ->get();
+
+            // Get submitted user IDs
+            $submittedUserIds = $submittedUsers->pluck('user_id')->toArray();
+            
+            // Get users who haven't submitted
+            $notSubmittedUsers = $assignedUsers->filter(function ($user) use ($submittedUserIds) {
+                return !in_array($user->id, $submittedUserIds);
+            })->values();
+
+            // Generate PDF
+            $pdf = Pdf::loadView('reports.requirement-report', [
+                'requirement' => $requirement,
+                'semester' => $semester,
+                'submittedUsers' => $submittedUsers,
+                'notSubmittedUsers' => $notSubmittedUsers,
+                'totalAssignedUsers' => $assignedUsers->count(),
+                'submittedRequirements' => $submittedUsers
+            ]);
+
+            $pdfFileName = preg_replace('/[^A-Za-z0-9_\- ]/', '_', $requirement->name) . '_' . 
+                        preg_replace('/[^A-Za-z0-9_\- ]/', '_', $semester->name) . '.pdf';
+            
+            // Add PDF to zip
+            $zip->addFromString($pdfFileName, $pdf->output());
+            $fileCount++;
+        }
+
+        // Close the zip file
+        if (!$zip->close()) {
+            abort(500, 'Failed to close zip file');
+        }
+
+        // If no requirements were found, create an info file
+        if ($fileCount === 0) {
+            $zip = new ZipArchive();
+            $zip->open($zipFilePath, ZipArchive::CREATE | ZipArchive::OVERWRITE);
+            $zip->addFromString('no_requirements_found.txt', 'No requirements were found for this semester.');
+            $zip->close();
+        }
+
+        return response()->download($zipFilePath)->deleteFileAfterSend(true);
+    }
+
+    public function previewSemesterReport(Semester $semester, $requirementId = null)
+    {
+        // If specific requirement is provided, show only that one
+        if ($requirementId) {
+            $requirement = Requirement::with(['semester'])->find($requirementId);
+            
+            // Get assigned users with their course assignments and related data
+            $assignedUsers = $requirement->getAssignedUsers()->load([
+                'courseAssignments.course.program',
+                'courseAssignments.course.courseType',
+                'college'
+            ]);
+            
+            $submittedUsers = SubmittedRequirement::where('requirement_id', $requirement->id)
+                ->with([
+                    'user.courseAssignments.course.program', 
+                    'user.courseAssignments.course.courseType',
+                    'user.college',
+                    'media'
+                ])
+                ->get();
+
+            $submittedUserIds = $submittedUsers->pluck('user_id')->toArray();
+            $notSubmittedUsers = $assignedUsers->filter(function ($user) use ($submittedUserIds) {
+                return !in_array($user->id, $submittedUserIds);
+            })->values();
+
+            $pdf = Pdf::loadView('reports.requirement-report', [
+                'requirement' => $requirement,
+                'semester' => $semester,
+                'submittedUsers' => $submittedUsers,
+                'notSubmittedUsers' => $notSubmittedUsers,
+                'totalAssignedUsers' => $assignedUsers->count(),
+                'submittedRequirements' => $submittedUsers // Add this for easier access in blade
+            ]);
+
+            return $pdf->stream("preview_{$requirement->name}.pdf");
+        }
+
+        // Otherwise, show first requirement as sample
+        $requirement = $semester->requirements()->with(['semester'])->first();
+        if (!$requirement) {
+            abort(404, 'No requirements found for this semester');
+        }
+
+        $assignedUsers = $requirement->getAssignedUsers()->load([
+            'courseAssignments.course.program',
+            'courseAssignments.course.courseType',
+            'college'
+        ]);
+        
+        $submittedUsers = SubmittedRequirement::where('requirement_id', $requirement->id)
+            ->with([
+                'user.courseAssignments.course.program',
+                'user.courseAssignments.course.courseType', 
+                'user.college',
+                'media'
+            ])
+            ->get();
+            
+        $submittedUserIds = $submittedUsers->pluck('user_id')->toArray();
+        $notSubmittedUsers = $assignedUsers->filter(function ($user) use ($submittedUserIds) {
+            return !in_array($user->id, $submittedUserIds);
+        })->values();
+
+        $pdf = Pdf::loadView('reports.requirement-report', [
+            'requirement' => $requirement,
+            'semester' => $semester,
+            'submittedUsers' => $submittedUsers,
+            'notSubmittedUsers' => $notSubmittedUsers,
+            'totalAssignedUsers' => $assignedUsers->count(),
+            'submittedRequirements' => $submittedUsers // Add this for easier access in blade
+        ]);
+
+        return $pdf->stream("preview_{$semester->name}.pdf");
     }
 }

@@ -134,11 +134,6 @@
                         </td>
                         <td class="whitespace-nowrap p-4">
                             <div class="flex justify-center space-x-2 text-base" onclick="event.stopPropagation()">
-                                <a href="{{ route('admin.users.report', $user) }}"
-                                    class="text-purple-500 hover:bg-purple-100 rounded-xl p-2 tooltip cursor-pointer"
-                                    data-tip="Generate Report">
-                                    <i class="fa-solid fa-file-chart-column"></i>
-                                </a>
                                 <button class="{{ $user->is_active ? 'text-indigo-800 hover:bg-blue-100' : 'text-gray-400 cursor-not-allowed' }} rounded-xl p-2 tooltip cursor-pointer"
                                     data-tip="{{ $user->is_active ? 'Manage Course' : 'User must be active to manage courses' }}" 
                                     wire:click="{{ $user->is_active ? "openAssignCourseModal($user->id)" : '' }}"
@@ -149,6 +144,11 @@
                                     data-tip="Edit" wire:click="openEditUserModal({{ $user->id }})">
                                     <i class="fa-solid fa-pen-to-square"></i>
                                 </button>
+                                <a href="{{ route('admin.users.report', $user) }}"
+                                    class="text-purple-500 hover:bg-purple-100 rounded-xl p-2 tooltip cursor-pointer"
+                                    data-tip="Report">
+                                    <i class="fa-solid fa-file-chart-column"></i>
+                                </a>
                             </div>
                         </td>
                     </tr>

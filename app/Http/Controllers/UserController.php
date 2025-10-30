@@ -182,7 +182,7 @@ class UserController extends Controller
             $groupedSubmissions[$key][] = $submission;
         }
 
-        $pdf = Pdf::loadView('testPage', [
+        $pdf = Pdf::loadView('reports.testPage', [
             'assignedCourses' => $assignedCourses,
             'requirements' => $requirements,
             'groupedSubmissions' => $groupedSubmissions, // Use the new grouped array
