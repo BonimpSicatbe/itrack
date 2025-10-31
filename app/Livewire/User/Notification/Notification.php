@@ -169,7 +169,6 @@ class Notification extends Component
 
         if ($notification->unread()) {
             $notification->markAsRead();
-            // Reload notifications to update unread status
             $this->loadNotifications();
             $this->updateUnreadStatus();
         }
@@ -185,11 +184,13 @@ class Notification extends Component
         // Handle different notification types
         $notificationType = data_get($notification->data, 'type');
         
-        if ($notificationType === 'submission_status_updated') {
-            // Handle submission status update notifications
+        if ($notificationType === 'due_date_reminder') {
+            $this->handleDueDateReminderNotification($notification, $data);
+        } 
+        elseif ($notificationType === 'submission_status_updated') {
             $this->handleSubmissionStatusNotification($notification, $data);
-        } else {
-            // Handle requirement notifications (new requirements, etc.)
+        } 
+        else {
             $this->handleRequirementNotification($notification, $data);
         }
 
@@ -642,6 +643,34 @@ class Notification extends Component
         
         // Final fallback: redirect to general requirements page
         return redirect()->to('/user/requirements');
+    }
+
+    protected function handleDueDateReminderNotification($notification, &$data): void
+    {
+        $requirementId = data_get($notification->data, 'requirement_id');
+        
+        if ($requirementId) {
+            $requirement = Requirement::with(['creator', 'updater', 'archiver'])
+                ->find($requirementId);
+
+            if ($requirement) {
+                $assignedToData = $this->formatAssignedToDisplay($requirement->assigned_to);
+                
+                $data['requirement'] = [
+                    'id' => $requirement->id,
+                    'name' => $requirement->name,
+                    'description' => $requirement->description,
+                    'due' => $requirement->due,
+                    'assigned_to' => $assignedToData,
+                    'status' => $requirement->status,
+                ];
+                
+                $data['reminder_info'] = [
+                    'days_remaining' => data_get($notification->data, 'days_remaining'),
+                    'due_date' => data_get($notification->data, 'due_date'),
+                ];
+            }
+        }
     }
 
     public function render()
