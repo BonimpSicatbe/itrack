@@ -81,7 +81,7 @@
                     {{-- Update the wire:click to navigate to notification page --}}
                     <a 
                         href="{{ route('user.notifications', ['notification' => $notification->id]) }}"
-                        wire:click="markAsReadAndNavigate('{{ $notification->id }}')"
+                        wire:click="markAsRead('{{ $notification->id }}')"
                         class="block p-4 mb-2 rounded-xl {{ $containerClass }} cursor-pointer transition-all duration-200 last:mb-0 hover:no-underline"
                     >
                         <div class="flex gap-3">
