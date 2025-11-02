@@ -83,7 +83,6 @@
                             </div>
                         </div>
                     </th>
-                    <th class="p-4 text-left bg-green-700" style="color: white; width: 15%;">Academic Year</th>
                     <th class="p-4 text-left bg-green-700" style="color: white; width: 10%;">Status</th>
                     <th class="p-4 text-center bg-green-700" style="color: white; width: 20%;">Actions</th>
                 </tr>
@@ -104,17 +103,6 @@
                         <td class="whitespace-nowrap p-4">
                             <div class="text-sm text-gray-500">
                                 {{ $semester->end_date->format('M d, Y') }}
-                            </div>
-                        </td>
-                        <td class="whitespace-nowrap p-4">
-                            <div class="text-sm text-gray-500">
-                                @php
-                                    $academicYear = '';
-                                    if (preg_match('/\|\s*(\d{4}-\d{4})$/', $semester->name, $matches)) {
-                                        $academicYear = $matches[1];
-                                    }
-                                @endphp
-                                {{ $academicYear }}
                             </div>
                         </td>
                         <td class="whitespace-nowrap p-4">
@@ -158,19 +146,6 @@
                                     data-tip="Download Report">
                                     <i class="fa-solid fa-file-chart-column"></i>
                                 </a>
-
-                                <!-- Delete button -->
-                                @if (!$semester->is_active)
-                                    <button class="text-red-500 hover:bg-red-100 rounded-xl p-2 tooltip cursor-pointer"
-                                        data-tip="Delete" wire:click="openDeleteConfirmationModal({{ $semester->id }})">
-                                        <i class="fa-solid fa-trash"></i>
-                                    </button>
-                                @else
-                                    <span class="text-red-300 rounded-xl p-2 tooltip cursor-not-allowed"
-                                        data-tip="Cannot delete active semester">
-                                        <i class="fa-solid fa-trash"></i>
-                                    </span>
-                                @endif
                             </div>
                         </td>
                     </tr>
