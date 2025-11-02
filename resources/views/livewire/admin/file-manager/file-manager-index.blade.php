@@ -60,7 +60,7 @@
                         class="px-3 py-2 rounded-xl bg-white text-1C7C54 font-medium text-sm shadow-sm hover:bg-73E2A7 transition flex items-center gap-2"
                         wire:click="togglePanel"
                         title="{{ $showSemesterPanel ? 'Hide Semester Panel' : 'Show Semester Panel' }}">
-                        <span>Semester</span>
+                        <span>Semesters</span>
                         <i class="fas fa-chevron-{{ $showSemesterPanel ? 'left' : 'right' }} text-xs"></i>
                     </button>
                 </div>
@@ -77,13 +77,13 @@
                             There is currently no active semester. Please activate a semester to view and manage files.
                         </p>
                         <div class="mt-6">
-                            <button 
-                                wire:click="togglePanel"
+                            <a 
+                                href="{{ url('/admin/management?tab=semesters') }}"
                                 class="px-6 py-3 bg-green-600 text-white rounded-xl font-semibold hover:bg-green-700 transition-colors flex items-center gap-2"
                             >
                                 <i class="fas fa-calendar-plus"></i>
                                 Manage Semesters
-                            </button>
+                            </a>
                         </div>
                     </div>
                 @else

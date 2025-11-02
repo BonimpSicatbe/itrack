@@ -4,6 +4,7 @@ namespace App\Livewire\Admin\FileManager;
 
 use Livewire\Component;
 use App\Models\Semester;
+use Illuminate\Support\Carbon;
 
 class SemesterView extends Component
 {
@@ -32,15 +33,28 @@ class SemesterView extends Component
         $this->currentSemester = null;
         $this->previousSemesters = collect();
         
-        // Fresh database queries
-        $this->currentSemester = Semester::where('is_active', true)->first();
-        $this->previousSemesters = Semester::where('is_active', false)
+        $today = Carbon::today();
+        
+        // Get current semester: either active OR the one that spans today's date
+        $this->currentSemester = Semester::where('is_active', true)
+            ->orWhere(function($query) use ($today) {
+                $query->where('start_date', '<=', $today)
+                      ->where('end_date', '>=', $today);
+            })
+            ->orderBy('is_active', 'desc') // Prioritize manually activated semesters
+            ->first();
+            
+        // Get previous semesters: only semesters that have ended (end_date < today)
+        // This excludes future semesters that haven't started yet
+        $this->previousSemesters = Semester::where('end_date', '<', $today)
+            ->where('id', '!=', $this->currentSemester?->id)
             ->orderBy('end_date', 'desc')
             ->get();
             
         \Log::debug('Refreshed data:', [
             'current' => $this->currentSemester?->id,
-            'previous_count' => $this->previousSemesters->count()
+            'previous_count' => $this->previousSemesters->count(),
+            'today' => $today->format('Y-m-d')
         ]);
     }
 
