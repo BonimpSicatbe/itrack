@@ -8,6 +8,8 @@ use App\Models\Semester;
 use App\Models\User;
 use App\Models\Requirement;
 use App\Models\RequirementSubmissionIndicator;
+use App\Models\CourseAssignment;
+use App\Models\SubmittedRequirement;
 use Illuminate\Support\Facades\DB;
 
 class SemesterAnalytics extends Component
@@ -53,8 +55,8 @@ class SemesterAnalytics extends Component
             return;
         }
 
-        // Use the more efficient query method that includes active user filter
-        $this->userActivityStats = $this->calculateUserStatsWithQuery($semester, $requirements, $totalRequirements);
+        // Use the new file-based completion rate calculation
+        $this->userActivityStats = $this->calculateUserCompletionByFiles($semester, $requirements, $totalRequirements);
 
         // Sort by completion rate descending
         $this->userActivityStats = $this->userActivityStats
@@ -82,54 +84,117 @@ class SemesterAnalytics extends Component
     }
 
     /**
-     * Alternative more efficient method using SQL joins with active user filter
+     * Calculate completion rate based on file approvals per requirement
      */
-    private function calculateUserStatsWithQuery($semester, $requirements, $totalRequirements)
+    private function calculateUserCompletionByFiles($semester, $requirements, $totalRequirements)
     {
         if ($totalRequirements == 0) {
             return collect();
         }
 
-        $userStats = DB::table('users')
+        // Get all active professors with their course assignments for the semester
+        $professorsWithCourses = CourseAssignment::where('semester_id', $semester->id)
+            ->join('users', 'course_assignments.professor_id', '=', 'users.id')
+            ->where('users.is_active', true)
             ->select(
-                'users.id',
+                'users.id as user_id',
                 'users.firstname',
                 'users.lastname',
-                DB::raw('COUNT(DISTINCT rsi.requirement_id) as total_submitted'),
-                DB::raw('COUNT(DISTINCT CASE WHEN sr.status = "approved" THEN rsi.requirement_id END) as total_approved')
+                'course_assignments.course_id'
             )
-            ->join('requirement_submission_indicators as rsi', 'users.id', '=', 'rsi.user_id')
-            ->leftJoin('submitted_requirements as sr', function($join) use ($semester) {
-                $join->on('rsi.requirement_id', '=', 'sr.requirement_id')
-                     ->on('rsi.user_id', '=', 'sr.user_id')
-                     ->on('rsi.course_id', '=', 'sr.course_id')
-                     ->where('sr.status', 'approved')
-                     ->whereBetween('sr.submitted_at', [
-                         $semester->start_date,
-                         $semester->end_date
-                     ]);
-            })
-            ->whereBetween('rsi.submitted_at', [
+            ->get()
+            ->groupBy('user_id');
+
+        $userStats = collect();
+
+        foreach ($professorsWithCourses as $userId => $courseAssignments) {
+            $user = $courseAssignments->first();
+            $totalUserCompletion = 0;
+            $requirementsCounted = 0;
+
+            // For each requirement, calculate completion percentage
+            foreach ($requirements as $requirement) {
+                $requirementCompletion = $this->calculateRequirementCompletion(
+                    $userId, 
+                    $requirement->id, 
+                    $courseAssignments->pluck('course_id')->toArray(),
+                    $semester
+                );
+
+                if ($requirementCompletion !== null) {
+                    $totalUserCompletion += $requirementCompletion;
+                    $requirementsCounted++;
+                }
+            }
+
+            // Calculate overall completion rate
+            $overallCompletionRate = $requirementsCounted > 0 
+                ? ($totalUserCompletion / $requirementsCounted) 
+                : 0;
+
+            // Get total submitted and approved counts for display
+            $submissionStats = $this->getUserSubmissionStats($userId, $semester->id);
+
+            $userStats->push([
+                'name' => $user->firstname . ' ' . $user->lastname,
+                'submitted' => $submissionStats['submitted_count'],
+                'approved' => $submissionStats['approved_count'],
+                'total_requirements' => $requirementsCounted,
+                'completion_rate' => round($overallCompletionRate, 2)
+            ]);
+        }
+
+        return $userStats;
+    }
+
+    /**
+     * Calculate completion percentage for a specific requirement across user's courses
+     */
+    private function calculateRequirementCompletion($userId, $requirementId, $courseIds, $semester)
+    {
+        // Get all submissions for this requirement across user's courses
+        // Exclude files with "uploaded" status from the count
+        $submissions = SubmittedRequirement::where('user_id', $userId)
+            ->where('requirement_id', $requirementId)
+            ->whereIn('course_id', $courseIds)
+            ->whereBetween('submitted_at', [
                 $semester->start_date,
                 $semester->end_date
             ])
-            ->whereIn('rsi.requirement_id', $requirements->pluck('id'))
-            ->where('users.is_active', true) // Only active users
-            ->groupBy('users.id', 'users.firstname', 'users.lastname')
+            ->where('status', '!=', 'uploaded') // Exclude uploaded status
             ->get();
 
-        return $userStats->map(function($user) use ($totalRequirements) {
-            $completionRate = $totalRequirements > 0 ? 
-                ($user->total_approved / $totalRequirements) * 100 : 0;
+        if ($submissions->isEmpty()) {
+            return 0; // No valid submissions = 0% completion
+        }
 
-            return [
-                'name' => $user->firstname . ' ' . $user->lastname,
-                'submitted' => $user->total_submitted,
-                'approved' => $user->total_approved,
-                'total_requirements' => $totalRequirements,
-                'completion_rate' => round($completionRate, 2)
-            ];
-        });
+        $totalSubmissions = $submissions->count();
+        $approvedSubmissions = $submissions->where('status', 'approved')->count();
+
+        // Calculate completion percentage for this requirement
+        return ($approvedSubmissions / $totalSubmissions) * 100;
+    }
+
+    /**
+     * Get user's submission statistics for the semester
+     */
+    private function getUserSubmissionStats($userId, $semesterId)
+    {
+        $stats = SubmittedRequirement::where('user_id', $userId)
+            ->whereHas('requirement', function($query) use ($semesterId) {
+                $query->where('semester_id', $semesterId);
+            })
+            ->where('status', '!=', 'uploaded') // Exclude uploaded status from counts
+            ->select(
+                DB::raw('COUNT(*) as submitted_count'),
+                DB::raw('SUM(CASE WHEN status = "approved" THEN 1 ELSE 0 END) as approved_count')
+            )
+            ->first();
+
+        return [
+            'submitted_count' => $stats->submitted_count ?? 0,
+            'approved_count' => $stats->approved_count ?? 0
+        ];
     }
 
     public function formatBytes($bytes, $precision = 2)
