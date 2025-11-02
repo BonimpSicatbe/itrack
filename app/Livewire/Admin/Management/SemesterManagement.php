@@ -96,22 +96,8 @@ class SemesterManagement extends Component
     {
         $validated = $this->validate([
             'semester' => 'required|in:first,second,midyear',
-            'start_date' => [
-                'required',
-                'date',
-            ],
-            'end_date' => [
-                'required',
-                'date',
-                'after:start_date',
-                function ($attribute, $value, $fail) {
-                    $startYear = date('Y', strtotime($this->start_date));
-                    $endYear = date('Y', strtotime($value));
-                    if ($startYear === $endYear) {
-                        $fail('End date must be in a different year than start date.');
-                    }
-                },
-            ],
+            'start_date' => 'required|date',
+            'end_date' => 'required|date|after:start_date',
         ]);
 
         Log::info($validated);
@@ -119,49 +105,44 @@ class SemesterManagement extends Component
         try {
             $startYear = date('Y', strtotime($this->start_date));
             $endYear = date('Y', strtotime($this->end_date));
-            $yearRange = $startYear . '-' . $endYear;
+            $currentYear = date('Y');
 
-            // Prevent older year ranges than the latest semester
-            $latestSemester = Semester::orderByRaw("YEAR(end_date) DESC")->first();
-
-            if ($latestSemester) {
-                $latestEndYear = date('Y', strtotime($latestSemester->end_date));
-
-                if ($endYear < $latestEndYear) {
-                    $this->errorMessage = "You cannot create a semester earlier than the latest semester ($latestSemester->name).";
-                    return;
-                }
-            }
-
-            // Check for duplicate semester in the same year range
-            $existingSemester = Semester::whereRaw("DATE_FORMAT(start_date, '%Y') = ?", [$startYear])
-                ->whereRaw("DATE_FORMAT(end_date, '%Y') = ?", [$endYear])
-                ->where(function ($query) {
-                    $query->where('name', 'like', '%First Semester%')
-                        ->orWhere('name', 'like', '%Second Semester%');
-                })
-                ->first();
-
-            if ($existingSemester && $this->semester !== 'midyear') {
-                $this->errorMessage = 'A semester with the same year range already exists.';
+            // Prevent creating semesters in previous years
+            if ($endYear < $currentYear) {
+                $this->errorMessage = "You cannot create a semester in previous years. The end year must be {$currentYear} or later.";
                 return;
             }
 
-            // For midyear, allow only one per year range
-            if ($this->semester === 'midyear') {
-                $existingMidyear = Semester::whereRaw("DATE_FORMAT(start_date, '%Y') = ?", [$startYear])
-                    ->whereRaw("DATE_FORMAT(end_date, '%Y') = ?", [$endYear])
-                    ->where('name', 'like', '%Midyear%')
-                    ->first();
+            // Create year range - handle same year or spanning years
+            $yearRange = ($startYear === $endYear) ? $startYear : $startYear . '-' . $endYear;
 
-                if ($existingMidyear) {
-                    $this->errorMessage = 'A midyear semester with the same year range already exists.';
-                    return;
-                }
+            // Check for duplicate semester TYPE in the same year range
+            $existingSemester = Semester::where(function ($query) use ($startYear, $endYear) {
+                $query->whereRaw("YEAR(start_date) = ?", [$startYear])
+                    ->whereRaw("YEAR(end_date) = ?", [$endYear]);
+            })
+                ->where(function ($query) {
+                    if ($this->semester === 'first') {
+                        $query->where('name', 'like', '%First Semester%');
+                    } elseif ($this->semester === 'second') {
+                        $query->where('name', 'like', '%Second Semester%');
+                    } else {
+                        $query->where('name', 'like', '%Midyear%');
+                    }
+                })
+                ->first();
+
+            if ($existingSemester) {
+                $semesterType = ucfirst($this->semester) . ($this->semester == 'midyear' ? '' : ' Semester');
+                $this->errorMessage = "A {$semesterType} with the year range ({$yearRange}) already exists.";
+                return;
             }
 
+            // Removed date overlap validation to allow multiple semesters in the same year range
+            // Only the semester TYPE needs to be unique for a given year range
+
             // Construct name
-            $semesterName = $this->semester . ($this->semester == 'midyear' ? '' : ' Semester') . ' | ' . $yearRange;
+            $semesterName = ucfirst($this->semester) . ($this->semester == 'midyear' ? '' : ' Semester') . ' | ' . $yearRange;
 
             // Deactivate previous active semesters
             $setPrevSemester = Semester::where('is_active', true)->update(['is_active' => false]);
@@ -171,7 +152,7 @@ class SemesterManagement extends Component
 
             // Create new semester
             $semester = Semester::create([
-                'name' => ucwords($semesterName),
+                'name' => $semesterName,
                 'start_date' => $this->start_date,
                 'end_date' => $this->end_date,
                 'is_active' => true,
