@@ -5,6 +5,7 @@ namespace App\Livewire\User\Dashboard;
 use Livewire\Component;
 use Illuminate\Support\Facades\Auth;
 use App\Models\SubmittedRequirement;
+use App\Models\Semester;
 
 class Progress extends Component
 {
@@ -16,20 +17,31 @@ class Progress extends Component
     {
         $userId = Auth::id();
         
-        // Get counts of submissions by status for the current user
-        $this->statusCounts = SubmittedRequirement::where('user_id', $userId)
-            ->select('status', \DB::raw('COUNT(*) as count'))
-            ->groupBy('status')
-            ->pluck('count', 'status')
-            ->toArray();
-
-        $this->totalSubmissions = array_sum($this->statusCounts);
+        // Get the active semester
+        $activeSemester = Semester::where('is_active', true)->first();
         
-        // Calculate percentages
-        if ($this->totalSubmissions > 0) {
-            foreach ($this->statusCounts as $status => $count) {
-                $this->statusPercentages[$status] = number_format(($count / $this->totalSubmissions) * 100, 1);
+        if ($activeSemester) {
+            // Get counts of submissions by status for the current user within active semester
+            $this->statusCounts = SubmittedRequirement::where('user_id', $userId)
+                ->whereBetween('created_at', [$activeSemester->start_date, $activeSemester->end_date])
+                ->select('status', \DB::raw('COUNT(*) as count'))
+                ->groupBy('status')
+                ->pluck('count', 'status')
+                ->toArray();
+
+            $this->totalSubmissions = array_sum($this->statusCounts);
+            
+            // Calculate percentages
+            if ($this->totalSubmissions > 0) {
+                foreach ($this->statusCounts as $status => $count) {
+                    $this->statusPercentages[$status] = number_format(($count / $this->totalSubmissions) * 100, 1);
+                }
             }
+        } else {
+            // No active semester found
+            $this->statusCounts = [];
+            $this->totalSubmissions = 0;
+            $this->statusPercentages = [];
         }
     }
 

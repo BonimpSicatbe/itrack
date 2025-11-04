@@ -279,10 +279,10 @@
                                     <i class="fa-solid fa-triangle-exclamation text-lg mr-3"></i>
                                     <div>
                                         <h3 class="font-bold text-sm">No semesters available</h3>
-                                        <div class="text-xs">You don't have any active or previous semesters at this time.</div>
+                                        <div class="text-xs">There are no active or past semesters at this time.</div>
                                     </div>
                                 </div>
-                            <div>
+                            </div>
                         @endif
 
                     @elseif($currentLevel === 'courses')

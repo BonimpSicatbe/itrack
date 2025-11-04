@@ -8,6 +8,17 @@
         </a>
     </div>
 
+    @php
+        $activeSemester = \App\Models\Semester::where('is_active', true)->first();
+    @endphp
+
+    @if($activeSemester)
+        <div class="mb-3 text-sm text-gray-600 bg-blue-50 px-3 py-2 rounded-lg">
+            <i class="fa-solid fa-calendar-check mr-2"></i>
+            Active Semester: {{ $activeSemester->name }}
+        </div>
+    @endif
+
     {{-- List --}}
     @if($recentSubmissions->count() > 0)
         <div class="space-y-3 max-h-96 overflow-y-auto">
@@ -56,7 +67,20 @@
     @else
         <div class="text-center py-8 text-gray-300">
             <i class="fas fa-folder-open text-3xl mb-2"></i>
-            <p class="text-gray-500 text-sm font-semibold">No recent submissions</p>
+            <p class="text-gray-500 text-sm font-semibold">
+                @if($activeSemester)
+                    No recent submissions for {{ $activeSemester->name }}
+                @else
+                    No active semester
+                @endif
+            </p>
+            <p class="text-gray-400 text-xs mt-1">
+                @if($activeSemester)
+                    Your submissions for the current semester will appear here
+                @else
+                    There is currently no active semester
+                @endif
+            </p>
         </div>
     @endif
 

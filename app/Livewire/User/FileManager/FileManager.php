@@ -373,7 +373,11 @@ class FileManager extends Component
 
     public function loadAllSemesters()
     {
-        $this->allSemesters = Semester::orderBy('start_date', 'desc')->get();
+        $today = now()->format('Y-m-d');
+        
+        $this->allSemesters = Semester::where('start_date', '<=', $today)
+            ->orderBy('start_date', 'desc')
+            ->get();
     }
 
     public function loadAssignedCourses()

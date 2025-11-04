@@ -7,6 +7,10 @@
         </div>
     </div>
 
+    @php
+        $activeSemester = \App\Models\Semester::where('is_active', true)->first();
+    @endphp
+
     @if($totalSubmissions > 0)
         {{-- Progress Bar --}}
         <div class="mb-6">
@@ -47,8 +51,20 @@
             <div class="mx-auto flex items-center justify-center mb-4">
                 <i class="fa-solid fa-folder-open text-gray-300 text-3xl"></i>
             </div>
-            <h4 class="text-gray-500 font-semibold mb-2 text-sm">No submissions yet</h4>
-            <p class="text-gray-500 text-xs">Your submission progress will appear here once you start submitting requirements.</p>
+            <h4 class="text-gray-500 font-semibold mb-2 text-sm">
+                @if($activeSemester)
+                    No submissions for current semester
+                @else
+                    No active semester
+                @endif
+            </h4>
+            <p class="text-gray-500 text-xs">
+                @if($activeSemester)
+                    Your submission progress for {{ $activeSemester->name }} will appear here once you start submitting requirements.
+                @else
+                    There is currently no active semester. Please contact administration.
+                @endif
+            </p>
         </div>
     @endif
 </div>
