@@ -12,11 +12,7 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
     <link rel="icon" type="image/png" href="{{ asset('favicon.png') }}">
-    <link rel="stylesheet" href="https://site-assets.fontawesome.com/releases/v7.0.0/css/all.css" />
-    <link rel="stylesheet" href="https://site-assets.fontawesome.com/releases/v7.0.0/css/sharp-solid.css" />
-    <link rel="stylesheet" href="https://site-assets.fontawesome.com/releases/v7.0.0/css/sharp-regular.css" />
-    <link rel="stylesheet" href="https://site-assets.fontawesome.com/releases/v7.0.0/css/sharp-light.css" />
-    <link rel="stylesheet" href="https://site-assets.fontawesome.com/releases/v7.0.0/css/duotone.css" />
+    <link rel="stylesheet" href="{{ asset('fontawesome-pro_v7.1.0/css/all.css') }}" />
 
     <!-- Alpine.js Core and Persist Plugin -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>

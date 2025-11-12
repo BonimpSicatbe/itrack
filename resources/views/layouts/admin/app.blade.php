@@ -7,7 +7,7 @@
         <meta name="csrf-token" content="{{ csrf_token() }}">
         <title>{{ config('app.name', 'Laravel') }}</title>
         <!-- Fonts -->
-         <link rel="icon" type="image/png" href="{{ asset('favicon.png') }}">
+        <link rel="icon" type="image/png" href="{{ asset('favicon.png') }}">
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -15,11 +15,7 @@
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
 
-        <link rel="stylesheet" href="https://site-assets.fontawesome.com/releases/v7.0.0/css/all.css" />
-        <link rel="stylesheet" href="https://site-assets.fontawesome.com/releases/v7.0.0/css/sharp-solid.css" />
-        <link rel="stylesheet" href="https://site-assets.fontawesome.com/releases/v7.0.0/css/sharp-regular.css" />
-        <link rel="stylesheet" href="https://site-assets.fontawesome.com/releases/v7.0.0/css/sharp-light.css" />
-        <link rel="stylesheet" href="https://site-assets.fontawesome.com/releases/v7.0.0/css/duotone.css" />
+        <link rel="stylesheet" href="{{ asset('fontawesome-pro_v7.1.0/css/all.css') }}" />
 
         @livewireStyles
 
