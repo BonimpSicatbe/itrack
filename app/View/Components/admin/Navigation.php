@@ -62,7 +62,13 @@ class Navigation extends Component
                     'group' => 'admin.file-manager.*',
                     'description' => 'View User Portfolio'
                 ],
-                
+                [
+                    'label' => 'Reports',
+                    'icon' => 'file-lines',
+                    'route' => 'admin.reports.index',
+                    'group' => 'admin.reports.*',
+                    'description' => 'View system reports'
+                ],
             ],
             // Secondary navigation (dropdown menu)
             'secondary' => [

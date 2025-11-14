@@ -62,7 +62,7 @@
 
                 <tbody class="bg-white divide-y divide-gray-200 text-gray-600">
                     @forelse ($requirements as $requirement)
-                        <tr class="hover:bg-green-50 transition-colors duration-150 cursor-pointer" 
+                        <tr class="hover:bg-green-50 transition-colors duration-150" 
                             wire:click="showRequirement({{ $requirement->id }})">
                             <td class="px-4 py-3 font-semibold text-gray-800">{{ $requirement->name }}</td>
                             <td class="px-4 py-3">
@@ -88,7 +88,7 @@
                                 </span>
                             </td>
                             <td class="px-4 py-3">
-                                {{ $requirement->creator?->firstname }} {{ $requirement->creator?->lastname }}
+                                {{ $requirement->creator?->firstname }} {{ $requirement->creator?->middlename }} {{ $requirement->creator?->lastname }}
                             </td>
                         </tr>
                     @empty

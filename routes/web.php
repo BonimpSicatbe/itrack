@@ -63,6 +63,12 @@ Route::middleware(['auth', 'role:admin|super-admin'])
         // File Manager
         Route::get('/file-manager', [FileManagerController::class, 'index'])
             ->name('file-manager.index');
+        
+        // Reports 
+        Route::get('/reports', \App\Livewire\Admin\Report\ReportIndex::class)
+            ->name('reports.index');
+        Route::get('/reports/preview-semester', [\App\Http\Controllers\Admin\ReportController::class, 'previewSemesterReport'])
+            ->name('reports.preview-semester');
 
         // Requirements
         Route::get('/requirements', [RequirementController::class, 'index'])

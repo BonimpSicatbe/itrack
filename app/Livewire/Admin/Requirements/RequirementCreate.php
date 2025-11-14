@@ -220,9 +220,14 @@ class RequirementCreate extends Component
                 'max:255', 
                 function ($attribute, $value, $fail) {
                     if ($this->isOtherSelected && !empty($value)) {
-                        $exists = \App\Models\Requirement::where('name', $value)->exists();
-                        if ($exists) {
-                            $fail('This requirement name already exists.');
+                        $activeSemester = $this->activeSemester;
+                        if ($activeSemester) {
+                            $exists = \App\Models\Requirement::where('name', $value)
+                                ->where('semester_id', $activeSemester->id)
+                                ->exists();
+                            if ($exists) {
+                                $fail('This requirement name already exists for the current semester.');
+                            }
                         }
                     }
                 }

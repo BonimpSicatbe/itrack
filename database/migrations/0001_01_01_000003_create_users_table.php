@@ -20,6 +20,9 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->foreignId('college_id')->nullable()->constrained('colleges');
+            $table->string('position')->nullable(); // Added instructor rank
+            $table->date('teaching_started_at')->nullable(); // Added teaching start date
+            $table->date('teaching_ended_at')->nullable(); // Added teaching end date
             $table->boolean('is_active')->default(true); 
             $table->timestamp('deactivated_at')->nullable(); 
             $table->string('password');

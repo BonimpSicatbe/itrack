@@ -2,7 +2,7 @@
     <!-- Header -->
     <div class="flex justify-between items-center text-white p-4 rounded-xl shadow-md" style="background: linear-gradient(148deg,rgba(18, 67, 44, 1) 0%, rgba(30, 119, 77, 1) 54%, rgba(55, 120, 64, 1) 100%);">
         <div class="flex items-center gap-3">
-            <div class="pl-3 ">
+            <div class="pl-3">
                 <i class="fa-solid fa-clipboard-list text-white text-2xl"></i>
             </div>
             <h2 class="text-xl md:text-xl font-semibold">Requirements List</h2>

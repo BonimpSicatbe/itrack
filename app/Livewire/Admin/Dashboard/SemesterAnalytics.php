@@ -95,12 +95,15 @@ class SemesterAnalytics extends Component
         // Get all active professors with their course assignments for the semester
         $professorsWithCourses = CourseAssignment::where('semester_id', $semester->id)
             ->join('users', 'course_assignments.professor_id', '=', 'users.id')
+            ->join('courses', 'course_assignments.course_id', '=', 'courses.id')
             ->where('users.is_active', true)
             ->select(
                 'users.id as user_id',
                 'users.firstname',
                 'users.lastname',
-                'course_assignments.course_id'
+                'users.college_id',
+                'course_assignments.course_id',
+                'courses.program_id'
             )
             ->get()
             ->groupBy('user_id');
@@ -109,42 +112,71 @@ class SemesterAnalytics extends Component
 
         foreach ($professorsWithCourses as $userId => $courseAssignments) {
             $user = $courseAssignments->first();
+            
+            // Get all unique program IDs from user's course assignments
+            $userPrograms = $courseAssignments->pluck('program_id')->unique()->values()->toArray();
+
             $totalUserCompletion = 0;
             $requirementsCounted = 0;
 
-            // For each requirement, calculate completion percentage
+            // For each requirement, check if it's assigned to this user and calculate completion
             foreach ($requirements as $requirement) {
-                $requirementCompletion = $this->calculateRequirementCompletion(
-                    $userId, 
-                    $requirement->id, 
-                    $courseAssignments->pluck('course_id')->toArray(),
-                    $semester
-                );
+                // Check if this requirement is assigned to the user based on their course programs
+                if ($this->isRequirementAssignedToUser($requirement, $userPrograms, $user->college_id)) {
+                    $requirementCompletion = $this->calculateRequirementCompletion(
+                        $userId, 
+                        $requirement->id, 
+                        $courseAssignments->pluck('course_id')->toArray(),
+                        $semester
+                    );
 
-                if ($requirementCompletion !== null) {
-                    $totalUserCompletion += $requirementCompletion;
-                    $requirementsCounted++;
+                    if ($requirementCompletion !== null) {
+                        $totalUserCompletion += $requirementCompletion;
+                        $requirementsCounted++;
+                    }
                 }
             }
-
-            // Calculate overall completion rate
-            $overallCompletionRate = $requirementsCounted > 0 
-                ? ($totalUserCompletion / $requirementsCounted) 
-                : 0;
 
             // Get total submitted and approved counts for display
             $submissionStats = $this->getUserSubmissionStats($userId, $semester->id);
 
-            $userStats->push([
-                'name' => $user->firstname . ' ' . $user->lastname,
-                'submitted' => $submissionStats['submitted_count'],
-                'approved' => $submissionStats['approved_count'],
-                'total_requirements' => $requirementsCounted,
-                'completion_rate' => round($overallCompletionRate, 2)
-            ]);
+            // Only include users who have submitted at least one file
+            if ($submissionStats['submitted_count'] > 0) {
+                // Calculate overall completion rate
+                $overallCompletionRate = $requirementsCounted > 0 
+                    ? ($totalUserCompletion / $requirementsCounted) 
+                    : 0;
+
+                $userStats->push([
+                    'name' => $user->firstname . ' ' . $user->lastname,
+                    'submitted' => $submissionStats['submitted_count'],
+                    'approved' => $submissionStats['approved_count'],
+                    'total_requirements' => $requirementsCounted,
+                    'completion_rate' => round($overallCompletionRate, 2)
+                ]);
+            }
         }
 
         return $userStats;
+    }
+
+    /**
+     * Check if a requirement is assigned to a user based on their course programs
+     */
+    private function isRequirementAssignedToUser($requirement, $userPrograms, $userCollegeId)
+    {
+        // Get the assignment configuration from the requirement
+        $requirementAssignedTo = $requirement->assigned_to;
+        $requirementPrograms = $requirementAssignedTo['programs'] ?? [];
+        $selectAllPrograms = $requirementAssignedTo['selectAllPrograms'] ?? false;
+
+        // If requirement is set to select all programs, it applies to everyone
+        if ($selectAllPrograms) {
+            return true;
+        }
+
+        // Check if any of the user's course programs match the requirement's assigned programs
+        return !empty(array_intersect($userPrograms, $requirementPrograms));
     }
 
     /**
