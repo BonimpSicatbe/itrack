@@ -139,13 +139,6 @@
                                         <i class="fa-solid fa-download"></i>
                                     </span>
                                 @endif
-
-                                <!-- Report button -->
-                                <a href="{{ route('admin.semesters.report', $semester) }}"
-                                    class="text-purple-500 hover:bg-purple-100 rounded-xl p-2 tooltip cursor-pointer"
-                                    data-tip="Download Report">
-                                    <i class="fa-solid fa-file-chart-column"></i>
-                                </a>
                             </div>
                         </td>
                     </tr>
