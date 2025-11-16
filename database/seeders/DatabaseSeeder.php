@@ -34,7 +34,7 @@ class DatabaseSeeder extends Seeder
         // Create admin user - Dan Lloyd P. Rosada
         $admin = User::create([
             'firstname' => 'Dan Lloyd',
-            'middlename' => 'P.',
+            'middlename' => 'Panganiban',
             'lastname' => 'Rosada',
             'extensionname' => '',
             'email' => 'danlloyd.rosada@gmail.com',
@@ -49,7 +49,7 @@ class DatabaseSeeder extends Seeder
         // Create regular user - Doming H. Ricalde
         $user = User::create([
             'firstname' => 'Doming',
-            'middlename' => 'H.',
+            'middlename' => 'Hilapo',
             'lastname' => 'Ricalde',
             'extensionname' => '',
             'email' => 'dominghilaporicalde@gmail.com',

@@ -8,6 +8,7 @@ use App\Http\Controllers\FileController;
 use App\Http\Controllers\FileManagerController;
 use App\Http\Controllers\admin\SemesterController;
 use App\Http\Controllers\Admin\ManagementController;
+use App\Http\Controllers\Admin\ReportController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -65,10 +66,22 @@ Route::middleware(['auth', 'role:admin|super-admin'])
             ->name('file-manager.index');
         
         // Reports 
-        Route::get('/reports', \App\Livewire\Admin\Report\ReportIndex::class)
+        Route::get('/reports', [ReportController::class, 'index'])
             ->name('reports.index');
-        Route::get('/reports/preview-semester', [\App\Http\Controllers\Admin\ReportController::class, 'previewSemesterReport'])
+        Route::get('/reports/preview-semester', [ReportController::class, 'previewSemesterReport'])
             ->name('reports.preview-semester');
+        
+        // Faculty Report Routes
+        Route::get('/reports/preview-faculty', [ReportController::class, 'previewFacultyReport'])
+            ->name('reports.preview-faculty');
+        Route::get('/reports/download-faculty', [ReportController::class, 'downloadFacultyReport'])
+            ->name('reports.download-faculty'); 
+        
+        // Requirement Report Routes
+        Route::get('/reports/preview-requirement', [ReportController::class, 'previewRequirementReport'])
+            ->name('reports.preview-requirement');
+        Route::get('/reports/download-requirement', [ReportController::class, 'downloadRequirementReport'])
+            ->name('reports.download-requirement');
 
         // Requirements
         Route::get('/requirements', [RequirementController::class, 'index'])

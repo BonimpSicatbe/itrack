@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Faculty Submission Report - {{ $overviewData['semester']->name ?? 'N/A' }}</title>
+    <title>Submission Report - {{ $overviewData['semester']->name ?? 'N/A' }}</title>
 
     <style>
         /* Define Green Color Theme Variables */
@@ -294,12 +294,12 @@
             font-family: 'Arial', sans-serif;
         }
 
-        /* Footer Styling - Copied from testPage.blade.php */
+        /* Footer Styling - Reduced border weight */
         .footer {
             width: 100%;
             margin-top: 35px;
             padding-top: 12px;
-            border-top: 2px solid #1f2937;
+            border-top: 1px solid #1f2937; /* Reduced from 2px to 1px */
             font-family: 'Arial', sans-serif;
         }
 
@@ -385,40 +385,12 @@
 
         /* Empty user column for continued courses */
         .empty-user-column {
-            background-color: #f9fafb;
+            /* Keep the background white to match the row */
+            background-color: white; 
             border-left: 1px solid #d1d5db;
             border-right: 1px solid #d1d5db;
-        }
-
-        /* Legend Styling */
-        .legend {
-            margin: 15px 0 1px 0;
-            padding: 0;
-            background-color: transparent;
-            border: none;
-            font-family: 'Arial', sans-serif;
-            text-align: right;
-        }
-
-        .legend-items {
-            display: flex;
-            justify-content: flex-end;
-            flex-wrap: nowrap;
-            gap: 15px;
-            font-family: 'Arial', sans-serif;
-        }
-
-        .legend-item {
-            padding-bottom: 3px;
-            display: flex;
-            align-items: center;
-            font-size: 8px;
-            font-family: 'Arial', sans-serif;
-            white-space: nowrap;
-        }
-
-        .legend-badge {
-            margin-right: 4px;
+            /* Ensure it has minimum padding/height */
+            padding: 5px 4px;
         }
 
         /* Prepared by section */
@@ -430,7 +402,7 @@
 
         .prepared-by-label {
             font-size: 11px;
-            margin-bottom: 20px;
+            margin-bottom: 30px;
             font-family: 'Arial', sans-serif;
         }
 
@@ -444,6 +416,22 @@
         .prepared-by-position {
             font-size: 11px;
             font-family: 'Arial', sans-serif;
+        }
+
+        /* NEW: Force table header to repeat on each page */
+        .report-table thead {
+            display: table-header-group;
+        }
+
+        /* NEW: Improved page break handling for user blocks */
+        .user-course-block {
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+
+        /* Style for continuation rows (no longer needed to hide the first cell, but kept for context) */
+        .continued-user-row {
+            /* Removed the user-column specific styling as it's now explicitly an empty cell */
         }
     </style>
 </head>
@@ -490,13 +478,15 @@
 
         <hr class="college-divider">
         
-        <div class="report-title">FACULTY SUBMISSION REPORT - {{ $overviewData['semester']->name ?? 'N/A' }}</div>
+        <div class="report-title">SUBMISSION REPORT - {{ $overviewData['semester']->name ?? 'N/A' }}</div>
     </div>
 
-    <!-- Summary Statistics -->
     @php
         $reportController = new \App\Http\Controllers\Admin\ReportController();
-        $summaryStats = $reportController->calculateSummaryStatistics($overviewData);
+        // Assuming calculateSummaryStatistics is a static method or accessible this way
+        $summaryStats = method_exists($reportController, 'calculateSummaryStatistics') 
+                        ? $reportController->calculateSummaryStatistics($overviewData) 
+                        : ['totalCourses' => 0, 'totalActualSubmissions' => 0, 'totalPossibleSubmissions' => 0, 'submissionRate' => 0];
     @endphp
     
     <div class="summary-grid">
@@ -518,7 +508,6 @@
         </div>
     </div>
 
-    <!-- Detailed Report Table - Fixed for proper page breaks -->
     <table class="report-table">
         <thead>
             <tr>
@@ -539,35 +528,35 @@
                 @php
                     $courses = $overviewData['userCoursesData'][$user->id] ?? collect();
                     $hasCourses = $courses->isNotEmpty();
+                    $formattedMiddleName = $user->middlename ? substr(trim($user->middlename), 0, 1) . '.' : '';
                 @endphp
                 
                 @if($hasCourses)
                     @foreach($courses as $courseIndex => $course)
-                        <tr class="data-row no-break">
-                            <!-- User Column - Only show on first course row -->
+                        <tr class="data-row no-break user-course-block">
                             @if($courseIndex === 0)
-                                <td rowspan="{{ $courses->count() }}" class="user-column">
+                                <td class="user-column">
                                     <div class="compact-text" style="font-weight: bold;">
-                                        {{ $user->firstname }} {{ $user->lastname }}
+                                        {{ $user->firstname }} {{ $formattedMiddleName }} {{ $user->lastname }} {{ $user->extensionname }}
                                     </div>
                                     <div class="small-text">
                                         {{ $user->position }}
                                     </div>
                                     <div class="small-text">{{ $user->email }}</div>
                                 </td>
+                            @else
+                                <td class="user-column empty-user-column">
+                                    </td>
                             @endif
                             
-                            <!-- Program Column -->
-                            <td>
+                            <td style="text-align: center;">
                                 {{ $course->program->program_code ?? 'N/A' }}
                             </td>
                             
-                            <!-- Course Column -->
-                            <td>
+                            <td style="text-align: center;">
                                 <div class="compact-text">{{ $course->course_code }}</div>
                             </td>
                             
-                            <!-- Requirement Status Columns -->
                             @foreach($overviewData['requirements'] as $requirement)
                                 @php
                                     // Check if the course is assigned to the requirement
@@ -592,26 +581,22 @@
                     @endforeach
                 @else
                     <tr class="data-row no-break">
-                        <!-- User Column -->
                         <td class="user-column">
-                            <div class="compact-text" style="font-weight: bold;">{{ $user->firstname }} {{ $user->lastname }}</div>
+                            <div class="compact-text" style="font-weight: bold;">{{ $user->firstname }} {{ $formattedMiddleName }} {{ $user->lastname }} {{ $user->extensionname }}</div>
                             @if($user->position)
                                 <div class="small-text" style="font-weight: 500;">{{ $user->position }}</div>
                             @endif
                             <div class="small-text">{{ $user->email }}</div>
                         </td>
                         
-                        <!-- Program Column -->
-                        <td class="program-column">
+                        <td class="program-column" >
                             <span class="small-text" style="color: #9ca3af;">No program</span>
                         </td>
                         
-                        <!-- Course Column -->
                         <td class="course-column">
                             <span class="small-text" style="color: #9ca3af;">No course</span>
                         </td>
                         
-                        <!-- Requirement Status Columns -->
                         @foreach($overviewData['requirements'] as $requirement)
                             <td style="text-align: center;">
                                 <span class="status-not-applicable">
@@ -632,25 +617,16 @@
         </tbody>
     </table>
 
-    <!-- Legend Section -->
-    <div class="legend">
-        <div class="legend-items">
-            <div class="legend-item">
-                <span class="status-submitted legend-badge">Sub</span>
-                <span>Submitted - Requirement has been submitted</span>
-            </div>
-            <div class="legend-item">
-                <span class="status-not-submitted legend-badge">No Sub</span>
-                <span>No Submission - No requirement has been submitted</span>
-            </div>
-            <div class="legend-item">
-                <span class="status-not-applicable legend-badge">N/A</span>
-                <span>Not Applicable - Requirement not assigned to this program</span>
-            </div>
-        </div>
+     @php
+        $preparedByMiddleName = Auth::user()->middlename ? substr(trim(Auth::user()->middlename), 0, 1) . '.' : '';
+    @endphp
+
+    <div class="prepared-by">
+        <div class="prepared-by-label">Prepared by:</div>
+        <div class="prepared-by-name">{{ Auth::user()->firstname }} {{ $preparedByMiddleName }} {{ Auth::user()->lastname }} {{ Auth::user()->extensionname }}</div>
+        <div class="prepared-by-position">{{ Auth::user()->position ?? 'Administrator' }}</div>
     </div>
 
-    <!-- Footer - Copied from testPage.blade.php -->
     <div class="footer">
         <div class="footer-content">
             <div class="footer-left">
@@ -664,13 +640,6 @@
                 <div class="footer-info">Generated On: {{ now()->format('l, F j, Y \a\t g:i A') }}</div>
             </div>
         </div>
-    </div>
-
-    <!-- Prepared by Section -->
-    <div class="prepared-by">
-        <div class="prepared-by-label">Prepared by:</div>
-        <div class="prepared-by-name">{{ Auth::user()->firstname }} {{ Auth::user()->middlename }} {{ Auth::user()->lastname }}</div>
-        <div class="prepared-by-position">{{ Auth::user()->position ?? 'Administrator' }}</div>
     </div>
 </body>
 </html>

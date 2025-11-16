@@ -158,7 +158,7 @@ class User extends Authenticatable implements HasMedia
     {
         $nameParts = [
             $this->firstname,
-            $this->middlename,
+            $this->formatMiddleName($this->middlename),
             $this->lastname,
             $this->extensionname,
         ];
@@ -186,6 +186,22 @@ class User extends Authenticatable implements HasMedia
     public function getCollegeNameAttribute(): string
     {
         return $this->college->name ?? 'N/A';
+    }
+
+    // ==================== HELPER METHODS ====================
+
+    /**
+     * Format middle name to show only first initial with period
+     * Example: "Tan" becomes "T."
+     */
+    protected function formatMiddleName(?string $middleName): string
+    {
+        if (empty($middleName)) {
+            return '';
+        }
+
+        // Get first character and add period
+        return substr(trim($middleName), 0, 1) . '.';
     }
 
     // ==================== SCOPES ====================

@@ -1,239 +1,161 @@
 <div>
     <div>
-        <!-- Header -->
-        <div class="flex justify-between items-center text-white p-6 rounded-xl shadow-md mb-6" style="background: linear-gradient(148deg,rgba(18, 67, 44, 1) 0%, rgba(30, 119, 77, 1) 54%, rgba(55, 120, 64, 1) 100%);">
-            <div class="flex items-center gap-3">
-                <div class="pl-3 rounded-xl">
-                    <i class="fa-solid fa-file-lines text-white text-2xl"></i>
-                </div>
-                <h2 class="text-xl md:text-xl font-semibold">Reports & Analytics</h2>
-            </div>
-        </div>
-
-        <!-- Report Tabs -->
-        <div class="mb-6">
-            <div class="border-b border-gray-200">
-                <nav class="-mb-px flex space-x-8">
-                    @foreach([
-                        'overview' => ['icon' => 'chart-simple', 'label' => 'Overview'],
-                        'users' => ['icon' => 'users', 'label' => 'Users'],
-                        'requirements' => ['icon' => 'clipboard-list', 'label' => 'Requirements'],
-                        'yearly' => ['icon' => 'calendar', 'label' => 'Custom Year'],
-                    ] as $tab => $tabConfig)
-                        <button
-                            wire:click="switchTab('{{ $tab }}')"
-                            class="@if($activeTab === $tab) border-green-500 text-green-600 @else border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 @endif whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center space-x-2 transition-colors duration-200"
-                        >
-                            <i class="fa-solid fa-{{ $tabConfig['icon'] }} text-sm"></i>
-                            <span>{{ $tabConfig['label'] }}</span>
-                        </button>
-                    @endforeach
-                </nav>
-            </div>
-        </div>
-
         <!-- Tab Content -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div class="bg-white rounded-xl p-6">
             <!-- Overview Tab -->
-            @if($activeTab === 'overview')
-                <div class="space-y-6">
-                    <!-- Header with Title and Generate Button -->
-                    <div class="flex justify-between items-center">
-                        <h2 class="text-lg font-semibold text-gray-900">Overview Report</h2>
-                        <button wire:click="generateReport" 
-                                target="_blank"
-                                class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-xl shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
-                            Generate PDF Report
-                            <i class="fa-regular fa-file-export ml-2 text-lg"></i>
-                        </button>
-                    </div>
-                    
-                    <!-- Filters Section -->
-                    <div class="bg-gray-50 rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <!-- Semester Filter -->
-                            <div>
-                                <label for="selectedSemester" class="block text-sm font-medium text-gray-700 mb-1">
-                                    Semester
-                                </label>
-                                <select wire:model.live="selectedSemester" id="selectedSemester" 
-                                        class="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500">
-                                    @foreach($semesters as $semester)
-                                        <option value="{{ $semester->id }}">{{ $semester->name }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
+            <div class="space-y-6">
+                <!-- Header with Title and Generate Button -->
+                <div class="flex justify-between items-center">
+                    <h2 class="text-lg font-semibold text-gray-900">Overview Report</h2>
+                    <button wire:click="generateReport" 
+                            target="_blank"
+                            class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-xl shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                        Generate PDF Report
+                        <i class="fa-regular fa-file-export ml-2 text-lg"></i>
+                    </button>
+                </div>
+                
+                <!-- Filters Section -->
+                <div class="bg-gray-50 rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <!-- Semester Filter -->
+                        <div>
+                            <label for="selectedSemester" class="block text-sm font-medium text-gray-700 mb-1">
+                                Semester
+                            </label>
+                            <select wire:model.live="selectedSemester" id="selectedSemester" 
+                                    class="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                                @foreach($semesters as $semester)
+                                    <option value="{{ $semester->id }}">{{ $semester->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
 
-                            <!-- Program Filter -->
-                            <div>
-                                <label for="selectedProgram" class="block text-sm font-medium text-gray-700 mb-1">
-                                    Program
-                                </label>
-                                <select wire:model.live="selectedProgram" id="selectedProgram" 
-                                        class="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500">
-                                    <option value="">All Programs</option>
-                                    @foreach($programs as $program)
-                                        <option value="{{ $program->id }}">{{ $program->program_name }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
+                        <!-- Program Filter -->
+                        <div>
+                            <label for="selectedProgram" class="block text-sm font-medium text-gray-700 mb-1">
+                                Program
+                            </label>
+                            <select wire:model.live="selectedProgram" id="selectedProgram" 
+                                    class="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                                <option value="">All Programs</option>
+                                @foreach($programs as $program)
+                                    <option value="{{ $program->id }}">{{ $program->program_name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
 
-                            <!-- Search Box for Overview Tab -->
-                            <div>
-                                <label for="search" class="block text-sm font-medium text-gray-700 mb-1">
-                                    Search Users
-                                </label>
-                                <input 
-                                    type="text" 
-                                    wire:model.live="search"
-                                    id="search"
-                                    placeholder="Search by name, email, rank, program, or course..."
-                                    class="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                                >
-                            </div>
+                        <!-- Search Box for Overview Tab -->
+                        <div>
+                            <label for="search" class="block text-sm font-medium text-gray-700 mb-1">
+                                Search Faculty
+                            </label>
+                            <input 
+                                type="text" 
+                                wire:model.live="search"
+                                id="search"
+                                placeholder="Search by name, email, rank, program, or course..."
+                                class="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                            >
                         </div>
                     </div>
-                    
-                    <!-- Overview Table - Excel-like View -->
-                    <div class="overflow-x-auto bg-white rounded-xl border border-gray-200 relative" style="min-height: 200px;">
-                        <table class="min-w-full border-collapse">
-                            <!-- Table Header -->
-                            <thead class="bg-green-50 text-gray-700 font-semibold text-sm sticky top-0 z-30">
-                                <tr>
-                                    <th class="p-3 rounded-tl-xl border border-green-500 sticky left-0 bg-green-50 z-40 w-49 min-w-49 relative">
-                                        <div class="absolute inset-0"></div>
-                                        User
-                                    </th>
-                                    <th class="p-3 border border-green-500 sticky left-48 bg-green-50 z-40 w-40 min-w-40 relative">
-                                        <div class="absolute inset-0"></div>
-                                        Program
-                                    </th>
-                                    <th class="p-3 border border-green-500 sticky left-88 bg-green-50 z-40 w-40 min-w-40 relative">
-                                        <div class="absolute inset-0"></div>
-                                        Course
-                                    </th>
-                                    
-                                    <!-- Requirement Columns -->
-                                    @if($overviewData['requirements']->count() > 0)
-                                        @foreach($overviewData['requirements'] as $requirement)
-                                            <th class="p-3 border border-green-500 text-center w-40 min-w-40 max-w-60 @if($loop->last) rounded-tr-xl @endif" title="{{ $requirement->name }}">
-                                                <div class="truncate">
-                                                    {{ \Illuminate\Support\Str::limit($requirement->name, 20) }}
-                                                </div>
-                                            </th>
-                                        @endforeach
-                                    @else
-                                        <!-- Single column when no requirements exist -->
-                                        <th class="p-3 border border-green-500 text-center w-40 min-w-40 max-w-60 rounded-tr-xl">
-                                            <div class="truncate text-gray-500">
-                                                No Requirements
+                </div>
+                
+                <!-- Overview Table - Excel-like View -->
+                <div class="overflow-x-auto bg-white rounded-xl border border-gray-200 relative" style="min-height: 200px;">
+                    <table class="min-w-full border-collapse">
+                        <!-- Table Header -->
+                        <thead class="bg-green-50 text-gray-700 font-semibold text-sm sticky top-0 z-30">
+                            <tr>
+                                <th class="p-3 rounded-tl-xl border border-green-500 sticky left-0 bg-green-50 z-40 w-49 min-w-49 relative">
+                                    <div class="absolute inset-0"></div>
+                                    Faculty
+                                </th>
+                                <th class="p-3 border border-green-500 sticky left-48 bg-green-50 z-40 w-40 min-w-40 relative">
+                                    <div class="absolute inset-0"></div>
+                                    Program
+                                </th>
+                                <th class="p-3 border border-green-500 sticky left-88 bg-green-50 z-40 w-40 min-w-40 relative">
+                                    <div class="absolute inset-0"></div>
+                                    Course
+                                </th>
+                                
+                                <!-- Requirement Columns -->
+                                @if($overviewData['requirements']->count() > 0)
+                                    @foreach($overviewData['requirements'] as $requirement)
+                                        <th class="p-3 border border-green-500 text-center w-40 min-w-40 max-w-60 @if($loop->last) rounded-tr-xl @endif" title="{{ $requirement->name }}">
+                                            <div class="truncate">
+                                                {{ \Illuminate\Support\Str::limit($requirement->name, 20) }}
                                             </div>
                                         </th>
-                                    @endif
-                                </tr>
-                            </thead>
+                                    @endforeach
+                                @else
+                                    <!-- Single column when no requirements exist -->
+                                    <th class="p-3 border border-green-500 text-center w-40 min-w-40 max-w-60 rounded-tr-xl">
+                                        <div class="truncate text-gray-500">
+                                            No Requirements
+                                        </div>
+                                    </th>
+                                @endif
+                            </tr>
+                        </thead>
 
-                            <!-- Table Body -->
-                            <tbody class="bg-white">
-                                @forelse($overviewData['users'] as $userIndex => $user)
-                                    @php
-                                        $courses = $overviewData['userCoursesData'][$user->id] ?? collect();
-                                        $rowspan = $this->getUserRowspan($user->id, $overviewData['userCoursesData']);
-                                        $hasCourses = $courses->isNotEmpty();
-                                    @endphp
-                                    
-                                    @if($hasCourses)
-                                        @foreach($courses as $courseIndex => $course)
-                                            <tr class="border-b border-gray-200 hover:bg-gray-50">
-                                                
-                                                <!-- User Column -->
-                                                @if($courseIndex === 0)
-                                                    <td class="p-3 border border-gray-200 sticky left-0 bg-white z-30 align-top relative"
-                                                        rowspan="{{ $rowspan }}">
-                                                        <div class="absolute inset-0 "></div>
-                                                        <div class="text-sm font-medium text-gray-900">{{ $user->full_name }}</div>
-                                                        @if($user->position)
-                                                            <div class="text-xs text-gray-600 font-medium">{{ $user->position }}</div>
-                                                        @endif
-                                                        <div class="text-xs text-gray-500">{{ $user->email }}</div>
-                                                    </td>
-                                                @endif
-                                                
-                                                <!-- Program Column -->
-                                                <td class="p-3 border border-gray-200 sticky left-48 bg-white z-30 text-sm text-gray-600 relative">
-                                                    <div class="absolute inset-0 border-l-1 border-r-1 border-gray-200"></div>
-                                                    <div class="font-medium">{{ $course->program->program_code ?? 'N/A' }}</div>
-                                                    <div class="text-xs text-gray-500 truncate" title="{{ $course->program->program_name ?? 'N/A' }}">
-                                                        {{ \Illuminate\Support\Str::limit($course->program->program_name ?? 'N/A', 25) }}
-                                                    </div>
-                                                </td>
-                                                
-                                                <!-- Course Column -->
-                                                <td class="p-3 border border-gray-200 sticky left-88 bg-white z-30 text-sm text-gray-600 relative">
-                                                    <div class="absolute inset-0 border-l-1 border-r-1 border-gray-200"></div>
-                                                    <div class="font-medium">{{ $course->course_code }}</div>
-                                                    <div class="text-xs text-gray-500 truncate" title="{{ $course->course_name }}">
-                                                        {{ \Illuminate\Support\Str::limit($course->course_name, 25) }}
-                                                    </div>
-                                                </td>
-                                                
-                                                <!-- Requirement Status Columns -->
-                                                @if($overviewData['requirements']->count() > 0)
-                                                    @foreach($overviewData['requirements'] as $requirement)
-                                                        @php
-                                                            $displayText = $this->getSubmissionDisplay(
-                                                                $user->id, 
-                                                                $requirement->id, 
-                                                                $course->id, 
-                                                                $overviewData['submissionIndicators'],
-                                                                $requirement,
-                                                                $overviewData['userCoursesData']
-                                                            );
-                                                            $badgeClass = $this->getStatusBadgeClass($displayText);
-                                                        @endphp
-                                                        <td class="p-3 border border-gray-200 text-center">
-                                                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium {{ $badgeClass }}">
-                                                                {{ $displayText }}
-                                                            </span>
-                                                        </td>
-                                                    @endforeach
-                                                @else
-                                                    <!-- Single "No Requirement" column when no requirements exist -->
-                                                    <td class="p-3 border border-gray-200 text-center"></td>
-                                                @endif
-                                            </tr>
-                                        @endforeach
-                                    @else
-                                        <!-- User with no courses -->
+                        <!-- Table Body -->
+                        <tbody class="bg-white">
+                            @forelse($overviewData['users'] as $userIndex => $user)
+                                @php
+                                    $courses = $overviewData['userCoursesData'][$user->id] ?? collect();
+                                    $rowspan = $this->getUserRowspan($user->id, $overviewData['userCoursesData']);
+                                    $hasCourses = $courses->isNotEmpty();
+                                @endphp
+                                
+                                @if($hasCourses)
+                                    @foreach($courses as $courseIndex => $course)
                                         <tr class="border-b border-gray-200 hover:bg-gray-50">
                                             
                                             <!-- User Column -->
-                                            <td class="p-3 border border-gray-200 sticky left-0 bg-white z-30 relative">
-                                                <div class="absolute inset-0 border-l-2 border-r-2 border-gray-300"></div>
-                                                <div class="text-sm font-medium text-gray-900">{{ $user->full_name }}</div>
-                                                @if($user->position)
-                                                    <div class="text-xs text-gray-600 font-medium">{{ $user->position }}</div>
-                                                @endif
-                                                <div class="text-xs text-gray-500">{{ $user->email }}</div>
-                                            </td>
+                                            @if($courseIndex === 0)
+                                                <td class="p-3 border border-gray-200 sticky left-0 bg-white z-30 align-top relative"
+                                                    rowspan="{{ $rowspan }}">
+                                                    <div class="absolute inset-0 "></div>
+                                                    <div class="text-sm font-medium text-gray-900">{{ $user->full_name }}</div>
+                                                    @if($user->position)
+                                                        <div class="text-xs text-gray-600 font-medium">{{ $user->position }}</div>
+                                                    @endif
+                                                    <div class="text-xs text-gray-500">{{ $user->email }}</div>
+                                                </td>
+                                            @endif
                                             
                                             <!-- Program Column -->
                                             <td class="p-3 border border-gray-200 sticky left-48 bg-white z-30 text-sm text-gray-600 relative">
-                                                <div class="absolute inset-0 border-l-2 border-r-2 border-gray-300"></div>
-                                                <span class="text-gray-400">No program</span>
+                                                <div class="absolute inset-0 border-l-1 border-r-1 border-gray-200"></div>
+                                                <div class="font-medium">{{ $course->program->program_code ?? 'N/A' }}</div>
+                                                <div class="text-xs text-gray-500 truncate" title="{{ $course->program->program_name ?? 'N/A' }}">
+                                                    {{ \Illuminate\Support\Str::limit($course->program->program_name ?? 'N/A', 25) }}
+                                                </div>
                                             </td>
                                             
                                             <!-- Course Column -->
                                             <td class="p-3 border border-gray-200 sticky left-88 bg-white z-30 text-sm text-gray-600 relative">
-                                                <div class="absolute inset-0 border-l-2 border-r-2 border-gray-300"></div>
-                                                <span class="text-gray-400">No course</span>
+                                                <div class="absolute inset-0 border-l-1 border-r-1 border-gray-200"></div>
+                                                <div class="font-medium">{{ $course->course_code }}</div>
+                                                <div class="text-xs text-gray-500 truncate" title="{{ $course->course_name }}">
+                                                    {{ \Illuminate\Support\Str::limit($course->course_name, 25) }}
+                                                </div>
                                             </td>
                                             
                                             <!-- Requirement Status Columns -->
                                             @if($overviewData['requirements']->count() > 0)
                                                 @foreach($overviewData['requirements'] as $requirement)
                                                     @php
-                                                        $displayText = 'N/A'; // Users with no courses are automatically not assigned
+                                                        $displayText = $this->getSubmissionDisplay(
+                                                            $user->id, 
+                                                            $requirement->id, 
+                                                            $course->id, 
+                                                            $overviewData['submissionIndicators'],
+                                                            $requirement,
+                                                            $overviewData['userCoursesData']
+                                                        );
                                                         $badgeClass = $this->getStatusBadgeClass($displayText);
                                                     @endphp
                                                     <td class="p-3 border border-gray-200 text-center">
@@ -244,87 +166,112 @@
                                                 @endforeach
                                             @else
                                                 <!-- Single "No Requirement" column when no requirements exist -->
-                                                <td class="p-3 border border-gray-200 text-center">
-                                                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-500">
-                                                        No Requirement
-                                                    </span>
-                                                </td>
+                                                <td class="p-3 border border-gray-200 text-center"></td>
                                             @endif
                                         </tr>
-                                    @endif
-                                @empty
-                                    <!-- Empty users state -->
-                                    <tr>
-                                        <td colspan="{{ $overviewData['requirements']->count() > 0 ? $overviewData['requirements']->count() + 3 : 4 }}" class="p-8 text-center text-gray-500">
-                                            <i class="fa-solid fa-users text-3xl text-gray-300 mb-2"></i>
-                                            <p class="text-sm font-semibold">No users found.</p>
-                                            @if($search)
-                                                <p class="text-sm font-semibold text-amber-500 mt-1">Try adjusting your search filters</p>
+                                    @endforeach
+                                @else
+                                    <!-- User with no courses -->
+                                    <tr class="border-b border-gray-200 hover:bg-gray-50">
+                                        
+                                        <!-- User Column -->
+                                        <td class="p-3 border border-gray-200 sticky left-0 bg-white z-30 relative">
+                                            <div class="absolute inset-0 border-l-2 border-r-2 border-gray-300"></div>
+                                            <div class="text-sm font-medium text-gray-900">{{ $user->full_name }}</div>
+                                            @if($user->position)
+                                                <div class="text-xs text-gray-600 font-medium">{{ $user->position }}</div>
                                             @endif
+                                            <div class="text-xs text-gray-500">{{ $user->email }}</div>
                                         </td>
+                                        
+                                        <!-- Program Column -->
+                                        <td class="p-3 border border-gray-200 sticky left-48 bg-white z-30 text-sm text-gray-600 relative">
+                                            <div class="absolute inset-0 border-l-2 border-r-2 border-gray-300"></div>
+                                            <span class="text-gray-400">No program</span>
+                                        </td>
+                                        
+                                        <!-- Course Column -->
+                                        <td class="p-3 border border-gray-200 sticky left-88 bg-white z-30 text-sm text-gray-600 relative">
+                                            <div class="absolute inset-0 border-l-2 border-r-2 border-gray-300"></div>
+                                            <span class="text-gray-400">No course</span>
+                                        </td>
+                                        
+                                        <!-- Requirement Status Columns -->
+                                        @if($overviewData['requirements']->count() > 0)
+                                            @foreach($overviewData['requirements'] as $requirement)
+                                                @php
+                                                    $displayText = 'N/A'; // Users with no courses are automatically not assigned
+                                                    $badgeClass = $this->getStatusBadgeClass($displayText);
+                                                @endphp
+                                                <td class="p-3 border border-gray-200 text-center">
+                                                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium {{ $badgeClass }}">
+                                                        {{ $displayText }}
+                                                    </span>
+                                                </td>
+                                            @endforeach
+                                        @else
+                                            <!-- Single "No Requirement" column when no requirements exist -->
+                                            <td class="p-3 border border-gray-200 text-center">
+                                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-500">
+                                                    No Requirement
+                                                </span>
+                                            </td>
+                                        @endif
                                     </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
+                                @endif
+                            @empty
+                                <!-- Empty users state -->
+                                <tr>
+                                    <td colspan="{{ $overviewData['requirements']->count() > 0 ? $overviewData['requirements']->count() + 3 : 4 }}" class="p-8 text-center text-gray-500">
+                                        <i class="fa-solid fa-users text-3xl text-gray-300 mb-2"></i>
+                                        <p class="text-sm font-semibold">No users found.</p>
+                                        @if($search)
+                                            <p class="text-sm font-semibold text-amber-500 mt-1">Try adjusting your search filters</p>
+                                        @endif
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
 
-                        <!-- Empty state overlay - Only show when there are no users at all -->
-                        @if($overviewData['users']->isEmpty())
-                        <div class="absolute inset-0 flex flex-col items-center justify-center bg-white py-8 text-gray-500 mt-15">
-                            <i class="fa-solid fa-users text-3xl text-gray-300 mb-2"></i>
-                            <p class="text-sm font-semibold">No users found.</p>
-                            @if($search)
-                                <p class="text-sm font-semibold text-amber-500 mt-1">Try adjusting your search filters</p>
-                            @endif
-                        </div>
+                    <!-- Empty state overlay - Only show when there are no users at all -->
+                    @if($overviewData['users']->isEmpty())
+                    <div class="absolute inset-0 flex flex-col items-center justify-center bg-white py-8 text-gray-500 mt-15">
+                        <i class="fa-solid fa-users text-3xl text-gray-300 mb-2"></i>
+                        <p class="text-sm font-semibold">No users found.</p>
+                        @if($search)
+                            <p class="text-sm font-semibold text-amber-500 mt-1">Try adjusting your search filters</p>
                         @endif
                     </div>
-
-                    <!-- Summary -->
-                    <div class="mt-4 flex flex-wrap gap-4 items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
-                        @php
-                            $totalCourses = 0;
-                            foreach($overviewData['userCoursesData'] as $courses) {
-                                $totalCourses += $courses->count();
-                            }
-                        @endphp
-                        <div class="text-xs font-semibold text-gray-700">
-                            Total Users: {{ $overviewData['users']->count() }} | 
-                            Total Courses: {{ $totalCourses }} |
-                            Total Requirements: {{ $overviewData['requirements']->count() }} |
-                            Semester: {{ $overviewData['semester']->name ?? 'N/A' }}
-                            @if($overviewData['requirements']->isEmpty())
-                                | <span class="text-amber-600">No requirements defined for this semester</span>
-                            @endif
-                        </div>
-                    </div>
+                    @endif
                 </div>
 
-            <!-- Users Tab -->
-            @elseif($activeTab === 'users')
-                <livewire:admin.report.user-report />
+                <!-- Pagination -->
+                @if($overviewData['users']->hasPages())
+                    <div class="mt-6">
+                        {{ $overviewData['users']->links() }}
+                    </div>
+                @endif
 
-            <!-- Requirements Tab -->
-            @elseif($activeTab === 'requirements')
-                <div class="space-y-6">
-                    <h2 class="text-lg font-semibold text-gray-900">Requirements Report</h2>
-                    <div class="text-center py-12">
-                        <i class="fa-solid fa-clipboard-list text-4xl text-gray-300 mb-4"></i>
-                        <p class="text-gray-500">Requirements report content will be displayed here</p>
-                        <p class="text-sm text-gray-400 mt-2">This will show requirement completion rates, submission trends, and compliance analysis</p>
+                <!-- Summary -->
+                <div class="mt-4 flex flex-wrap gap-4 items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
+                    @php
+                        $totalCourses = 0;
+                        foreach($overviewData['userCoursesData'] as $courses) {
+                            $totalCourses += $courses->count();
+                        }
+                    @endphp
+                    <div class="text-xs font-semibold text-gray-700">
+                        Total Faculty: {{ $overviewData['users']->total() }} | 
+                        Total Courses: {{ $totalCourses }} |
+                        Total Requirements: {{ $overviewData['requirements']->count() }} |
+                        Semester: {{ $overviewData['semester']->name ?? 'N/A' }}
+                        @if($overviewData['requirements']->isEmpty())
+                            | <span class="text-amber-600">No requirements defined for this semester</span>
+                        @endif
                     </div>
                 </div>
-
-            <!-- Yearly Tab -->
-            @elseif($activeTab === 'yearly')
-                <div class="space-y-6">
-                    <h2 class="text-lg font-semibold text-gray-900">Custom Year Report</h2>
-                    <div class="text-center py-12">
-                        <i class="fa-solid fa-calendar text-4xl text-gray-300 mb-4"></i>
-                        <p class="text-gray-500">Yearly report content will be displayed here</p>
-                        <p class="text-sm text-gray-400 mt-2">This will show year-over-year comparisons, annual trends, and custom period analysis</p>
-                    </div>
-                </div>
-            @endif
+            </div>
         </div>
 
         <!-- Flash Message -->

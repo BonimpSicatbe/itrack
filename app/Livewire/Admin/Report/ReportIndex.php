@@ -3,6 +3,7 @@
 namespace App\Livewire\Admin\Report;
 
 use Livewire\Component;
+use Livewire\WithPagination;
 use App\Models\Semester;
 use App\Models\College;
 use App\Models\Program;
@@ -14,7 +15,8 @@ use App\Models\RequirementSubmissionIndicator;
 
 class ReportIndex extends Component
 {
-    public $activeTab = 'overview';
+    use WithPagination;
+    
     public $search = '';
     
     // Filter options
@@ -55,16 +57,18 @@ class ReportIndex extends Component
         // Reset program when semester changes
         $this->selectedProgram = '';
         $this->selectedCourse = '';
+        $this->resetPage(); // Reset to first page when filters change
     }
 
     public function updatedSelectedProgram()
     {
         $this->selectedCourse = '';
+        $this->resetPage(); // Reset to first page when filters change
     }
 
-    public function switchTab($tab)
+    public function updatedSearch()
     {
-        $this->activeTab = $tab;
+        $this->resetPage(); // Reset to first page when search changes
     }
 
     public function generateReport()
@@ -114,7 +118,12 @@ class ReportIndex extends Component
 
         // Get all requirements for the selected semester
         $requirements = Requirement::where('semester_id', $semester->id)
-            ->orderByRaw('CAST(JSON_UNQUOTE(JSON_EXTRACT(requirement_type_ids, "$[0]")) AS UNSIGNED) ASC')
+            ->orderByRaw('
+                CASE 
+                    WHEN JSON_LENGTH(requirement_type_ids) = 0 THEN 999999
+                    ELSE CAST(JSON_UNQUOTE(JSON_EXTRACT(requirement_type_ids, "$[0]")) AS UNSIGNED)
+                END ASC
+            ')
             ->orderBy('name')
             ->get();
 
@@ -149,10 +158,10 @@ class ReportIndex extends Component
             });
         }
 
-        $users = $usersQuery->get();
-
-        // Get course assignments for the filtered users - WITH PROGRAM FILTERING
-        $courseAssignmentsQuery = CourseAssignment::whereIn('professor_id', $users->pluck('id'))
+        // Get course assignments for ALL users (for filtering) - WITH PROGRAM FILTERING
+        $allUsers = $usersQuery->get();
+        
+        $courseAssignmentsQuery = CourseAssignment::whereIn('professor_id', $allUsers->pluck('id'))
             ->where('semester_id', $semester->id)
             ->with(['course' => function($query) {
                 // Apply program filter to courses if a program is selected
@@ -180,7 +189,17 @@ class ReportIndex extends Component
             }
         }
 
-        // Get submission indicators for the filtered users and filtered courses
+        // Apply program filter to users query
+        if ($this->selectedProgram) {
+            $usersQuery->whereHas('courseAssignments.course', function($query) {
+                $query->where('program_id', $this->selectedProgram);
+            });
+        }
+
+        // Paginate users - 10 per page
+        $users = $usersQuery->paginate(7);
+
+        // Get submission indicators for the paginated users and filtered courses
         $submissionIndicators = RequirementSubmissionIndicator::whereIn('user_id', $users->pluck('id'))
             ->whereIn('requirement_id', $requirements->pluck('id'))
             ->with(['requirement', 'course'])
@@ -200,13 +219,6 @@ class ReportIndex extends Component
             }
             
             $userCoursesData[$user->id] = $courses;
-        }
-
-        // Filter out users who have no courses after program filtering
-        if ($this->selectedProgram) {
-            $users = $users->filter(function($user) use ($userCoursesData) {
-                return $userCoursesData[$user->id]->isNotEmpty();
-            });
         }
 
         return [
@@ -336,10 +348,10 @@ class ReportIndex extends Component
 
     public function render()
     {
-        $overviewData = $this->activeTab === 'overview' ? $this->getOverviewData() : [];
+        $overviewData = $this->getOverviewData();
 
         return view('livewire.admin.report.report-index', [
             'overviewData' => $overviewData
-        ])->layout('layouts.admin.app');
+        ]);
     }
-}
+}   
