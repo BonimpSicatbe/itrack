@@ -83,6 +83,12 @@ Route::middleware(['auth', 'role:admin|super-admin'])
         Route::get('/reports/download-requirement', [ReportController::class, 'downloadRequirementReport'])
             ->name('reports.download-requirement');
 
+        // Custom Report Routes
+        Route::get('/reports/preview-custom', [ReportController::class, 'previewCustomReport'])
+            ->name('reports.preview-custom');
+        Route::get('/reports/download-custom', [ReportController::class, 'downloadCustomReport'])
+            ->name('reports.download-custom');
+
         // Requirements
         Route::get('/requirements', [RequirementController::class, 'index'])
             ->name('requirements.index');

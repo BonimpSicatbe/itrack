@@ -49,13 +49,8 @@
                     </div>
                 @break
                 @case('yearly')
-                    <div class="p-6">
-                        <h2 class="text-lg font-semibold text-gray-900 mb-4">Custom Year Report</h2>
-                        <div class="text-center py-12">
-                            <i class="fa-solid fa-calendar text-4xl text-gray-300 mb-4"></i>
-                            <p class="text-gray-500">Yearly report content will be displayed here</p>
-                            <p class="text-sm text-gray-400 mt-2">This will show year-over-year comparisons, annual trends, and custom period analysis</p>
-                        </div>
+                    <div>
+                        @livewire('admin.report.custom-report')
                     </div>
                 @break
             @endswitch

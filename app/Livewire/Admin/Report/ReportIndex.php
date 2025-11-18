@@ -18,6 +18,7 @@ class ReportIndex extends Component
     use WithPagination;
     
     public $search = '';
+    public $perPage = 5; // Add this line
     
     // Filter options
     public $selectedSemester = '';
@@ -52,23 +53,29 @@ class ReportIndex extends Component
         $this->courses = Course::with('program')->orderBy('course_name')->get();
     }
 
+    // Add these pagination methods
+    public function updatedPerPage()
+    {
+        $this->resetPage();
+    }
+
     public function updatedSelectedSemester()
     {
         // Reset program when semester changes
         $this->selectedProgram = '';
         $this->selectedCourse = '';
-        $this->resetPage(); // Reset to first page when filters change
+        $this->resetPage();
     }
 
     public function updatedSelectedProgram()
     {
         $this->selectedCourse = '';
-        $this->resetPage(); // Reset to first page when filters change
+        $this->resetPage();
     }
 
     public function updatedSearch()
     {
-        $this->resetPage(); // Reset to first page when search changes
+        $this->resetPage();
     }
 
     public function generateReport()
@@ -107,12 +114,14 @@ class ReportIndex extends Component
             : Semester::getActiveSemester();
         
         if (!$semester) {
+            // Return empty paginator instead of empty collection
             return [
                 'requirements' => collect(),
-                'users' => collect(),
+                'users' => User::where('id', 0)->paginate($this->perPage), // Empty paginator
                 'courseAssignments' => collect(),
                 'submissionIndicators' => collect(),
-                'userCoursesData' => []
+                'userCoursesData' => [],
+                'semester' => null
             ];
         }
 
@@ -196,8 +205,8 @@ class ReportIndex extends Component
             });
         }
 
-        // Paginate users - 10 per page
-        $users = $usersQuery->paginate(7);
+        // Paginate users - use perPage property instead of hardcoded value
+        $users = $usersQuery->paginate($this->perPage); // Changed from 7 to $this->perPage
 
         // Get submission indicators for the paginated users and filtered courses
         $submissionIndicators = RequirementSubmissionIndicator::whereIn('user_id', $users->pluck('id'))
@@ -354,4 +363,4 @@ class ReportIndex extends Component
             'overviewData' => $overviewData
         ]);
     }
-}   
+}

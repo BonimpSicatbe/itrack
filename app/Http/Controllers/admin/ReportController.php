@@ -14,6 +14,7 @@ use App\Models\RequirementSubmissionIndicator;
 use App\Models\SubmittedRequirement;
 use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
 
 class ReportController extends Controller
 {
@@ -72,7 +73,7 @@ class ReportController extends Controller
         // Get parameters from request
         $userId = $request->input('user_id');
         $semesterId = $request->input('semester_id');
-        $submissionFilter = $request->input('submission_filter', 'all'); // Add this line
+        $submissionFilter = $request->input('submission_filter', 'all');
         
         // Validate required parameters
         if (!$userId || !$semesterId) {
@@ -93,8 +94,17 @@ class ReportController extends Controller
             ->where('semester_id', $semester->id)
             ->get();
 
-        // Get requirements for the semester
-        $requirements = Requirement::where('semester_id', $semester->id)->get();
+        // Update requirements query to order by requirement_type_ids
+        $requirements = Requirement::where('semester_id', $semester->id)
+            ->orderByRaw('
+                CASE 
+                    WHEN JSON_LENGTH(requirement_type_ids) = 0 OR requirement_type_ids IS NULL THEN 1 
+                    ELSE 0 
+                END
+            ') // Put empty arrays last
+            ->orderByRaw('CAST(JSON_UNQUOTE(JSON_EXTRACT(requirement_type_ids, "$[0]")) AS UNSIGNED)') // Order by first type ID
+            ->orderBy('name') // Secondary order by name for same type IDs
+            ->get();
 
         // Calculate summary data
         $summaryData = $this->calculateFacultySummaryData($user, $semester, $assignedCourses, $requirements);
@@ -108,18 +118,27 @@ class ReportController extends Controller
             'semester' => $semester,
             'summaryData' => $summaryData,
             'detailedRequirements' => $detailedRequirements,
-            'submissionFilter' => $submissionFilter // Add this line
+            'submissionFilter' => $submissionFilter
         ])->setPaper('a4', 'portrait');
 
         // Preview in browser instead of downloading
         return $pdf->stream('faculty-report-' . $user->lastname . '-' . now()->format('Y-m-d') . '.pdf');
     }
 
-    /**
-     * Calculate summary statistics for faculty report
-     */
     protected function calculateFacultySummaryData($user, $semester, $assignedCourses, $requirements)
     {
+        // Update requirements query to order by requirement_type_ids
+        $requirements = Requirement::where('semester_id', $semester->id)
+            ->orderByRaw('
+                CASE 
+                    WHEN JSON_LENGTH(requirement_type_ids) = 0 OR requirement_type_ids IS NULL THEN 1 
+                    ELSE 0 
+                END
+            ') // Put empty arrays last
+            ->orderByRaw('CAST(JSON_UNQUOTE(JSON_EXTRACT(requirement_type_ids, "$[0]")) AS UNSIGNED)') // Order by first type ID
+            ->orderBy('name') // Secondary order by name for same type IDs
+            ->get();
+
         $totalRequirements = 0;
         $submittedCount = 0;
         $approvedCount = 0;
@@ -167,6 +186,18 @@ class ReportController extends Controller
         // Group submissions by course and requirement
         $groupedSubmissions = [];
         
+        // Update requirements query to order by requirement_type_ids
+        $requirements = Requirement::where('semester_id', $semester->id)
+            ->orderByRaw('
+                CASE 
+                    WHEN JSON_LENGTH(requirement_type_ids) = 0 OR requirement_type_ids IS NULL THEN 1 
+                    ELSE 0 
+                END
+            ') // Put empty arrays last
+            ->orderByRaw('CAST(JSON_UNQUOTE(JSON_EXTRACT(requirement_type_ids, "$[0]")) AS UNSIGNED)') // Order by first type ID
+            ->orderBy('name') // Secondary order by name for same type IDs
+            ->get();
+
         // Get all requirements that are assigned to the user's courses
         $assignedRequirements = $requirements->filter(function($requirement) use ($assignedCourses) {
             foreach ($assignedCourses as $assignment) {
@@ -177,6 +208,7 @@ class ReportController extends Controller
             return false;
         });
 
+        // Rest of the method remains the same...
         foreach ($assignedCourses as $assignment) {
             foreach ($assignedRequirements as $requirement) {
                 // Only include requirements that are assigned to this course's program
@@ -478,7 +510,7 @@ class ReportController extends Controller
         // Get parameters from request
         $userId = $request->input('user_id');
         $semesterId = $request->input('semester_id');
-        $submissionFilter = $request->input('submission_filter', 'all'); // Add this line
+        $submissionFilter = $request->input('submission_filter', 'all');
         
         // Validate required parameters
         if (!$userId || !$semesterId) {
@@ -499,8 +531,17 @@ class ReportController extends Controller
             ->where('semester_id', $semester->id)
             ->get();
 
-        // Get requirements for the semester
-        $requirements = Requirement::where('semester_id', $semester->id)->get();
+        // Update requirements query to order by requirement_type_ids
+        $requirements = Requirement::where('semester_id', $semester->id)
+            ->orderByRaw('
+                CASE 
+                    WHEN JSON_LENGTH(requirement_type_ids) = 0 OR requirement_type_ids IS NULL THEN 1 
+                    ELSE 0 
+                END
+            ') // Put empty arrays last
+            ->orderByRaw('CAST(JSON_UNQUOTE(JSON_EXTRACT(requirement_type_ids, "$[0]")) AS UNSIGNED)') // Order by first type ID
+            ->orderBy('name') // Secondary order by name for same type IDs
+            ->get();
 
         // Calculate summary data
         $summaryData = $this->calculateFacultySummaryData($user, $semester, $assignedCourses, $requirements);
@@ -514,7 +555,7 @@ class ReportController extends Controller
             'semester' => $semester,
             'summaryData' => $summaryData,
             'detailedRequirements' => $detailedRequirements,
-            'submissionFilter' => $submissionFilter // Add this line
+            'submissionFilter' => $submissionFilter
         ])->setPaper('a4', 'portrait');
 
         // Download the PDF
@@ -733,5 +774,225 @@ class ReportController extends Controller
 
         // Download the PDF
         return $pdf->download('requirement-report-' . $requirement->name . '-' . $semester->name . '-' . now()->format('Y-m-d') . '.pdf');
+    }
+
+    public function previewCustomReport(Request $request)
+    {
+        // Get parameters from request
+        $startDate = $request->input('start_date');
+        $endDate = $request->input('end_date');
+        $collegeId = $request->input('college_id');
+        $search = $request->input('search');
+
+        // Validate required parameters
+        if (!$startDate || !$endDate) {
+            abort(400, 'Start date and End date are required');
+        }
+
+        // Convert Y-m to full dates
+        $start = Carbon::createFromFormat('Y-m', $startDate)->startOfMonth();
+        $end = Carbon::createFromFormat('Y-m', $endDate)->endOfMonth();
+
+        // Get college filter data
+        $collegeFilter = $collegeId ? College::find($collegeId) : null;
+
+        // Generate report data
+        $reportData = $this->generateCustomReportData($start, $end, $collegeId, $search);
+        $summaryStats = $this->calculateCustomReportSummary($reportData, $start, $end);
+
+        // Generate PDF report for preview
+        $pdf = Pdf::loadView('reports.custom-report-pdf', [
+            'reportData' => $reportData,
+            'summaryStats' => $summaryStats,
+            'collegeFilter' => $collegeFilter,
+            'searchFilter' => $search,
+        ])->setPaper('a4', 'portrait');
+
+        $filename = 'custom-report-' . $start->format('Y-m') . '-to-' . $end->format('Y-m') . '.pdf';
+        
+        return $pdf->stream($filename);
+    }
+
+    public function downloadCustomReport(Request $request)
+    {
+        // Same logic as preview but with download
+        $startDate = $request->input('start_date');
+        $endDate = $request->input('end_date');
+        $collegeId = $request->input('college_id');
+        $search = $request->input('search');
+
+        if (!$startDate || !$endDate) {
+            abort(400, 'Start date and End date are required');
+        }
+
+        $start = Carbon::createFromFormat('Y-m', $startDate)->startOfMonth();
+        $end = Carbon::createFromFormat('Y-m', $endDate)->endOfMonth();
+        $collegeFilter = $collegeId ? College::find($collegeId) : null;
+
+        $reportData = $this->generateCustomReportData($start, $end, $collegeId, $search);
+        $summaryStats = $this->calculateCustomReportSummary($reportData, $start, $end);
+
+        $pdf = Pdf::loadView('reports.custom-report-pdf', [
+            'reportData' => $reportData,
+            'summaryStats' => $summaryStats,
+            'collegeFilter' => $collegeFilter,
+            'searchFilter' => $search,
+        ])->setPaper('a4', 'portrait');
+
+        $filename = 'custom-report-' . $start->format('Y-m') . '-to-' . $end->format('Y-m') . '.pdf';
+        
+        return $pdf->download($filename);
+    }
+
+    protected function generateCustomReportData($start, $end, $collegeId = null, $search = null)
+    {
+        // Get faculty who were teaching during this period
+        $facultyQuery = User::where('is_active', true)
+            ->whereDoesntHave('roles', function($q) {
+                $q->whereIn('name', ['admin', 'super-admin']);
+            })
+            ->where(function($query) use ($start, $end) {
+                // Faculty whose teaching period overlaps with the selected date range
+                $query->where(function($q) use ($start, $end) {
+                    $q->whereNull('teaching_started_at')
+                    ->orWhere('teaching_started_at', '<=', $end);
+                })
+                ->where(function($q) use ($start, $end) {
+                    $q->whereNull('teaching_ended_at')
+                    ->orWhere('teaching_ended_at', '>=', $start);
+                });
+            });
+
+        // Apply college filter
+        if ($collegeId) {
+            $facultyQuery->where('college_id', $collegeId);
+        }
+
+        // Apply search filter
+        if ($search) {
+            $facultyQuery->where(function($q) use ($search) {
+                $q->where('firstname', 'like', '%'.$search.'%')
+                ->orWhere('middlename', 'like', '%'.$search.'%')
+                ->orWhere('lastname', 'like', '%'.$search.'%')
+                ->orWhere('email', 'like', '%'.$search.'%');
+            });
+        }
+
+        $faculty = $facultyQuery->with('college')->get();
+
+        // Get semesters within the date range that have already started
+        $semesters = Semester::where('start_date', '<=', $end)
+            ->where('end_date', '>=', $start)
+            ->where('start_date', '<=', now()) 
+            ->orderBy('start_date')
+            ->get();
+
+        $reportData = [];
+
+        foreach ($faculty as $facultyMember) {
+            // Get course assignments within the date range
+            $courseAssignments = CourseAssignment::with(['course.program', 'semester'])
+                ->where('professor_id', $facultyMember->id)
+                ->whereIn('semester_id', $semesters->pluck('id'))
+                ->get();
+
+            $facultyCourses = [];
+            $facultyTotalSubmissions = 0;
+            $facultyTotalApproved = 0;
+
+            foreach ($courseAssignments as $assignment) {
+                // Get requirements for this semester
+                $requirements = Requirement::where('semester_id', $assignment->semester_id)->get();
+                
+                $courseRequirements = [];
+                $courseSubmissions = 0;
+                $courseApproved = 0;
+
+                foreach ($requirements as $requirement) {
+                    // Check if this requirement is assigned to the course's program
+                    if ($this->isCourseAssignedToRequirement($assignment->course, $requirement)) {
+                        $submissions = SubmittedRequirement::with('media')
+                            ->where('requirement_id', $requirement->id)
+                            ->where('user_id', $facultyMember->id)
+                            ->where('course_id', $assignment->course_id)
+                            ->get();
+
+                        $submissionCount = $submissions->count();
+                        $approvedCount = $submissions->where('status', 'approved')->count();
+
+                        $courseRequirements[] = [
+                            'requirement' => $requirement,
+                            'submissions' => $submissions,
+                            'submission_count' => $submissionCount,
+                            'approved_count' => $approvedCount,
+                        ];
+
+                        $courseSubmissions += $submissionCount;
+                        $courseApproved += $approvedCount;
+                    }
+                }
+
+                if (count($courseRequirements) > 0) {
+                    $facultyCourses[] = [
+                        'assignment' => $assignment,
+                        'requirements' => $courseRequirements,
+                        'total_submissions' => $courseSubmissions,
+                        'total_approved' => $courseApproved,
+                    ];
+
+                    $facultyTotalSubmissions += $courseSubmissions;
+                    $facultyTotalApproved += $courseApproved;
+                }
+            }
+
+            if (count($facultyCourses) > 0) {
+                $totalRequirements = array_sum(array_map(fn($course) => count($course['requirements']), $facultyCourses));
+                $submissionRate = $totalRequirements > 0 ? round(($facultyTotalSubmissions / $totalRequirements) * 100, 1) : 0;
+
+                $reportData[] = [
+                    'faculty' => $facultyMember,
+                    'courses' => $facultyCourses,
+                    'total_submissions' => $facultyTotalSubmissions,
+                    'total_approved' => $facultyTotalApproved,
+                    'submission_rate' => $submissionRate,
+                ];
+            }
+        }
+
+        return $reportData;
+    }
+
+    protected function calculateCustomReportSummary($reportData, $start, $end)
+    {
+        $totalFaculty = count($reportData);
+        $totalCourses = array_sum(array_map(fn($item) => count($item['courses']), $reportData));
+        
+        $totalRequirements = 0;
+        $totalSubmissions = 0;
+        $totalApproved = 0;
+
+        foreach ($reportData as $facultyData) {
+            foreach ($facultyData['courses'] as $courseData) {
+                $totalRequirements += count($courseData['requirements']);
+                $totalSubmissions += $courseData['total_submissions'];
+                $totalApproved += $courseData['total_approved'];
+            }
+        }
+
+        $overallSubmissionRate = $totalRequirements > 0 ? round(($totalSubmissions / $totalRequirements) * 100, 1) : 0;
+
+        return [
+            'total_faculty' => $totalFaculty,
+            'total_courses' => $totalCourses,
+            'total_requirements' => $totalRequirements,
+            'total_submissions' => $totalSubmissions,
+            'total_approved' => $totalApproved,
+            'overall_submission_rate' => $overallSubmissionRate,
+            'date_range' => [
+                'start' => $start,
+                'end' => $end,
+                'formatted' => $start->format('F Y') . ' to ' . $end->format('F Y'),
+            ],
+        ];
     }
 }

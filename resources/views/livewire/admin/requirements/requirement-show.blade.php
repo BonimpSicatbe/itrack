@@ -156,7 +156,7 @@
                                             </div>
                                             <div class="min-w-0">
                                                 <div class="text-sm font-semibold text-gray-900 truncate">
-                                                    {{ $user->firstname }} {{ $user->middlename ? $user->middlename . ' ' : '' }}{{ $user->lastname }}{{ $user->extensionname ? ' ' . $user->extensionname : '' }}
+                                                    {{ $user->getFullNameAttribute() }}
                                                 </div>
                                             </div>
                                         </div>

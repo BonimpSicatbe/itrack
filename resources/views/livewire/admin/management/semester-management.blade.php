@@ -152,7 +152,7 @@
     </div>
 
     <!-- Create Semester Modal -->
-    <input type="checkbox" id="create_semester_modal" class="modal-toggle"/>
+    <input type="checkbox" id="create_semester_modal" class="modal-toggle" wire:model="showCreateModal"/>
     <div class="modal rounded-xl" role="dialog">
         <div class="modal-box p-0 m-0 rounded-xl">
             {{-- header --}}
@@ -162,7 +162,7 @@
             </div>
 
             {{-- body --}}
-            <form wire:submit='createSemester' class="flex flex-col p-4">
+            <form wire:submit.prevent='createSemester' class="flex flex-col p-4">
                 {{-- error messages --}}
                 @if ($errorMessage)
                     <div class="alert alert-error bg-red-100 border border-red-400 text-red-700">
@@ -192,7 +192,7 @@
                 <!-- Footer -->
                 <div class="flex flex-row items-center gap-4 justify-end w-full mt-7">
                     <label for="create_semester_modal" class="btn btn-md btn-default rounded-xl">Cancel</label>
-                    <button wire:click='createSemester' type="button"
+                    <button type="submit"
                         class="btn btn-md bg-green-600 hover:bg-green-700 text-white rounded-xl">
                         <span wire:loading.remove wire:target="createSemester">Create Semester</span>
                         <span wire:loading wire:target="createSemester"><i
@@ -201,7 +201,7 @@
                 </div>
             </form>
         </div>
-        <label class="modal-backdrop" for="create_semester_modal">Close</label>
+        <label class="modal-backdrop" for="create_semester_modal" wire:click="closeCreateModal">Close</label>
     </div>
 
     <!-- Edit Semester Modal -->
@@ -216,51 +216,29 @@
             <!-- Body -->
             <div class="bg-white px-6 py-6 rounded-b-xl">
                 <div class="space-y-4">
-                    <div>
-                        <label class="block text-xs tracking-wide uppercase font-semibold text-gray-700">Semester Name</label>
-                        <input type="text" wire:model="name"
-                            class="mt-1 block w-full rounded-xl border-gray-300 text-gray-500 sm:text-sm" readonly>
-                        @error('name')
-                            <span class="text-red-500 text-xs">{{ $message }}</span>
-                        @enderror
-                    </div>
+                    {{-- error messages --}}
+                    @if ($errorMessage)
+                        <div class="alert alert-error bg-red-100 border border-red-400 text-red-700">
+                            <i class="fa-solid fa-circle-exclamation mr-2"></i> {{ $errorMessage }}
+                        </div>
+                    @endif
 
-                    <div>
-                        <label class="block text-xs tracking-wide uppercase font-semibold text-gray-700">Academic Year</label>
-                        <select wire:model="academic_year" class="mt-1 block w-full rounded-xl border-gray-300 text-gray-500 sm:text-sm">
-                            <option value="">Select Academic Year</option>
-                            @foreach($this->getAcademicYearOptions() as $yearOption)
-                                <option value="{{ $yearOption }}">{{ $yearOption }}</option>
-                            @endforeach
-                        </select>
-                        @error('academic_year')
-                            <span class="text-red-500 text-xs">{{ $message }}</span>
-                        @enderror
-                    </div>
+                    <x-select-fieldset label="semester" name="semester" wire:model="semester">
+                        <option value="">Select Semester Type</option>
+                        <option value="first">First Semester</option>
+                        <option value="second">Second Semester</option>
+                        <option value="midyear">Midyear</option>
+                    </x-select-fieldset>
 
-                    <div>
-                        <label class="block text-xs tracking-wide uppercase font-semibold text-gray-700">Start Date</label>
-                        <input type="date" wire:model="start_date"
-                            class="mt-1 block w-full rounded-xl border-gray-300 text-gray-500 sm:text-sm">
-                        @error('start_date')
-                            <span class="text-red-500 text-xs">{{ $message }}</span>
-                        @enderror
-                    </div>
+                    <x-select-fieldset label="academic_year" name="academic_year" wire:model="academic_year" required>
+                        <option value="">Select Academic Year</option>
+                        @foreach($this->getAcademicYearOptions() as $yearOption)
+                            <option value="{{ $yearOption }}">{{ $yearOption }}</option>
+                        @endforeach
+                    </x-select-fieldset>
 
-                    <div>
-                        <label class="block text-xs tracking-wide uppercase font-semibold text-gray-700">End Date</label>
-                        <input type="date" wire:model="end_date"
-                            class="mt-1 block w-full rounded-xl border-gray-300 text-gray-500 sm:text-sm">
-                        @error('end_date')
-                            <span class="text-red-500 text-xs">{{ $message }}</span>
-                        @enderror
-                    </div>
-
-                    <div class="flex items-center">
-                        <input type="checkbox" wire:model="isActive" id="editIsActive"
-                            class="rounded border-gray-300 text-1C7C54 focus:ring-1C7C54">
-                        <label for="editIsActive" class="ml-2 text-sm text-gray-700">Set as active semester</label>
-                    </div>
+                    <x-text-fieldset type="date" name="start_date" wire:model="start_date" label="Starting Date" required />
+                    <x-text-fieldset type="date" name="end_date" wire:model="end_date" label="Ending Date" required />
                 </div>
 
                 <!-- Footer -->

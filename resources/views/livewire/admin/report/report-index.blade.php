@@ -246,11 +246,56 @@
                     @endif
                 </div>
 
-                <!-- Pagination -->
+                <!-- Pagination Controls -->
                 @if($overviewData['users']->hasPages())
-                    <div class="mt-6">
-                        {{ $overviewData['users']->links() }}
+                <div class="mt-4 flex flex-col sm:flex-row items-center justify-between gap-3 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                    
+                    <div class="text-sm text-gray-700">
+                        Showing {{ $overviewData['users']->firstItem() ?? 0 }} to {{ $overviewData['users']->lastItem() ?? 0 }} 
+                        of {{ $overviewData['users']->total() }} results
                     </div>
+                    
+                    <div class="flex gap-1">
+                        <!-- Previous Page -->
+                        @if($overviewData['users']->onFirstPage())
+                        <span class="px-3 py-1 bg-gray-200 text-gray-500 rounded-md text-sm cursor-not-allowed">
+                            Previous
+                        </span>
+                        @else
+                        <button wire:click="previousPage" class="px-3 py-1 bg-white border border-gray-300 text-gray-700 rounded-md text-sm hover:bg-gray-50 transition-colors">
+                            Previous
+                        </button>
+                        @endif
+
+                        <!-- Page Numbers -->
+                        @foreach($overviewData['users']->getUrlRange(1, $overviewData['users']->lastPage()) as $page => $url)
+                            @if($page == $overviewData['users']->currentPage())
+                            <span class="px-3 py-1 bg-green-600 text-white rounded-md text-sm font-medium">
+                                {{ $page }}
+                            </span>
+                            @else
+                            <button wire:click="gotoPage({{ $page }})" class="px-3 py-1 bg-white border border-gray-300 text-gray-700 rounded-md text-sm hover:bg-gray-50 transition-colors">
+                                {{ $page }}
+                            </button>
+                            @endif
+                        @endforeach
+
+                        <!-- Next Page -->
+                        @if($overviewData['users']->hasMorePages())
+                        <button wire:click="nextPage" class="px-3 py-1 bg-white border border-gray-300 text-gray-700 rounded-md text-sm hover:bg-gray-50 transition-colors">
+                            Next
+                        </button>
+                        @else
+                        <span class="px-3 py-1 bg-gray-200 text-gray-500 rounded-md text-sm cursor-not-allowed">
+                            Next
+                        </span>
+                        @endif
+                    </div>
+                </div>
+                @else
+                <div class="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200 text-sm text-gray-700">
+                    Showing {{ $overviewData['users']->count() }} results
+                </div>
                 @endif
 
                 <!-- Summary -->

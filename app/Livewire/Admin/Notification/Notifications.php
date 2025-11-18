@@ -27,7 +27,11 @@ class Notifications extends Component
     {
         $this->notifications = Auth::user()
             ->notifications()
-            ->whereIn('type', ['App\Notifications\NewSubmissionNotification', 'App\Notifications\SubmissionStatusUpdated'])
+            ->whereIn('type', [
+                'App\Notifications\NewSubmissionNotification', 
+                'App\Notifications\SubmissionStatusUpdated',
+                'App\Notifications\SemesterEndedWithMissingSubmissions' 
+            ])
             ->latest()
             ->get();
     }
@@ -119,7 +123,13 @@ class Notifications extends Component
         // Handle different notification types
         if ($notificationData['type'] === 'submission_status_updated') {
             $this->loadStatusUpdateDetails($notificationData);
-        } else {
+        } 
+        
+        else if ($notificationData['type'] === 'semester_ended_with_missing_submissions') {
+            $this->loadSemesterEndedDetails($notificationData);
+        } 
+        
+        else {
             $this->loadNewSubmissionDetails($notificationData);
         }
     }
@@ -352,7 +362,11 @@ class Notifications extends Component
     public function markAllAsRead()
     {
         Auth::user()->unreadNotifications()
-            ->whereIn('type', ['App\Notifications\NewSubmissionNotification', 'App\Notifications\SubmissionStatusUpdated'])
+            ->whereIn('type', [
+                'App\Notifications\NewSubmissionNotification', 
+                'App\Notifications\SubmissionStatusUpdated',
+                'App\Notifications\SemesterEndedWithMissingSubmissions' // ADD THIS
+            ])
             ->update(['read_at' => now()]);
         
         $this->loadNotifications();
@@ -372,7 +386,11 @@ class Notifications extends Component
     public function markAllAsUnread()
     {
         $readNotifications = Auth::user()->readNotifications()
-            ->whereIn('type', ['App\Notifications\NewSubmissionNotification', 'App\Notifications\SubmissionStatusUpdated'])
+            ->whereIn('type', [
+                'App\Notifications\NewSubmissionNotification', 
+                'App\Notifications\SubmissionStatusUpdated',
+                'App\Notifications\SemesterEndedWithMissingSubmissions' // ADD THIS
+            ])
             ->get();
         
         $readNotifications->each(function ($notification) {
@@ -427,6 +445,31 @@ class Notifications extends Component
             'approved' => 'Approved',
             default => ucfirst(str_replace('_', ' ', $status))
         };
+    }
+
+    protected function loadSemesterEndedDetails($notificationData)
+    {
+        // Load semester details - use null coalescing with safe defaults
+        $semesterId = $notificationData['semester_id'] ?? null;
+        if ($semesterId) {
+            $semester = \App\Models\Semester::find($semesterId);
+            if ($semester) {
+                $this->selectedNotificationData['semester'] = [
+                    'id' => $semester->id,
+                    'name' => $semester->name,
+                    'start_date' => $semester->start_date,
+                    'end_date' => $semester->end_date,
+                    'is_active' => $semester->is_active,
+                ];
+            }
+        }
+
+        // Load missing submissions data with safe defaults
+        $this->selectedNotificationData['missing_submissions'] = [
+            'total_count' => $notificationData['missing_submissions_count'] ?? 0,
+            'submissions' => $notificationData['missing_submissions'] ?? [],
+            'ended_at' => $notificationData['ended_at'] ?? null,
+        ];
     }
 
     public function render()

@@ -21,7 +21,6 @@ class SemesterManagement extends Component
     public $academic_year = '';
     public $start_date = '';
     public $end_date = '';
-    public $isActive = false;
     public $editingSemester = null;
     public $showCreateModal = false;
     public $showEditModal = false;
@@ -33,7 +32,6 @@ class SemesterManagement extends Component
         'academic_year' => 'required',
         'start_date' => 'required|date',
         'end_date' => 'required|date|after:start_date',
-        'isActive' => 'boolean'
     ];
 
     protected $messages = [
@@ -145,10 +143,9 @@ class SemesterManagement extends Component
         // No need to reset page since we removed pagination
     }
 
-    // Add these methods for modal handling
     public function openCreateModal()
     {
-        $this->reset(['name', 'semester', 'academic_year', 'start_date', 'end_date', 'isActive', 'errorMessage']);
+        $this->reset(['name', 'semester', 'academic_year', 'start_date', 'end_date', 'errorMessage']);
         $this->showCreateModal = true;
         $this->resetErrorBag();
     }
@@ -162,12 +159,26 @@ class SemesterManagement extends Component
     {
         $this->editingSemester = Semester::find($id);
         $this->name = $this->editingSemester->name;
+        
+        // Extract semester type from name
+        $this->semester = $this->extractSemesterTypeFromName($this->editingSemester->name);
         $this->academic_year = $this->extractAcademicYearFromName($this->editingSemester->name);
         $this->start_date = $this->editingSemester->start_date->format('Y-m-d');
         $this->end_date = $this->editingSemester->end_date->format('Y-m-d');
-        $this->isActive = $this->editingSemester->is_active;
         $this->showEditModal = true;
         $this->resetErrorBag();
+    }
+
+    private function extractSemesterTypeFromName($name)
+    {
+        if (str_contains($name, 'First Semester')) {
+            return 'first';
+        } elseif (str_contains($name, 'Second Semester')) {
+            return 'second';
+        } elseif (str_contains($name, 'Midyear')) {
+            return 'midyear';
+        }
+        return '';
     }
 
     public function closeEditModal()
@@ -304,7 +315,7 @@ class SemesterManagement extends Component
             ]);
 
             $this->reset(['semester', 'academic_year', 'start_date', 'end_date', 'errorMessage']);
-            $this->dispatch('closeModal', modalId: 'create_semester_modal');
+            $this->showCreateModal = false; // Close the modal
             $this->dispatch('showNotification', 'success', 'Semester created successfully!');
         } catch (\Exception $e) {
             Log::error('Failed to create semester', [
@@ -322,78 +333,69 @@ class SemesterManagement extends Component
         $this->academic_year = $this->extractAcademicYearFromName($this->editingSemester->name);
         $this->start_date = $this->editingSemester->start_date->format('Y-m-d');
         $this->end_date = $this->editingSemester->end_date->format('Y-m-d');
-        $this->isActive = $this->editingSemester->is_active;
         $this->showEditModal = true;
         $this->resetErrorBag();
     }
 
     public function updateSemester()
     {
-        $this->validate();
-
-        // Extract semester type from current name
-        $currentName = $this->editingSemester->name;
-        $semesterType = '';
-        
-        if (str_contains($currentName, 'First Semester')) {
-            $semesterType = 'first';
-        } elseif (str_contains($currentName, 'Second Semester')) {
-            $semesterType = 'second';
-        } elseif (str_contains($currentName, 'Midyear')) {
-            $semesterType = 'midyear';
-        }
-
-        // Validate academic year format
-        if (!$this->isValidAcademicYear($this->academic_year)) {
-            $this->addError('academic_year', "Academic year must be in valid format (e.g., 2025-2026) with consecutive years.");
-            return;
-        }
-
-        // Check for duplicate semester (same type and academic year)
-        if ($this->checkDuplicateSemester($semesterType, $this->academic_year, $this->editingSemester->id)) {
-            $semesterTypeDisplay = ucfirst($semesterType) . ($semesterType == 'midyear' ? '' : ' Semester');
-            $this->addError('academic_year', "A {$semesterTypeDisplay} for academic year {$this->academic_year} already exists.");
-            return;
-        }
-
-        // Check for date overlap with other semesters
-        if ($this->checkDateOverlap($this->start_date, $this->end_date, $this->editingSemester->id)) {
-            $this->addError('start_date', 'This semester\'s date range overlaps with an existing semester.');
-            return;
-        }
-
-        // Create new name with academic year
-        $newName = ucfirst($semesterType) . ($semesterType == 'midyear' ? '' : ' Semester') . ' | ' . $this->academic_year;
-
-        // Check if this semester should be active based on current date
-        $today = now()->format('Y-m-d');
-        $shouldBeActive = ($this->start_date <= $today && $this->end_date >= $today);
-
-        // If this semester should be active, deactivate all others
-        if ($shouldBeActive) {
-            Semester::where('is_active', true)
-                ->where('id', '!=', $this->editingSemester->id)
-                ->update(['is_active' => false]);
-            $this->isActive = true;
-        } elseif ($this->isActive && !$shouldBeActive) {
-            // If user manually set as active but dates don't match current date, respect manual choice
-            Semester::where('is_active', true)
-                ->where('id', '!=', $this->editingSemester->id)
-                ->update(['is_active' => false]);
-        } elseif (!$shouldBeActive) {
-            // If shouldn't be active and user didn't manually set it, ensure it's inactive
-            $this->isActive = false;
-        }
-
-        $this->editingSemester->update([
-            'name' => $newName,
-            'start_date' => $this->start_date,
-            'end_date' => $this->end_date,
-            'is_active' => $this->isActive,
+        $this->validate([
+            'semester' => 'required|in:first,second,midyear',
+            'academic_year' => 'required',
+            'start_date' => 'required|date',
+            'end_date' => 'required|date|after:start_date',
         ]);
 
-        $this->closeEditModal();
-        $this->dispatch('showNotification', 'success', 'Semester updated successfully!');
+        try {
+            // Validate academic year format
+            if (!$this->isValidAcademicYear($this->academic_year)) {
+                $this->addError('academic_year', "Academic year must be in valid format (e.g., 2025-2026) with consecutive years.");
+                return;
+            }
+
+            // Check for duplicate semester (same type and academic year)
+            if ($this->checkDuplicateSemester($this->semester, $this->academic_year, $this->editingSemester->id)) {
+                $semesterTypeDisplay = ucfirst($this->semester) . ($this->semester == 'midyear' ? '' : ' Semester');
+                $this->addError('academic_year', "A {$semesterTypeDisplay} for academic year {$this->academic_year} already exists.");
+                return;
+            }
+
+            // Check for date overlap with other semesters
+            if ($this->checkDateOverlap($this->start_date, $this->end_date, $this->editingSemester->id)) {
+                $this->addError('start_date', 'This semester\'s date range overlaps with an existing semester.');
+                return;
+            }
+
+            // Create new name with selected semester type and academic year
+            $newName = ucfirst($this->semester) . ($this->semester == 'midyear' ? '' : ' Semester') . ' | ' . $this->academic_year;
+
+            // Check if this semester should be active based on current date
+            $today = now()->format('Y-m-d');
+            $shouldBeActive = ($this->start_date <= $today && $this->end_date >= $today);
+
+            // If this semester should be active, deactivate all others
+            if ($shouldBeActive) {
+                Semester::where('is_active', true)
+                    ->where('id', '!=', $this->editingSemester->id)
+                    ->update(['is_active' => false]);
+            }
+
+            $this->editingSemester->update([
+                'name' => $newName,
+                'start_date' => $this->start_date,
+                'end_date' => $this->end_date,
+                'is_active' => $shouldBeActive,
+            ]);
+
+            $this->closeEditModal();
+            $this->dispatch('showNotification', 'success', 'Semester updated successfully!');
+        } catch (\Exception $e) {
+            Log::error('Failed to update semester', [
+                'error' => $e->getMessage(),
+                'user_id' => auth()->id() ?? null,
+            ]);
+            $this->dispatch('showNotification', 'error', 'Failed to update semester. Please try again.');
+        }
     }
 
     public function deleteSemester()
@@ -439,27 +441,6 @@ class SemesterManagement extends Component
         $semesterName = $semester->name;
         $semester->delete();
         $this->dispatch('showNotification', 'success', "Semester '{$semesterName}' deleted successfully!");
-    }
-
-    public function setActive($id)
-    {
-        // Deactivate all other semesters
-        Semester::where('is_active', true)->update(['is_active' => false]);
-
-        // Activate the selected semester
-        $semester = Semester::find($id);
-        $semester->update(['is_active' => true]);
-
-        $this->dispatch('showNotification', 'success', 'Semester activated successfully!');
-    }
-
-    public function setInactive($id)
-    {
-        // Deactivate the selected semester
-        $semester = Semester::find($id);
-        $semester->update(['is_active' => false]);
-
-        $this->dispatch('showNotification', 'success', 'Semester archived successfully!');
     }
 
     public function render()
