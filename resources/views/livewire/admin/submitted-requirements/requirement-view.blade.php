@@ -5,11 +5,11 @@
         <div class="bg-white rounded-xl shadow-md hover:shadow-lg transition flex-1 flex flex-col overflow-hidden min-h-0">
             <!-- Header with Back Button -->
             <div class="px-6 py-3 flex-shrink-0" style="background: linear-gradient(148deg,rgba(18, 67, 44, 1) 0%, rgba(30, 119, 77, 1) 54%, rgba(55, 120, 64, 1) 100%);">
-                <button wire:click="goBackToIndex" 
-                        class="flex items-center gap-2 px-3 py-2 text-sm font-medium text-white bg-white/20 hover:bg-white/30 rounded-xl transition-all duration-200 hover:shadow-md hover:scale-105 flex-shrink-0">
-                    <i class="fas fa-arrow-left"></i>
+                <a href="{{ $this->getBackUrl() }}" 
+                class="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-white bg-white/20 hover:bg-white/30 rounded-xl transition-all duration-200 hover:shadow-md hover:scale-105 flex-shrink-0">
+                    <i class="fas fa-chevron-left"></i>
                     <span>Back</span>
-                </button>
+                </a>
             </div>
 
             <!-- Scrollable Content -->

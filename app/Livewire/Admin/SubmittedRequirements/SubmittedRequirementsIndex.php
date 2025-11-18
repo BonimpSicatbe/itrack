@@ -16,7 +16,7 @@ class SubmittedRequirementsIndex extends Component
 {
     use WithPagination;
 
-    public $viewMode = 'list';
+    public $viewMode = 'grid';
     public $category = 'overview';
     public $search = '';
     
@@ -83,9 +83,12 @@ class SubmittedRequirementsIndex extends Component
         $this->updateBreadcrumb();
         $this->resetPage();
         
+        // Force a component re-render to ensure state is updated
+        $this->dispatch('$refresh');
+        
         // Debug
         logger("User selected: " . $userId);
-        logger("Current state: ", [
+        logger("Current state after user selection: ", [
             'requirementId' => $this->selectedRequirementId,
             'userId' => $this->selectedUserId,
             'courseId' => $this->selectedCourseId
@@ -97,14 +100,34 @@ class SubmittedRequirementsIndex extends Component
         $this->selectedCourseId = $courseId;
         $this->updateBreadcrumb();
         
+        // Debug: Log the current state
+        logger("Course selected - Current state:", [
+            'requirementId' => $this->selectedRequirementId,
+            'userId' => $this->selectedUserId,
+            'courseId' => $this->selectedCourseId
+        ]);
+
         // Navigate to requirement view page with all context parameters
+        // Remove the strict condition - just check if we have the minimum required data
         if ($this->selectedRequirementId && $this->selectedUserId && $this->selectedCourseId) {
+            logger("Redirecting to requirement view");
+            
             return redirect()->route('admin.submitted-requirements.requirement', [
                 'requirement_id' => $this->selectedRequirementId,
                 'user_id' => $this->selectedUserId,
-                'course_id' => $this->selectedCourseId
+                'course_id' => $this->selectedCourseId,
+                'source' => 'requirement-category' 
+            ]);
+        } else {
+            logger("Cannot redirect - missing parameters:", [
+                'has_requirement' => !empty($this->selectedRequirementId),
+                'has_user' => !empty($this->selectedUserId),
+                'has_course' => !empty($this->selectedCourseId)
             ]);
         }
+        
+        // Make sure to reset page even if not redirecting
+        $this->resetPage();
     }
     
     public function goBack($crumbType, $index = null)
@@ -218,63 +241,20 @@ class SubmittedRequirementsIndex extends Component
         $this->updateBreadcrumb();
     }
 
-    public function render()
-    {
-        $activeSemester = Semester::getActiveSemester();
-        
-        if (!$activeSemester) {
-            return view('livewire.admin.submitted-requirements.submitted-requirements-index', [
-                'activeSemester' => null,
-                'categories' => $this->getCategories(),
-                'requirements' => collect(),
-                'usersForRequirement' => collect(),
-                'coursesForUserRequirement' => collect(),
-            ]);
-        }
-
-        // Only handle requirement category logic here
-        if ($this->category === 'requirement') {
-            if ($this->selectedRequirementId) {
-                if ($this->selectedUserId) {
-                    // LEVEL 3: Courses for specific user and requirement
-                    $requirements = collect();
-                    $usersForRequirement = collect();
-                    $coursesForUserRequirement = $this->getCoursesForUserRequirement();
-                } else {
-                    // LEVEL 2: Users for specific requirement
-                    $requirements = collect();
-                    $usersForRequirement = $this->getUsersForRequirement();
-                    $coursesForUserRequirement = collect();
-                }
-            } else {
-                // LEVEL 1: All requirements
-                $requirements = $this->getRequirements($activeSemester);
-                $usersForRequirement = collect();
-                $coursesForUserRequirement = collect();
-            }
-        } else {
-            // For overview category, we'll use a separate component
-            $requirements = collect();
-            $usersForRequirement = collect();
-            $coursesForUserRequirement = collect();
-        }
-
-        return view('livewire.admin.submitted-requirements.submitted-requirements-index', [
-            'activeSemester' => $activeSemester,
-            'categories' => $this->getCategories(),
-            'requirements' => $requirements,
-            'usersForRequirement' => $usersForRequirement,
-            'coursesForUserRequirement' => $coursesForUserRequirement,
-        ]);
-    }
-
     /**
      * LEVEL 1: Get all requirements for active semester
      */
     protected function getRequirements($activeSemester)
     {
         $query = Requirement::where('semester_id', $activeSemester->id)
-            ->orderBy('id');
+            ->orderByRaw('
+                CASE 
+                    WHEN JSON_LENGTH(requirement_type_ids) = 0 OR requirement_type_ids IS NULL THEN 1 
+                    ELSE 0 
+                END
+            ') // Put empty arrays last
+            ->orderByRaw('CAST(JSON_UNQUOTE(JSON_EXTRACT(requirement_type_ids, "$[0]")) AS UNSIGNED)') // Order by first type ID
+            ->orderBy('name'); // Secondary order by name for same type IDs
 
         if ($this->search) {
             $query->where('name', 'like', '%' . $this->search . '%');
@@ -296,6 +276,7 @@ class SubmittedRequirementsIndex extends Component
                 'id' => $requirement->id,
                 'name' => $requirement->name,
                 'submission_count' => $submissionCount,
+                'requirement_type_ids' => $requirement->requirement_type_ids, // Include for debugging
             ];
         });
     }
@@ -440,5 +421,60 @@ class SubmittedRequirementsIndex extends Component
         if (in_array($property, ['selectedRequirementId', 'selectedUserId', 'selectedCourseId', 'viewMode', 'search'])) {
             $this->debugState();
         }
+    }
+
+    public function selectRequirementFromBox($requirementId)
+    {
+        $this->selectRequirement($requirementId);
+    }
+
+    public function render()
+    {
+        $activeSemester = Semester::getActiveSemester();
+        
+        if (!$activeSemester) {
+            return view('livewire.admin.submitted-requirements.submitted-requirements-index', [
+                'activeSemester' => null,
+                'categories' => $this->getCategories(),
+                'requirements' => collect(),
+                'usersForRequirement' => collect(),
+                'coursesForUserRequirement' => collect(),
+            ]);
+        }
+
+        // Only handle requirement category logic here
+        if ($this->category === 'requirement') {
+            if ($this->selectedRequirementId) {
+                if ($this->selectedUserId) {
+                    // LEVEL 3: Courses for specific user and requirement
+                    $requirements = collect();
+                    $usersForRequirement = collect();
+                    $coursesForUserRequirement = $this->getCoursesForUserRequirement();
+                } else {
+                    // LEVEL 2: Users for specific requirement
+                    $requirements = collect();
+                    $usersForRequirement = $this->getUsersForRequirement();
+                    $coursesForUserRequirement = collect();
+                }
+            } else {
+                // LEVEL 1: All requirements
+                $requirements = $this->getRequirements($activeSemester);
+                $usersForRequirement = collect();
+                $coursesForUserRequirement = collect();
+            }
+        } else {
+            // For overview category, we'll use a separate component
+            $requirements = collect();
+            $usersForRequirement = collect();
+            $coursesForUserRequirement = collect();
+        }
+
+        return view('livewire.admin.submitted-requirements.submitted-requirements-index', [
+            'activeSemester' => $activeSemester,
+            'categories' => $this->getCategories(),
+            'requirements' => $requirements,
+            'usersForRequirement' => $usersForRequirement,
+            'coursesForUserRequirement' => $coursesForUserRequirement,
+        ]);
     }
 }

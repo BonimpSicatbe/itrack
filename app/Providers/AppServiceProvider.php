@@ -5,6 +5,7 @@ namespace App\Providers;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Database\Eloquent\Builder;
 use App\Services\DueDateReminderService;
+use App\Services\MissingSubmissionService; // ADD THIS IMPORT
 use Illuminate\Support\Facades\Event;
 
 class AppServiceProvider extends ServiceProvider
@@ -14,7 +15,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->singleton(MissingSubmissionService::class, function ($app) {
+            return new MissingSubmissionService();
+        });
     }
 
     /**
@@ -41,6 +44,5 @@ class AppServiceProvider extends ServiceProvider
                 }
             }
         });
-
     }
 }

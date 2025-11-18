@@ -63,13 +63,22 @@ class RequirementView extends Component
         $this->loadFiles();
     }
 
-    public function goBackToIndex()
+    // Replace goBackToIndex with getBackUrl
+    public function getBackUrl()
     {
-        return redirect()->route('admin.submitted-requirements.index', [
-            'category' => 'requirement',
-            'selectedRequirementId' => $this->requirement_id,
-            'selectedUserId' => $this->user_id,
-        ]);
+        $source = request()->query('source', 'overview');
+        
+        if ($source === 'requirement-category') {
+            // Return to requirement category with context preserved
+            return route('admin.submitted-requirements.index', [
+                'category' => 'requirement',
+                'selectedRequirementId' => $this->requirement_id,
+                'selectedUserId' => $this->user_id,
+            ]);
+        }
+        
+        // Default: return to overview
+        return route('admin.submitted-requirements.index', ['category' => 'overview']);
     }
 
     public function formatStatus($status)

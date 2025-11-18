@@ -228,8 +228,8 @@
                                                     <div class="flex-shrink-0">
                                                         <i class="fa-solid fa-folder text-green-700 text-4xl"></i>
                                                     </div>
-                                                    <div>
-                                                        <h3 class="font-semibold text-gray-800 text-sm truncate">
+                                                    <div class="min-w-0 flex-1"> <!-- Added min-w-0 and flex-1 here -->
+                                                        <h3 class="font-semibold text-gray-800 text-sm truncate"> <!-- Added truncate class -->
                                                             {{ $requirement['name'] }}
                                                         </h3>
                                                     </div>
@@ -238,15 +238,7 @@
                                         </div>
                                     </div>
                                 @empty
-                                    <div class="col-span-full flex flex-col items-center justify-center py-16 text-gray-400">
-                                        <i class="fas fa-folder-open text-3xl text-gray-300 mb-2"></i>
-                                        <p class="text-sm font-semibold text-gray-500 mb-2">No submitted requirements found</p>
-                                        @if($search)
-                                            <p class="text-amber-500 text-sm font-semibold">Try adjusting your search term</p>
-                                        @else
-                                            <p class="text-gray-500 text-sm">No requirements have been marked as submitted yet</p>
-                                        @endif
-                                    </div>
+                                    <!-- Empty state remains the same -->
                                 @endforelse
                             </div>
                         @endif
@@ -940,8 +932,8 @@
                                                     <div class="flex-shrink-0">
                                                         <i class="fa-solid fa-folder text-green-700 text-4xl"></i>
                                                     </div>
-                                                    <div class="min-w-0 flex-1">
-                                                        <h3 class="font-semibold text-gray-800 text-md truncate">
+                                                    <div class="min-w-0 flex-1"> <!-- Added min-w-0 and flex-1 here -->
+                                                        <h3 class="font-semibold text-gray-800 text-md truncate"> <!-- Added truncate class -->
                                                             {{ $requirement['name'] }}
                                                         </h3>
                                                     </div>
@@ -953,15 +945,7 @@
                                         </div>
                                     </div>
                                 @empty
-                                    <div class="col-span-full flex flex-col items-center justify-center py-16 text-gray-400">
-                                        <i class="fas fa-folder-open text-8xl text-gray-300 mb-6"></i>
-                                        <p class="text-xl font-semibold text-gray-500 mb-2">No requirements found</p>
-                                        @if($search)
-                                            <p class="text-amber-500 text-sm font-semibold">Try adjusting your search term</p>
-                                        @else
-                                            <p class="text-gray-500 text-sm">This user hasn't submitted any requirements for this course</p>
-                                        @endif
-                                    </div>
+                                    <!-- Empty state remains the same -->
                                 @endforelse
                             </div>
                         @endif

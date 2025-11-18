@@ -8,12 +8,15 @@ use App\Models\User;
 use App\Models\CourseAssignment;
 use App\Models\RequirementSubmissionIndicator;
 use Livewire\Component;
+use Livewire\WithPagination;
 
 class SubmittedRequirementsOverview extends Component
 {
+    use WithPagination;
+    
     public $search = '';
+    public $perPage = 5;
 
-    // Add this to make search reactive
     protected $listeners = ['refreshOverview' => '$refresh'];
 
     public function render()
@@ -37,9 +40,14 @@ class SubmittedRequirementsOverview extends Component
     {
         // Get all requirements for the active semester
         $requirements = Requirement::where('semester_id', $activeSemester->id)
-            ->orderByRaw('CAST(JSON_UNQUOTE(JSON_EXTRACT(requirement_type_ids, "$[0]")) AS UNSIGNED) ASC')
+            ->orderByRaw('
+                CASE 
+                    WHEN JSON_LENGTH(requirement_type_ids) = 0 THEN 999999
+                    ELSE CAST(JSON_UNQUOTE(JSON_EXTRACT(requirement_type_ids, "$[0]")) AS UNSIGNED)
+                END ASC
+            ')
             ->orderBy('name')
-            ->get();
+            ->get(); 
 
         // Get all non-admin users with search functionality - ONLY ACTIVE USERS
         $usersQuery = User::where('is_active', true) // Only active users
@@ -63,16 +71,17 @@ class SubmittedRequirementsOverview extends Component
             });
         }
 
-        $users = $usersQuery->get();
+        // Use pagination instead of get()
+        $users = $usersQuery->paginate($this->perPage);
 
-        // Get course assignments for the filtered users
+        // Get course assignments for the paginated users
         $courseAssignments = CourseAssignment::whereIn('professor_id', $users->pluck('id'))
             ->where('semester_id', $activeSemester->id)
             ->with('course')
             ->get()
             ->groupBy('professor_id');
 
-        // Get submission indicators for the filtered users
+        // Get submission indicators for the paginated users
         $submissionIndicators = RequirementSubmissionIndicator::whereIn('user_id', $users->pluck('id'))
             ->whereIn('requirement_id', $requirements->pluck('id'))
             ->with(['requirement', 'course'])
@@ -88,14 +97,25 @@ class SubmittedRequirementsOverview extends Component
 
         return [
             'requirements' => $requirements,
-            'users' => $users,
+            'users' => $users, // This is now a paginator instance
             'courseAssignments' => $courseAssignments,
             'submissionIndicators' => $submissionIndicators,
             'userCoursesData' => $userCoursesData
         ];
     }
 
-    // ... rest of your helper methods remain the same ...
+    // Add method to update per page
+    public function updatedPerPage()
+    {
+        $this->resetPage(); // Reset to first page when changing items per page
+    }
+
+    // Add method to handle search with pagination reset
+    public function updatingSearch()
+    {
+        $this->resetPage();
+    }
+
     public function getUserCourses($userId, $courseAssignments)
     {
         if (!isset($courseAssignments[$userId])) {
@@ -140,5 +160,16 @@ class SubmittedRequirementsOverview extends Component
     {
         $courses = $userCoursesData[$userId] ?? collect();
         return max(1, $courses->count());
+    }
+
+    // Add this method to generate the submission URL with source parameter
+    public function getSubmissionUrl($requirementId, $userId, $courseId)
+    {
+        return route('admin.submitted-requirements.requirement', [
+            'requirement_id' => $requirementId,
+            'user_id' => $userId,
+            'course_id' => $courseId,
+            'source' => 'overview' // Add source parameter
+        ]);
     }
 }

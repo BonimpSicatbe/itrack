@@ -247,9 +247,19 @@ class UserReport extends Component
             ->where('semester_id', $this->selectedSemester)
             ->get();
 
-        $requirements = Requirement::where('semester_id', $this->selectedSemester)->get();
+        // Update requirements query to order by requirement_type_ids
+        $requirements = Requirement::where('semester_id', $this->selectedSemester)
+            ->orderByRaw('
+                CASE 
+                    WHEN JSON_LENGTH(requirement_type_ids) = 0 OR requirement_type_ids IS NULL THEN 1 
+                    ELSE 0 
+                END
+            ') // Put empty arrays last
+            ->orderByRaw('CAST(JSON_UNQUOTE(JSON_EXTRACT(requirement_type_ids, "$[0]")) AS UNSIGNED)') // Order by first type ID
+            ->orderBy('name') // Secondary order by name for same type IDs
+            ->get();
 
-        // Group submissions by course and requirement
+        // Rest of the method remains the same...
         $groupedSubmissions = [];
         
         // First, get all requirements that are assigned to the user's courses
@@ -326,7 +336,7 @@ class UserReport extends Component
             'grouped_submissions' => $groupedSubmissions,
         ];
     }
-
+    
     public function generateReport()
     {
         // Validate that a semester and user are selected

@@ -1,6 +1,6 @@
 <div class="flex flex-col gap-2 mb-6">
     <!-- Header / Toolbar -->
-    <div class="flex justify-between items-center text-white p-4 rounded-xl shadow-md" style="background: linear-gradient(148deg,rgba(18, 67, 44, 1) 0%, rgba(30, 119, 77, 1) 54%, rgba(55, 120, 64, 1) 100%);">
+    <div class="flex justify-between items-center text-white rounded-xl shadow-md {{ $category === 'overview' ? 'p-6' : 'p-4' }}" style="background: linear-gradient(148deg,rgba(18, 67, 44, 1) 0%, rgba(30, 119, 77, 1) 54%, rgba(55, 120, 64, 1) 100%);">
         <div class="flex items-center gap-3">
             <div class="pl-3 bg-1C7C54/10 rounded-xl">
                 <i class="fa-solid fa-paper-plane text-white text-2xl"></i>
@@ -8,7 +8,8 @@
             <h2 class="text-xl md:text-xl font-semibold">Submitted Requirements</h2>
         </div>
 
-        <!-- View toggle buttons -->
+        <!-- View toggle buttons - Only show in requirement category -->
+        @if($category === 'requirement')
         <div class="flex items-center gap-1 bg-white/20 p-1 rounded-xl">
             <button 
                 wire:click="switchView('list')" 
@@ -25,6 +26,7 @@
                 <i class="fas fa-border-all"></i>
             </button>
         </div>
+        @endif
     </div>
 
     <div class="bg-white rounded-xl shadow-md p-6 flex flex-col gap-4 min-h-[calc(100vh_-_190px)]">
@@ -110,7 +112,14 @@
                                 </div>
                                 
                                 @forelse ($requirements as $requirement)
-                                    <div class="grid grid-cols-12 gap-4 px-6 py-4 border-b border-gray-100 hover:bg-green-50 transition-colors">
+                                    <!-- Make the entire row clickable -->
+                                    <div 
+                                        wire:click="selectRequirementFromBox({{ $requirement['id'] }})"
+                                        class="grid grid-cols-12 gap-4 px-6 py-4 border-b border-gray-100 hover:bg-green-50 transition-colors cursor-pointer"
+                                        role="button"
+                                        tabindex="0"
+                                        wire:key="requirement-{{ $requirement['id'] }}"
+                                    >
                                         <div class="col-span-8 flex items-center gap-3">
                                             <i class="fas fa-folder text-green-600 text-xl"></i>
                                             <div class="flex flex-col">
@@ -123,13 +132,11 @@
                                             </span>
                                         </div>
                                         <div class="col-span-2 flex items-center justify-center">
-                                            <button 
-                                                wire:click="selectRequirement({{ $requirement['id'] }})"
-                                                class="flex items-center gap-2 px-4 py-2 text-sm bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors"
-                                            >
+                                            <!-- Remove the button and replace with text indicator -->
+                                            <div class="flex items-center gap-2 px-4 py-2 text-sm bg-green-600 text-white rounded-xl">
                                                 <i class="fas fa-folder-open"></i>
                                                 Open
-                                            </button>
+                                            </div>
                                         </div>
                                     </div>
                                 @empty
@@ -146,30 +153,31 @@
                             <!-- Grid View for Requirements -->
                             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                                 @forelse ($requirements as $requirement)
-                                    <div class="bg-white border-2 border-gray-200 rounded-xl p-5 hover:border-green-500 hover:shadow-md transition-all duration-200 group">
+                                    <!-- Make the entire card clickable -->
+                                    <div 
+                                        wire:click="selectRequirementFromBox({{ $requirement['id'] }})"
+                                        class="bg-white border-2 border-gray-200 rounded-xl p-5 hover:border-green-500 hover:shadow-md transition-all duration-200 group cursor-pointer"
+                                        role="button"
+                                        tabindex="0"
+                                        wire:key="requirement-{{ $requirement['id'] }}"
+                                    >
                                         <div class="flex flex-col h-full">
-                                            <div class="flex items-start justify-between mb-3">
-                                                <div class="flex items-center gap-3">
-                                                    <i class="fa-solid fa-folder text-green-600 text-3xl group-hover:scale-110 transition-transform"></i>
+                                            <div class="flex items-center justify-between gap-4">
+                                                <!-- Left side: Folder icon and requirement name -->
+                                                <div class="flex items-center gap-3 flex-1 min-w-0">
+                                                    <i class="fa-solid fa-folder text-green-600 text-3xl group-hover:scale-110 transition-transform flex-shrink-0"></i>
+                                                    <div class="min-w-0">
+                                                        <h3 class="font-semibold text-gray-800 text-sm line-clamp-2" title="{{ $requirement['name'] }}">
+                                                            {{ $requirement['name'] }}
+                                                        </h3>
+                                                    </div>
                                                 </div>
-                                                <span class="px-2 py-1 text-xs bg-green-100 text-green-800 font-semibold rounded-full">
+                                                
+                                                <!-- Right side: Submission count -->
+                                                <span class="px-2 py-1 text-xs bg-green-100 text-green-800 font-semibold rounded-full flex-shrink-0">
                                                     {{ $requirement['submission_count'] }}
                                                 </span>
                                             </div>
-                                            
-                                            <div class="flex-1 mb-4">
-                                                <h3 class="font-semibold text-gray-800 text-sm mb-1 line-clamp-2" title="{{ $requirement['name'] }}">
-                                                    {{ $requirement['name'] }}
-                                                </h3>
-                                            </div>
-                                            
-                                            <button 
-                                                wire:click="selectRequirement({{ $requirement['id'] }})"
-                                                class="w-full flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors group-hover:shadow-sm"
-                                            >
-                                                <i class="fas fa-folder-open"></i>
-                                                Open Folder
-                                            </button>
                                         </div>
                                     </div>
                                 @empty
