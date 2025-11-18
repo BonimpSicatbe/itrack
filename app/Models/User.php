@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Spatie\Permission\Traits\HasRoles;
-use Spatie\MediaLibrary\HasMedia;   
+use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 
 class User extends Authenticatable implements HasMedia
@@ -29,12 +29,11 @@ class User extends Authenticatable implements HasMedia
         'email',
         'email_verified_at',
         'college_id',
-        'position', // Add this if missing
-        'teaching_started_at', // ADD THIS
-        'teaching_ended_at', // ADD THIS
         'is_active', 
         'deactivated_at',
         'password',
+        'position',
+        'teaching_started_at',
     ];
 
     /**
@@ -82,16 +81,16 @@ class User extends Authenticatable implements HasMedia
     public function taughtCourses(): BelongsToMany
     {
         return $this->belongsToMany(Course::class, 'course_assignments', 'professor_id', 'course_id')
-                    ->as('assignment')
-                    ->using(CourseAssignment::class)
-                    ->withPivot('assignment_id', 'year', 'semester', 'assignment_date')
-                    ->withTimestamps();
+            ->as('assignment')
+            ->using(CourseAssignment::class)
+            ->withPivot('assignment_id', 'year', 'semester', 'assignment_date')
+            ->withTimestamps();
     }
 
     public function courses(): BelongsToMany
     {
         return $this->belongsToMany(Course::class, 'submitted_requirements', 'user_id', 'course_id')
-                    ->distinct();
+            ->distinct();
     }
 
     public function submissionIndicators()
@@ -101,7 +100,8 @@ class User extends Authenticatable implements HasMedia
 
     // ==================== EXISTING RELATIONSHIPS ====================
 
-    public function semester() {
+    public function semester()
+    {
         return $this->belongsToMany(Semester::class, 'user_semester', 'user_id', 'semester_id');
     }
 
@@ -136,11 +136,11 @@ class User extends Authenticatable implements HasMedia
     {
         return $this->hasMany(CourseAssignment::class, 'professor_id');
     }
-    
+
     public function r()
     {
         $currentSemester = Semester::where('is_active', true)->first();
-        
+
         if (!$currentSemester) {
             return collect();
         }
@@ -213,11 +213,11 @@ class User extends Authenticatable implements HasMedia
 
     public function scopeSearch($query, string $search)
     {
-        return $query->where(function($q) use ($search) {
+        return $query->where(function ($q) use ($search) {
             $q->where('firstname', 'like', "%{$search}%")
-              ->orWhere('middlename', 'like', "%{$search}%")
-              ->orWhere('lastname', 'like', "%{$search}%")
-              ->orWhere('email', 'like', "%{$search}%");
+                ->orWhere('middlename', 'like', "%{$search}%")
+                ->orWhere('lastname', 'like', "%{$search}%")
+                ->orWhere('email', 'like', "%{$search}%");
         });
     }
 
@@ -241,7 +241,7 @@ class User extends Authenticatable implements HasMedia
     public function registerMediaCollections(): void
     {
         $this->addMediaCollection('profile_picture')
-             ->singleFile()
-             ->acceptsMimeTypes(['image/jpeg', 'image/png', 'image/gif']);
+            ->singleFile()
+            ->acceptsMimeTypes(['image/jpeg', 'image/png', 'image/gif']);
     }
 }
