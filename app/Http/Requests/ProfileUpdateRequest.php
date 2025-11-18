@@ -36,6 +36,8 @@ class ProfileUpdateRequest extends FormRequest
                 'max:255',
                 Rule::unique(User::class)->ignore($this->user()->id),
             ],
+            'teaching_started_at' => ['nullable', 'date'],
+            'teaching_ended_at' => ['nullable', 'date', 'after:teaching_started_at'],
         ];
     }
 
@@ -60,6 +62,20 @@ class ProfileUpdateRequest extends FormRequest
             'email.unique' => 'This email address is already taken.',
             'email.lowercase' => 'The email must be lowercase.',
             'email.max' => 'The email may not be greater than 255 characters.',
+            'teaching_started_at.date' => 'The teaching start date must be a valid date.',
+            'teaching_ended_at.date' => 'The teaching end date must be a valid date.',
+            'teaching_ended_at.after' => 'The teaching end date must be after the teaching start date.',
+        ];
+    }
+
+    /**
+     * Get custom attributes for validator errors.
+     */
+    public function attributes(): array
+    {
+        return [
+            'teaching_started_at' => 'teaching started at',
+            'teaching_ended_at' => 'teaching ended at',
         ];
     }
 }

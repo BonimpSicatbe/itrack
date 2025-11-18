@@ -29,6 +29,9 @@ class User extends Authenticatable implements HasMedia
         'email',
         'email_verified_at',
         'college_id',
+        'position', // Add this if missing
+        'teaching_started_at', // ADD THIS
+        'teaching_ended_at', // ADD THIS
         'is_active', 
         'deactivated_at',
         'password',
@@ -54,6 +57,8 @@ class User extends Authenticatable implements HasMedia
         'password' => 'hashed',
         'is_active' => 'boolean', // NEW
         'deactivated_at' => 'datetime', // NEW
+        'teaching_started_at' => 'datetime', // ADD THIS
+        'teaching_ended_at' => 'datetime', // ADD THIS
     ];
 
     /**
