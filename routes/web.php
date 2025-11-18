@@ -14,8 +14,12 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-    return redirect()->route('login');
+    return redirect()->route('register');
 });
+
+// Route::get('/', function () {
+//     return redirect()->route('login');
+// });
 
 // User routes
 Route::middleware(['auth', 'role:user'])
@@ -64,19 +68,19 @@ Route::middleware(['auth', 'role:admin|super-admin'])
         // File Manager
         Route::get('/file-manager', [FileManagerController::class, 'index'])
             ->name('file-manager.index');
-        
-        // Reports 
+
+        // Reports
         Route::get('/reports', [ReportController::class, 'index'])
             ->name('reports.index');
         Route::get('/reports/preview-semester', [ReportController::class, 'previewSemesterReport'])
             ->name('reports.preview-semester');
-        
+
         // Faculty Report Routes
         Route::get('/reports/preview-faculty', [ReportController::class, 'previewFacultyReport'])
             ->name('reports.preview-faculty');
         Route::get('/reports/download-faculty', [ReportController::class, 'downloadFacultyReport'])
-            ->name('reports.download-faculty'); 
-        
+            ->name('reports.download-faculty');
+
         // Requirement Report Routes
         Route::get('/reports/preview-requirement', [ReportController::class, 'previewRequirementReport'])
             ->name('reports.preview-requirement');
@@ -96,18 +100,18 @@ Route::middleware(['auth', 'role:admin|super-admin'])
         // Submitted Requirements
         Route::get('/submitted-requirements', [SubmittedRequirementController::class, 'index'])
             ->name('submitted-requirements.index');
-            
+
         // Individual submission view (original route)
         Route::get('/submitted-requirements/{submitted_requirement}', [SubmittedRequirementController::class, 'show'])
             ->name('submitted-requirements.show');
-        
+
         // Add the missing route for requirement view
         Route::get('/submitted-requirements/requirement/{requirement_id}', function ($requirement_id) {
             return view('admin.pages.submitted-requirements.requirement', [
                 'requirement_id' => $requirement_id,
             ]);
         })->name('submitted-requirements.requirement');
-            
+
         // Context-based requirement view
         Route::get('/submitted-requirements/requirement/{requirement_id}/{user_id?}/{course_id?}', function ($requirement_id, $user_id = null, $course_id = null) {
             return view('admin.pages.submitted-requirements.requirement', [
