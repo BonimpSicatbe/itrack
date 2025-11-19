@@ -23,19 +23,19 @@
 
             {{-- Filter Tabs --}}
             <div class="flex space-x-1 bg-white/10 rounded-xl p-1">
-                <button 
+                <button
                     wire:click="$set('activeTab', 'all')"
                     class="flex-1 py-2 px-3 text-sm font-medium rounded-lg transition-all duration-200 {{ $activeTab === 'all' ? 'bg-white text-green-800 shadow-sm' : 'text-white hover:bg-white/20' }}"
                 >
                     All
                 </button>
-                <button 
+                <button
                     wire:click="$set('activeTab', 'unread')"
                     class="flex-1 py-2 px-3 text-sm font-medium rounded-lg transition-all duration-200 {{ $activeTab === 'unread' ? 'bg-white text-green-800 shadow-sm' : 'text-white hover:bg-white/20' }}"
                 >
                     Unread
                 </button>
-                <button 
+                <button
                     wire:click="$set('activeTab', 'read')"
                     class="flex-1 py-2 px-3 text-sm font-medium rounded-lg transition-all duration-200 {{ $activeTab === 'read' ? 'bg-white text-green-800 shadow-sm' : 'text-white hover:bg-white/20' }}"
                 >
@@ -306,12 +306,12 @@
                                     <i class="fa-solid fa-arrows-rotate text-blue-600 text-xl mr-3"></i>
                                     <h3 class="text-lg font-semibold text-blue-900">Status Update</h3>
                                 </div>
-                                
+
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div class="space-y-2">
                                         <p class="text-sm font-semibold text-blue-700">Previous Status</p>
                                         <div class="bg-white p-3 rounded-xl border border-blue-200">
-                                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold 
+                                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold
                                                 @if($selectedNotificationData['status_update']['old_status'] === 'approved') bg-green-100 text-green-800
                                                 @elseif($selectedNotificationData['status_update']['old_status'] === 'rejected') bg-red-100 text-red-800
                                                 @elseif($selectedNotificationData['status_update']['old_status'] === 'revision_needed') bg-yellow-100 text-yellow-800
@@ -320,11 +320,11 @@
                                             </span>
                                         </div>
                                     </div>
-                                    
+
                                     <div class="space-y-2">
                                         <p class="text-sm font-semibold text-blue-700">New Status</p>
                                         <div class="bg-white p-3 rounded-xl border border-blue-200">
-                                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold 
+                                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold
                                                 @if($selectedNotificationData['status_update']['new_status'] === 'approved') bg-green-100 text-green-800
                                                 @elseif($selectedNotificationData['status_update']['new_status'] === 'rejected') bg-red-100 text-red-800
                                                 @elseif($selectedNotificationData['status_update']['new_status'] === 'revision_needed') bg-yellow-100 text-yellow-800
@@ -333,14 +333,14 @@
                                             </span>
                                         </div>
                                     </div>
-                                    
+
                                     <div class="space-y-2">
                                         <p class="text-sm font-semibold text-blue-700">Reviewed By</p>
                                         <div class="bg-white p-3 rounded-xl border border-blue-200 text-sm text-gray-700">
                                             {{ $selectedNotificationData['status_update']['reviewed_by'] }}
                                         </div>
                                     </div>
-                                    
+
                                     <div class="space-y-2">
                                         <p class="text-sm font-semibold text-blue-700">Reviewed At</p>
                                         <div class="bg-white p-3 rounded-xl border border-blue-200 text-sm text-gray-700">
@@ -403,7 +403,7 @@
 
                         {{-- Submissions Section --}}
                         <div class="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
-                            
+
                             {{-- Main Header --}}
                             <div class="flex items-center mb-4">
                                 <div class="rounded-xl mr-2">
@@ -513,7 +513,7 @@
 
                                     {{-- Status Update and Review History (Always Visible) --}}
                                     <div class="p-5 border-t bg-gray-50">
-                                        
+
                                         {{-- Current Review Notes Display (for context) --}}
                                         <div class="space-y-2 mb-6">
                                             <p class="text-sm font-semibold text-gray-700">Current Review Notes</p>
@@ -521,11 +521,11 @@
                                                 {{ $submission['admin_notes'] ?? 'No notes provided for this status.' }}
                                             </p>
                                         </div>
-                                        
+
                                         {{-- Status Update Form (Always Visible) --}}
                                         <form wire:submit.prevent="updateFileStatus('{{ $file['submission_id'] }}')" class="space-y-4">
                                             <h4 class="text-md font-bold text-gray-900 mb-4 border-b pb-2">Update Submission Status</h4>
-                                            
+
                                             <div class="flex flex-col md:flex-row gap-4">
                                                 {{-- Status Dropdown --}}
                                                 <div class="w-full md:w-1/2 space-y-2">

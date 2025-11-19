@@ -28,11 +28,26 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        $user = Auth::user();
+        $user = $request->user();
 
-        $route = $user->hasRole('admin') || $user->hasRole('super-admin') ? 'admin.dashboard' : 'user.dashboard';
+        if (! $user) {
+            return redirect()->route('login')->withErrors(['email' => 'Unable to retrieve user after login.']);
+        }
 
-        return redirect()->route($route)->with('success', 'Login successful!');
+        // Decide admin vs user dashboard in a safe way:
+        $isAdmin = false;
+
+        if (method_exists($user, 'hasRole')) {
+            $isAdmin = $user->hasRole('admin') || $user->hasRole('super-admin');
+        } elseif (isset($user->is_admin)) {
+            // fallback if you use an `is_admin` boolean on the model
+            $isAdmin = (bool) $user->is_admin;
+        }
+
+        $route = $isAdmin ? 'admin.dashboard' : 'user.dashboard';
+
+        // Redirect to intended URL if present, otherwise to the chosen route
+        return redirect()->intended(route($route))->with('success', 'Login successful!');
     }
 
     /**
@@ -46,6 +61,6 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerateToken();
 
-        return redirect('/login');
+        return redirect('/');
     }
 }
