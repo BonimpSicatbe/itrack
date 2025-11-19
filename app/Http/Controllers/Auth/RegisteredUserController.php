@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Notifications\NewRegisteredUserNotification;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -65,6 +66,32 @@ class RegisteredUserController extends Controller
 
             // assign default role
             $user->assignRole('user');
+
+            // notify admin users about new registration
+            $adminUsers = User::role(['admin', 'super-admin'])->get();
+            Log::info('Preparing to notify admin users of new registration', [
+                'new_user_id' => $user->id,
+                'new_user_email' => $user->email,
+                'admin_count' => $adminUsers->count(),
+            ]);
+
+            foreach ($adminUsers as $admin) {
+                try {
+                    $admin->notify(new NewRegisteredUserNotification($user));
+                    Log::info('Admin notified about new user', [
+                        'admin_id' => $admin->id,
+                        'admin_email' => $admin->email,
+                        'notified_user_id' => $user->id,
+                    ]);
+                } catch (\Throwable $e) {
+                    Log::error('Failed to notify admin about new user', [
+                        'admin_id' => $admin->id,
+                        'admin_email' => $admin->email,
+                        'notified_user_id' => $user->id,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+            }
 
             // optionally fire the Registered event
             event(new Registered($user));
