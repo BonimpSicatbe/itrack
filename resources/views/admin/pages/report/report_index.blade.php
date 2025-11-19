@@ -8,7 +8,7 @@
             <!-- Title -->
             <div class="flex items-center gap-3">
                 <i class="fa-solid fa-file-lines text-white text-xl"></i>
-                <h2 class="text-xl font-semibold text-white">Reports & Analytics</h2>
+                <h2 class="text-xl font-semibold text-white">Reports</h2>
             </div>
 
             <!-- Tabs Navigation -->

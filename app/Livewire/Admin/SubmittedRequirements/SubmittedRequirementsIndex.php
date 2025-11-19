@@ -29,8 +29,13 @@ class SubmittedRequirementsIndex extends Component
     
     #[Url]
     public $selectedCourseId = null;
+
+    #[Url]
+    public $selectedSemesterId = null;
     
     public $breadcrumb = [];
+    public $availableSemesters = [];
+    public $latestEndedSemester = null;
 
     protected $queryString = [
         'category' => ['except' => 'overview'],
@@ -38,7 +43,43 @@ class SubmittedRequirementsIndex extends Component
         'selectedRequirementId' => ['except' => null],
         'selectedUserId' => ['except' => null],
         'selectedCourseId' => ['except' => null],
+        'selectedSemesterId' => ['except' => null],
     ];
+
+    public function mount()
+    {
+        $this->initializeSemesters();
+        $this->updateBreadcrumb();
+    }
+
+    protected function initializeSemesters()
+    {
+        // Get available semesters (active and past semesters that have ended)
+        $this->availableSemesters = Semester::where(function($query) {
+                $query->where('is_active', true)
+                    ->orWhere('end_date', '<=', now()->format('Y-m-d'));
+            })
+            ->where('start_date', '<=', now()->format('Y-m-d')) // Exclude future semesters
+            ->orderBy('start_date', 'desc')
+            ->get();
+
+        // Get active semester
+        $activeSemester = Semester::getActiveSemester();
+        
+        // Get latest ended semester if no active semester
+        $this->latestEndedSemester = Semester::where('end_date', '<=', now()->format('Y-m-d'))
+            ->orderBy('end_date', 'desc')
+            ->first();
+
+        // Set default selected semester
+        if ($activeSemester) {
+            $this->selectedSemesterId = $activeSemester->id;
+        } elseif ($this->latestEndedSemester) {
+            $this->selectedSemesterId = $this->latestEndedSemester->id;
+        } else {
+            $this->selectedSemesterId = $this->availableSemesters->first()?->id;
+        }
+    }
 
     public function switchView($mode)
     {
@@ -63,6 +104,12 @@ class SubmittedRequirementsIndex extends Component
     public function resetFilters()
     {
         $this->reset(['search']);
+        $this->resetPage();
+    }
+
+    public function updatedSelectedSemesterId()
+    {
+        $this->resetNavigation();
         $this->resetPage();
     }
     
@@ -236,17 +283,30 @@ class SubmittedRequirementsIndex extends Component
         }
     }
 
-    public function mount()
+    /**
+     * Get the current semester based on selection
+     */
+    protected function getCurrentSemester()
     {
-        $this->updateBreadcrumb();
+        if ($this->selectedSemesterId) {
+            return Semester::find($this->selectedSemesterId);
+        }
+        
+        return Semester::getActiveSemester() ?: $this->latestEndedSemester;
     }
 
     /**
-     * LEVEL 1: Get all requirements for active semester
+     * LEVEL 1: Get all requirements for selected semester
      */
-    protected function getRequirements($activeSemester)
+    protected function getRequirements()
     {
-        $query = Requirement::where('semester_id', $activeSemester->id)
+        $currentSemester = $this->getCurrentSemester();
+        
+        if (!$currentSemester) {
+            return collect();
+        }
+
+        $query = Requirement::where('semester_id', $currentSemester->id)
             ->orderByRaw('
                 CASE 
                     WHEN JSON_LENGTH(requirement_type_ids) = 0 OR requirement_type_ids IS NULL THEN 1 
@@ -411,6 +471,7 @@ class SubmittedRequirementsIndex extends Component
             'selectedRequirementId' => $this->selectedRequirementId,
             'selectedUserId' => $this->selectedUserId,
             'selectedCourseId' => $this->selectedCourseId,
+            'selectedSemesterId' => $this->selectedSemesterId,
             'viewMode' => $this->viewMode,
             'search' => $this->search
         ]);
@@ -418,7 +479,7 @@ class SubmittedRequirementsIndex extends Component
 
     public function updated($property)
     {
-        if (in_array($property, ['selectedRequirementId', 'selectedUserId', 'selectedCourseId', 'viewMode', 'search'])) {
+        if (in_array($property, ['selectedRequirementId', 'selectedUserId', 'selectedCourseId', 'viewMode', 'search', 'selectedSemesterId'])) {
             $this->debugState();
         }
     }
@@ -430,11 +491,12 @@ class SubmittedRequirementsIndex extends Component
 
     public function render()
     {
-        $activeSemester = Semester::getActiveSemester();
+        $currentSemester = $this->getCurrentSemester();
         
-        if (!$activeSemester) {
+        if (!$currentSemester) {
             return view('livewire.admin.submitted-requirements.submitted-requirements-index', [
                 'activeSemester' => null,
+                'selectedSemester' => null,
                 'categories' => $this->getCategories(),
                 'requirements' => collect(),
                 'usersForRequirement' => collect(),
@@ -458,7 +520,7 @@ class SubmittedRequirementsIndex extends Component
                 }
             } else {
                 // LEVEL 1: All requirements
-                $requirements = $this->getRequirements($activeSemester);
+                $requirements = $this->getRequirements();
                 $usersForRequirement = collect();
                 $coursesForUserRequirement = collect();
             }
@@ -470,7 +532,8 @@ class SubmittedRequirementsIndex extends Component
         }
 
         return view('livewire.admin.submitted-requirements.submitted-requirements-index', [
-            'activeSemester' => $activeSemester,
+            'activeSemester' => $currentSemester,
+            'selectedSemester' => $currentSemester,
             'categories' => $this->getCategories(),
             'requirements' => $requirements,
             'usersForRequirement' => $usersForRequirement,

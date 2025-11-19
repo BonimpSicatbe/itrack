@@ -25,7 +25,11 @@ class Navigation extends Component
         }
 
         return Auth::user()->unreadNotifications()
-            ->where('type', 'App\Notifications\NewSubmissionNotification')
+            ->whereIn('type', [
+                'App\Notifications\NewSubmissionNotification',
+                'App\Notifications\SubmissionStatusUpdated',
+                'App\Notifications\SemesterEndedWithMissingSubmissions' // ADD THIS
+            ])
             ->count();
     }
 

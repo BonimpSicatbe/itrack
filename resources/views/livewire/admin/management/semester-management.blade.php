@@ -45,7 +45,7 @@
             <thead>
                 <tr class="bg-base-300 font-bold uppercase">
                     <th class="cursor-pointer hover:bg-green-800 p-4 text-left bg-green-700" wire:click="sortBy('name')"
-                        style="color: white; width: 25%;">
+                        style="color: white; width: 30%;">
                         <div class="flex items-center pt-2 pb-2">
                             Semester Name
                             <div class="ml-1">
@@ -58,7 +58,7 @@
                         </div>
                     </th>
                     <th class="cursor-pointer hover:bg-green-800 bg-green-700 p-4 text-left"
-                        wire:click="sortBy('start_date')" style="color: white; width: 15%;">
+                        wire:click="sortBy('start_date')" style="color: white; width: 20%;">
                         <div class="flex items-center pt-2 pb-2">
                             Start Date
                             <div class="ml-1">
@@ -71,7 +71,7 @@
                         </div>
                     </th>
                     <th class="cursor-pointer hover:bg-green-800 bg-green-700 p-4 text-left"
-                        wire:click="sortBy('end_date')" style="color: white; width: 15%;">
+                        wire:click="sortBy('end_date')" style="color: white; width: 20%;">
                         <div class="flex items-center pt-2 pb-2">
                             End Date
                             <div class="ml-1">
@@ -83,8 +83,8 @@
                             </div>
                         </div>
                     </th>
-                    <th class="p-4 text-left bg-green-700" style="color: white; width: 10%;">Status</th>
-                    <th class="p-4 text-center bg-green-700" style="color: white; width: 20%;">Actions</th>
+                    <th class="p-4 text-left bg-green-700" style="color: white; width: 15%;">Status</th>
+                    <th class="p-4 text-center bg-green-700" style="color: white; width: 15%;">Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -125,26 +125,12 @@
                                     data-tip="Edit" wire:click="openEditModal({{ $semester->id }})">
                                     <i class="fa-solid fa-pen-to-square"></i>
                                 </button>
-
-                                <!-- Download Semester button -->
-                                @if (!$semester->is_active)
-                                    <a href="{{ route('admin.semesters.download', $semester) }}"
-                                        class="text-blue-600 hover:bg-blue-100 rounded-xl p-2 tooltip cursor-pointer"
-                                        data-tip="Download Semester">
-                                        <i class="fa-solid fa-download"></i>
-                                    </a>
-                                @else
-                                    <span class="text-blue-300 rounded-xl p-2 tooltip cursor-not-allowed"
-                                        data-tip="Cannot download active semester">
-                                        <i class="fa-solid fa-download"></i>
-                                    </span>
-                                @endif
                             </div>
                         </td>
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="6" class="text-center p-4">No semesters found.</td>
+                        <td colspan="5" class="text-center p-4">No semesters found.</td>
                     </tr>
                 @endforelse
             </tbody>
@@ -152,7 +138,7 @@
     </div>
 
     <!-- Create Semester Modal -->
-    <input type="checkbox" id="create_semester_modal" class="modal-toggle" wire:model="showCreateModal"/>
+    <input type="checkbox" id="create_semester_modal" class="modal-toggle" {{ $showCreateModal ? 'checked' : '' }} />
     <div class="modal rounded-xl" role="dialog">
         <div class="modal-box p-0 m-0 rounded-xl">
             {{-- header --}}
@@ -297,4 +283,15 @@
             </div>
         </x-modal>
     @endif
+
+    <script>
+    document.addEventListener('livewire:initialized', () => {
+        Livewire.on('closeCreateModal', () => {
+            const modal = document.getElementById('create_semester_modal');
+            if (modal) {
+                modal.checked = false;
+            }
+        });
+    });
+    </script>
 </div>

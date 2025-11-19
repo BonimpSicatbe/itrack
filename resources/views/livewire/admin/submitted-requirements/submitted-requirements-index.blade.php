@@ -30,10 +30,33 @@
     </div>
 
     <div class="bg-white rounded-xl shadow-md p-6 flex flex-col gap-4 min-h-[calc(100vh_-_190px)]">
-        @if($activeSemester)
+        @if($activeSemester || $selectedSemester)
             <!-- Filter Bar -->
             <div class="rounded-xl flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div class="flex flex-col sm:flex-row items-center gap-4">
+                    <!-- Semester Dropdown -->
+                    <div class="relative">
+                        <select 
+                            wire:model.live="selectedSemesterId"
+                            class="block w-full p-2 pr-8 text-sm text-1B512D border border-gray-300 shadow-sm focus:border-green-600 focus:ring-green-600 rounded-xl appearance-none bg-white"
+                        >
+                            @foreach($availableSemesters as $semester)
+                                <option value="{{ $semester->id }}" {{ $semester->id == $selectedSemesterId ? 'selected' : '' }}>
+                                    {{ $semester->name }} 
+                                    @if($semester->is_active)
+                                        (Active)
+                                    @elseif($semester->id == $latestEndedSemester?->id)
+                                        (Latest Ended)
+                                    @endif
+                                </option>
+                            @endforeach
+                        </select>
+                        <div class="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
+                            <i class="fas fa-chevron-down text-gray-500 text-sm"></i>
+                        </div>
+                    </div>
+
+                    <!-- Search Input -->
                     <div class="relative max-w-md w-full md:w-sm">
                         <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
                             <i class="fas fa-search text-gray-500 text-sm"></i>
@@ -91,7 +114,8 @@
                     <!-- Include Overview Component -->
                     <livewire:admin.submitted-requirements.submitted-requirements-overview 
                         :search="$search" 
-                        :key="'overview-' . $search . '-' . $category"
+                        :selectedSemesterId="$selectedSemesterId"
+                        :key="'overview-' . $search . '-' . $category . '-' . $selectedSemesterId"
                     />
                 @else
                     <!-- Requirement Category with File Manager Style -->

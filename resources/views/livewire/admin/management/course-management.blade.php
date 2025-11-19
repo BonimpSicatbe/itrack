@@ -1,5 +1,6 @@
 <div class="w-full flex">
     <div class="w-full transition-all duration-300 ease-in-out">
+        <!-- Header Section -->
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-2 gap-4 px-6 pt-6">
             <div>
                 <div class="flex items-center gap-2">
@@ -7,12 +8,20 @@
                     <p class="text-sm text-gray-600">| Manage courses and their information.</p>
                 </div>
             </div>
-            <button 
-                wire:click="openAddCourseModal" 
-                class="px-5 py-2 bg-green-600 text-white font-semibold rounded-xl text-sm cursor-pointer"
-            >
-                <i class="fa-solid fa-plus mr-2"></i>Add Course
-            </button>
+            <div class="flex gap-3">
+                <button 
+                    wire:click="openBulkCopyModal" 
+                    class="px-5 py-2 bg-blue-600 text-white font-semibold rounded-xl text-sm cursor-pointer hover:bg-blue-700 transition-colors"
+                >
+                    <i class="fa-solid fa-copy mr-2"></i>Bulk Copy Assignments
+                </button>
+                <button 
+                    wire:click="openAddCourseModal" 
+                    class="px-5 py-2 bg-green-600 text-white font-semibold rounded-xl text-sm cursor-pointer"
+                >
+                    <i class="fa-solid fa-plus mr-2"></i>Add Course
+                </button>
+            </div>
         </div>
 
         <div class="border-b border-gray-200 mb-4"></div>
@@ -102,6 +111,170 @@
             </table>
         </div>
     </div>
+
+    <!-- Bulk Copy Assignments Modal -->
+    @if ($showBulkCopyModal)
+        <x-modal name="bulk-copy-modal" :show="$showBulkCopyModal" maxWidth="4xl">
+            <!-- Header -->
+            <div class=" text-white rounded-t-xl px-6 py-4 flex items-center space-x-3 bg-blue-600">
+                <i class="fa-solid fa-copy text-lg"></i>
+                <h3 class="text-xl font-semibold">Bulk Copy Course Assignments</h3>
+            </div>
+
+            <!-- Body -->
+            <div class="bg-white px-6 py-6 rounded-b-xl">
+                <!-- Info Note -->
+                <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6">
+                    <div class="flex items-start">
+                        <div class="flex-shrink-0">
+                            <i class="fa-solid fa-info-circle text-blue-500 mt-1"></i>
+                        </div>
+                        <div class="ml-3">
+                            <h3 class="text-sm font-medium text-blue-800">About Bulk Copy</h3>
+                            <div class="mt-1 text-sm text-blue-700">
+                                <p>This feature copies all course assignments from a previous semester to a new semester.</p>
+                                <p class="mt-1 font-semibold">✓ Assignments from deactivated users will be automatically excluded</p>
+                                <p class="mt-1">You can choose to replace existing assignments or merge with them.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Source Semester -->
+                    <div>
+                        <label class="block text-xs tracking-wide uppercase font-semibold text-gray-700 mb-2">
+                            Copy From Semester (Source)
+                        </label>
+                        <select wire:model.live="bulkCopyData.source_semester_id"
+                            class="w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm p-3">
+                            <option value="">Select source semester...</option>
+                            @foreach($semesters->where('id', '!=', $bulkCopyData['target_semester_id'] ?? '') as $semester)
+                                <option value="{{ $semester->id }}">
+                                    {{ $semester->name }} 
+                                    ({{ \Carbon\Carbon::parse($semester->start_date)->format('M Y') }} - 
+                                    {{ \Carbon\Carbon::parse($semester->end_date)->format('M Y') }})
+                                </option>
+                            @endforeach
+                        </select>
+                        @error('bulkCopyData.source_semester_id')
+                            <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <!-- Target Semester -->
+                    <div>
+                        <label class="block text-xs tracking-wide uppercase font-semibold text-gray-700 mb-2">
+                            Copy To Semester (Target)
+                        </label>
+                        <select wire:model.live="bulkCopyData.target_semester_id"
+                            class="w-full rounded-xl border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm p-3">
+                            <option value="">Select target semester...</option>
+                            @foreach($semesters->where('id', '!=', $bulkCopyData['source_semester_id'] ?? '') as $semester)
+                                <option value="{{ $semester->id }}">
+                                    {{ $semester->name }} 
+                                    ({{ \Carbon\Carbon::parse($semester->start_date)->format('M Y') }} - 
+                                    {{ \Carbon\Carbon::parse($semester->end_date)->format('M Y') }})
+                                    @if($semester->is_active) (Active) @endif
+                                </option>
+                            @endforeach
+                        </select>
+                        @error('bulkCopyData.target_semester_id')
+                            <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                        @enderror
+                    </div>
+                </div>
+
+                <!-- Options -->
+                <div class="mt-6">
+                    <div class="flex items-center">
+                        <input type="checkbox" 
+                            wire:model.live="bulkCopyData.replace_existing"
+                            id="bulk_replace_existing"
+                            class="rounded border-gray-300 text-blue-600 focus:ring-blue-500 w-4 h-4">
+                        <label for="bulk_replace_existing" class="ml-2 text-sm text-gray-700 font-medium">
+                            Replace existing assignments in target semester
+                        </label>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1 ml-6">
+                        If checked, existing assignments in the target semester will be removed before copying.
+                    </p>
+                </div>
+
+                <!-- Preview Section -->
+                @if($showBulkCopyPreview)
+                    <div class="mt-6 border-t pt-6">
+                        <h4 class="text-lg font-semibold text-gray-700 mb-4">
+                            Preview - {{ count($bulkCopyPreview) }} courses with assignments
+                        </h4>
+                        
+                        <div class="max-h-80 overflow-y-auto border border-gray-200 rounded-xl">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Course</th>
+                                        <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Assignments</th>
+                                        <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Existing</th>
+                                        <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">
+                                    @foreach($bulkCopyPreview as $preview)
+                                        <tr class="hover:bg-gray-50">
+                                            <td class="px-4 py-3 whitespace-nowrap">
+                                                <div class="text-sm font-medium text-gray-900">{{ $preview['course_code'] }}</div>
+                                                <div class="text-xs text-gray-500">{{ $preview['course_name'] }}</div>
+                                            </td>
+                                            <td class="px-4 py-3 text-center text-sm text-gray-900">
+                                                {{ $preview['assignment_count'] }}
+                                            </td>
+                                            <td class="px-4 py-3 text-center text-sm text-gray-900">
+                                                {{ $preview['existing_assignments'] }}
+                                            </td>
+                                            <td class="px-4 py-3 text-center">
+                                                @if($preview['is_conflict'])
+                                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $preview['will_copy'] ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800' }}">
+                                                        <i class="fa-solid {{ $preview['will_copy'] ? 'fa-check mr-1' : 'fa-exclamation-triangle mr-1' }}"></i>
+                                                        {{ $preview['will_copy'] ? 'Will Replace' : 'Conflict' }}
+                                                    </span>
+                                                @else
+                                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                                        <i class="fa-solid fa-check mr-1"></i>
+                                                        Will Copy
+                                                    </span>
+                                                @endif
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                @endif
+
+                <!-- Action Buttons -->
+                <div class="mt-8 pt-6 border-t border-gray-200 flex justify-end space-x-3">
+                    <button type="button" 
+                        wire:click="closeBulkCopyModal"
+                        class="px-5 py-2 rounded-xl border border-gray-300 text-gray-500 bg-white font-semibold text-sm cursor-pointer hover:bg-gray-50 transition-colors">
+                        Cancel
+                    </button>
+                    <button type="button" 
+                        wire:click="bulkCopyAssignments"
+                        wire:loading.attr="disabled"
+                        class="px-5 py-2 rounded-xl bg-blue-600 text-white font-semibold text-sm shadow cursor-pointer hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        {{ empty($bulkCopyData['source_semester_id']) || empty($bulkCopyData['target_semester_id']) ? 'disabled' : '' }}>
+                        <span wire:loading.remove wire:target="bulkCopyAssignments">
+                            <i class="fa-solid fa-copy mr-2"></i>Copy All Assignments
+                        </span>
+                        <span wire:loading wire:target="bulkCopyAssignments">
+                            <i class="fa-solid fa-spinner fa-spin mr-2"></i> Copying...
+                        </span>
+                    </button>
+                </div>
+            </div>
+        </x-modal>
+    @endif
 
     @if($showAddCourseModal)
         <x-modal name="add-course-modal" :show="$showAddCourseModal" maxWidth="2xl">
@@ -451,7 +624,7 @@
                                                 </div>
                                             </div>
                                             <button 
-                                                wire:click="openRemoveAssignmentModal({{ $assignment->assignment_id }})"
+                                                wire:click="openRemoveAssignmentModal({{ $assignment->id }})"
                                                 class="text-red-500 hover:text-red-700 ml-2 cursor-pointer"
                                                 title="Remove Assignment"
                                             >
@@ -472,85 +645,124 @@
                                 <label class="block text-xs tracking-wide uppercase font-semibold text-gray-700">Select Faculty</label>
                                 <div class="relative mt-2" 
                                     x-data="{
-                                        open: @entangle('showFacultyDropdown'),
-                                        searchText: @entangle('facultySearch'),
-                                        updateInput() {
-                                            // Force update the input value when faculty is selected
-                                            this.$refs.facultyInput.value = this.searchText;
+                                        isOpen: @entangle('showFacultyDropdown'),
+                                        search: @entangle('facultySearch').live,
+                                        selectedId: @entangle('assignmentData.professor_id'),
+                                        
+                                        init() {
+                                            // Close dropdown when clicking outside
+                                            document.addEventListener('click', (event) => {
+                                                if (!this.$el.contains(event.target)) {
+                                                    this.isOpen = false;
+                                                }
+                                            });
+                                        },
+                                        
+                                        onInputClick() {
+                                            this.isOpen = true;
+                                            // Trigger Livewire method to ensure dropdown shows
+                                            @this.onFacultyInputFocus();
+                                        },
+                                        
+                                        selectProfessor(id, name) {
+                                            this.selectedId = id;
+                                            this.search = name;
+                                            this.isOpen = false;
+                                            // Call Livewire method to handle selection
+                                            @this.selectFacultyFromDropdown(id);
+                                        },
+                                        
+                                        clearSelection() {
+                                            this.selectedId = '';
+                                            this.search = '';
+                                            this.isOpen = true;
+                                            @this.clearFacultySelection();
+                                        },
+                                        
+                                        handleInput(event) {
+                                            this.isOpen = true;
+                                            // Update Livewire property directly
+                                            @this.set('facultySearch', event.target.value);
                                         }
-                                    }"
-                                    x-init="
-                                        $watch('searchText', value => {
-                                            updateInput();
-                                        });
-                                        $wire.on('faculty-selected', (event) => {
-                                            searchText = event.facultyName;
-                                            updateInput();
-                                        });
-                                    "
-                                    x-on:click.away="open = false; $wire.closeFacultyDropdown()">
+                                    }">
                                     
                                     <div class="relative">
                                         <input 
                                             type="text"
-                                            x-ref="facultyInput"
-                                            x-model="searchText"
-                                            x-on:input="$wire.set('facultySearch', $event.target.value); open = true;"
-                                            x-on:click="open = true"
-                                            wire:keydown.escape="clearFacultySelection"
+                                            x-model="search"
+                                            x-on:input.debounce.300ms="handleInput($event)"
+                                            x-on:click="onInputClick()"
+                                            x-on:keydown.escape="isOpen = false"
                                             class="block w-full rounded-xl border-gray-300 sm:text-sm pr-10 cursor-text"
                                             placeholder="Type to search faculty..."
                                             autocomplete="off"
                                         />
                                         <div class="absolute inset-y-0 right-0 flex items-center pr-2">
-                                            @if($assignmentData['professor_id'])
+                                            <template x-if="selectedId">
                                                 <button 
                                                     type="button"
-                                                    wire:click="clearFacultySelection"
+                                                    x-on:click="clearSelection()"
                                                     class="text-gray-400 hover:text-gray-600 p-1"
                                                     title="Clear selection"
                                                 >
                                                     <i class="fa-solid fa-times"></i>
                                                 </button>
-                                            @endif
+                                            </template>
                                             <button 
                                                 type="button"
-                                                wire:click="toggleFacultyDropdown"
+                                                x-on:click="isOpen = !isOpen"
                                                 class="text-gray-400 hover:text-gray-600 p-1"
                                                 title="Toggle dropdown"
                                             >
-                                                <i class="fa-solid fa-chevron-down"></i>
+                                                <i class="fa-solid fa-chevron-down" x-bind:class="{ 'transform rotate-180': isOpen }"></i>
                                             </button>
                                         </div>
                                     </div>
                                     
-                                    <div x-show="open" x-transition class="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-xl shadow-lg max-h-60 overflow-auto">
+                                    <!-- Dropdown -->
+                                    <div 
+                                        x-show="isOpen" 
+                                        x-transition:enter="transition ease-out duration-100"
+                                        x-transition:enter-start="transform opacity-0 scale-95"
+                                        x-transition:enter-end="transform opacity-100 scale-100"
+                                        x-transition:leave="transition ease-in duration-75"
+                                        x-transition:leave-start="transform opacity-100 scale-100"
+                                        x-transition:leave-end="transform opacity-0 scale-95"
+                                        class="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-xl shadow-lg max-h-60 overflow-auto"
+                                        style="display: none;"
+                                    >
                                         <div class="max-h-60 overflow-y-auto">
-                                            @forelse($this->filteredProfessors as $professor)
-                                                <button 
-                                                    type="button"
-                                                    wire:click="selectFaculty('{{ $professor['id'] }}', '{{ $professor['name'] }}')"
-                                                    class="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-green-50 hover:text-green-900 rounded-lg flex items-center justify-between {{ $assignmentData['professor_id'] == $professor['id'] ? 'bg-green-50 text-green-900' : '' }}"
-                                                    x-on:click.stop
-                                                >
-                                                    <span>{{ $professor['name'] }}</span>
-                                                    @if($assignmentData['professor_id'] == $professor['id'])
-                                                        <i class="fa-solid fa-check text-green-600 ml-2"></i>
-                                                    @endif
-                                                </button>
-                                            @empty
-                                                <div class="px-3 py-2 text-sm text-gray-500 text-center">
+                                            @if($showFacultyDropdown && count($this->filteredProfessors) > 0)
+                                                @foreach($this->filteredProfessors as $professor)
+                                                    <button 
+                                                        type="button"
+                                                        x-on:click="selectProfessor('{{ $professor['id'] }}', '{{ $professor['name'] }}')"
+                                                        class="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-green-50 hover:text-green-900 rounded-lg flex items-center justify-between transition-colors duration-150"
+                                                        :class="{ 'bg-green-50 text-green-900': selectedId == '{{ $professor['id'] }}' }"
+                                                    >
+                                                        <span>{{ $professor['name'] }}</span>
+                                                        @if($assignmentData['professor_id'] == $professor['id'])
+                                                            <i class="fa-solid fa-check text-green-600 ml-2"></i>
+                                                        @endif
+                                                    </button>
+                                                @endforeach
+                                            @elseif($showFacultyDropdown)
+                                                <div class="px-3 py-3 text-sm text-gray-500 text-center">
                                                     @if($currentCourseAssignments->count() > 0)
-                                                        <i class="fa-solid fa-user-check mr-1"></i> All available faculty are already assigned to this course
+                                                        <i class="fa-solid fa-user-check mr-2"></i> 
+                                                        All available faculty are already assigned to this course
                                                     @else
-                                                        No active faculty members found
+                                                        <i class="fa-solid fa-search mr-2"></i>
+                                                        No faculty members found matching your search
                                                     @endif
                                                 </div>
-                                            @endforelse
+                                            @endif
                                         </div>
                                     </div>
                                 </div>
-                                @error('assignmentData.professor_id') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
+                                @error('assignmentData.professor_id') 
+                                    <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span> 
+                                @enderror
                             </div>
 
                             <div class="mb-4">
@@ -567,23 +779,9 @@
                                         </option>
                                     @endforeach
                                 </select>
-                                @error('assignmentData.semester_id') <span class="text-red-500 text-xs">{{ $message }}</span> @enderror
-                            </div>
-
-                            <!-- 🔥 SINGLE Assign Faculty Button placed here -->
-                            <div class="flex justify-end">
-                                <button type="button" 
-                                    wire:click="assignProfessor" 
-                                    wire:loading.attr="disabled"
-                                    class="w-full px-4 py-2 rounded-xl bg-blue-600 text-white font-semibold text-sm shadow cursor-pointer hover:bg-blue-700 transition-colors"
-                                    {{ empty($assignmentData['professor_id']) || empty($assignmentData['semester_id']) ? 'disabled' : '' }}>
-                                    <span wire:loading.remove wire:target="assignProfessor">
-                                        <i class="fa-solid fa-user-plus mr-2"></i>Assign Faculty
-                                    </span>
-                                    <span wire:loading wire:target="assignProfessor">
-                                        <i class="fa-solid fa-spinner fa-spin mr-2"></i> Assigning...
-                                    </span>
-                                </button>
+                                @error('assignmentData.semester_id') 
+                                    <span class="text-red-500 text-xs mt-1 block">{{ $message }}</span> 
+                                @enderror
                             </div>
                         </div>
                     </div>
@@ -607,7 +805,7 @@
                 </div>
             </div>
         </x-modal>
-        @endif
+    @endif
 
     @if($showRemoveAssignmentModal)
         <x-modal name="remove-assignment-modal" :show="$showRemoveAssignmentModal" maxWidth="md">
@@ -645,9 +843,6 @@
         </x-modal>
     @endif
 
-    
-
-    
     <style>
         .table {
             border-spacing: 0;
@@ -663,35 +858,6 @@
 
 @script
 <script>
-    // Listen for notifications from Livewire
-    $wire.on('showNotification', (event) => {
-        const notification = document.createElement('div');
-        notification.className = `fixed top-4 right-4 z-50 p-4 rounded-xl shadow-lg text-white font-semibold transition-all duration-300 transform translate-x-full ${getNotificationClass(event.type)}`;
-        notification.innerHTML = `
-            <div class="flex items-center space-x-2">
-                <i class="${getNotificationIcon(event.type)}"></i>
-                <span>${event.content}</span>
-            </div>
-        `;
-        
-        document.body.appendChild(notification);
-        
-        // Animate in
-        setTimeout(() => {
-            notification.classList.remove('translate-x-full');
-        }, 100);
-        
-        // Remove after 5 seconds
-        setTimeout(() => {
-            notification.classList.add('translate-x-full');
-            setTimeout(() => {
-                if (notification.parentNode) {
-                    notification.parentNode.removeChild(notification);
-                }
-            }, 300);
-        }, 5000);
-    });
-
     function getNotificationClass(type) {
         switch (type) {
             case 'success': return 'bg-green-600';
@@ -711,4 +877,3 @@
     }
 </script>
 @endscript
-

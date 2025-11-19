@@ -176,7 +176,11 @@
                                 <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Days Since Semester Ended</p>
                                 <div class="bg-gray-50 p-3 rounded-xl text-sm font-medium text-gray-900 shadow-inner">
                                     @if(isset($selectedNotificationData['semester']['end_date']))
-                                        {{ \Carbon\Carbon::parse($selectedNotificationData['semester']['end_date'])->diffInDays(now()) }} days
+                                        @php
+                                            $endDate = \Carbon\Carbon::parse($selectedNotificationData['semester']['end_date']);
+                                            $daysSinceEnded = (int) $endDate->diffInDays(now()); // Force integer conversion
+                                        @endphp
+                                        {{ $daysSinceEnded }} days
                                     @else
                                         N/A
                                     @endif
@@ -203,9 +207,23 @@
                                 <div class="border border-orange-200 rounded-xl p-4 bg-orange-50 shadow-sm">
                                     <div class="flex justify-between items-start">
                                         <div class="flex-1">
-                                            <h4 class="font-semibold text-gray-900 text-sm mb-2">
-                                                {{ $missing['requirement_name'] ?? 'Unknown Requirement' }}
-                                            </h4>
+                                            {{-- Requirement and Course on same line --}}
+                                            <div class="flex items-center justify-between mb-2">
+                                                <h4 class="font-semibold text-gray-900 text-sm">
+                                                    {{ $missing['requirement_name'] ?? 'Unknown Requirement' }}
+                                                </h4>
+                                                <div class="flex items-center text-gray-600 text-xs bg-white px-3 py-1 rounded-full border border-orange-200">
+                                                    <span class="ml-1">
+                                                        @if(isset($missing['course_code']) && isset($missing['course_name']))
+                                                            {{ $missing['course_code'] }} - {{ $missing['course_name'] }}
+                                                        @else
+                                                            No course assigned
+                                                        @endif
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            
+                                            {{-- Other details in grid --}}
                                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
                                                 <div class="flex items-center text-gray-600">
                                                     <i class="fa-solid fa-user mr-2 text-gray-500"></i>

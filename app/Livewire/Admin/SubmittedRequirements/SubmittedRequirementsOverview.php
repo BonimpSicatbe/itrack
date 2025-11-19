@@ -16,30 +16,48 @@ class SubmittedRequirementsOverview extends Component
     
     public $search = '';
     public $perPage = 5;
+    public $selectedSemesterId = null;
 
     protected $listeners = ['refreshOverview' => '$refresh'];
 
+    public function mount($selectedSemesterId = null)
+    {
+        $this->selectedSemesterId = $selectedSemesterId;
+    }
+
+    /**
+     * Get the current semester based on selection
+     */
+    protected function getCurrentSemester()
+    {
+        if ($this->selectedSemesterId) {
+            return Semester::find($this->selectedSemesterId);
+        }
+        
+        return Semester::getActiveSemester();
+    }
+
     public function render()
     {
-        $activeSemester = Semester::getActiveSemester();
+        $currentSemester = $this->getCurrentSemester();
         
-        if (!$activeSemester) {
+        if (!$currentSemester) {
             return view('livewire.admin.submitted-requirements.submitted-requirements-overview', [
                 'overviewData' => []
             ]);
         }
 
-        $overviewData = $this->getOverviewData($activeSemester);
+        $overviewData = $this->getOverviewData($currentSemester);
 
         return view('livewire.admin.submitted-requirements.submitted-requirements-overview', [
             'overviewData' => $overviewData
         ]);
     }
 
-    protected function getOverviewData($activeSemester)
+    protected function getOverviewData($currentSemester)
     {
-        // Get all requirements for the active semester
-        $requirements = Requirement::where('semester_id', $activeSemester->id)
+        // Get all requirements for the current semester
+        $requirements = Requirement::where('semester_id', $currentSemester->id)
             ->orderByRaw('
                 CASE 
                     WHEN JSON_LENGTH(requirement_type_ids) = 0 THEN 999999
@@ -76,7 +94,7 @@ class SubmittedRequirementsOverview extends Component
 
         // Get course assignments for the paginated users
         $courseAssignments = CourseAssignment::whereIn('professor_id', $users->pluck('id'))
-            ->where('semester_id', $activeSemester->id)
+            ->where('semester_id', $currentSemester->id)
             ->with('course')
             ->get()
             ->groupBy('professor_id');

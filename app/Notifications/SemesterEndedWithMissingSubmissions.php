@@ -30,7 +30,7 @@ class SemesterEndedWithMissingSubmissions extends Notification implements Should
     public function toDatabase($notifiable)
     {
         return [
-            'type' => 'semester_ended_missing_submissions',
+            'type' => 'semester_ended_missing_submissions', // Remove the extra 's'
             'message' => "Semester {$this->semester->name} ended with {$this->totalMissing} missing submissions",
             'semester_id' => $this->semester->id,
             'semester_name' => $this->semester->name,

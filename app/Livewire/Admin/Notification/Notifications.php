@@ -63,6 +63,9 @@ class Notifications extends Component
         $notification = DatabaseNotification::find($id);
         
         if ($notification) {
+            // Debug: Log the notification data
+            \Log::info('Notification Data:', $notification->data);
+            
             if ($notification->unread()) {
                 $notification->markAsRead();
                 $this->dispatch('notification-read');
@@ -121,14 +124,14 @@ class Notifications extends Component
         }
 
         // Handle different notification types
-        if ($notificationData['type'] === 'submission_status_updated') {
+        $notificationType = $notificationData['type'] ?? null;
+        
+        if ($notificationType === 'submission_status_updated') {
             $this->loadStatusUpdateDetails($notificationData);
         } 
-        
-        else if ($notificationData['type'] === 'semester_ended_with_missing_submissions') {
+        else if ($notificationType === 'semester_ended_missing_submissions') { // Match the corrected type
             $this->loadSemesterEndedDetails($notificationData);
         } 
-        
         else {
             $this->loadNewSubmissionDetails($notificationData);
         }
@@ -460,6 +463,15 @@ class Notifications extends Component
                     'start_date' => $semester->start_date,
                     'end_date' => $semester->end_date,
                     'is_active' => $semester->is_active,
+                ];
+            } else {
+                // Fallback to data from notification if semester not found
+                $this->selectedNotificationData['semester'] = [
+                    'id' => $semesterId,
+                    'name' => $notificationData['semester_name'] ?? 'Unknown Semester',
+                    'start_date' => null,
+                    'end_date' => $notificationData['ended_at'] ?? null,
+                    'is_active' => false,
                 ];
             }
         }

@@ -7,6 +7,8 @@ use App\Models\Requirement;
 use App\Models\CourseAssignment;
 use App\Models\SubmittedRequirement;
 use App\Models\User;
+use App\Models\RequirementType;
+use App\Models\RequirementSubmissionIndicator;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -61,6 +63,12 @@ class MissingSubmissionService
             Log::info("Found {$courseAssignments->count()} course assignments for requirement {$requirement->id}");
 
             foreach ($courseAssignments as $assignment) {
+                // NEW: Apply partnership logic before checking submission
+                if ($this->shouldSkipRequirementDueToPartnership($requirement, $assignment, $semester)) {
+                    Log::info("Skipping requirement {$requirement->id} due to partnership completion for user {$assignment->professor_id}, course {$assignment->course_id}");
+                    continue;
+                }
+
                 $submissionExists = SubmittedRequirement::where('requirement_id', $requirement->id)
                     ->where('user_id', $assignment->professor_id)
                     ->where('course_id', $assignment->course_id)
@@ -90,6 +98,291 @@ class MissingSubmissionService
         }
 
         return $missingSubmissions;
+    }
+
+    /**
+     * NEW METHOD: Apply partnership logic to determine if requirement should be skipped
+     */
+    protected function shouldSkipRequirementDueToPartnership(Requirement $requirement, CourseAssignment $assignment, Semester $semester)
+    {
+        $user = $assignment->professor;
+        $courseId = $assignment->course_id;
+        
+        // Check if this requirement belongs to Midterm or Finals
+        $isMidtermReq = $this->isMidtermRequirement($requirement);
+        $isFinalsReq = $this->isFinalsRequirement($requirement);
+        
+        if (!$isMidtermReq && !$isFinalsReq) {
+            return false; // Not a Midterm/Finals requirement, don't skip
+        }
+        
+        // Check submission indicators for this user and course
+        $courseSubmitted = RequirementSubmissionIndicator::where('user_id', $user->id)
+            ->where('course_id', $courseId)
+            ->get()
+            ->keyBy('requirement_id');
+        
+        // Get all requirements for this course and semester to check partnerships
+        $allCourseRequirements = Requirement::where('semester_id', $semester->id)
+            ->get()
+            ->filter(function($req) use ($user, $courseId, $semester) {
+                return $this->isUserAssignedToRequirementForCourse($req, $user, $courseId, $semester);
+            });
+        
+        if ($isMidtermReq) {
+            return $this->shouldExcludeMidtermForCourse($allCourseRequirements, $courseSubmitted);
+        }
+        
+        if ($isFinalsReq) {
+            return $this->shouldExcludeFinalsForCourse($allCourseRequirements, $courseSubmitted);
+        }
+        
+        return false;
+    }
+
+    /**
+     * NEW METHOD: Check if user is assigned to requirement for specific course
+     */
+    protected function isUserAssignedToRequirementForCourse(Requirement $requirement, User $user, $courseId, Semester $semester)
+    {
+        $assignedTo = $requirement->getRawOriginal('assigned_to');
+        
+        if (is_string($assignedTo)) {
+            $assignedTo = json_decode($assignedTo, true);
+        }
+        
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            $assignedTo = [];
+        }
+
+        $programs = $assignedTo['programs'] ?? [];
+        $selectAllPrograms = $assignedTo['selectAllPrograms'] ?? false;
+
+        // If requirement is assigned to all programs, check if user teaches the specific course
+        if ($selectAllPrograms) {
+            return CourseAssignment::where('professor_id', $user->id)
+                ->where('course_id', $courseId)
+                ->where('semester_id', $semester->id)
+                ->exists();
+        }
+
+        // Check if user teaches the specific course that belongs to assigned programs
+        return CourseAssignment::where('professor_id', $user->id)
+            ->where('course_id', $courseId)
+            ->where('semester_id', $semester->id)
+            ->whereHas('course', function($query) use ($programs) {
+                $query->whereIn('program_id', $programs);
+            })
+            ->exists();
+    }
+
+    /**
+     * NEW METHOD: Check if Midterm should be excluded for specific course
+     */
+    protected function shouldExcludeMidtermForCourse($allCourseRequirements, $courseSubmitted)
+    {
+        $midtermTosSubmitted = false;
+        $midtermExaminationsSubmitted = false;
+        $midtermRubricsSubmitted = false;
+        
+        foreach ($allCourseRequirements as $requirement) {
+            if ($this->isMidtermRequirement($requirement)) {
+                if ($this->isTosRequirement($requirement)) {
+                    $midtermTosSubmitted = $courseSubmitted->has($requirement->id);
+                } elseif ($this->isExaminationsRequirement($requirement)) {
+                    $midtermExaminationsSubmitted = $courseSubmitted->has($requirement->id);
+                } elseif ($this->isRubricsRequirement($requirement)) {
+                    $midtermRubricsSubmitted = $courseSubmitted->has($requirement->id);
+                }
+            }
+        }
+        
+        // Exclude Midterm if: (TOS AND Examinations submitted) OR (Rubrics submitted)
+        return ($midtermTosSubmitted && $midtermExaminationsSubmitted) || $midtermRubricsSubmitted;
+    }
+
+    /**
+     * NEW METHOD: Check if Finals should be excluded for specific course
+     */
+    protected function shouldExcludeFinalsForCourse($allCourseRequirements, $courseSubmitted)
+    {
+        $finalsTosSubmitted = false;
+        $finalsExaminationsSubmitted = false;
+        $finalsRubricsSubmitted = false;
+        
+        foreach ($allCourseRequirements as $requirement) {
+            if ($this->isFinalsRequirement($requirement)) {
+                if ($this->isTosRequirement($requirement)) {
+                    $finalsTosSubmitted = $courseSubmitted->has($requirement->id);
+                } elseif ($this->isExaminationsRequirement($requirement)) {
+                    $finalsExaminationsSubmitted = $courseSubmitted->has($requirement->id);
+                } elseif ($this->isRubricsRequirement($requirement)) {
+                    $finalsRubricsSubmitted = $courseSubmitted->has($requirement->id);
+                }
+            }
+        }
+        
+        // Exclude Finals if: (TOS AND Examinations submitted) OR (Rubrics submitted)
+        return ($finalsTosSubmitted && $finalsExaminationsSubmitted) || $finalsRubricsSubmitted;
+    }
+
+    /**
+     * Check if requirement belongs to Midterm folder hierarchy
+     */
+    protected function isMidtermRequirement($requirement)
+    {
+        if (empty($requirement->requirement_type_ids)) {
+            return false;
+        }
+        
+        // Midterm folder ID is 3, get all its sub-folder IDs
+        $midtermFolder = RequirementType::find(3);
+        if (!$midtermFolder) {
+            return false;
+        }
+        
+        $midtermHierarchyIds = $this->getFolderHierarchyIds($midtermFolder);
+        
+        foreach ($requirement->requirement_type_ids as $typeId) {
+            if (in_array($typeId, $midtermHierarchyIds)) {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+
+    /**
+     * Check if requirement belongs to Finals folder hierarchy
+     */
+    protected function isFinalsRequirement($requirement)
+    {
+        if (empty($requirement->requirement_type_ids)) {
+            return false;
+        }
+        
+        // Finals folder ID is 7, get all its sub-folder IDs
+        $finalsFolder = RequirementType::find(7);
+        if (!$finalsFolder) {
+            return false;
+        }
+        
+        $finalsHierarchyIds = $this->getFolderHierarchyIds($finalsFolder);
+        
+        foreach ($requirement->requirement_type_ids as $typeId) {
+            if (in_array($typeId, $finalsHierarchyIds)) {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+
+    /**
+     * Check if requirement is a TOS requirement
+     */
+    protected function isTosRequirement($requirement)
+    {
+        // Check by name or requirement group - adjust as needed
+        return str_contains(strtolower($requirement->name), 'tos') || 
+               str_contains(strtolower($requirement->requirement_group), 'tos') ||
+               $this->isRequirementInTosFolder($requirement);
+    }
+
+    /**
+     * Check if requirement is an Examinations requirement
+     */
+    protected function isExaminationsRequirement($requirement)
+    {
+        return str_contains(strtolower($requirement->name), 'examination') || 
+               str_contains(strtolower($requirement->requirement_group), 'examination') ||
+               $this->isRequirementInExaminationsFolder($requirement);
+    }
+
+    /**
+     * Check if requirement is a Rubrics requirement
+     */
+    protected function isRubricsRequirement($requirement)
+    {
+        return str_contains(strtolower($requirement->name), 'rubric') || 
+               str_contains(strtolower($requirement->requirement_group), 'rubric') ||
+               $this->isRequirementInRubricsFolder($requirement);
+    }
+
+    /**
+     * Check if requirement is in TOS folder (ID 4 for midterm, ID 8 for finals)
+     */
+    protected function isRequirementInTosFolder($requirement)
+    {
+        if (empty($requirement->requirement_type_ids)) {
+            return false;
+        }
+        
+        $tosFolderIds = [4, 8]; // TOS folder IDs from your database
+        foreach ($requirement->requirement_type_ids as $typeId) {
+            if (in_array($typeId, $tosFolderIds)) {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+
+    /**
+     * Check if requirement is in Examinations folder (ID 6 for midterm, ID 10 for finals)
+     */
+    protected function isRequirementInExaminationsFolder($requirement)
+    {
+        if (empty($requirement->requirement_type_ids)) {
+            return false;
+        }
+        
+        $examinationsFolderIds = [6, 10]; // Examinations folder IDs from your database
+        foreach ($requirement->requirement_type_ids as $typeId) {
+            if (in_array($typeId, $examinationsFolderIds)) {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+
+    /**
+     * Check if requirement is in Rubrics folder (ID 5 for midterm, ID 9 for finals)
+     */
+    protected function isRequirementInRubricsFolder($requirement)
+    {
+        if (empty($requirement->requirement_type_ids)) {
+            return false;
+        }
+        
+        $rubricsFolderIds = [5, 9]; // Rubrics folder IDs from your database
+        foreach ($requirement->requirement_type_ids as $typeId) {
+            if (in_array($typeId, $rubricsFolderIds)) {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+
+    /**
+     * Get all folder IDs in a folder hierarchy (including the folder itself and all children)
+     */
+    protected function getFolderHierarchyIds($folder)
+    {
+        $ids = [$folder->id];
+        
+        // Recursively get all child folder IDs
+        $childFolders = RequirementType::where('parent_id', $folder->id)
+            ->where('is_folder', true)
+            ->get();
+            
+        foreach ($childFolders as $childFolder) {
+            $ids = array_merge($ids, $this->getFolderHierarchyIds($childFolder));
+        }
+        
+        return $ids;
     }
 
     protected function getCourseAssignmentsForRequirement(Requirement $requirement, Semester $semester)
@@ -210,12 +503,15 @@ class MissingSubmissionService
             ];
 
             foreach ($courseAssignments as $assignment) {
+                // Apply partnership logic here too for debugging
+                $shouldSkip = $this->shouldSkipRequirementDueToPartnership($requirement, $assignment, $semester);
+                
                 $submissionExists = SubmittedRequirement::where('requirement_id', $requirement->id)
                     ->where('user_id', $assignment->professor_id)
                     ->where('course_id', $assignment->course_id)
                     ->exists();
 
-                if (!$submissionExists) {
+                if (!$submissionExists && !$shouldSkip) {
                     $requirementInfo['missing_for_assignments'][] = [
                         'assignment_id' => $assignment->assignment_id,
                         'professor' => $assignment->professor->firstname . ' ' . $assignment->professor->lastname,
@@ -224,7 +520,8 @@ class MissingSubmissionService
                         'course' => $assignment->course->course_code . ' ' . $assignment->course->course_name,
                         'course_id' => $assignment->course_id,
                         'program_id' => $assignment->course->program_id ?? null,
-                        'program_name' => $assignment->course->program->program_name ?? 'No Program'
+                        'program_name' => $assignment->course->program->program_name ?? 'No Program',
+                        'skipped_by_partnership' => $shouldSkip
                     ];
                     $debugInfo['missing_submissions']++;
                 }

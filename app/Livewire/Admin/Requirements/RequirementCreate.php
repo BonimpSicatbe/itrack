@@ -49,8 +49,8 @@ class RequirementCreate extends Component
     // Track previous selection for requirement types
     public $previousRequirementTypes = [];
 
-    // Track existing requirement names to disable already created types
-    public $existingRequirementNames = [];
+    // Track existing requirement type IDs to disable already created types
+    public $existingRequirementTypeIds = [];
 
     public function mount()
     {
@@ -58,8 +58,8 @@ class RequirementCreate extends Component
         $this->folderChildrenMap = $this->getFolderChildrenMap();
         $this->previousRequirementTypes = $this->selectedRequirementTypes;
         
-        // Get all existing requirement names for the active semester
-        $this->loadExistingRequirementNames();
+        // Get all existing requirement type IDs for the active semester
+        $this->loadExistingRequirementTypeIds();
     }
 
     protected function getFolderChildrenMap(): array
@@ -73,12 +73,18 @@ class RequirementCreate extends Component
         return $map;
     }
 
-    protected function loadExistingRequirementNames()
+    protected function loadExistingRequirementTypeIds()
     {
         $activeSemester = $this->activeSemester;
         if ($activeSemester) {
-            $this->existingRequirementNames = Requirement::where('semester_id', $activeSemester->id)
-                ->pluck('name')
+            // Get all requirements for the active semester with their type IDs
+            $this->existingRequirementTypeIds = Requirement::where('semester_id', $activeSemester->id)
+                ->whereNotNull('requirement_type_ids')
+                ->get()
+                ->pluck('requirement_type_ids')
+                ->flatten()
+                ->unique()
+                ->values()
                 ->toArray();
         }
     }
@@ -86,73 +92,19 @@ class RequirementCreate extends Component
     // Check if a requirement type is already created
     public function isRequirementCreated($requirementType)
     {
-        // For folders, check if ALL children are already created
-        if ($requirementType->is_folder && $requirementType->children->isNotEmpty()) {
-            foreach ($requirementType->children as $child) {
-                $childWithRelations = RequirementType::with('children')->find($child->id);
-                
-                if ($childWithRelations->children->isNotEmpty()) {
-                    // Grandchild level - check if any grandchild is NOT created
-                    foreach ($childWithRelations->children as $grandchild) {
-                        $fullName = $grandchild->name . ' ' . $child->name . ' ' . $requirementType->name;
-                        if (!in_array($fullName, $this->existingRequirementNames)) {
-                            return false; // Found at least one not created
-                        }
-                    }
-                } else {
-                    // Child level - check if child is NOT created
-                    $fullName = $child->name . ' ' . $requirementType->name;
-                    if (!in_array($fullName, $this->existingRequirementNames)) {
-                        return false; // Found at least one not created
-                    }
-                }
-            }
-            return true; // ALL children are created
-        } else {
-            // For individual requirements
-            if ($requirementType->parent_id) {
-                $parent = RequirementType::with('parent')->find($requirementType->parent_id);
-                $grandparent = $parent->parent ?? null;
-                
-                if ($grandparent) {
-                    $fullName = $requirementType->name . ' ' . $parent->name . ' ' . $grandparent->name;
-                } else {
-                    $fullName = $requirementType->name . ' ' . $parent->name;
-                }
-                
-                return in_array($fullName, $this->existingRequirementNames);
-            } else {
-                return in_array($requirementType->name, $this->existingRequirementNames);
-            }
-        }
+        return in_array($requirementType->id, $this->existingRequirementTypeIds);
     }
 
     // Check if a specific child requirement is already created
     public function isChildRequirementCreated($child, $parent)
     {
-        $childWithRelations = RequirementType::with('children')->find($child->id);
-        
-        if ($childWithRelations->children->isNotEmpty()) {
-            // This child has grandchildren
-            foreach ($childWithRelations->children as $grandchild) {
-                $fullName = $grandchild->name . ' ' . $child->name . ' ' . $parent->name;
-                if (in_array($fullName, $this->existingRequirementNames)) {
-                    return true;
-                }
-            }
-            return false;
-        } else {
-            // This child is a leaf node
-            $fullName = $child->name . ' ' . $parent->name;
-            return in_array($fullName, $this->existingRequirementNames);
-        }
+        return in_array($child->id, $this->existingRequirementTypeIds);
     }
 
     // Check if a specific grandchild requirement is already created
     public function isGrandchildRequirementCreated($grandchild, $child, $parent)
     {
-        $fullName = $grandchild->name . ' ' . $child->name . ' ' . $parent->name;
-        return in_array($fullName, $this->existingRequirementNames);
+        return in_array($grandchild->id, $this->existingRequirementTypeIds);
     }
 
     // --- COMPUTED PROPERTIES ---
@@ -232,7 +184,24 @@ class RequirementCreate extends Component
                     }
                 }
             ],
-            'selectedRequirementTypes' => ['nullable', 'array'],
+            'selectedRequirementTypes' => [
+                'nullable', 
+                'array',
+                function ($attribute, $value, $fail) {
+                    if (!empty($value)) {
+                        $activeSemester = $this->activeSemester;
+                        if ($activeSemester) {
+                            // Check if any of the selected types already exist in requirements
+                            $existingTypeIds = $this->existingRequirementTypeIds;
+                            $intersection = array_intersect($value, $existingTypeIds);
+                            if (!empty($intersection)) {
+                                $conflictingTypes = RequirementType::whereIn('id', $intersection)->pluck('name')->toArray();
+                                $fail('The following requirement types have already been created for this semester: ' . implode(', ', $conflictingTypes));
+                            }
+                        }
+                    }
+                }
+            ],
             'selectedRequirementTypes.*' => ['exists:requirement_types,id'],
             'isOtherSelected' => ['boolean'],
 
@@ -352,8 +321,7 @@ class RequirementCreate extends Component
         $midtermIds = $this->midtermChildrenIds;
         if (!empty($midtermIds)) {
             $availableMidtermIds = array_filter($midtermIds, function($id) {
-                $type = RequirementType::find($id);
-                return $type && !$this->isChildRequirementCreated($type, RequirementType::find($type->parent_id));
+                return !in_array($id, $this->existingRequirementTypeIds);
             });
             $this->selectAllMidterm = count(array_intersect($availableMidtermIds, $this->selectedRequirementTypes)) === count($availableMidtermIds) && count($availableMidtermIds) > 0;
         }
@@ -362,8 +330,7 @@ class RequirementCreate extends Component
         $finalsIds = $this->finalsChildrenIds;
         if (!empty($finalsIds)) {
             $availableFinalsIds = array_filter($finalsIds, function($id) {
-                $type = RequirementType::find($id);
-                return $type && !$this->isChildRequirementCreated($type, RequirementType::find($type->parent_id));
+                return !in_array($id, $this->existingRequirementTypeIds);
             });
             $this->selectAllFinals = count(array_intersect($availableFinalsIds, $this->selectedRequirementTypes)) === count($availableFinalsIds) && count($availableFinalsIds) > 0;
         }
@@ -455,8 +422,7 @@ class RequirementCreate extends Component
             if ($value) {
                 // Filter out already created requirements
                 $availableMidtermIds = array_filter($midtermIds, function($id) {
-                    $type = RequirementType::find($id);
-                    return $type && !$this->isChildRequirementCreated($type, RequirementType::find($type->parent_id));
+                    return !in_array($id, $this->existingRequirementTypeIds);
                 });
                 
                 // Add available Midterm children to selection
@@ -477,8 +443,7 @@ class RequirementCreate extends Component
             if ($value) {
                 // Filter out already created requirements
                 $availableFinalsIds = array_filter($finalsIds, function($id) {
-                    $type = RequirementType::find($id);
-                    return $type && !$this->isChildRequirementCreated($type, RequirementType::find($type->parent_id));
+                    return !in_array($id, $this->existingRequirementTypeIds);
                 });
                 
                 // Add available Finals children to selection
@@ -626,33 +591,48 @@ class RequirementCreate extends Component
                     ->get();
 
                 foreach ($allSelectedTypes as $type) {
+                    // Skip if this type is already created
+                    if (in_array($type->id, $this->existingRequirementTypeIds)) {
+                        continue;
+                    }
+
                     // If this type HAS CHILDREN (is a parent folder), create requirements for ALL its children
                     if ($type->children->isNotEmpty()) {
                         foreach ($type->children as $child) {
+                            // Skip if this child is already created
+                            if (in_array($child->id, $this->existingRequirementTypeIds)) {
+                                continue;
+                            }
+
                             // Check if the child itself has children (nested folders)
                             $childWithRelations = RequirementType::with('children')->find($child->id);
                             
                             if ($childWithRelations->children->isNotEmpty()) {
                                 // If the child has children, create requirements for THOSE grandchildren
                                 foreach ($childWithRelations->children as $grandchild) {
+                                    // Skip if this grandchild is already created
+                                    if (in_array($grandchild->id, $this->existingRequirementTypeIds)) {
+                                        continue;
+                                    }
+
                                     // Format: "Grandchild Name + Child Name + Parent Name" 
                                     // (e.g., "Question 1 TOS Midterm")
-                                    $fullName = $grandchild->name . ' ' . $child->name . ' ' . $type->name;
+                                    $fullName = $type->name . ' ' . $child->name . ' ' . $grandchild->name;
                                     
                                     $requirementsToCreate[] = [
                                         'name' => $fullName, 
-                                        'type_ids' => [$grandchild->id], // Store the GRANDCHILD ID
+                                        'type_ids' => [$grandchild->id],
                                         'requirement_group' => $this->getRequirementGroup($grandchild->id, $child->id, $type->id),
                                     ];
                                 }
                             } else {
                                 // If the child has NO children, create requirement for the child
                                 // Format: "Child Name + Parent Name" (e.g., "TOS Midterm")
-                                $fullName = $child->name . ' ' . $type->name;
+                                $fullName = $type->name . ' ' . $child->name;
                                 
                                 $requirementsToCreate[] = [
                                     'name' => $fullName, 
-                                    'type_ids' => [$child->id], // Store the CHILD ID
+                                    'type_ids' => [$child->id],
                                     'requirement_group' => $this->getRequirementGroup($child->id, $type->id),
                                 ];
                             }
@@ -665,10 +645,10 @@ class RequirementCreate extends Component
                         
                         if ($grandparent) {
                             // Three levels: "Leaf + Parent + Grandparent" (e.g., "Question 1 TOS Midterm")
-                            $fullName = $type->name . ' ' . $parent->name . ' ' . $grandparent->name;
+                            $fullName = $grandparent->name . ' ' . $parent->name . ' ' . $type->name;
                         } else {
                             // Two levels: "Leaf + Parent" (e.g., "TOS Midterm")
-                            $fullName = $type->name . ' ' . $parent->name;
+                            $fullName = $parent->name . ' ' . $type->name;
                         }
                         
                         $requirementsToCreate[] = [
@@ -732,6 +712,21 @@ class RequirementCreate extends Component
             $createdCount = 0;
 
             foreach ($requirementsToCreate as $data) {
+                // Final check to ensure requirement with these type IDs doesn't already exist
+                if (!empty($data['type_ids'])) {
+                    $existingRequirement = Requirement::where('semester_id', $activeSemester->id)
+                        ->whereJsonContains('requirement_type_ids', $data['type_ids'])
+                        ->first();
+                    
+                    if ($existingRequirement) {
+                        Log::warning("Requirement with type IDs already exists", [
+                            'type_ids' => $data['type_ids'],
+                            'existing_requirement' => $existingRequirement->id
+                        ]);
+                        continue; // Skip creating this requirement
+                    }
+                }
+
                 $requirement = Requirement::create([
                     'name' => $data['name'], 
                     'due' => $this->due,

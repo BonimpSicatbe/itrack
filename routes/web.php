@@ -123,16 +123,6 @@ Route::middleware(['auth', 'role:admin|super-admin'])
             ]);
         })->name('submitted-requirements.requirement-context');
 
-        // Semester Routes (moved outside management group for better naming)
-        Route::get('/semesters/{semester}/download', [SemesterController::class, 'downloadZippedSemester'])
-            ->name('semesters.download');
-        Route::get('/semesters/{semester}/report', [SemesterController::class, 'downloadSemesterReport'])
-            ->name('semesters.report');
-        Route::get('/semesters/{semester}/preview-report', [SemesterController::class, 'previewSemesterReport'])
-            ->name('semesters.preview-report');
-        Route::get('/semesters/{semester}/preview-report/{requirementId}', [SemesterController::class, 'previewSemesterReport'])
-            ->name('semesters.preview-report-specific');
-
         Route::get('/users/{user}/preview-report', [UserController::class, 'previewUserReport'])->name('users.preview-report');
         Route::get('/users/{user}/report', [UserController::class, 'downloadUserReport'])->name('users.report');
 

@@ -33,7 +33,7 @@
                 </div>
                 <input type="text" wire:model.live.debounce.300ms="search"
                     class="pl-10 block w-sm rounded-xl border-gray-300 shadow-sm focus:border-green-600 focus:ring-green-600 sm:text-sm"
-                    placeholder="Search user name, email, or college..">
+                    placeholder="Search user name, email, or position..">
             </div>
         </div>
 
@@ -66,7 +66,7 @@
                         </div>
                     </th>
                     <th class="p-4 text-left bg-green-700" style="color: white; width: 25%;">Email</th>
-                    <th class="p-4 text-left bg-green-700" style="color: white; width: 15%;">College</th>
+                    <th class="p-4 text-left bg-green-700" style="color: white; width: 15%;">Position</th>
                     <th class="p-4 text-left bg-green-700" style="color: white; width: 15%;">Roles</th>
                     <th class="p-4 text-left bg-green-700" style="color: white; width: 10%;">Status</th>
                     <th class="p-4 text-center bg-green-700" style="color: white; width: 10%;">Actions</th>
@@ -86,10 +86,7 @@
                                 </div>
                                 <div class="ml-4">
                                     <div class="text-sm font-semibold text-gray-900">
-                                        {{ $user->firstname }}
-                                        {{ $user->middlename ? $user->middlename . ' ' : '' }}
-                                        {{ $user->lastname }}
-                                        {{ $user->extensionname ? $user->extensionname : '' }}
+                                        {{ $user->formatted_name }}
                                     </div>
                                 </div>
                             </div>
@@ -108,7 +105,7 @@
                             @endif
                         </td>
                         <td class="whitespace-nowrap p-4 text-sm text-gray-500">
-                            {{ $user->college->name ?? 'N/A' }}
+                            {{ $user->position ?? 'N/A' }}
                         </td>
                         <td class="whitespace-nowrap p-4">
                             @foreach ($user->roles as $role)
@@ -144,11 +141,6 @@
                                     data-tip="Edit" wire:click="openEditUserModal({{ $user->id }})">
                                     <i class="fa-solid fa-pen-to-square"></i>
                                 </button>
-                                <a href="{{ route('admin.users.preview-report', $user) }}" target="_blank"
-                                    class="text-purple-500 hover:bg-purple-100 rounded-xl p-2 tooltip cursor-pointer"
-                                    data-tip="Report">
-                                    <i class="fa-solid fa-file-chart-column"></i>
-                                </a>
                             </div>
                         </td>
                     </tr>
@@ -162,9 +154,56 @@
     </div>
 
     <!-- Pagination -->
-    <div class="mt-4 px-6">
-        {{ $users->links() }}
-    </div>
+    @if($users->hasPages())
+        <div class="mt-4 flex flex-col sm:flex-row items-center justify-between gap-3 p-4 bg-gray-50 border border-gray-200">
+            
+            <div class="text-sm text-gray-700">
+                Showing {{ $users->firstItem() ?? 0 }} to {{ $users->lastItem() ?? 0 }} 
+                of {{ $users->total() }} results
+            </div>
+            
+            <div class="flex gap-1">
+                <!-- Previous Page -->
+                @if($users->onFirstPage())
+                <span class="px-3 py-1 bg-gray-200 text-gray-500 rounded-md text-sm cursor-not-allowed">
+                    Previous
+                </span>
+                @else
+                <button wire:click="previousPage" class="px-3 py-1 bg-white border border-gray-300 text-gray-700 rounded-md text-sm hover:bg-gray-50 transition-colors">
+                    Previous
+                </button>
+                @endif
+
+                <!-- Page Numbers -->
+                @foreach($users->getUrlRange(1, $users->lastPage()) as $page => $url)
+                    @if($page == $users->currentPage())
+                    <span class="px-3 py-1 bg-green-600 text-white rounded-md text-sm font-medium">
+                        {{ $page }}
+                    </span>
+                    @else
+                    <button wire:click="gotoPage({{ $page }})" class="px-3 py-1 bg-white border border-gray-300 text-gray-700 rounded-md text-sm hover:bg-gray-50 transition-colors">
+                        {{ $page }}
+                    </button>
+                    @endif
+                @endforeach
+
+                <!-- Next Page -->
+                @if($users->hasMorePages())
+                <button wire:click="nextPage" class="px-3 py-1 bg-white border border-gray-300 text-gray-700 rounded-md text-sm hover:bg-gray-50 transition-colors">
+                    Next
+                </button>
+                @else
+                <span class="px-3 py-1 bg-gray-200 text-gray-500 rounded-md text-sm cursor-not-allowed">
+                    Next
+                </span>
+                @endif
+            </div>
+        </div>
+    @else
+        <div class="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200 text-sm text-gray-700">
+            Showing {{ $users->count() }} results
+        </div>
+    @endif
 
     <!-- User Detail -->
     @if ($selectedUser)
@@ -312,6 +351,13 @@
                             <h4 class="text-sm font-medium text-gray-900 mb-2">Institutional Information</h4>
                             <dl class="space-y-2">
                                 <div class="sm:flex sm:items-center">
+                                    <dt class="text-sm text-gray-500 font-medium sm:w-32 sm:flex-none sm:pr-4">Position</dt>
+                                    <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                                        {{ $selectedUser->position ?? 'N/A' }}
+                                    </dd>
+                                </div>
+                                <!-- ADD COLLEGE FIELD HERE -->
+                                <div class="sm:flex sm:items-center">
                                     <dt class="text-sm text-gray-500 font-medium sm:w-32 sm:flex-none sm:pr-4">College</dt>
                                     <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
                                         {{ $selectedUser->college->name ?? 'N/A' }}
@@ -325,21 +371,37 @@
                             <h4 class="text-sm font-medium text-gray-900 mb-2">Account Information</h4>
                             <dl class="space-y-2">
                                 <div class="sm:flex sm:items-center">
-                                    <dt class="text-sm text-gray-500 font-medium sm:w-32 sm:flex-none sm:pr-4">Member Since
-                                    </dt>
+                                    <dt class="text-sm text-gray-500 font-medium sm:w-32 sm:flex-none sm:pr-4">Member Since</dt>
                                     <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
                                         {{ $selectedUser->created_at->format('M d, Y') }}
                                     </dd>
                                 </div>
                                 <div class="sm:flex sm:items-center">
-                                    <dt class="text-sm text-gray-500 font-medium sm:w-32 sm:flex-none sm:pr-4">Last Updated
-                                    </dt>
+                                    <dt class="text-sm text-gray-500 font-medium sm:w-32 sm:flex-none sm:pr-4">Last Updated</dt>
                                     <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
                                         {{ $selectedUser->updated_at->format('M d, Y') }}
                                     </dd>
                                 </div>
+                                <!-- Add Teaching Period Information -->
+                                @if($selectedUser->teaching_started_at)
+                                <div class="sm:flex sm:items-center">
+                                    <dt class="text-sm text-gray-500 font-medium sm:w-32 sm:flex-none sm:pr-4">Teaching Started</dt>
+                                    <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                                        {{ \Carbon\Carbon::parse($selectedUser->teaching_started_at)->format('M d, Y') }}
+                                    </dd>
+                                </div>
+                                @endif
+                                @if($selectedUser->teaching_ended_at)
+                                <div class="sm:flex sm:items-center">
+                                    <dt class="text-sm text-gray-500 font-medium sm:w-32 sm:flex-none sm:pr-4">Teaching Ended</dt>
+                                    <dd class="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                                        {{ \Carbon\Carbon::parse($selectedUser->teaching_ended_at)->format('M d, Y') }}
+                                    </dd>
+                                </div>
+                                @endif
                             </dl>
                         </div>
+
                     </div>
 
                     <!-- Right column: Assigned Courses -->
@@ -502,6 +564,14 @@
                         @enderror
                     </div>
 
+                    <!-- Position -->
+                    <div>
+                        <label class="block text-xs tracking-wide uppercase font-semibold text-gray-700">Position</label>
+                        <input type="text" wire:model="newUser.position"
+                            class="mt-2 block w-full rounded-xl border-gray-300 sm:text-sm focus:ring-green-600"
+                            placeholder="Enter position">
+                    </div>
+
                     <!-- College -->
                     <div>
                         <label class="block text-xs tracking-wide uppercase font-semibold text-gray-700">College</label>
@@ -618,6 +688,14 @@
                         @error('editingUser.email')
                             <span class="text-red-500 text-xs">{{ $message }}</span>
                         @enderror
+                    </div>
+
+                    <!-- Position -->
+                    <div>
+                        <label class="block text-xs font-semibold tracking-wide uppercase text-gray-700">Position</label>
+                        <input type="text" wire:model="editingUser.position"
+                            class="mt-2 block w-full rounded-xl border-gray-300 sm:text-sm focus:ring-green-600"
+                            placeholder="Enter position">
                     </div>
 
                     <!-- College -->

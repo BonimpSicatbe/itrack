@@ -113,9 +113,10 @@ class RequirementEdit extends Component
 
     public function updateRequirement()
     {
+        // REMOVED the after_or_equal:now validation to allow editing past due dates
         $this->validate([
             'name' => 'required|string|max:255|unique:requirements,name,' . $this->requirement->id,
-            'due' => 'required|date_format:Y-m-d\TH:i|after_or_equal:now',
+            'due' => 'required|date_format:Y-m-d\TH:i', // Removed: |after_or_equal:now
             'priority' => 'required|in:low,normal,high',
             'selectedPrograms' => ['required', 'array', 'min:1'],
             'selectedPrograms.*' => ['exists:programs,id'],

@@ -18,9 +18,12 @@ use App\Mail\AccountSetupMail;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\URL;
+use Livewire\WithPagination;
 
 class UserManagement extends Component
 {
+    use WithPagination;
+
     public $search = '';
     public $collegeFilter = '';
 
@@ -35,6 +38,7 @@ class UserManagement extends Component
         'lastname' => '',
         'extensionname' => '',
         'email' => '',
+        'position' => '',
         'college_id' => '',
         'role' => ''
     ];
@@ -48,7 +52,8 @@ class UserManagement extends Component
         'lastname' => '',
         'extensionname' => '',
         'email' => '',
-        'college_id' => '',
+        'position' => '',
+        'college_id' => '', 
         'role' => '',
         'password' => '',
         'password_confirmation' => ''
@@ -82,7 +87,7 @@ class UserManagement extends Component
     public function showUser($userId)
     {
         $this->selectedUser = User::with([
-            'college',
+            'college', // ADD THIS LINE
             'courseAssignments.course.program',
             'courseAssignments.semester'
         ])->find($userId);
@@ -119,7 +124,7 @@ class UserManagement extends Component
             'lastname' => $user->lastname,
             'extensionname' => $user->extensionname,
             'email' => $user->email,
-            'college_id' => $user->college_id,
+            'position' => $user->position,
             'role' => $user->roles->first() ? $user->roles->first()->id : '',
             'password' => '',
             'password_confirmation' => ''
@@ -205,8 +210,11 @@ class UserManagement extends Component
     // Load all available courses without search filter
     public function loadAllAvailableCourses()
     {
-        // Get already assigned course IDs for this user
+        // Get already assigned course IDs for the CURRENTLY SELECTED semester only
         $assignedCourseIds = CourseAssignment::where('professor_id', $this->userToAssignCourse->id)
+            ->when(!empty($this->assignCourseData['semester_id']), function($query) {
+                return $query->where('semester_id', $this->assignCourseData['semester_id']);
+            })
             ->pluck('course_id')
             ->toArray();
 
@@ -219,8 +227,11 @@ class UserManagement extends Component
     // Load available courses with search filter
     public function loadAvailableCourses()
     {
-        // Get already assigned course IDs for this user
+        // Get already assigned course IDs for the CURRENTLY SELECTED semester only
         $assignedCourseIds = CourseAssignment::where('professor_id', $this->userToAssignCourse->id)
+            ->when(!empty($this->assignCourseData['semester_id']), function($query) {
+                return $query->where('semester_id', $this->assignCourseData['semester_id']);
+            })
             ->pluck('course_id')
             ->toArray();
 
@@ -241,6 +252,17 @@ class UserManagement extends Component
         }
 
         $this->availableCourses = $query->orderBy('course_code')->get();
+    }
+
+    // Update available courses when semester changes
+    public function updatedAssignCourseDataSemesterId()
+    {
+        // Reload available courses when semester changes to filter out courses already assigned in that semester
+        $this->loadAllAvailableCourses();
+        $this->loadAvailableCourses();
+        
+        // Clear selected courses when semester changes
+        $this->assignCourseData['course_ids'] = [];
     }
 
     // Update available courses when search changes
@@ -371,7 +393,6 @@ class UserManagement extends Component
             // Refresh the selected user if it's the same user - do this after closing modal
             if ($selectedUserId && $selectedUserId == $assignedUserId) {
                 $this->selectedUser = User::with([
-                    'college',
                     'courseAssignments.course.program',
                     'courseAssignments.semester'
                 ])->find($selectedUserId);
@@ -419,9 +440,10 @@ class UserManagement extends Component
                 'editingUser.lastname' => 'required|string|max:255',
                 'editingUser.extensionname' => 'nullable|string|max:255',
                 'editingUser.email' => 'required|string|email|max:255|unique:users,email,' . $this->editingUser['id'],
-                'editingUser.college_id' => 'nullable|exists:colleges,id',
+                'editingUser.position' => 'nullable|string|max:255',
                 'editingUser.password' => 'nullable|confirmed|min:8',
                 'editingUser.role' => 'required|exists:roles,id',
+                'editingUser.college_id' => 'nullable|exists:colleges,id',
             ], [
                 'editingUser.firstname.required' => 'First name is required.',
                 'editingUser.lastname.required' => 'Last name is required.',
@@ -456,7 +478,7 @@ class UserManagement extends Component
                 'lastname' => $this->editingUser['lastname'],
                 'extensionname' => $this->editingUser['extensionname'],
                 'email' => $this->editingUser['email'],
-                'college_id' => $this->editingUser['college_id'],
+                'position' => $this->editingUser['position'],
             ];
 
             // Only update password if provided
@@ -480,7 +502,7 @@ class UserManagement extends Component
 
             // Refresh the selected user if it's the same user
             if ($this->selectedUser && $this->selectedUser->id == $user->id) {
-                $this->selectedUser = $user->fresh(['college']);
+                $this->selectedUser = $user->fresh();
             }
         } catch (\Exception $e) {
             $this->dispatch(
@@ -500,8 +522,9 @@ class UserManagement extends Component
                 'newUser.lastname' => 'required|string|max:255',
                 'newUser.extensionname' => 'nullable|string|max:255',
                 'newUser.email' => 'required|string|email|max:255|unique:users,email',
-                'newUser.college_id' => 'nullable|exists:colleges,id',
+                'newUser.position' => 'nullable|string|max:255',
                 'newUser.role' => 'required|exists:roles,id',
+                'newUser.college_id' => 'required|exists:colleges,id',
             ], [
                 'newUser.firstname.required' => 'First name is required.',
                 'newUser.lastname.required' => 'Last name is required.',
@@ -534,7 +557,7 @@ class UserManagement extends Component
                 'lastname' => $this->newUser['lastname'],
                 'extensionname' => $this->newUser['extensionname'],
                 'email' => $this->newUser['email'],
-                'college_id' => $this->newUser['college_id'],
+                'position' => $this->newUser['position'],
                 'password' => Hash::make($generatedPassword),
             ]);
 
@@ -606,6 +629,7 @@ class UserManagement extends Component
             $this->userToDeactivate->update([
                 'is_active' => false,
                 'deactivated_at' => now(),
+                'teaching_ended_at' => now()->format('Y-m-d'), // Set teaching ended date
             ]);
 
             $userName = $this->userToDeactivate->firstname . ' ' . $this->userToDeactivate->lastname;
@@ -642,6 +666,7 @@ class UserManagement extends Component
             $this->userToActivate->update([
                 'is_active' => true,
                 'deactivated_at' => null,
+                'teaching_ended_at' => null, // Remove teaching ended date when reactivating
             ]);
 
             $userName = $this->userToActivate->firstname . ' ' . $this->userToActivate->lastname;
@@ -728,22 +753,31 @@ class UserManagement extends Component
         return $user && $user->is_active;
     }
 
+    public function updatedSearch()
+    {
+        $this->resetPage();
+    }
+
+    public function updatedCollegeFilter()
+    {
+        $this->resetPage();
+    }
+
+    public function updatedStatusFilter()
+    {
+        $this->resetPage();
+    }
+
     public function render()
     {
-        $query = User::with(['college', 'roles'])
+        $query = User::with(['roles'])
             ->where(function ($q) {
                 $q->where('firstname', 'like', '%' . $this->search . '%')
                 ->orWhere('middlename', 'like', '%' . $this->search . '%')
                 ->orWhere('lastname', 'like', '%' . $this->search . '%')
                 ->orWhere('email', 'like', '%' . $this->search . '%')
-                ->orWhereHas('college', function ($collegeQuery) {
-                    $collegeQuery->where('name', 'like', '%' . $this->search . '%');
-                });
+                ->orWhere('position', 'like', '%' . $this->search . '%');
             });
-
-        if ($this->collegeFilter) {
-            $query->where('college_id', $this->collegeFilter);
-        }
 
         // Add status filter
         if ($this->statusFilter === 'active') {
@@ -755,9 +789,9 @@ class UserManagement extends Component
         $users = $query->orderBy($this->sortField, $this->sortDirection)
             ->paginate(10);
 
-        $colleges = College::orderBy('name')->get();
+        $colleges = College::orderBy('name')->get(); // ADD THIS LINE
         $roles = Role::orderBy('name')->get();
 
-        return view('livewire.admin.management.user-management', compact('users', 'colleges', 'roles'));
+        return view('livewire.admin.management.user-management', compact('users', 'roles', 'colleges')); // UPDATE THIS LINE
     }
 }

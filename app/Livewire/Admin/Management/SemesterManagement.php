@@ -314,8 +314,12 @@ class SemesterManagement extends Component
                 'user_id' => auth()->id() ?? null,
             ]);
 
-            $this->reset(['semester', 'academic_year', 'start_date', 'end_date', 'errorMessage']);
-            $this->showCreateModal = false; // Close the modal
+            // Reset form fields and close modal
+            $this->reset(['semester', 'academic_year', 'start_date', 'end_date', 'errorMessage', 'showCreateModal']);
+            
+            // Dispatch event to close modal via JavaScript
+            $this->dispatch('closeCreateModal');
+            
             $this->dispatch('showNotification', 'success', 'Semester created successfully!');
         } catch (\Exception $e) {
             Log::error('Failed to create semester', [
@@ -445,8 +449,7 @@ class SemesterManagement extends Component
 
     public function render()
     {
-        // Auto-update semester statuses on every render
-        $this->updateSemesterStatuses();
+        // Remove this line: $this->updateSemesterStatuses();
 
         $semesters = Semester::query()
             ->when($this->search, function ($query) {
