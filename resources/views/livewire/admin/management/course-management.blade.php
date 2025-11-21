@@ -82,7 +82,7 @@
                 </thead>
                 <tbody>
                     @forelse($courses as $course)
-                        <tr class="hover:bg-green-50 cursor-pointer" wire:click="openCourseDetailsModal({{ $course->id }})">
+                        <tr class="hover:bg-green-50 cursor-pointer" wire:click="openCourseDetailsModal({{ $course->id }})" wire:key="course-{{ $course->id }}">
                             <td class="whitespace-nowrap p-4">
                                 <div class="text-sm font-medium text-gray-900">{{ $course->course_code }}</div>
                             </td>
