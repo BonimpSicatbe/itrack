@@ -41,4 +41,9 @@ class CourseAssignment extends Model
         // Assuming 'professor_id' links to the 'User' model
         return $this->belongsTo(User::class, 'professor_id');
     }
+
+    public function getIdAttribute()
+    {
+        return $this->assignment_id;
+    }
 }

@@ -63,10 +63,12 @@ class RequirementView extends Component
         $this->loadFiles();
     }
 
-    // Replace goBackToIndex with getBackUrl
     public function getBackUrl()
     {
         $source = request()->query('source', 'overview');
+        
+        // Get the current page from the query string, default to 1
+        $page = request()->query('page', 1);
         
         if ($source === 'requirement-category') {
             // Return to requirement category with context preserved
@@ -74,11 +76,15 @@ class RequirementView extends Component
                 'category' => 'requirement',
                 'selectedRequirementId' => $this->requirement_id,
                 'selectedUserId' => $this->user_id,
+                'page' => $page // Preserve pagination
             ]);
         }
         
-        // Default: return to overview
-        return route('admin.submitted-requirements.index', ['category' => 'overview']);
+        // Default: return to overview with pagination preserved
+        return route('admin.submitted-requirements.index', [
+            'category' => 'overview',
+            'page' => $page // Preserve pagination
+        ]);
     }
 
     public function formatStatus($status)

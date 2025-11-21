@@ -446,19 +446,13 @@ class CourseManagement extends Component
         try {
             // First, update the course information
             $this->validate([
-                'editingCourse.course_code' => [
-                    'required',
-                    'string',
-                    'max:50',
-                    Rule::unique('courses', 'course_code')->ignore($this->editingCourse['id'])
-                ],
+                'editingCourse.course_code' => 'required|string|max:50', // Remove unique constraint
                 'editingCourse.course_name' => 'required|string|max:255',
                 'editingCourse.description' => 'nullable|string',
                 'editingCourse.program_id' => 'required|exists:programs,id',
                 'editingCourse.course_type_id' => 'nullable|exists:course_types,id',
             ], [
                 'editingCourse.course_code.required' => 'Course code is required.',
-                'editingCourse.course_code.unique' => 'This course code is already in use.',
                 'editingCourse.course_name.required' => 'Course name is required.',
                 'editingCourse.program_id.required' => 'Program is required.',
             ]);

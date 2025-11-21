@@ -81,7 +81,7 @@
                 </thead>
                 <tbody>
                     @forelse($colleges as $college)
-                        <tr class="hover:bg-green-50">
+                        <tr class="hover:bg-green-50" wire:key="college-{{ $college->id }}">
                             <td class="whitespace-nowrap p-4">
                                 <div class="text-sm font-medium text-gray-900">
                                     {{ $college->name }}

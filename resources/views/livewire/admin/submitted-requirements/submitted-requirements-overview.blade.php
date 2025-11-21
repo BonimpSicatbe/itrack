@@ -9,8 +9,12 @@
                         <div class="absolute inset-0"></div>
                         User
                     </th>
-                    <th class="p-3 border border-green-500 sticky left-48 bg-green-600 z-40 w-40 min-w-40  relative">
-                        <div class="absolute inset-0 "></div>
+                    <th class="p-3 border border-green-500 sticky left-48 bg-green-600 z-40 w-40 min-w-40 relative">
+                        <div class="absolute inset-0"></div>
+                        Program
+                    </th>
+                    <th class="p-3 border border-green-500 sticky left-88 bg-green-600 z-40 w-40 min-w-40 relative">
+                        <div class="absolute inset-0"></div>
                         Course
                     </th>
                     
@@ -49,8 +53,17 @@
                                     </td>
                                 @endif
                                 
-                                <!-- Course Column -->
+                                <!-- Program Column -->
                                 <td class="p-3 border border-gray-200 sticky left-48 bg-white z-30 text-sm text-gray-600 relative">
+                                    <div class="absolute inset-0 border-l-1 border-r-1 border-gray-200"></div>
+                                    <div class="font-medium">{{ $course->program->program_code ?? 'N/A' }}</div>
+                                    <div class="text-xs text-gray-500 truncate" title="{{ $course->program->program_name ?? 'N/A' }}">
+                                        {{ \Illuminate\Support\Str::limit($course->program->program_name ?? 'N/A', 25) }}
+                                    </div>
+                                </td>
+                                
+                                <!-- Course Column -->
+                                <td class="p-3 border border-gray-200 sticky left-88 bg-white z-30 text-sm text-gray-600 relative">
                                     <div class="absolute inset-0 border-l-1 border-r-1 border-gray-200"></div>
                                     <div class="font-medium">{{ $course->course_code }}</div>
                                     <div class="text-xs text-gray-500 truncate" title="{{ $course->course_name }}">
@@ -61,7 +74,14 @@
                                 <!-- Requirement Status Columns -->
                                 @foreach($overviewData['requirements'] as $requirement)
                                     @php
-                                        $displayText = $this->getSubmissionDisplay($user->id, $requirement->id, $course->id, $overviewData['submissionIndicators']);
+                                        $displayText = $this->getSubmissionDisplay(
+                                            $user->id, 
+                                            $requirement->id, 
+                                            $course->id, 
+                                            $overviewData['submissionIndicators'],
+                                            $requirement,
+                                            $overviewData['userCoursesData']
+                                        );
                                         $badgeClass = $this->getStatusBadgeClass(strtolower($displayText));
                                         $isSubmitted = $displayText === 'Submitted';
                                         $submissionUrl = $isSubmitted ? 
@@ -94,8 +114,14 @@
                                 <div class="text-xs text-gray-500">{{ $user->email }}</div>
                             </td>
                             
-                            <!-- Course Column -->
+                            <!-- Program Column -->
                             <td class="p-3 border border-gray-200 sticky left-48 bg-white z-30 text-sm text-gray-600 relative">
+                                <div class="absolute inset-0 border-l-2 border-r-2 border-gray-300"></div>
+                                <span class="text-gray-400">No program</span>
+                            </td>
+                            
+                            <!-- Course Column -->
+                            <td class="p-3 border border-gray-200 sticky left-88 bg-white z-30 text-sm text-gray-600 relative">
                                 <div class="absolute inset-0 border-l-2 border-r-2 border-gray-300"></div>
                                 <span class="text-gray-400">No course</span>
                             </td>
@@ -103,8 +129,8 @@
                             <!-- Requirement Status Columns -->
                             @foreach($overviewData['requirements'] as $requirement)
                                 @php
-                                    $displayText = '';
-                                    $badgeClass = $this->getStatusBadgeClass('not_submitted');
+                                    $displayText = 'N/A'; // Users with no courses are automatically not assigned
+                                    $badgeClass = $this->getStatusBadgeClass($displayText);
                                 @endphp
                                 <td class="p-3 border border-gray-200 text-center">
                                     <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium {{ $badgeClass }}">
@@ -183,7 +209,7 @@
     </div>
     @endif
 
-    <!-- Summary
+    <!-- Summary -->
     <div class="mt-4 flex flex-wrap gap-4 items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
         @php
             $totalCourses = 0;
@@ -192,9 +218,13 @@
             }
         @endphp
         <div class="text-xs font-semibold text-gray-700">
-            Total Users: {{ $overviewData['users']->count() }} | 
+            Total Users: {{ $overviewData['users']->total() }} | 
             Total Courses: {{ $totalCourses }} |
-            Total Requirements: {{ $overviewData['requirements']->count() }}
+            Total Requirements: {{ $overviewData['requirements']->count() }} |
+            Semester: {{ $overviewData['semester']->name ?? 'N/A' }}
+            @if($overviewData['requirements']->isEmpty())
+                | <span class="text-amber-600">No requirements defined for this semester</span>
+            @endif
         </div>
-    </div> -->
+    </div>
 </div>
