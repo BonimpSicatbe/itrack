@@ -5,7 +5,9 @@ namespace App\Livewire\Admin\Notification;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use App\Models\SubmittedRequirement;
+use App\Models\User;
 use Illuminate\Notifications\DatabaseNotification;
+use Illuminate\Support\Facades\Log;
 
 class Notifications extends Component
 {
@@ -13,7 +15,8 @@ class Notifications extends Component
     public $selectedNotification = null;
     public $selectedNotificationData = null;
     public $activeTab = 'all';
-    
+    public $newRegisteredUser = null;
+
     // Change to array properties to handle multiple files
     public $newStatus = [];
     public $adminNotes = [];
@@ -28,9 +31,10 @@ class Notifications extends Component
         $this->notifications = Auth::user()
             ->notifications()
             ->whereIn('type', [
-                'App\Notifications\NewSubmissionNotification', 
+                'App\Notifications\NewSubmissionNotification',
                 'App\Notifications\SubmissionStatusUpdated',
-                'App\Notifications\SemesterEndedWithMissingSubmissions' 
+                'App\Notifications\SemesterEndedWithMissingSubmissions',
+                'App\Notifications\NewRegisteredUserNotification',
             ])
             ->latest()
             ->get();
@@ -59,13 +63,34 @@ class Notifications extends Component
     {
         $id = urldecode($id);
         $this->selectedNotification = $id;
-        
+
         $notification = DatabaseNotification::find($id);
-        
-        if ($notification) {
+
+        // dd($notification->data);
+
+        if ($notification->data['type'] === 'new_registered_user') {
+            Log::info('Notification Data:', $notification->data);
+
+            // Debug: Log the notification data
+            if ($notification->unread()) {
+                $notification->markAsRead();
+                $this->dispatch('notification-read');
+                $this->loadNotifications();
+            }
+
+            $this->selectedNotificationData = [
+                'type' => $notification->data['type'] ?? null,
+                'message' => $notification->data['message'] ?? '',
+                'user_name' => $notification->data['user_name'] ?? 'Unknown User',
+                'created_at' => $notification->created_at,
+                'unread' => $notification->unread(),
+            ];
+
+            $this->loadDetails($notification->data);
+        } else if ($notification) {
             // Debug: Log the notification data
             \Log::info('Notification Data:', $notification->data);
-            
+
             if ($notification->unread()) {
                 $notification->markAsRead();
                 $this->dispatch('notification-read');
@@ -81,7 +106,7 @@ class Notifications extends Component
 
             $this->loadDetails($notification->data);
         }
-        
+
         // Reset form data when selecting a new notification
         $this->reset(['newStatus', 'adminNotes']);
     }
@@ -125,13 +150,16 @@ class Notifications extends Component
 
         // Handle different notification types
         $notificationType = $notificationData['type'] ?? null;
-        
+
         if ($notificationType === 'submission_status_updated') {
             $this->loadStatusUpdateDetails($notificationData);
-        } 
+        }
         else if ($notificationType === 'semester_ended_missing_submissions') { // Match the corrected type
             $this->loadSemesterEndedDetails($notificationData);
-        } 
+        }
+        else if ($notificationType === 'new_registered_user') { // Match the corrected type
+            $this->loadNewRegisteredUserDetails($notificationData);
+        }
         else {
             $this->loadNewSubmissionDetails($notificationData);
         }
@@ -141,7 +169,7 @@ class Notifications extends Component
     {
         // For status update notifications
         $submissionId = $notificationData['submission_id'] ?? null;
-        
+
         if ($submissionId) {
             $submission = SubmittedRequirement::with(['reviewer', 'course.program', 'user', 'media'])
                 ->find($submissionId);
@@ -149,7 +177,7 @@ class Notifications extends Component
             if ($submission) {
                 $this->selectedNotificationData['submissions'] = [$this->formatSubmission($submission)];
                 $this->loadFiles([$submission]);
-                
+
                 // Add status update specific data
                 $this->selectedNotificationData['status_update'] = [
                     'old_status' => $notificationData['old_status'],
@@ -178,7 +206,7 @@ class Notifications extends Component
     {
         // Original logic for new submission notifications
         $submissionIds = [];
-        
+
         if (isset($notificationData['submission_ids'])) {
             $submissionIds = $notificationData['submission_ids'];
         } elseif (isset($notificationData['submission_id'])) {
@@ -265,12 +293,12 @@ class Notifications extends Component
     protected function loadFiles($submissions)
     {
         $files = [];
-        
+
         foreach ($submissions as $submission) {
             foreach ($submission->getMedia('submission_files') as $media) {
                 $extension = strtolower(pathinfo($media->file_name, PATHINFO_EXTENSION));
                 $isPreviewable = in_array($extension, ['jpg', 'jpeg', 'png', 'gif', 'pdf']);
-                
+
                 $files[] = [
                     'id' => $media->id,
                     'name' => $media->name,
@@ -310,10 +338,10 @@ class Notifications extends Component
         ]);
 
         $submission = SubmittedRequirement::findOrFail($submissionId);
-        
+
         // Store old status for notification
         $oldStatus = $submission->status;
-        
+
         $submission->update([
             'status' => $this->newStatus[$submissionId],
             'admin_notes' => $this->adminNotes[$submissionId] ?? null,
@@ -342,8 +370,8 @@ class Notifications extends Component
         if (isset($this->adminNotes[$submissionId])) {
             unset($this->adminNotes[$submissionId]);
         }
-        
-        $this->dispatch('showNotification', 
+
+        $this->dispatch('showNotification',
             type: 'success',
             content: 'Status updated successfully!',
             duration: 3000
@@ -366,20 +394,20 @@ class Notifications extends Component
     {
         Auth::user()->unreadNotifications()
             ->whereIn('type', [
-                'App\Notifications\NewSubmissionNotification', 
+                'App\Notifications\NewSubmissionNotification',
                 'App\Notifications\SubmissionStatusUpdated',
                 'App\Notifications\SemesterEndedWithMissingSubmissions' // ADD THIS
             ])
             ->update(['read_at' => now()]);
-        
+
         $this->loadNotifications();
         $this->selectedNotification = null;
         $this->selectedNotificationData = null;
         $this->reset(['newStatus', 'adminNotes']);
-        
+
         $this->dispatch('notifications-marked-read');
-        
-        $this->dispatch('showNotification', 
+
+        $this->dispatch('showNotification',
             type: 'success',
             content: 'All notifications marked as read!',
             duration: 3000
@@ -390,24 +418,24 @@ class Notifications extends Component
     {
         $readNotifications = Auth::user()->readNotifications()
             ->whereIn('type', [
-                'App\Notifications\NewSubmissionNotification', 
+                'App\Notifications\NewSubmissionNotification',
                 'App\Notifications\SubmissionStatusUpdated',
                 'App\Notifications\SemesterEndedWithMissingSubmissions' // ADD THIS
             ])
             ->get();
-        
+
         $readNotifications->each(function ($notification) {
             $notification->markAsUnread();
         });
-        
+
         $this->loadNotifications();
         $this->selectedNotification = null;
         $this->selectedNotificationData = null;
         $this->reset(['newStatus', 'adminNotes']);
-        
+
         $this->dispatch('notifications-marked-unread', count: $readNotifications->count());
-        
-        $this->dispatch('showNotification', 
+
+        $this->dispatch('showNotification',
             type: 'success',
             content: 'All notifications marked as unread!',
             duration: 3000
@@ -418,20 +446,20 @@ class Notifications extends Component
     {
         $id = urldecode($id);
         $notification = DatabaseNotification::find($id);
-        
+
         if ($notification && !$notification->unread()) {
             $notification->markAsUnread();
             $this->loadNotifications();
-            
+
             // Update the current notification data if it's the selected one
             if ($this->selectedNotification === $id) {
                 $this->selectedNotificationData['unread'] = true;
             }
-            
+
             // Add this dispatch to update the navigation count
             $this->dispatch('notification-unread');
-            
-            $this->dispatch('showNotification', 
+
+            $this->dispatch('showNotification',
                 type: 'success',
                 content: 'Notification marked as unread!',
                 duration: 3000
@@ -448,6 +476,20 @@ class Notifications extends Component
             'approved' => 'Approved',
             default => ucfirst(str_replace('_', ' ', $status))
         };
+    }
+
+    protected function loadNewRegisteredUserDetails($notificationData)
+    {
+        // Load new registered user details
+        $this->selectedNotificationData['new_user'] = [
+            'id' => $notificationData['user_id'] ?? null,
+            'name' => $notificationData['user_name'] ?? $notificationData['name'] ?? 'Unknown User',
+            'email' => $notificationData['user_email'] ?? $notificationData['email'] ?? 'No Email Provided',
+            'registered_at' => $notificationData['registered_at'] ?? $notificationData['created_at'] ?? null,
+        ];
+
+        $this->newRegisteredUser = User::where('id', $this->selectedNotificationData['new_user']['id'])->get();
+        // dd($this->newRegisteredUser->first()->id);
     }
 
     protected function loadSemesterEndedDetails($notificationData)
@@ -484,10 +526,43 @@ class Notifications extends Component
         ];
     }
 
+        public function verifyUser($userId)
+        {
+            $user = User::find($userId);
+
+            if (!$user) {
+                $this->dispatch('showNotification', type: 'error', content: 'User not found.', duration: 3000);
+                return;
+            }
+
+            if (!empty($user->email_verified_at)) {
+                $this->dispatch('showNotification', type: 'info', content: 'User is already verified.', duration: 3000);
+                return;
+            }
+
+            try {
+                $user->email_verified_at = now();
+                $user->save();
+
+                // Refresh local data shown in the component
+                $this->newRegisteredUser = User::where('id', $user->id)->get();
+                if (isset($this->selectedNotificationData['new_user'])) {
+                    $this->selectedNotificationData['new_user']['verified_at'] = $user->email_verified_at;
+                }
+
+                $this->loadNotifications();
+
+                $this->dispatch('showNotification', type: 'success', content: 'User verified successfully!', duration: 3000);
+            } catch (\Throwable $e) {
+                Log::error('Failed to verify user: '.$e->getMessage(), ['user_id' => $userId]);
+                $this->dispatch('showNotification', type: 'error', content: 'Failed to verify user.', duration: 3000);
+            }
+        }
+
     public function render()
     {
         $filteredNotifications = $this->getFilteredNotifications();
-        
+
         return view('livewire.admin.notification.notifications', [
             'filteredNotifications' => $filteredNotifications,
             'activeTab' => $this->activeTab,

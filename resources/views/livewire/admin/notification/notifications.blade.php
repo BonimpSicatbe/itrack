@@ -13,7 +13,8 @@
     {{-- Notifications List (Left) --}}
     <div class="w-1/3 border-r border-gray-200 bg-gray-50 flex flex-col">
         <!-- Header -->
-        <div class="flex-shrink-0 p-6" style="background: linear-gradient(148deg,rgba(18, 67, 44, 1) 0%, rgba(30, 119, 77, 1) 54%, rgba(55, 120, 64, 1) 100%);">
+        <div class="flex-shrink-0 p-6"
+            style="background: linear-gradient(148deg,rgba(18, 67, 44, 1) 0%, rgba(30, 119, 77, 1) 54%, rgba(55, 120, 64, 1) 100%);">
             <div class="flex justify-between items-center mb-4">
                 <div class="flex items-center">
                     <i class="fa-solid fa-bell text-white text-2xl mr-3"></i>
@@ -23,29 +24,23 @@
 
             {{-- Filter Tabs --}}
             <div class="flex space-x-1 bg-white/10 rounded-xl p-1">
-                <button
-                    wire:click="$set('activeTab', 'all')"
-                    class="flex-1 py-2 px-3 text-sm font-medium rounded-lg transition-all duration-200 {{ $activeTab === 'all' ? 'bg-white text-green-800 shadow-sm' : 'text-white hover:bg-white/20' }}"
-                >
+                <button wire:click="$set('activeTab', 'all')"
+                    class="flex-1 py-2 px-3 text-sm font-medium rounded-lg transition-all duration-200 {{ $activeTab === 'all' ? 'bg-white text-green-800 shadow-sm' : 'text-white hover:bg-white/20' }}">
                     All
                 </button>
-                <button
-                    wire:click="$set('activeTab', 'unread')"
-                    class="flex-1 py-2 px-3 text-sm font-medium rounded-lg transition-all duration-200 {{ $activeTab === 'unread' ? 'bg-white text-green-800 shadow-sm' : 'text-white hover:bg-white/20' }}"
-                >
+                <button wire:click="$set('activeTab', 'unread')"
+                    class="flex-1 py-2 px-3 text-sm font-medium rounded-lg transition-all duration-200 {{ $activeTab === 'unread' ? 'bg-white text-green-800 shadow-sm' : 'text-white hover:bg-white/20' }}">
                     Unread
                 </button>
-                <button
-                    wire:click="$set('activeTab', 'read')"
-                    class="flex-1 py-2 px-3 text-sm font-medium rounded-lg transition-all duration-200 {{ $activeTab === 'read' ? 'bg-white text-green-800 shadow-sm' : 'text-white hover:bg-white/20' }}"
-                >
+                <button wire:click="$set('activeTab', 'read')"
+                    class="flex-1 py-2 px-3 text-sm font-medium rounded-lg transition-all duration-200 {{ $activeTab === 'read' ? 'bg-white text-green-800 shadow-sm' : 'text-white hover:bg-white/20' }}">
                     Read
                 </button>
             </div>
 
             {{-- Mark All Buttons in respective sections --}}
             <div>
-                @if($activeTab === 'unread' && $notifications->where('read_at', null)->count() > 0)
+                @if ($activeTab === 'unread' && $notifications->where('read_at', null)->count() > 0)
                     <button wire:click="markAllAsRead"
                         class="mt-4 w-full text-sm font-semibold text-green-700 bg-white hover:bg-green-50 hover:text-green-800 px-4 py-2 rounded-xl shadow-sm transition-all duration-200">
                         <i class="fa-regular fa-envelope-open mr-2"></i>Mark all as read
@@ -90,7 +85,7 @@
                     <div class="p-8">
                         <i class="fa-regular fa-bell-slash text-green-600 text-7xl mb-4"></i>
                         <p class="text-gray-600 text-sm font-semibold">
-                            @if($activeTab === 'unread')
+                            @if ($activeTab === 'unread')
                                 No unread notifications
                             @elseif($activeTab === 'read')
                                 No read notifications
@@ -111,18 +106,20 @@
             <div class="p-3 space-y-3">
 
                 {{-- Header --}}
-                <div class=" p-6 rounded-xl shadow-sm border border-gray-100" style="background: linear-gradient(148deg,rgba(18, 67, 44, 1) 0%, rgba(30, 119, 77, 1) 54%, rgba(55, 120, 64, 1) 100%);">
+                <div class=" p-6 rounded-xl shadow-sm border border-gray-100"
+                    style="background: linear-gradient(148deg,rgba(18, 67, 44, 1) 0%, rgba(30, 119, 77, 1) 54%, rgba(55, 120, 64, 1) 100%);">
                     <div class="flex justify-between items-start">
                         <div>
                             <h2 class="text-xl font-semibold text-white mb-2">Notification Details</h2>
                             <div class="flex items-center text-sm text-gray-100">
                                 <i class="fa-regular fa-clock mr-2"></i>
                                 <span class="font-semibold">Received:</span>
-                                <span class="ml-2">{{ $selectedNotificationData['created_at']->format('M d, Y g:i A') }}</span>
+                                <span
+                                    class="ml-2">{{ $selectedNotificationData['created_at']->format('M d, Y g:i A') }}</span>
                             </div>
                         </div>
                         {{-- Mark as Unread Button --}}
-                        @if(!$selectedNotificationData['unread'])
+                        @if (!$selectedNotificationData['unread'])
                             <button wire:click="markAsUnread('{{ $selectedNotification }}')"
                                 class="flex items-center px-4 py-2 text-sm font-semibold text-green-700 bg-white hover:bg-green-50 rounded-xl shadow-sm transition-all duration-200">
                                 <i class="fa-regular fa-envelope mr-2"></i>Mark as Unread
@@ -132,7 +129,7 @@
                 </div>
 
                 {{-- Display based on notification type --}}
-                @if($selectedNotificationData['type'] === 'semester_ended_missing_submissions')
+                @if ($selectedNotificationData['type'] === 'semester_ended_missing_submissions')
                     <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-md">
                         <div class="flex items-center mb-6 border-b border-gray-200 pb-4">
                             <div class="rounded-xl mr-2">
@@ -154,7 +151,7 @@
                             <div class="space-y-2">
                                 <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">End Date</p>
                                 <div class="bg-gray-50 p-3 rounded-xl text-sm font-medium text-gray-900 shadow-inner">
-                                    @if(isset($selectedNotificationData['semester']['end_date']))
+                                    @if (isset($selectedNotificationData['semester']['end_date']))
                                         {{ \Carbon\Carbon::parse($selectedNotificationData['semester']['end_date'])->format('M d, Y') }}
                                     @else
                                         N/A
@@ -164,20 +161,26 @@
 
                             <!-- Total Missing -->
                             <div class="space-y-2">
-                                <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Total Missing Submissions</p>
-                                <div class="bg-red-50 p-3 rounded-xl text-sm font-medium text-red-700 shadow-inner border border-red-200">
+                                <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Total Missing
+                                    Submissions</p>
+                                <div
+                                    class="bg-red-50 p-3 rounded-xl text-sm font-medium text-red-700 shadow-inner border border-red-200">
                                     <i class="fa-solid fa-triangle-exclamation mr-2"></i>
-                                    {{ $selectedNotificationData['missing_submissions']['total_count'] ?? 0 }} missing submissions
+                                    {{ $selectedNotificationData['missing_submissions']['total_count'] ?? 0 }} missing
+                                    submissions
                                 </div>
                             </div>
 
                             <!-- Days Since Ended -->
                             <div class="space-y-2">
-                                <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Days Since Semester Ended</p>
+                                <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Days Since
+                                    Semester Ended</p>
                                 <div class="bg-gray-50 p-3 rounded-xl text-sm font-medium text-gray-900 shadow-inner">
-                                    @if(isset($selectedNotificationData['semester']['end_date']))
+                                    @if (isset($selectedNotificationData['semester']['end_date']))
                                         @php
-                                            $endDate = \Carbon\Carbon::parse($selectedNotificationData['semester']['end_date']);
+                                            $endDate = \Carbon\Carbon::parse(
+                                                $selectedNotificationData['semester']['end_date'],
+                                            );
                                             $daysSinceEnded = (int) $endDate->diffInDays(now()); // Force integer conversion
                                         @endphp
                                         {{ $daysSinceEnded }} days
@@ -201,66 +204,72 @@
                             </span>
                         </div>
 
-                        @if(($selectedNotificationData['missing_submissions']['total_count'] ?? 0) > 0)
+                        @if (($selectedNotificationData['missing_submissions']['total_count'] ?? 0) > 0)
                             <div class="space-y-4">
-                                @foreach(($selectedNotificationData['missing_submissions']['submissions'] ?? []) as $missing)
-                                <div class="border border-orange-200 rounded-xl p-4 bg-orange-50 shadow-sm">
-                                    <div class="flex justify-between items-start">
-                                        <div class="flex-1">
-                                            {{-- Requirement and Course on same line --}}
-                                            <div class="flex items-center justify-between mb-2">
-                                                <h4 class="font-semibold text-gray-900 text-sm">
-                                                    {{ $missing['requirement_name'] ?? 'Unknown Requirement' }}
-                                                </h4>
-                                                <div class="flex items-center text-gray-600 text-xs bg-white px-3 py-1 rounded-full border border-orange-200">
-                                                    <span class="ml-1">
-                                                        @if(isset($missing['course_code']) && isset($missing['course_name']))
-                                                            {{ $missing['course_code'] }} - {{ $missing['course_name'] }}
-                                                        @else
-                                                            No course assigned
-                                                        @endif
-                                                    </span>
+                                @foreach ($selectedNotificationData['missing_submissions']['submissions'] ?? [] as $missing)
+                                    <div class="border border-orange-200 rounded-xl p-4 bg-orange-50 shadow-sm">
+                                        <div class="flex justify-between items-start">
+                                            <div class="flex-1">
+                                                {{-- Requirement and Course on same line --}}
+                                                <div class="flex items-center justify-between mb-2">
+                                                    <h4 class="font-semibold text-gray-900 text-sm">
+                                                        {{ $missing['requirement_name'] ?? 'Unknown Requirement' }}
+                                                    </h4>
+                                                    <div
+                                                        class="flex items-center text-gray-600 text-xs bg-white px-3 py-1 rounded-full border border-orange-200">
+                                                        <span class="ml-1">
+                                                            @if (isset($missing['course_code']) && isset($missing['course_name']))
+                                                                {{ $missing['course_code'] }} -
+                                                                {{ $missing['course_name'] }}
+                                                            @else
+                                                                No course assigned
+                                                            @endif
+                                                        </span>
+                                                    </div>
                                                 </div>
-                                            </div>
-                                            
-                                            {{-- Other details in grid --}}
-                                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-                                                <div class="flex items-center text-gray-600">
-                                                    <i class="fa-solid fa-user mr-2 text-gray-500"></i>
-                                                    <span class="font-semibold">Faculty:</span>
-                                                    <span class="ml-1">{{ $missing['user_name'] ?? 'Unknown User' }}</span>
-                                                </div>
-                                                <div class="flex items-center text-gray-600">
-                                                    <i class="fa-solid fa-envelope mr-2 text-gray-500"></i>
-                                                    <span class="font-semibold">Email:</span>
-                                                    <span class="ml-1">{{ $missing['user_email'] ?? 'N/A' }}</span>
-                                                </div>
-                                                <div class="flex items-center text-gray-600">
-                                                    <i class="fa-regular fa-calendar mr-2 text-gray-500"></i>
-                                                    <span class="font-semibold">Due Date:</span>
-                                                    <span class="ml-1">
-                                                        @if(isset($missing['due_date']))
-                                                            {{ \Carbon\Carbon::parse($missing['due_date'])->format('M d, Y g:i A') }}
-                                                        @else
-                                                            N/A
-                                                        @endif
-                                                    </span>
-                                                </div>
-                                                <div class="flex items-center text-red-600">
-                                                    <i class="fa-solid fa-clock mr-2 text-red-500"></i>
-                                                    <span class="font-semibold">Status:</span>
-                                                    <span class="ml-1">Not Submitted</span>
+
+                                                {{-- Other details in grid --}}
+                                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                                                    <div class="flex items-center text-gray-600">
+                                                        <i class="fa-solid fa-user mr-2 text-gray-500"></i>
+                                                        <span class="font-semibold">Faculty:</span>
+                                                        <span
+                                                            class="ml-1">{{ $missing['user_name'] ?? 'Unknown User' }}</span>
+                                                    </div>
+                                                    <div class="flex items-center text-gray-600">
+                                                        <i class="fa-solid fa-envelope mr-2 text-gray-500"></i>
+                                                        <span class="font-semibold">Email:</span>
+                                                        <span
+                                                            class="ml-1">{{ $missing['user_email'] ?? 'N/A' }}</span>
+                                                    </div>
+                                                    <div class="flex items-center text-gray-600">
+                                                        <i class="fa-regular fa-calendar mr-2 text-gray-500"></i>
+                                                        <span class="font-semibold">Due Date:</span>
+                                                        <span class="ml-1">
+                                                            @if (isset($missing['due_date']))
+                                                                {{ \Carbon\Carbon::parse($missing['due_date'])->format('M d, Y g:i A') }}
+                                                            @else
+                                                                N/A
+                                                            @endif
+                                                        </span>
+                                                    </div>
+                                                    <div class="flex items-center text-red-600">
+                                                        <i class="fa-solid fa-clock mr-2 text-red-500"></i>
+                                                        <span class="font-semibold">Status:</span>
+                                                        <span class="ml-1">Not Submitted</span>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
                                 @endforeach
 
-                                @if(($selectedNotificationData['missing_submissions']['total_count'] ?? 0) > 10)
+                                @if (($selectedNotificationData['missing_submissions']['total_count'] ?? 0) > 10)
                                     <div class="text-center py-4">
                                         <p class="text-sm text-gray-500 font-semibold">
-                                            Showing first 10 of {{ $selectedNotificationData['missing_submissions']['total_count'] }} missing submissions
+                                            Showing first 10 of
+                                            {{ $selectedNotificationData['missing_submissions']['total_count'] }}
+                                            missing submissions
                                         </p>
                                     </div>
                                 @endif
@@ -270,23 +279,70 @@
                                 <div class="bg-gray-100 rounded-xl p-8 inline-block">
                                     <i class="fa-regular fa-circle-check text-green-500 text-4xl mb-4"></i>
                                     <p class="text-gray-600 text-sm font-semibold">No missing submissions</p>
-                                    <p class="text-gray-500 text-xs mt-1">All requirements have been submitted for this semester</p>
+                                    <p class="text-gray-500 text-xs mt-1">All requirements have been submitted for this
+                                        semester</p>
                                 </div>
                             </div>
                         @endif
                     </div>
+                @elseif ($selectedNotificationData['type'] === 'new_registered_user')
+                    <div class="bg-white p-6 rounded-xl border border-gray-100 shadow-sm space-y-4">
+                        <div class="flex items-center">
+                            <div class="rounded-xl mr-3 bg-green-50 p-3">
+                                <i class="fa-solid fa-user-plus text-green-600 text-2xl"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-semibold text-gray-900">New Registered User</h3>
+                                <p class="text-sm text-gray-500">A new account has been created — details below are for
+                                    admin review</p>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-2 text-lg font-bold uppercase">
+                            <fieldset class="fieldset w-full">
+                                <legend class="fieldset-legend capitalize">first name</legend>
+                                <input type="text" class="input w-full" placeholder="{{$this->newRegisteredUser->first()->firstname}}" readonly/>
+                            </fieldset>
+                            <fieldset class="fieldset w-full">
+                                <legend class="fieldset-legend capitalize">middle name</legend>
+                                <input type="text" class="input w-full" placeholder="{{$this->newRegisteredUser->first()->middlename}}" readonly/>
+                            </fieldset>
+                            <fieldset class="fieldset w-full">
+                                <legend class="fieldset-legend capitalize">last name</legend>
+                                <input type="text" class="input w-full" placeholder="{{$this->newRegisteredUser->first()->lastname}}" readonly/>
+                            </fieldset>
+                            <fieldset class="fieldset w-full">
+                                <legend class="fieldset-legend capitalize">extension name</legend>
+                                <input type="text" class="input w-full" placeholder="{{$this->newRegisteredUser->first()->extensionname}}" readonly/>
+                            </fieldset>
+                            <fieldset class="fieldset w-full">
+                                <legend class="fieldset-legend capitalize">email</legend>
+                                <input type="text" class="input w-full" placeholder="{{$this->newRegisteredUser->first()->email}}" readonly/>
+                            </fieldset>
+                            <fieldset class="fieldset w-full">
+                                <legend class="fieldset-legend capitalize">email verified at</legend>
+                                <input type="text" class="input w-full" placeholder="{{ $this->newRegisteredUser->first()->email_verified_at ? \Carbon\Carbon::parse($this->newRegisteredUser->first()->email_verified_at)->format('M d, Y g:i A') : 'Not Verified' }}" readonly/>
+                            </fieldset>
+                        </div>
+
+                        <button wire:click="verifyUser('{{ $this->newRegisteredUser->first()->id }}')" onclick="confirm('Are you sure you want to verify this user?') || event.stopImmediatePropagation()" type="button"
+                            class="col-span-3 btn btn-sm btn-success">Verify</button>
+                    </div>
                 @else
                     {{-- Existing Submission/Status Update View --}}
                     {{-- Display error if submission data is missing --}}
-                    @if(!isset($selectedNotificationData['submissions']) && !isset($selectedNotificationData['submission']))
+                    @if (!isset($selectedNotificationData['submissions']) && !isset($selectedNotificationData['submission']))
                         <div class="bg-red-50 border border-red-200 rounded-xl p-8 text-center shadow-sm">
                             <div class="bg-red-100 p-4 rounded-xl inline-block mb-4">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-red-500" fill="none"
+                                    viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                                 </svg>
                             </div>
                             <h3 class="text-xl font-semibold text-red-800 mb-2">Submission Data Unavailable</h3>
-                            <p class="text-sm text-red-600 font-semibold">The submission data for this notification is no longer available. It may have been deleted.</p>
+                            <p class="text-sm text-red-600 font-semibold">The submission data for this notification is
+                                no longer available. It may have been deleted.</p>
                         </div>
                     @else
                         {{-- Requirement Details --}}
@@ -300,55 +356,59 @@
                             </div>
 
                             {{-- Status Update Information --}}
-                            @if(isset($selectedNotificationData['status_update']))
-                            <div class="bg-blue-50 border border-blue-200 rounded-xl p-6 shadow-sm">
-                                <div class="flex items-center mb-4">
-                                    <i class="fa-solid fa-arrows-rotate text-blue-600 text-xl mr-3"></i>
-                                    <h3 class="text-lg font-semibold text-blue-900">Status Update</h3>
-                                </div>
+                            @if (isset($selectedNotificationData['status_update']))
+                                <div class="bg-blue-50 border border-blue-200 rounded-xl p-6 shadow-sm">
+                                    <div class="flex items-center mb-4">
+                                        <i class="fa-solid fa-arrows-rotate text-blue-600 text-xl mr-3"></i>
+                                        <h3 class="text-lg font-semibold text-blue-900">Status Update</h3>
+                                    </div>
 
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div class="space-y-2">
-                                        <p class="text-sm font-semibold text-blue-700">Previous Status</p>
-                                        <div class="bg-white p-3 rounded-xl border border-blue-200">
-                                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold
-                                                @if($selectedNotificationData['status_update']['old_status'] === 'approved') bg-green-100 text-green-800
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div class="space-y-2">
+                                            <p class="text-sm font-semibold text-blue-700">Previous Status</p>
+                                            <div class="bg-white p-3 rounded-xl border border-blue-200">
+                                                <span
+                                                    class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold
+                                                @if ($selectedNotificationData['status_update']['old_status'] === 'approved') bg-green-100 text-green-800
                                                 @elseif($selectedNotificationData['status_update']['old_status'] === 'rejected') bg-red-100 text-red-800
                                                 @elseif($selectedNotificationData['status_update']['old_status'] === 'revision_needed') bg-yellow-100 text-yellow-800
                                                 @else bg-blue-100 text-blue-800 @endif">
-                                                {{ $this->formatStatus($selectedNotificationData['status_update']['old_status']) }}
-                                            </span>
+                                                    {{ $this->formatStatus($selectedNotificationData['status_update']['old_status']) }}
+                                                </span>
+                                            </div>
                                         </div>
-                                    </div>
 
-                                    <div class="space-y-2">
-                                        <p class="text-sm font-semibold text-blue-700">New Status</p>
-                                        <div class="bg-white p-3 rounded-xl border border-blue-200">
-                                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold
-                                                @if($selectedNotificationData['status_update']['new_status'] === 'approved') bg-green-100 text-green-800
+                                        <div class="space-y-2">
+                                            <p class="text-sm font-semibold text-blue-700">New Status</p>
+                                            <div class="bg-white p-3 rounded-xl border border-blue-200">
+                                                <span
+                                                    class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold
+                                                @if ($selectedNotificationData['status_update']['new_status'] === 'approved') bg-green-100 text-green-800
                                                 @elseif($selectedNotificationData['status_update']['new_status'] === 'rejected') bg-red-100 text-red-800
                                                 @elseif($selectedNotificationData['status_update']['new_status'] === 'revision_needed') bg-yellow-100 text-yellow-800
                                                 @else bg-blue-100 text-blue-800 @endif">
-                                                {{ $this->formatStatus($selectedNotificationData['status_update']['new_status']) }}
-                                            </span>
+                                                    {{ $this->formatStatus($selectedNotificationData['status_update']['new_status']) }}
+                                                </span>
+                                            </div>
                                         </div>
-                                    </div>
 
-                                    <div class="space-y-2">
-                                        <p class="text-sm font-semibold text-blue-700">Reviewed By</p>
-                                        <div class="bg-white p-3 rounded-xl border border-blue-200 text-sm text-gray-700">
-                                            {{ $selectedNotificationData['status_update']['reviewed_by'] }}
+                                        <div class="space-y-2">
+                                            <p class="text-sm font-semibold text-blue-700">Reviewed By</p>
+                                            <div
+                                                class="bg-white p-3 rounded-xl border border-blue-200 text-sm text-gray-700">
+                                                {{ $selectedNotificationData['status_update']['reviewed_by'] }}
+                                            </div>
                                         </div>
-                                    </div>
 
-                                    <div class="space-y-2">
-                                        <p class="text-sm font-semibold text-blue-700">Reviewed At</p>
-                                        <div class="bg-white p-3 rounded-xl border border-blue-200 text-sm text-gray-700">
-                                            {{ \Carbon\Carbon::parse($selectedNotificationData['status_update']['reviewed_at'])->format('M d, Y g:i A') }}
+                                        <div class="space-y-2">
+                                            <p class="text-sm font-semibold text-blue-700">Reviewed At</p>
+                                            <div
+                                                class="bg-white p-3 rounded-xl border border-blue-200 text-sm text-gray-700">
+                                                {{ \Carbon\Carbon::parse($selectedNotificationData['status_update']['reviewed_at'])->format('M d, Y g:i A') }}
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
                             @endif
 
                             <!-- Grid Layout -->
@@ -356,7 +416,8 @@
                                 <!-- Name -->
                                 <div class="space-y-2">
                                     <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Name</p>
-                                    <div class="bg-gray-50 p-3 rounded-xl text-sm font-medium text-gray-900 shadow-inner">
+                                    <div
+                                        class="bg-gray-50 p-3 rounded-xl text-sm font-medium text-gray-900 shadow-inner">
                                         {{ $selectedNotificationData['requirement']['name'] }}
                                     </div>
                                 </div>
@@ -364,12 +425,16 @@
                                 <!-- Program -->
                                 <div class="space-y-2">
                                     <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Program</p>
-                                    <div class="bg-gray-50 p-3 rounded-xl flex items-center text-sm text-gray-900 shadow-inner">
+                                    <div
+                                        class="bg-gray-50 p-3 rounded-xl flex items-center text-sm text-gray-900 shadow-inner">
                                         <i class="fa-solid fa-graduation-cap mr-2 text-gray-500"></i>
-                                        @if(isset($selectedNotificationData['course']['program']))
-                                            {{ $selectedNotificationData['course']['program']['program_code'] }} - {{ $selectedNotificationData['course']['program']['program_name'] }}
+                                        @if (isset($selectedNotificationData['course']['program']))
+                                            {{ $selectedNotificationData['course']['program']['program_code'] }} -
+                                            {{ $selectedNotificationData['course']['program']['program_name'] }}
                                         @elseif(isset($selectedNotificationData['files'][0]['course']['program']))
-                                            {{ $selectedNotificationData['files'][0]['course']['program']['program_code'] }} - {{ $selectedNotificationData['files'][0]['course']['program']['program_name'] }}
+                                            {{ $selectedNotificationData['files'][0]['course']['program']['program_code'] }}
+                                            -
+                                            {{ $selectedNotificationData['files'][0]['course']['program']['program_name'] }}
                                         @else
                                             <span class="text-gray-400">No program assigned</span>
                                         @endif
@@ -379,11 +444,13 @@
                                 <!-- Due Date -->
                                 <div class="space-y-2">
                                     <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Due Date</p>
-                                    <div class="bg-gray-50 p-3 rounded-xl flex items-center text-sm text-gray-900 shadow-inner">
+                                    <div
+                                        class="bg-gray-50 p-3 rounded-xl flex items-center text-sm text-gray-900 shadow-inner">
                                         <i class="fa-regular fa-calendar mr-2 text-gray-500"></i>
                                         {{ \Carbon\Carbon::parse($selectedNotificationData['requirement']['due'])->format('M d, Y g:i A') }}
-                                        @if($selectedNotificationData['requirement']['due']->isPast())
-                                            <span class="ml-2 px-2 py-0.5 text-xs font-semibold text-red-700 bg-red-100 rounded-full">
+                                        @if ($selectedNotificationData['requirement']['due']->isPast())
+                                            <span
+                                                class="ml-2 px-2 py-0.5 text-xs font-semibold text-red-700 bg-red-100 rounded-full">
                                                 Overdue
                                             </span>
                                         @endif
@@ -393,7 +460,8 @@
                                 <!-- Status -->
                                 <div class="space-y-2">
                                     <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Status</p>
-                                    <div class="bg-gray-50 p-3 rounded-xl flex items-center text-sm text-gray-900 shadow-inner">
+                                    <div
+                                        class="bg-gray-50 p-3 rounded-xl flex items-center text-sm text-gray-900 shadow-inner">
                                         <i class="fa-solid fa-circle-info mr-2 text-gray-500"></i>
                                         {{ ucfirst($selectedNotificationData['requirement']['status']) }}
                                     </div>
@@ -416,165 +484,210 @@
                             <div class="mb-6 pb-4 border-b border-gray-100">
                                 <p class="text-sm text-gray-600 mb-1">
                                     <span class="font-bold text-gray-700 mr-1">Submitted By:</span>
-                                    <span class="font-semibold">{{ $selectedNotificationData['submitter']['name'] }}</span>
+                                    <span
+                                        class="font-semibold">{{ $selectedNotificationData['submitter']['name'] }}</span>
                                     ({{ $selectedNotificationData['submitter']['email'] }})
                                 </p>
-                                @if(isset($selectedNotificationData['course']['program']))
+                                @if (isset($selectedNotificationData['course']['program']))
                                     <p class="text-sm text-gray-600">
                                         <span class="font-bold text-gray-700 mr-1">Program:</span>
                                         <span class="font-semibold">
-                                            {{ $selectedNotificationData['course']['program']['program_code'] }} - {{ $selectedNotificationData['course']['program']['program_name'] }}
+                                            {{ $selectedNotificationData['course']['program']['program_code'] }} -
+                                            {{ $selectedNotificationData['course']['program']['program_name'] }}
                                         </span>
                                     </p>
                                 @endif
                             </div>
 
                             {{-- Files List --}}
-                            @if(count($selectedNotificationData['files'] ?? []))
-                            <div class="space-y-6">
-                                @foreach($selectedNotificationData['files'] as $file)
-                                @php
-                                    $submission = collect($selectedNotificationData['submissions'] ?? [])->firstWhere('id', $file['submission_id']);
-                                    $fileStatus = $file['status'];
-                                    $fileStatusLabel = match($fileStatus) {
-                                        'under_review' => 'Under Review',
-                                        'revision_needed' => 'Revision Required',
-                                        'rejected' => 'Rejected',
-                                        'approved' => 'Approved',
-                                        default => ucfirst($fileStatus),
-                                    };
-                                    $statusColor = match($fileStatus) {
-                                        'approved' => 'bg-green-100 text-green-700 border-green-300',
-                                        'rejected' => 'bg-red-100 text-red-700 border-red-300',
-                                        'revision_needed' => 'bg-yellow-100 text-yellow-700 border-yellow-300',
-                                        default => 'bg-blue-100 text-blue-700 border-blue-300',
-                                    };
-                                @endphp
+                            @if (count($selectedNotificationData['files'] ?? []))
+                                <div class="space-y-6">
+                                    @foreach ($selectedNotificationData['files'] as $file)
+                                        @php
+                                            $submission = collect(
+                                                $selectedNotificationData['submissions'] ?? [],
+                                            )->firstWhere('id', $file['submission_id']);
+                                            $fileStatus = $file['status'];
+                                            $fileStatusLabel = match ($fileStatus) {
+                                                'under_review' => 'Under Review',
+                                                'revision_needed' => 'Revision Required',
+                                                'rejected' => 'Rejected',
+                                                'approved' => 'Approved',
+                                                default => ucfirst($fileStatus),
+                                            };
+                                            $statusColor = match ($fileStatus) {
+                                                'approved' => 'bg-green-100 text-green-700 border-green-300',
+                                                'rejected' => 'bg-red-100 text-red-700 border-red-300',
+                                                'revision_needed' => 'bg-yellow-100 text-yellow-700 border-yellow-300',
+                                                default => 'bg-blue-100 text-blue-700 border-blue-300',
+                                            };
+                                        @endphp
 
-                                {{-- Submission Card --}}
-                                <div class="border border-gray-200 rounded-xl overflow-hidden shadow-md">
-                                    {{-- Submission Header/Context --}}
-                                    <div class="bg-green-700 px-5 py-3 border-b border-gray-200">
-                                        <div class="flex flex-wrap justify-between items-center gap-2 text-sm text-white">
-                                            @if($file['course'] ?? null)
-                                            <p class="font-medium flex items-center">
-                                                <i class="fa-solid fa-book-open mr-2 text-white"></i>
-                                                Course: {{ $file['course']['course_code'] }} - {{ $file['course']['course_name'] }}
-                                            </p>
-                                            @endif
-                                            @if($submission['reviewed_at'] ?? null)
-                                                <p class="font-medium flex items-center">
-                                                    Reviewed: {{ $submission['reviewed_at']->format('M d, Y g:i A') }}
-                                                </p>
-                                            @endif
-                                        </div>
-                                    </div>
-
-                                    {{-- File Detail (More compact) --}}
-                                    <div class="p-5 flex items-center justify-between bg-white">
-                                        <div class="flex items-center space-x-4 min-w-0">
-                                            <div class="flex-shrink-0 p-3 bg-gray-100 rounded-xl shadow-inner">
-                                                @switch($file['extension'])
-                                                    @case('pdf') <i class="fa-regular fa-file-pdf text-red-500 text-xl"></i> @break
-                                                    @case('doc') @case('docx') <i class="fa-regular fa-file-word text-blue-500 text-xl"></i> @break
-                                                    @case('xls') @case('xlsx') <i class="fa-regular fa-file-excel text-green-500 text-xl"></i> @break
-                                                    @case('jpg') @case('jpeg') @case('png') @case('gif') <i class="fa-regular fa-file-image text-purple-500 text-xl"></i> @break
-                                                    @default <i class="fa-regular fa-file text-gray-500 text-xl"></i>
-                                                @endswitch
-                                            </div>
-                                            <div class="min-w-0">
-                                                <p class="text-sm font-semibold text-gray-900 truncate mb-1">{{ $file['name'] }}</p>
-                                                <div class="flex items-center gap-3">
-                                                    <span class="text-xs text-gray-500 font-semibold bg-gray-200 px-2 py-0.5 rounded-full">
-                                                        {{ strtoupper($file['extension']) }} • {{ $file['size'] }}
-                                                    </span>
-                                                    <span class="text-xs px-3 py-1 rounded-full {{ $statusColor }} font-semibold">
-                                                        {{ $fileStatusLabel }}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="flex space-x-1 flex-shrink-0">
-                                            <a href="{{ route('file.download', ['submission' => $file['submission_id'], 'file' => $file['id']]) }}"
-                                            class="p-2 text-blue-500 hover:text-blue-700 hover:bg-blue-100 rounded-lg transition-colors"
-                                            title="Download">
-                                                <i class="fa-solid fa-download"></i>
-                                            </a>
-                                            @if($file['is_previewable'])
-                                            <a href="{{ route('file.preview', ['submission' => $file['submission_id'], 'file' => $file['id']]) }}"
-                                            target="_blank"
-                                            class="p-2 text-green-600 hover:text-green-700 hover:bg-green-100 rounded-lg transition-colors"
-                                            title="Preview">
-                                                <i class="fa-solid fa-eye"></i>
-                                            </a>
-                                            @endif
-                                        </div>
-                                    </div>
-
-                                    {{-- Status Update and Review History (Always Visible) --}}
-                                    <div class="p-5 border-t bg-gray-50">
-
-                                        {{-- Current Review Notes Display (for context) --}}
-                                        <div class="space-y-2 mb-6">
-                                            <p class="text-sm font-semibold text-gray-700">Current Review Notes</p>
-                                            <p class="text-sm text-gray-600 bg-white p-6 rounded-xl border border-gray-200 shadow-inner ">
-                                                {{ $submission['admin_notes'] ?? 'No notes provided for this status.' }}
-                                            </p>
-                                        </div>
-
-                                        {{-- Status Update Form (Always Visible) --}}
-                                        <form wire:submit.prevent="updateFileStatus('{{ $file['submission_id'] }}')" class="space-y-4">
-                                            <h4 class="text-md font-bold text-gray-900 mb-4 border-b pb-2">Update Submission Status</h4>
-
-                                            <div class="flex flex-col md:flex-row gap-4">
-                                                {{-- Status Dropdown --}}
-                                                <div class="w-full md:w-1/2 space-y-2">
-                                                    <label for="newStatus-{{ $file['submission_id'] }}" class="block text-sm font-semibold text-gray-700">Select New Status</label>
-                                                    <select wire:model="newStatus.{{ $file['submission_id'] }}" id="newStatus-{{ $file['submission_id'] }}"
-                                                        class="w-full rounded-xl border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 text-sm py-2.5 px-4 bg-white">
-                                                        <option value="">Select new status</option>
-                                                        @foreach(\App\Models\SubmittedRequirement::statusesForReview() as $value => $label)
-                                                            <option value="{{ $value }}">
-                                                                {{ $label }}
-                                                            </option>
-                                                        @endforeach
-                                                    </select>
-                                                    @error("newStatus.{$file['submission_id']}")
-                                                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                                                    @enderror
-                                                </div>
-
-                                                {{-- Admin Notes Textarea --}}
-                                                <div class="w-full md:w-1/2 space-y-2">
-                                                    <label for="adminNotes-{{ $file['submission_id'] }}" class="block text-sm font-semibold text-gray-700">New Admin Notes (Optional)</label>
-                                                    <textarea wire:model="adminNotes.{{ $file['submission_id'] }}" id="adminNotes-{{ $file['submission_id'] }}" rows="1"
-                                                        placeholder="Add notes for the submitter..."
-                                                        class="w-full rounded-xl border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 text-sm py-2.5 px-4 bg-white resize-none"></textarea>
-                                                    @error("adminNotes.{$file['submission_id']}")
-                                                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                                                    @enderror
+                                        {{-- Submission Card --}}
+                                        <div class="border border-gray-200 rounded-xl overflow-hidden shadow-md">
+                                            {{-- Submission Header/Context --}}
+                                            <div class="bg-green-700 px-5 py-3 border-b border-gray-200">
+                                                <div
+                                                    class="flex flex-wrap justify-between items-center gap-2 text-sm text-white">
+                                                    @if ($file['course'] ?? null)
+                                                        <p class="font-medium flex items-center">
+                                                            <i class="fa-solid fa-book-open mr-2 text-white"></i>
+                                                            Course: {{ $file['course']['course_code'] }} -
+                                                            {{ $file['course']['course_name'] }}
+                                                        </p>
+                                                    @endif
+                                                    @if ($submission['reviewed_at'] ?? null)
+                                                        <p class="font-medium flex items-center">
+                                                            Reviewed:
+                                                            {{ $submission['reviewed_at']->format('M d, Y g:i A') }}
+                                                        </p>
+                                                    @endif
                                                 </div>
                                             </div>
 
-                                            {{-- Update Button --}}
-                                            <div class="flex justify-end">
-                                                <button type="submit"
-                                                    class="px-5 py-2 border border-transparent rounded-xl text-sm font-semibold text-white bg-green-600 hover:bg-green-700 shadow-lg hover:shadow-xl transition-all duration-200">
-                                                    <i class="fa-solid fa-check mr-2"></i>Apply Status Update
-                                                </button>
+                                            {{-- File Detail (More compact) --}}
+                                            <div class="p-5 flex items-center justify-between bg-white">
+                                                <div class="flex items-center space-x-4 min-w-0">
+                                                    <div class="flex-shrink-0 p-3 bg-gray-100 rounded-xl shadow-inner">
+                                                        @switch($file['extension'])
+                                                            @case('pdf')
+                                                                <i class="fa-regular fa-file-pdf text-red-500 text-xl"></i>
+                                                            @break
+
+                                                            @case('doc')
+                                                            @case('docx')
+                                                                <i class="fa-regular fa-file-word text-blue-500 text-xl"></i>
+                                                            @break
+
+                                                            @case('xls')
+                                                            @case('xlsx')
+                                                                <i class="fa-regular fa-file-excel text-green-500 text-xl"></i>
+                                                            @break
+
+                                                            @case('jpg')
+                                                            @case('jpeg')
+
+                                                            @case('png')
+                                                            @case('gif')
+                                                                <i
+                                                                    class="fa-regular fa-file-image text-purple-500 text-xl"></i>
+                                                            @break
+
+                                                            @default
+                                                                <i class="fa-regular fa-file text-gray-500 text-xl"></i>
+                                                        @endswitch
+                                                    </div>
+                                                    <div class="min-w-0">
+                                                        <p class="text-sm font-semibold text-gray-900 truncate mb-1">
+                                                            {{ $file['name'] }}</p>
+                                                        <div class="flex items-center gap-3">
+                                                            <span
+                                                                class="text-xs text-gray-500 font-semibold bg-gray-200 px-2 py-0.5 rounded-full">
+                                                                {{ strtoupper($file['extension']) }} •
+                                                                {{ $file['size'] }}
+                                                            </span>
+                                                            <span
+                                                                class="text-xs px-3 py-1 rounded-full {{ $statusColor }} font-semibold">
+                                                                {{ $fileStatusLabel }}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="flex space-x-1 flex-shrink-0">
+                                                    <a href="{{ route('file.download', ['submission' => $file['submission_id'], 'file' => $file['id']]) }}"
+                                                        class="p-2 text-blue-500 hover:text-blue-700 hover:bg-blue-100 rounded-lg transition-colors"
+                                                        title="Download">
+                                                        <i class="fa-solid fa-download"></i>
+                                                    </a>
+                                                    @if ($file['is_previewable'])
+                                                        <a href="{{ route('file.preview', ['submission' => $file['submission_id'], 'file' => $file['id']]) }}"
+                                                            target="_blank"
+                                                            class="p-2 text-green-600 hover:text-green-700 hover:bg-green-100 rounded-lg transition-colors"
+                                                            title="Preview">
+                                                            <i class="fa-solid fa-eye"></i>
+                                                        </a>
+                                                    @endif
+                                                </div>
                                             </div>
-                                        </form>
-                                    </div>
+
+                                            {{-- Status Update and Review History (Always Visible) --}}
+                                            <div class="p-5 border-t bg-gray-50">
+
+                                                {{-- Current Review Notes Display (for context) --}}
+                                                <div class="space-y-2 mb-6">
+                                                    <p class="text-sm font-semibold text-gray-700">Current Review Notes
+                                                    </p>
+                                                    <p
+                                                        class="text-sm text-gray-600 bg-white p-6 rounded-xl border border-gray-200 shadow-inner ">
+                                                        {{ $submission['admin_notes'] ?? 'No notes provided for this status.' }}
+                                                    </p>
+                                                </div>
+
+                                                {{-- Status Update Form (Always Visible) --}}
+                                                <form
+                                                    wire:submit.prevent="updateFileStatus('{{ $file['submission_id'] }}')"
+                                                    class="space-y-4">
+                                                    <h4 class="text-md font-bold text-gray-900 mb-4 border-b pb-2">
+                                                        Update Submission Status</h4>
+
+                                                    <div class="flex flex-col md:flex-row gap-4">
+                                                        {{-- Status Dropdown --}}
+                                                        <div class="w-full md:w-1/2 space-y-2">
+                                                            <label for="newStatus-{{ $file['submission_id'] }}"
+                                                                class="block text-sm font-semibold text-gray-700">Select
+                                                                New Status</label>
+                                                            <select
+                                                                wire:model="newStatus.{{ $file['submission_id'] }}"
+                                                                id="newStatus-{{ $file['submission_id'] }}"
+                                                                class="w-full rounded-xl border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 text-sm py-2.5 px-4 bg-white">
+                                                                <option value="">Select new status</option>
+                                                                @foreach (\App\Models\SubmittedRequirement::statusesForReview() as $value => $label)
+                                                                    <option value="{{ $value }}">
+                                                                        {{ $label }}
+                                                                    </option>
+                                                                @endforeach
+                                                            </select>
+                                                            @error("newStatus.{$file['submission_id']}")
+                                                                <p class="text-red-500 text-xs mt-1">{{ $message }}
+                                                                </p>
+                                                            @enderror
+                                                        </div>
+
+                                                        {{-- Admin Notes Textarea --}}
+                                                        <div class="w-full md:w-1/2 space-y-2">
+                                                            <label for="adminNotes-{{ $file['submission_id'] }}"
+                                                                class="block text-sm font-semibold text-gray-700">New
+                                                                Admin Notes (Optional)</label>
+                                                            <textarea wire:model="adminNotes.{{ $file['submission_id'] }}" id="adminNotes-{{ $file['submission_id'] }}"
+                                                                rows="1" placeholder="Add notes for the submitter..."
+                                                                class="w-full rounded-xl border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 text-sm py-2.5 px-4 bg-white resize-none"></textarea>
+                                                            @error("adminNotes.{$file['submission_id']}")
+                                                                <p class="text-red-500 text-xs mt-1">{{ $message }}
+                                                                </p>
+                                                            @enderror
+                                                        </div>
+                                                    </div>
+
+                                                    {{-- Update Button --}}
+                                                    <div class="flex justify-end">
+                                                        <button type="submit"
+                                                            class="px-5 py-2 border border-transparent rounded-xl text-sm font-semibold text-white bg-green-600 hover:bg-green-700 shadow-lg hover:shadow-xl transition-all duration-200">
+                                                            <i class="fa-solid fa-check mr-2"></i>Apply Status Update
+                                                        </button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    @endforeach
                                 </div>
-                                @endforeach
-                            </div>
                             @else
                                 {{-- No files message --}}
                                 <div class="text-center py-12 bg-gray-50 rounded-xl">
                                     <div class="bg-gray-100 rounded-xl p-8 inline-block">
                                         <i class="fa-regular fa-file-excel text-gray-400 text-4xl mb-4"></i>
                                         <p class="text-gray-600 text-sm font-semibold">No files submitted</p>
-                                        <p class="text-gray-500 text-xs mt-1">This submission doesn't contain any files</p>
+                                        <p class="text-gray-500 text-xs mt-1">This submission doesn't contain any files
+                                        </p>
                                     </div>
                                 </div>
                             @endif
@@ -587,7 +700,8 @@
             <div class="h-full flex items-center justify-center p-6">
                 <div class="text-center rounded-xl p-12">
                     <h3 class="text-xl font-semibold text-gray-900 mb-3">No notification selected</h3>
-                    <p class="text-sm text-gray-500 font-semibold">Click on a notification from the list to view details</p>
+                    <p class="text-sm text-gray-500 font-semibold">Click on a notification from the list to view
+                        details</p>
                 </div>
             </div>
         @endif
