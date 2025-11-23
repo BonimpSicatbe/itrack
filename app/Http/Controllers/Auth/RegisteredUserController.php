@@ -68,7 +68,7 @@ class RegisteredUserController extends Controller
             $user->assignRole('user');
 
             // notify admin users about new registration
-            $adminUsers = User::role(['admin', 'super-admin'])->get();
+            $adminUsers = User::role(['admin'])->get();
             Log::info('Preparing to notify admin users of new registration', [
                 'new_user_id' => $user->id,
                 'new_user_email' => $user->email,
@@ -94,7 +94,7 @@ class RegisteredUserController extends Controller
             }
 
             // optionally fire the Registered event
-            event(new Registered($user));
+            // event(new Registered($user));
 
             $route = $user->hasRole('admin') || $user->hasRole('super-admin') ? 'admin.dashboard' : 'user.dashboard';
 

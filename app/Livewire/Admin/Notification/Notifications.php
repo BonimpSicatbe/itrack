@@ -264,7 +264,7 @@ class Notifications extends Component
     protected function loadCorrectionNotes($notificationData)
     {
         $submissionIds = [];
-        
+
         if (isset($notificationData['submission_ids'])) {
             $submissionIds = $notificationData['submission_ids'];
         } elseif (isset($notificationData['submission_id'])) {
@@ -404,7 +404,7 @@ class Notifications extends Component
         $oldStatus = $submission->status;
         $newStatus = $this->newStatus[$submissionId];
         $adminNotes = $this->adminNotes[$submissionId] ?? null;
-        
+
         // Update the submission status (this goes to submitted_requirements table)
         $submission->update([
             'status' => $newStatus, // This saves to submitted_requirements.status
@@ -415,7 +415,7 @@ class Notifications extends Component
 
         // ALWAYS CREATE CORRECTION NOTE - even when there are no admin notes
         $firstMedia = $submission->getMedia('submission_files')->first();
-        
+
         AdminCorrectionNote::create([
             'submitted_requirement_id' => $submission->id,
             'requirement_id' => $submission->requirement_id,
@@ -604,38 +604,39 @@ class Notifications extends Component
         ];
     }
 
-        public function verifyUser($userId)
-        {
-            $user = User::find($userId);
+    public function verifyUser($userId)
+    {
+        $user = User::find($userId);
 
-            if (!$user) {
-                $this->dispatch('showNotification', type: 'error', content: 'User not found.', duration: 3000);
-                return;
-            }
-
-            if (!empty($user->email_verified_at)) {
-                $this->dispatch('showNotification', type: 'info', content: 'User is already verified.', duration: 3000);
-                return;
-            }
-
-            try {
-                $user->email_verified_at = now();
-                $user->save();
-
-                // Refresh local data shown in the component
-                $this->newRegisteredUser = User::where('id', $user->id)->get();
-                if (isset($this->selectedNotificationData['new_user'])) {
-                    $this->selectedNotificationData['new_user']['verified_at'] = $user->email_verified_at;
-                }
-
-                $this->loadNotifications();
-
-                $this->dispatch('showNotification', type: 'success', content: 'User verified successfully!', duration: 3000);
-            } catch (\Throwable $e) {
-                Log::error('Failed to verify user: '.$e->getMessage(), ['user_id' => $userId]);
-                $this->dispatch('showNotification', type: 'error', content: 'Failed to verify user.', duration: 3000);
-            }
+        if (!$user) {
+            $this->dispatch('showNotification', type: 'error', content: 'User not found.', duration: 3000);
+            return;
         }
+
+        if (!empty($user->email_verified_at)) {
+            $this->dispatch('showNotification', type: 'info', content: 'User is already verified.', duration: 3000);
+            return;
+        }
+
+        try {
+            $user->sendEmailVerificationNotification();
+            $user->markEmailAsVerified();
+            $user->save();
+
+            // Refresh local data shown in the component
+            $this->newRegisteredUser = User::where('id', $user->id)->get();
+            if (isset($this->selectedNotificationData['new_user'])) {
+                $this->selectedNotificationData['new_user']['verified_at'] = $user->email_verified_at;
+            }
+
+            $this->loadNotifications();
+
+            $this->dispatch('showNotification', type: 'success', content: 'User verified successfully!', duration: 3000);
+        } catch (\Throwable $e) {
+            Log::error('Failed to verify user: ' . $e->getMessage(), ['user_id' => $userId]);
+            $this->dispatch('showNotification', type: 'error', content: 'Failed to verify user.', duration: 3000);
+        }
+    }
 
     public function render()
     {

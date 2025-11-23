@@ -326,7 +326,7 @@
                         </div>
 
                         <button wire:click="verifyUser('{{ $this->newRegisteredUser->first()->id }}')" onclick="confirm('Are you sure you want to verify this user?') || event.stopImmediatePropagation()" type="button"
-                            class="col-span-3 btn btn-sm btn-success">Verify</button>
+                            class="col-span-3 btn btn-sm btn-success">Verify User</button>
                     </div>
                 @else
                     {{-- Existing Submission/Status Update View --}}
@@ -701,14 +701,14 @@
                                                         </div>
                                                         <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold
                                                             @if($note['status'] === 'approved') bg-green-100 text-green-800
-                                                            @elseif($note['status'] === 'rejected') bg-red-100 text-red-800  
+                                                            @elseif($note['status'] === 'rejected') bg-red-100 text-red-800
                                                             @elseif($note['status'] === 'revision_needed') bg-yellow-100 text-yellow-800
                                                             @elseif($note['status'] === 'under_review') bg-blue-100 text-blue-800
                                                             @else bg-gray-100 text-gray-800 @endif">
                                                             {{ $note['status_label'] }}
                                                         </span>
                                                     </div>
-                                                    
+
                                                     <div class="p-5 bg-white">
                                                         <div class="space-y-3">
                                                             @if($note['file_name'])
@@ -718,11 +718,11 @@
                                                                 <span class="ml-2 text-gray-700">{{ $note['file_name'] }}</span>
                                                             </div>
                                                             @endif
-                                                            
+
                                                             <div class="bg-gray-50 p-4 rounded-xl border border-gray-200">
                                                                 <p class="text-sm text-gray-700 whitespace-pre-wrap">{{ $note['correction_notes'] }}</p>
                                                             </div>
-                                                            
+
                                                             @if($note['addressed_at'])
                                                             <div class="flex items-center text-sm text-green-600">
                                                                 <i class="fa-regular fa-clock mr-2"></i>
