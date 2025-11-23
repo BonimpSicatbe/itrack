@@ -5,6 +5,7 @@ namespace App\Livewire\Admin\Notification;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 use App\Models\SubmittedRequirement;
+use App\Models\AdminCorrectionNote;
 use Illuminate\Notifications\DatabaseNotification;
 
 class Notifications extends Component
@@ -129,7 +130,7 @@ class Notifications extends Component
         if ($notificationType === 'submission_status_updated') {
             $this->loadStatusUpdateDetails($notificationData);
         } 
-        else if ($notificationType === 'semester_ended_missing_submissions') { // Match the corrected type
+        else if ($notificationType === 'semester_ended_missing_submissions') {
             $this->loadSemesterEndedDetails($notificationData);
         } 
         else {
@@ -172,6 +173,9 @@ class Notifications extends Component
                 ];
             }
         }
+
+        // Load correction notes for this submission
+        $this->loadCorrectionNotes($notificationData);
     }
 
     protected function loadNewSubmissionDetails($notificationData)
@@ -224,6 +228,63 @@ class Notifications extends Component
                 ];
             }
         }
+
+        // Load correction notes for this submission
+        $this->loadCorrectionNotes($notificationData);
+    }
+
+    protected function loadCorrectionNotes($notificationData)
+    {
+        $submissionIds = [];
+        
+        if (isset($notificationData['submission_ids'])) {
+            $submissionIds = $notificationData['submission_ids'];
+        } elseif (isset($notificationData['submission_id'])) {
+            $submissionIds = [$notificationData['submission_id']];
+        }
+
+        if (!empty($submissionIds)) {
+            $correctionNotes = AdminCorrectionNote::with(['admin'])
+                ->whereIn('submitted_requirement_id', $submissionIds)
+                ->orderBy('created_at', 'desc')
+                ->get();
+
+            // Group correction notes by submitted_requirement_id
+            $this->selectedNotificationData['correction_notes_by_submission'] = $correctionNotes->groupBy('submitted_requirement_id')->map(function ($notes) {
+                return $notes->map(function ($note) {
+                    return [
+                        'id' => $note->id,
+                        'correction_notes' => $note->correction_notes,
+                        'file_name' => $note->file_name,
+                        'status' => $note->status,
+                        'status_label' => $this->formatCorrectionNoteStatus($note->status),
+                        'created_at' => $note->created_at,
+                        'admin' => $note->admin ? [
+                            'id' => $note->admin->id,
+                            'name' => $note->admin->full_name ?? $note->admin->name,
+                            'email' => $note->admin->email,
+                        ] : null,
+                        'addressed_at' => $note->addressed_at,
+                        // Remove the old 'is_pending' check since we don't have pending status anymore
+                    ];
+                })->toArray();
+            })->toArray();
+        } else {
+            $this->selectedNotificationData['correction_notes_by_submission'] = [];
+        }
+    }
+
+    // UPDATED THIS METHOD - Use SubmittedRequirement statuses instead
+    protected function formatCorrectionNoteStatus($status)
+    {
+        return match($status) {
+            AdminCorrectionNote::STATUS_UPLOADED => 'Uploaded',
+            AdminCorrectionNote::STATUS_UNDER_REVIEW => 'Under Review',
+            AdminCorrectionNote::STATUS_REVISION_NEEDED => 'Revision Required',
+            AdminCorrectionNote::STATUS_REJECTED => 'Rejected',
+            AdminCorrectionNote::STATUS_APPROVED => 'Approved',
+            default => ucfirst($status),
+        };
     }
 
     protected function formatSubmission($submission)
@@ -313,18 +374,35 @@ class Notifications extends Component
         
         // Store old status for notification
         $oldStatus = $submission->status;
+        $newStatus = $this->newStatus[$submissionId];
+        $adminNotes = $this->adminNotes[$submissionId] ?? null;
         
+        // Update the submission status (this goes to submitted_requirements table)
         $submission->update([
-            'status' => $this->newStatus[$submissionId],
-            'admin_notes' => $this->adminNotes[$submissionId] ?? null,
+            'status' => $newStatus, // This saves to submitted_requirements.status
+            'admin_notes' => $adminNotes,
             'reviewed_by' => auth()->id(),
             'reviewed_at' => now(),
+        ]);
+
+        // ALWAYS CREATE CORRECTION NOTE - even when there are no admin notes
+        $firstMedia = $submission->getMedia('submission_files')->first();
+        
+        AdminCorrectionNote::create([
+            'submitted_requirement_id' => $submission->id,
+            'requirement_id' => $submission->requirement_id,
+            'course_id' => $submission->course_id,
+            'user_id' => $submission->user_id,
+            'admin_id' => auth()->id(),
+            'correction_notes' => $adminNotes ?? 'No notes provided', // Use "No notes provided" when empty
+            'file_name' => $firstMedia ? $firstMedia->file_name : null,
+            'status' => $newStatus, // Store the actual file status here
         ]);
 
         // Send notification to user about status update
         $user = \App\Models\User::find($submission->user_id);
         if ($user) {
-            $user->notify(new \App\Notifications\SubmissionStatusUpdated($submission, $oldStatus, $this->newStatus[$submissionId]));
+            $user->notify(new \App\Notifications\SubmissionStatusUpdated($submission, $oldStatus, $newStatus));
         }
 
         // Reload the notification data to reflect changes
@@ -368,7 +446,7 @@ class Notifications extends Component
             ->whereIn('type', [
                 'App\Notifications\NewSubmissionNotification', 
                 'App\Notifications\SubmissionStatusUpdated',
-                'App\Notifications\SemesterEndedWithMissingSubmissions' // ADD THIS
+                'App\Notifications\SemesterEndedWithMissingSubmissions'
             ])
             ->update(['read_at' => now()]);
         
@@ -392,7 +470,7 @@ class Notifications extends Component
             ->whereIn('type', [
                 'App\Notifications\NewSubmissionNotification', 
                 'App\Notifications\SubmissionStatusUpdated',
-                'App\Notifications\SemesterEndedWithMissingSubmissions' // ADD THIS
+                'App\Notifications\SemesterEndedWithMissingSubmissions'
             ])
             ->get();
         

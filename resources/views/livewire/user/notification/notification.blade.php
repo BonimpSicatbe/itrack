@@ -342,19 +342,6 @@
                         </div>
                         @endif
 
-                        {{-- Admin Notes (Submission Level) --}}
-                        @if(isset($selectedNotificationData['submissions'][0]['admin_notes']) && $selectedNotificationData['submissions'][0]['admin_notes'])
-                        <div class="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-6">
-                            <div class="flex items-start">
-                                <i class="fa-solid fa-comment-dots text-yellow-600 mt-0.5 mr-3 text-lg"></i>
-                                <div class="flex-1">
-                                    <h4 class="text-sm font-semibold text-yellow-800 mb-2">Admin Feedback</h4>
-                                    <p class="text-sm text-yellow-700 whitespace-pre-wrap">{{ $selectedNotificationData['submissions'][0]['admin_notes'] }}</p>
-                                </div>
-                            </div>
-                        </div>
-                        @endif
-
                         {{-- Files List --}}
                         <div class="space-y-4">
                             @foreach($selectedNotificationData['files'] as $file)
@@ -431,6 +418,87 @@
                                 </div>
                             </div>
                             @endforeach
+                        </div>
+                    </div>
+                    @endif
+
+                    {{-- Correction Feedback Section (Moved after Files) --}}
+                    @if(isset($selectedNotificationData['correction_notes']) && count($selectedNotificationData['correction_notes']))
+                    <div class="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
+                        <div class="flex items-center mb-6">
+                            <i class="fa-solid fa-message-pen text-blue-600 text-2xl mr-3"></i>
+                            <h3 class="text-xl font-semibold text-gray-900">Feedback & Correction History</h3>
+                            <span class="bg-blue-100 text-blue-800 text-sm px-3 py-1 rounded-full ml-3">
+                                {{ count($selectedNotificationData['correction_notes']) }} entries
+                            </span>
+                        </div>
+                        
+                        {{-- Timeline-style correction notes --}}
+                        <div class="space-y-4">
+                            @foreach($selectedNotificationData['correction_notes'] as $index => $note)
+                                <div class="border border-gray-200 rounded-xl overflow-hidden transition-all duration-200 hover:shadow-md">
+                                    {{-- Note Header --}}
+                                    <div class="bg-gradient-to-r from-gray-50 to-white px-5 py-4 border-b border-gray-200 flex justify-between items-center">
+                                        <div class="flex items-center space-x-4">
+                                            <div class="flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 text-blue-600 font-semibold text-sm">
+                                                {{ count($selectedNotificationData['correction_notes']) - $index }}
+                                            </div>
+                                            <div>
+                                                <span class="text-sm font-semibold text-gray-800">
+                                                    Feedback from {{ $note['admin_name'] }}
+                                                </span>
+                                                <span class="block text-xs text-gray-500 mt-1">
+                                                    {{ \Carbon\Carbon::parse($note['created_at'])->format('M j, Y g:i A') }}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <span class="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold {{ $note['status_badge'] }}">
+                                            {{ $note['status_label'] }}
+                                        </span>
+                                    </div>
+                                    
+                                    {{-- Note Content --}}
+                                    <div class="p-5 bg-white">
+                                        <div class="space-y-4">
+                                            {{-- File Information --}}
+                                            @if($note['file_name'])
+                                                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
+                                                    <div class="flex items-center space-x-3">
+                                                        <i class="fa-regular fa-file text-gray-500"></i>
+                                                        <div>
+                                                            <span class="text-sm font-semibold text-gray-700">Original File</span>
+                                                            <p class="text-sm text-gray-600">{{ $note['file_name'] }}</p>
+                                                        </div>
+                                                    </div>
+                                                    @if($note['has_file_been_replaced'])
+                                                        <div class="flex items-center space-x-2 text-green-600">
+                                                            <i class="fa-solid fa-arrow-right text-xs"></i>
+                                                            <span class="text-sm font-semibold">Updated</span>
+                                                            <span class="text-xs bg-green-100 px-2 py-1 rounded">{{ $note['current_file_name'] }}</span>
+                                                        </div>
+                                                    @endif
+                                                </div>
+                                            @endif
+                                            
+                                            {{-- Correction Notes --}}
+                                            <div class="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                                                <p class="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">{{ $note['notes'] }}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                    @elseif(isset($selectedNotificationData['submissions'][0]['admin_notes']) && $selectedNotificationData['submissions'][0]['admin_notes'])
+                    {{-- Fallback to original admin notes if no correction notes exist --}}
+                    <div class="bg-yellow-50 border border-yellow-200 rounded-xl p-4">
+                        <div class="flex items-start">
+                            <i class="fa-solid fa-comment-dots text-yellow-600 mt-0.5 mr-3 text-lg"></i>
+                            <div class="flex-1">
+                                <h4 class="text-sm font-semibold text-yellow-800 mb-2">Admin Feedback</h4>
+                                <p class="text-sm text-yellow-700 whitespace-pre-wrap">{{ $selectedNotificationData['submissions'][0]['admin_notes'] }}</p>
+                            </div>
                         </div>
                     </div>
                     @endif

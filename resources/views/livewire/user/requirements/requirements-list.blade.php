@@ -416,7 +416,7 @@
                                                                                 <div class="flex gap-2 text-center justify-center gap-3">
                                                                                     @if ($submission->submissionFile)
                                                                                         <a href="{{ route('file.download', ['submission' => $submission->id]) }}"
-                                                                                            class="text-sm text-blue-600"
+                                                                                            class="text-sm text-blue-600 hover:text-blue-700"
                                                                                             title="Download">
                                                                                             <i class="fa-solid fa-download"></i>
                                                                                         </a>
@@ -438,12 +438,28 @@
                                                                                         @if ($isPreviewable)
                                                                                             <a href="{{ route('file.preview', ['submission' => $submission->id]) }}"
                                                                                                 target="_blank"
-                                                                                                class="text-sm text-green-600"
+                                                                                                class="text-sm text-green-600 hover:text-green-700"
                                                                                                 title="View">
                                                                                                 <i class="fa-solid fa-eye"></i>
                                                                                             </a>
                                                                                         @endif
                                                                                     @endif
+
+                                                                                    {{-- Feedback Button --}}
+                                                                                    @php
+                                                                                        $correctionNotesCount = \App\Models\AdminCorrectionNote::where('submitted_requirement_id', $submission->id)->count();
+                                                                                    @endphp
+                                                                                    <button wire:click="$dispatch('showRecentSubmissionDetail', { submissionId: '{{ $submission->id }}' })"
+                                                                                        class="text-sm text-purple-600 hover:text-purple-700 relative"
+                                                                                        title="View Feedback">
+                                                                                        <i class="fa-solid fa-message"></i>
+                                                                                        @if($correctionNotesCount > 0)
+                                                                                            <span class="absolute -top-2 -right-2 bg-purple-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
+                                                                                                {{ $correctionNotesCount }}
+                                                                                            </span>
+                                                                                        @endif
+                                                                                    </button>
+
                                                                                     @php
                                                                                         $isMarkedDone = \App\Models\RequirementSubmissionIndicator::where('requirement_id', $requirement->id)
                                                                                             ->where('user_id', auth()->id())
@@ -451,11 +467,21 @@
                                                                                             ->exists();
                                                                                     @endphp
 
-                                                                                    @if (($submission->status === 'uploaded' || $submission->status === 'under_review' || $submission->status === 'rejected' || $submission->status === 'revision_needed') && !$isMarkedDone)
+                                                                                    {{-- Uploaded/Under Review: Show Delete Button Only --}}
+                                                                                    @if (($submission->status === 'uploaded' || $submission->status === 'under_review') && !$isMarkedDone)
                                                                                         <button wire:click="confirmDelete({{ $submission->id }})"
-                                                                                            class="text-sm text-red-600"
+                                                                                            class="text-sm text-red-600 hover:text-red-700"
                                                                                             title="Delete submission">
                                                                                             <i class="fa-solid fa-trash"></i>
+                                                                                        </button>
+                                                                                    @endif
+
+                                                                                    {{-- Revision Required/Rejected: Show Replace Button Only --}}
+                                                                                    @if (($submission->status === 'revision_needed' || $submission->status === 'rejected') && !$isMarkedDone)
+                                                                                        <button wire:click="confirmReplace({{ $submission->id }})"
+                                                                                            class="text-sm text-orange-600 hover:text-orange-700"
+                                                                                            title="Replace file">
+                                                                                            <i class="fa-solid fa-rotate"></i>
                                                                                         </button>
                                                                                     @endif
                                                                                 </div>
@@ -797,7 +823,7 @@
                                                                                     <div class="flex gap-2 text-center justify-center gap-3">
                                                                                         @if ($submission->submissionFile)
                                                                                             <a href="{{ route('file.download', ['submission' => $submission->id]) }}"
-                                                                                                class="text-sm text-blue-600"
+                                                                                                class="text-sm text-blue-600 hover:text-blue-700"
                                                                                                 title="Download">
                                                                                                 <i class="fa-solid fa-download"></i>
                                                                                             </a>
@@ -819,12 +845,28 @@
                                                                                             @if ($isPreviewable)
                                                                                                 <a href="{{ route('file.preview', ['submission' => $submission->id]) }}"
                                                                                                     target="_blank"
-                                                                                                    class="text-sm text-green-600"
+                                                                                                    class="text-sm text-green-600 hover:text-green-700"
                                                                                                     title="View">
                                                                                                     <i class="fa-solid fa-eye"></i>
                                                                                                 </a>
                                                                                             @endif
                                                                                         @endif
+
+                                                                                        {{-- Feedback Button --}}
+                                                                                        @php
+                                                                                            $correctionNotesCount = \App\Models\AdminCorrectionNote::where('submitted_requirement_id', $submission->id)->count();
+                                                                                        @endphp
+                                                                                        <button wire:click="$dispatch('showRecentSubmissionDetail', { submissionId: '{{ $submission->id }}' })"
+                                                                                            class="text-sm text-purple-600 hover:text-purple-700 relative"
+                                                                                            title="View Feedback">
+                                                                                            <i class="fa-solid fa-message"></i>
+                                                                                            @if($correctionNotesCount > 0)
+                                                                                                <span class="absolute -top-2 -right-2 bg-purple-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
+                                                                                                    {{ $correctionNotesCount }}
+                                                                                                </span>
+                                                                                            @endif
+                                                                                        </button>
+
                                                                                         @php
                                                                                             $isMarkedDone = \App\Models\RequirementSubmissionIndicator::where('requirement_id', $requirement->id)
                                                                                                 ->where('user_id', auth()->id())
@@ -832,11 +874,21 @@
                                                                                                 ->exists();
                                                                                         @endphp
 
-                                                                                        @if (($submission->status === 'uploaded' || $submission->status === 'under_review' || $submission->status === 'rejected' || $submission->status === 'revision_needed') && !$isMarkedDone)
+                                                                                        {{-- Uploaded/Under Review: Show Delete Button Only --}}
+                                                                                        @if (($submission->status === 'uploaded' || $submission->status === 'under_review') && !$isMarkedDone)
                                                                                             <button wire:click="confirmDelete({{ $submission->id }})"
-                                                                                                class="text-sm text-red-600"
+                                                                                                class="text-sm text-red-600 hover:text-red-700"
                                                                                                 title="Delete submission">
                                                                                                 <i class="fa-solid fa-trash"></i>
+                                                                                            </button>
+                                                                                        @endif
+
+                                                                                        {{-- Revision Required/Rejected: Show Replace Button Only --}}
+                                                                                        @if (($submission->status === 'revision_needed' || $submission->status === 'rejected') && !$isMarkedDone)
+                                                                                            <button wire:click="confirmReplace({{ $submission->id }})"
+                                                                                                class="text-sm text-orange-600 hover:text-orange-700"
+                                                                                                title="Replace file">
+                                                                                                <i class="fa-solid fa-rotate"></i>
                                                                                             </button>
                                                                                         @endif
                                                                                     </div>
@@ -924,6 +976,80 @@
         @endauth
     </div>
 
+    <!-- Replace File Modal -->
+    @if ($showReplaceModal)
+        <x-modal name="replace-submission-file-modal" :show="$showReplaceModal" maxWidth="md">
+            <div class="bg-orange-600 text-white rounded-t-xl px-6 py-4 flex items-center space-x-3">
+                <i class="fa-solid fa-rotate text-lg"></i>
+                <h3 class="text-xl font-semibold">Replace File</h3>
+            </div>
+
+            <div class="bg-white px-6 py-6 rounded-b-xl">
+                <div class="space-y-4">
+                    <p class="text-gray-700">
+                        Are you sure you want to replace this submission file?
+                    </p>
+                    <p class="text-sm text-gray-600">
+                        The current file will be removed and replaced with the new file. Your submission history will be preserved.
+                    </p>
+                    
+                    <!-- File Input -->
+                    <div>
+                        <input type="file" wire:model="replaceFile"
+                            class="file-input file-input-bordered w-full"
+                            wire:loading.attr="disabled">
+                        @error('replaceFile')
+                            <span class="text-error text-sm">{{ $message }}</span>
+                        @enderror
+                    </div>
+
+                    <!-- Display selected replacement file -->
+                    @if ($replaceFile)
+                        <div class="p-3 bg-green-50 rounded-xl border border-gray-400">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                    @php
+                                        $extension = strtolower($replaceFile->getClientOriginalExtension());
+                                        $iconInfo = \App\Models\SubmittedRequirement::FILE_ICONS[$extension] ?? \App\Models\SubmittedRequirement::FILE_ICONS['default'];
+                                    @endphp
+                                    <i class="fa-solid {{ $iconInfo['icon'] }} {{ $iconInfo['color'] }}"></i>
+                                    <span class="text-sm font-medium truncate max-w-xs">
+                                        {{ $replaceFile->getClientOriginalName() }}
+                                    </span>
+                                </div>
+                                <button type="button" class="btn btn-xs btn-ghost text-error"
+                                    wire:click="$set('replaceFile', null)" title="Remove file">
+                                    <i class="fa-solid fa-times"></i>
+                                </button>
+                            </div>
+                            <div class="mt-1 text-xs text-gray-500">
+                                Size: {{ round($replaceFile->getSize() / 1024, 1) }} KB
+                            </div>
+                        </div>
+                    @endif
+                </div>
+
+                <div class="mt-6 pt-4 border-t border-gray-200 flex justify-end space-x-3">
+                    <button type="button" wire:click="cancelReplace"
+                        class="px-4 py-2 border border-gray-300 rounded-full text-sm font-medium text-gray-700 hover:bg-gray-50 cursor-pointer">
+                        Cancel
+                    </button>
+                    <button type="button" wire:click="replaceSubmission"
+                        class="px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-full text-sm font-medium cursor-pointer"
+                        wire:loading.attr="disabled"
+                        :disabled="!$replaceFile">
+                        <span wire:loading.remove wire:target="replaceSubmission">
+                            <i class="fa-solid fa-rotate mr-2"></i> Replace File
+                        </span>
+                        <span wire:loading wire:target="replaceSubmission">
+                            <i class="fa-solid fa-spinner fa-spin mr-2"></i> Replacing...
+                        </span>
+                    </button>
+                </div>
+            </div>
+        </x-modal>
+    @endif
+
     <!-- Delete Confirmation Modal -->
     @if ($showDeleteModal)
         <x-modal name="delete-submission-confirmation-modal" :show="$showDeleteModal" maxWidth="md">
@@ -961,4 +1087,17 @@
             </div>
         </x-modal>
     @endif
+
+    @livewire('user.recents.recent-submission-detail-modal')
+
+    @push('scripts')
+    <script>
+        document.addEventListener('livewire:init', () => {
+            Livewire.on('showRecentSubmissionDetail', (data) => {
+                @this.showRecentSubmissionDetail(data.submissionId);
+            });
+        });
+    </script>
+    @endpush
 </div>
+

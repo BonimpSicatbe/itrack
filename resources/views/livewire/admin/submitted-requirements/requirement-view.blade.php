@@ -202,8 +202,7 @@
                         <button wire:click="updateStatus" 
                             class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-xl shadow-sm text-green-700 bg-white hover:bg-green-700 hover:text-white border border-white transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-700"
                             title="Update both status and notes">
-                            <i class="fa-solid fa-check mr-1.5"></i>
-                            Update Status & Notes
+                            Update
                         </button>
                     </div>
                 @endif
@@ -243,12 +242,20 @@
                     <!-- Admin Notes Section -->
                     <div class="border-t border-gray-200 bg-white flex-shrink-0">
                         <div class="px-2 py-2">
-                            <textarea 
-                                wire:model="adminNotes"
-                                rows="2"
-                                placeholder="Add notes or comments about this submission..."
-                                class="w-full px-3 py-2 border border-gray-300 rounded-xl shadow-sm focus:border-green-700 focus:ring focus:ring-green-700 focus:ring-opacity-50 text-sm text-gray-700 placeholder-gray-400"
-                            ></textarea>
+                            <div class="flex gap-2">
+                                <textarea 
+                                    wire:model="adminNotes"
+                                    rows="1"
+                                    placeholder="Write correction notes for the submitter...."
+                                    class="flex-1 px-3 py-2 border border-gray-300 rounded-xl shadow-sm focus:border-green-700 focus:ring focus:ring-green-700 focus:ring-opacity-50 text-sm text-gray-700 placeholder-gray-400"
+                                ></textarea>
+                                <!-- View Notes Button -->
+                                <button type="button" wire:click="loadCorrectionNotes"
+                                    class="inline-flex items-center px-3 py-2 border border-green-600 text-sm font-medium rounded-lg text-green-600 bg-white hover:bg-green-50 transition-colors self-start flex-shrink-0">
+                                    <i class="fa-solid fa-note-sticky mr-1.5"></i>
+                                    Previous Correction Notes
+                                </button>
+                            </div>
                         </div>
                     </div>
                 @else
@@ -281,4 +288,91 @@
             </div>
         </div>
     </div>
+
+    <!-- Correction Notes Modal -->
+    <x-modal name="correction-notes-modal" :show="$showCorrectionNotesModal" maxWidth="2xl">
+        <div class="bg-white rounded-xl shadow-lg max-h-[80vh] overflow-hidden">
+            <!-- Modal Header -->
+            <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between" style="background: linear-gradient(148deg,rgba(18, 67, 44, 1) 0%, rgba(30, 119, 77, 1) 54%, rgba(55, 120, 64, 1) 100%);">
+                <div class="flex items-center">
+                    <i class="fa-solid fa-note-sticky text-white text-xl mr-3"></i>
+                    <h3 class="text-lg font-semibold text-white">Correction Notes History</h3>
+                </div>
+                <button wire:click="$set('showCorrectionNotesModal', false)" 
+                    class="text-white hover:text-gray-200 transition-colors">
+                    <i class="fa-solid fa-xmark text-xl"></i>
+                </button>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="p-6 overflow-y-auto max-h-[60vh]">
+                @if(count($correctionNotes) > 0)
+                    <div class="space-y-4">
+                        @foreach($correctionNotes as $note)
+                        <div class="border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+                            <div class="bg-gray-50 px-4 py-3 border-b border-gray-200 flex justify-between items-center">
+                                <div class="flex items-center">
+                                    <span class="text-sm font-semibold text-gray-700">
+                                        Note from {{ $note['admin']['name'] ?? 'Admin' }}
+                                    </span>
+                                    <span class="ml-3 text-xs text-gray-500">
+                                        {{ \Carbon\Carbon::parse($note['created_at'])->format('M d, Y g:i A') }}
+                                    </span>
+                                </div>
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold
+                                    @if($note['status'] === 'approved') bg-green-100 text-green-800
+                                    @elseif($note['status'] === 'rejected') bg-red-100 text-red-800  
+                                    @elseif($note['status'] === 'revision_needed') bg-yellow-100 text-yellow-800
+                                    @elseif($note['status'] === 'under_review') bg-blue-100 text-blue-800
+                                    @else bg-gray-100 text-gray-800 @endif">
+                                    {{ $note['status_label'] }}
+                                </span>
+                            </div>
+                            
+                            <div class="p-4 bg-white">
+                                <div class="space-y-3">
+                                    @if($note['file_name'])
+                                    <div class="flex items-center text-sm text-gray-600">
+                                        <i class="fa-regular fa-file mr-2 text-gray-500"></i>
+                                        <span class="font-semibold">Original File:</span>
+                                        <span class="ml-2 text-gray-700">{{ $note['file_name'] }}</span>
+                                    </div>
+                                    @endif
+                                    
+                                    <div class="bg-gray-50 p-3 rounded-lg border border-gray-200">
+                                        <p class="text-sm text-gray-700 whitespace-pre-wrap">{{ $note['correction_notes'] }}</p>
+                                    </div>
+                                    
+                                    @if($note['addressed_at'])
+                                    <div class="flex items-center text-sm text-green-600">
+                                        <i class="fa-regular fa-clock mr-2"></i>
+                                        <span class="font-semibold">Addressed on:</span>
+                                        <span class="ml-2">{{ \Carbon\Carbon::parse($note['addressed_at'])->format('M d, Y g:i A') }}</span>
+                                    </div>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+                        @endforeach
+                    </div>
+                @else
+                    <div class="text-center py-8">
+                        <div class="mx-auto w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-3">
+                            <i class="fa-solid fa-note-sticky text-2xl text-gray-400"></i>
+                        </div>
+                        <h3 class="text-lg font-medium text-gray-900 mb-1">No notes yet</h3>
+                        <p class="text-sm text-gray-500">No correction notes have been added for this submission</p>
+                    </div>
+                @endif
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="px-6 py-4 border-t border-gray-200 bg-gray-50 flex justify-end">
+                <button wire:click="$set('showCorrectionNotesModal', false)" 
+                    class="px-4 py-2 border border-gray-300 rounded-xl text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+                    Close
+                </button>
+            </div>
+        </div>
+    </x-modal>
 </div>

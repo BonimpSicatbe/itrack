@@ -436,4 +436,20 @@ class Requirement extends Model implements HasMedia
                 ->delete();
         });
     }
+
+    /**
+     * Relationship with Admin Correction Notes
+     */
+    public function correctionNotes(): HasMany
+    {
+        return $this->hasMany(AdminCorrectionNote::class);
+    }
+
+    /**
+     * Get pending correction notes for this requirement
+     */
+    public function pendingCorrectionNotes(): HasMany
+    {
+        return $this->correctionNotes()->pending();
+    }
 }

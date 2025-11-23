@@ -7,6 +7,7 @@ use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
@@ -32,7 +33,7 @@ class SubmittedRequirement extends Model implements HasMedia
     ];
 
     // Status Constants
-    const STATUS_UPLOADED = 'uploaded'; // New default status
+    const STATUS_UPLOADED = 'uploaded'; 
     const STATUS_UNDER_REVIEW = 'under_review';
     const STATUS_REVISION_NEEDED = 'revision_needed';
     const STATUS_REJECTED = 'rejected';
@@ -111,6 +112,14 @@ class SubmittedRequirement extends Model implements HasMedia
             'requirement_id', // Local key on submitted_requirements table
             'semester_id' // Local key on requirements table
         );
+    }
+
+    /**
+     * Relationship with Admin Correction Notes
+     */
+    public function correctionNotes(): HasMany
+    {
+        return $this->hasMany(AdminCorrectionNote::class, 'submitted_requirement_id');
     }
 
     /* ========== SCOPES ========== */
@@ -459,6 +468,22 @@ class SubmittedRequirement extends Model implements HasMedia
             self::STATUS_REJECTED => 'Rejected',
             self::STATUS_APPROVED => 'Approved',
         ];
+    }
+
+    /**
+     * Get pending correction notes for this submission
+     */
+    public function pendingCorrectionNotes(): HasMany
+    {
+        return $this->correctionNotes()->pending();
+    }
+
+    /**
+     * Check if submission has pending correction notes
+     */
+    public function hasPendingCorrections(): bool
+    {
+        return $this->pendingCorrectionNotes()->exists();
     }
 
     /* ========== BOOT ========== */

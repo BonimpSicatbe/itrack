@@ -193,11 +193,6 @@
             font-family: 'Arial', sans-serif;
         }
 
-        .footer-logo {
-            max-width: 120px; /* Increased from 100px */
-            height: auto;
-        }
-
         .footer-info {
             font-size: 11px; /* Increased from 9px */
             font-family: 'Arial', sans-serif;
@@ -407,40 +402,40 @@
             font-family: 'Arial', sans-serif;
         }
 
-        /* Prepared by section - UPDATED FOR PAGE BREAK FIX */
-        .prepared-by-section {
+        /* NEW: Approval sections */
+        .approval-sections {
+            display: table;
+            width: 100%;
             margin-top: 40px;
-            page-break-inside: avoid;
-            page-break-before: auto;
-        }
-
-        .prepared-by {
-            text-align: right;
             font-family: 'Arial', sans-serif;
-            padding: 20px 0;
         }
 
-        .prepared-by-label {
+        .approval-section {
+            display: table-cell;
+            width: 33.33%;
+            vertical-align: top;
+            padding: 0 15px;
+        }
+
+        .approval-label {
+            font-size: 11px;
             margin-bottom: 30px;
             font-family: 'Arial', sans-serif;
         }
 
-        .prepared-by-name {
+        .approval-name {
+            font-size: 12px;
             font-weight: bold;
             margin-bottom: 2px;
             font-family: 'Arial', sans-serif;
         }
 
-        .prepared-by-position {
-            font-family: 'Arial', sans-serif;
-        }
-
-        .prepared-by-email {
+        .approval-position {
             font-size: 11px;
             font-family: 'Arial', sans-serif;
         }
 
-        /* Print Specifics - UPDATED FOR PREPARED BY SECTION */
+        /* Print Specifics - UPDATED FOR APPROVAL SECTIONS */
         @media print {
             body {
                 margin: 0.5in 1in;
@@ -482,8 +477,8 @@
                 border-radius: 9999px; /* Added for print */
             }
 
-            /* Enhanced page break control for prepared by section */
-            .prepared-by-section {
+            /* Enhanced page break control for approval sections */
+            .approval-sections {
                 page-break-inside: avoid !important;
                 page-break-before: avoid !important;
                 margin-top: 30px;
@@ -685,24 +680,35 @@
         <div class="no-data">No instructors with course assignments found for this semester.</div>
     @endif
 
-    <!-- Prepared by Section with enhanced page break control -->
-    <div class="prepared-by-section">
-        <div class="prepared-by">
-            <div class="prepared-by-label">Prepared by:</div>
-            <div class="prepared-by-name">{{ Auth::user()->firstname }} {{ $formattedPreparedByMiddleName }} {{ Auth::user()->lastname }} {{ Auth::user()->extensionname }}</div>
-            <div class="prepared-by-position">{{ Auth::user()->position ?? 'Administrator' }}</div>
-        </div>
-    </div>
-
     <div class="footer">
         <div class="footer-content">
-            <div class="footer-left">
-                <img src="{{ public_path('images/logo-title.png') }}" alt="iTrack Logo" class="footer-logo">
-            </div>
             <div class="footer-right">
                 <div class="footer-info">Generated On: {{ now()->format('l, F j, Y \a\t g:i A') }}</div>
             </div>
         </div>
     </div>
+
+    <!-- Approval Sections with enhanced page break control -->
+    <div class="approval-sections">
+        <div class="approval-section">
+            <div class="approval-label">Prepared by:</div>
+            <div class="approval-name">{{ Auth::user()->firstname }} {{ $formattedPreparedByMiddleName }} {{ Auth::user()->lastname }} {{ Auth::user()->extensionname }}</div>
+            <div class="approval-position">{{ Auth::user()->position ?? 'Administrator' }}</div>
+        </div>
+        
+        <div class="approval-section">
+            <div class="approval-label">Noted by:</div>
+            <div class="approval-name">DR. MARIA S. SANTOS</div>
+            <div class="approval-position">Dean, Graduate School</div>
+        </div>
+        
+        <div class="approval-section">
+            <div class="approval-label">Checked by:</div>
+            <div class="approval-name">DR. JUAN R. CRUZ</div>
+            <div class="approval-position">Quality Assurance Director</div>
+        </div>
+    </div>
+
+    
 </body>
 </html>

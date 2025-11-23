@@ -20,6 +20,9 @@ class RequirementsList extends Component
     use WithFileUploads;
 
     public $activeSemester;
+    public $showReplaceModal = false;
+    public $submissionToReplace = null;
+    public $replaceFile;
     
     #[LivewireUrl(as: 'course', history: true, keep: false)]
     public $selectedCourse = null;
@@ -1180,6 +1183,136 @@ class RequirementsList extends Component
         }
         
         return RequirementType::find($this->selectedSubFolder);
+    }
+
+    /**
+     * Confirm replacement of a submission file
+     */
+    public function confirmReplace($submissionId)
+    {
+        $submission = SubmittedRequirement::find($submissionId);
+        
+        // Check if requirement is marked as done for this course
+        if ($submission) {
+            $isMarkedDone = RequirementSubmissionIndicator::where('requirement_id', $submission->requirement_id)
+                ->where('user_id', Auth::id())
+                ->where('course_id', $this->selectedCourse)
+                ->exists();
+                
+            if ($isMarkedDone) {
+                $this->dispatch('showNotification',
+                    type: 'error',
+                    content: 'Cannot replace file. Requirement is marked as done.'
+                );
+                return;
+            }
+        }
+        
+        $this->submissionToReplace = $submissionId;
+        $this->showReplaceModal = true;
+        $this->replaceFile = null;
+    }
+
+    /**
+     * Cancel replacement
+     */
+    public function cancelReplace()
+    {
+        $this->showReplaceModal = false;
+        $this->submissionToReplace = null;
+        $this->replaceFile = null;
+    }
+
+    /**
+     * Replace submission file
+     */
+    public function replaceSubmission()
+    {
+        $this->validate([
+            'replaceFile' => 'required|file|max:10240',
+        ]);
+
+        try {
+            if (!$this->submissionToReplace) {
+                return;
+            }
+            
+            $submission = SubmittedRequirement::findOrFail($this->submissionToReplace);
+            
+            // Check if user can replace this submission
+            if ($submission->user_id !== Auth::id()) {
+                $this->dispatch('showNotification',
+                    type: 'error',
+                    content: 'You are not authorized to replace this submission.'
+                );
+                return;
+            }
+            
+            // Check if requirement is marked as done for this course
+            $isMarkedDone = RequirementSubmissionIndicator::where('requirement_id', $submission->requirement_id)
+                ->where('user_id', Auth::id())
+                ->where('course_id', $this->selectedCourse)
+                ->exists();
+                
+            if ($isMarkedDone) {
+                $this->dispatch('showNotification',
+                    type: 'error',
+                    content: 'Cannot replace file. Requirement is marked as done.'
+                );
+                return;
+            }
+            
+            // Delete the old file
+            if ($submission->submissionFile) {
+                $submission->submissionFile->delete();
+            }
+            
+            // Add the new file
+            $submission
+                ->addMedia($this->replaceFile->getRealPath())
+                ->usingName($this->replaceFile->getClientOriginalName())
+                ->usingFileName($this->replaceFile->getClientOriginalName())
+                ->toMediaCollection('submission_files');
+
+            // Update submission timestamp and reset status if it was reviewed
+            if ($submission->status !== SubmittedRequirement::STATUS_UPLOADED) {
+                $submission->update([
+                    'status' => SubmittedRequirement::STATUS_UPLOADED,
+                    'submitted_at' => now(),
+                    'admin_notes' => null, // Clear previous admin notes
+                    'reviewed_by' => null,
+                    'reviewed_at' => null,
+                ]);
+            } else {
+                $submission->update([
+                    'submitted_at' => now(),
+                ]);
+            }
+            
+            $this->showReplaceModal = false;
+            $this->submissionToReplace = null;
+            $this->replaceFile = null;
+            
+            // Reload requirements based on current view
+            if ($this->selectedSubFolder) {
+                $this->loadSubFolderRequirements();
+            } else if ($this->selectedFolder) {
+                $this->loadFolderRequirements();
+            } else {
+                $this->loadCourseRequirements();
+            }
+            
+            $this->dispatch('showNotification',
+                type: 'success',
+                content: 'File replaced successfully!'
+            );
+            
+        } catch (\Exception $e) {
+            $this->dispatch('showNotification',
+                type: 'error',
+                content: 'Failed to replace file: ' . $e->getMessage()
+            );
+        }
     }
 
     public function render()

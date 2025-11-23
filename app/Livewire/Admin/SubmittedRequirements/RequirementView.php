@@ -40,6 +40,9 @@ class RequirementView extends Component
     public $adminNotes = '';
     public $initialFileId;
 
+    public $showCorrectionNotesModal = false;
+    public $correctionNotes = [];
+
     public function mount($requirement_id, $user_id = null, $course_id = null, $initialFileId = null)
     {
         $this->requirement_id = $requirement_id;
@@ -261,6 +264,18 @@ class RequirementView extends Component
                 'reviewed_by' => auth()->id(),
                 'reviewed_at' => now(),
             ]);
+
+            // CREATE CORRECTION NOTE
+            \App\Models\AdminCorrectionNote::create([
+                'submitted_requirement_id' => $submission->id,
+                'requirement_id' => $this->requirement_id,
+                'course_id' => $this->course_id,
+                'user_id' => $this->user_id,
+                'admin_id' => auth()->id(),
+                'correction_notes' => $this->adminNotes ?: 'No notes provided',
+                'file_name' => $this->selectedFile['file_name'],
+                'status' => $this->selectedStatus,
+            ]);
             
             // Send notification to user if status changed
             if ($oldStatus !== $this->selectedStatus) {
@@ -309,6 +324,49 @@ class RequirementView extends Component
             return number_format($bytes / 1024, 2) . ' KB';
         }
         return $bytes . ' bytes';
+    }
+
+    public function loadCorrectionNotes()
+    {
+        if ($this->selectedFile) {
+            $submissionId = $this->selectedFile['submission_id'];
+            
+            $notes = \App\Models\AdminCorrectionNote::with(['admin'])
+                ->where('submitted_requirement_id', $submissionId)
+                ->orderBy('created_at', 'desc')
+                ->get();
+
+            $this->correctionNotes = $notes->map(function ($note) {
+                return [
+                    'id' => $note->id,
+                    'correction_notes' => $note->correction_notes,
+                    'file_name' => $note->file_name,
+                    'status' => $note->status,
+                    'status_label' => $this->formatCorrectionNoteStatus($note->status),
+                    'created_at' => $note->created_at,
+                    'admin' => $note->admin ? [
+                        'id' => $note->admin->id,
+                        'name' => $note->admin->full_name ?? $note->admin->name,
+                        'email' => $note->admin->email,
+                    ] : null,
+                    'addressed_at' => $note->addressed_at,
+                ];
+            })->toArray();
+        }
+
+        $this->showCorrectionNotesModal = true;
+    }
+
+    protected function formatCorrectionNoteStatus($status)
+    {
+        return match($status) {
+            \App\Models\AdminCorrectionNote::STATUS_UPLOADED => 'Uploaded',
+            \App\Models\AdminCorrectionNote::STATUS_UNDER_REVIEW => 'Under Review',
+            \App\Models\AdminCorrectionNote::STATUS_REVISION_NEEDED => 'Revision Required',
+            \App\Models\AdminCorrectionNote::STATUS_REJECTED => 'Rejected',
+            \App\Models\AdminCorrectionNote::STATUS_APPROVED => 'Approved',
+            default => ucfirst($status),
+        };
     }
 
     public function render()

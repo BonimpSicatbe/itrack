@@ -258,6 +258,39 @@
         .status-rejected { background-color: #fee2e2; color: #991b1b; }
         .status-no-submission { background-color: #f3f4f6; color: #1f2937; }
 
+        /* NEW: Approval sections */
+        .approval-sections {
+            display: table;
+            width: 100%;
+            margin-top: 40px;
+            font-family: 'Arial', sans-serif;
+        }
+
+        .approval-section {
+            display: table-cell;
+            width: 33.33%;
+            vertical-align: top;
+            padding: 0 15px;
+        }
+
+        .approval-label {
+            font-size: 11px;
+            margin-bottom: 30px;
+            font-family: 'Arial', sans-serif;
+        }
+
+        .approval-name {
+            font-size: 12px;
+            font-weight: bold;
+            margin-bottom: 2px;
+            font-family: 'Arial', sans-serif;
+        }
+
+        .approval-position {
+            font-size: 11px;
+            font-family: 'Arial', sans-serif;
+        }
+
         .footer {
             width: 100%;
             margin-top: 30px;
@@ -270,7 +303,6 @@
         .footer-left, .footer-right { display: table-cell; vertical-align: middle; width: 50%; }
         .footer-left { text-align: left; }
         .footer-right { text-align: right; color: var(--light-text); }
-        .footer-logo { max-width: 100px; height: auto; }
         .footer-info { font-size: 9px; }
 
         /* Page break utilities */
@@ -302,6 +334,13 @@
             /* Force page breaks if content is too long */
             .force-page-break {
                 page-break-before: always;
+            }
+
+            /* Enhanced page break control for approval sections */
+            .approval-sections {
+                page-break-inside: avoid !important;
+                page-break-before: avoid !important;
+                margin-top: 30px;
             }
         }
 
@@ -529,23 +568,35 @@
         </div>
     @endforelse
 
-    <div class="prepared-by-section keep-together" style="margin-top: 30px;">
-        <div style="text-align: right;">
-            <div style="margin-bottom: 25px; font-size: 10px;">Prepared by:</div>
-            <div style="font-weight: bold; margin-bottom: 2px; font-size: 11px;">{{ Auth::user()->firstname }} {{ $formattedPreparedByMiddleName }} {{ Auth::user()->lastname }} {{ Auth::user()->extensionname }}</div>
-            <div style="font-size: 10px;">{{ Auth::user()->position ?? 'Administrator' }}</div>
-        </div>
-    </div>
-
     <div class="footer">
         <div class="footer-content">
-            <div class="footer-left">
-                <img src="{{ public_path('images/logo-title.png') }}" alt="iTrack Logo" class="footer-logo">
-            </div>
             <div class="footer-right">
                 <div class="footer-info">Generated On: {{ now()->format('F j, Y \a\t g:i A') }}</div>
             </div>
         </div>
     </div>
+
+    <!-- Approval Sections with enhanced page break control -->
+    <div class="approval-sections keep-together">
+        <div class="approval-section">
+            <div class="approval-label">Prepared by:</div>
+            <div class="approval-name">{{ Auth::user()->firstname }} {{ $formattedPreparedByMiddleName }} {{ Auth::user()->lastname }} {{ Auth::user()->extensionname }}</div>
+            <div class="approval-position">{{ Auth::user()->position ?? 'Administrator' }}</div>
+        </div>
+        
+        <div class="approval-section">
+            <div class="approval-label">Noted by:</div>
+            <div class="approval-name">DR. MARIA S. SANTOS</div>
+            <div class="approval-position">Dean, Graduate School</div>
+        </div>
+        
+        <div class="approval-section">
+            <div class="approval-label">Checked by:</div>
+            <div class="approval-name">DR. JUAN R. CRUZ</div>
+            <div class="approval-position">Quality Assurance Director</div>
+        </div>
+    </div>
+
+    
 </body>
 </html>

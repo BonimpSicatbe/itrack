@@ -235,13 +235,33 @@ class Notification extends Component
 
         // Load submission details if available (for submission-related notifications)
         if ($submissionId) {
-            $submission = SubmittedRequirement::with(['reviewer', 'course.program', 'user', 'media'])
+            $submission = SubmittedRequirement::with(['reviewer', 'course.program', 'user', 'media', 'correctionNotes.admin'])
                 ->find($submissionId);
 
             if ($submission) {
                 $data['submissions'] = [$this->formatSubmission($submission)];
                 $this->loadFiles([$submission], $data);
                 
+                // Load correction notes for this submission - order by latest first with detailed information
+                $data['correction_notes'] = $submission->correctionNotes
+                    ->sortByDesc('created_at') // Newest first
+                    ->map(function ($note) {
+                        return [
+                            'id' => $note->id,
+                            'notes' => $note->correction_notes,
+                            'file_name' => $note->file_name,
+                            'status' => $note->status,
+                            'status_label' => $this->formatCorrectionNoteStatus($note->status),
+                            'status_badge' => $note->status_badge,
+                            'admin_name' => $note->admin->name ?? 'Administrator',
+                            'created_at' => $note->created_at,
+                            'addressed_at' => $note->addressed_at,
+                            'is_pending' => $note->addressed_at === null,
+                            'has_file_been_replaced' => $note->hasFileBeenReplaced(),
+                            'current_file_name' => $note->getCurrentFileName(),
+                        ];
+                    })->values()->toArray(); // Reset keys after sorting
+
                 // Load submitter data
                 $data['submitter'] = [
                     'id' => $submission->user->id,
@@ -316,14 +336,13 @@ class Notification extends Component
         }
     }
 
-
     protected function handleSubmissionStatusNotification($notification, &$data): void
     {
         $submissionId = data_get($notification->data, 'submission_id');
         $requirementId = data_get($notification->data, 'requirement_id');
 
         // Get submission details
-        $submission = SubmittedRequirement::with(['requirement', 'user', 'course.program', 'media'])
+        $submission = SubmittedRequirement::with(['requirement', 'user', 'course.program', 'media', 'correctionNotes.admin'])
             ->where('id', $submissionId)
             ->where('user_id', Auth::id())
             ->first();
@@ -331,6 +350,26 @@ class Notification extends Component
         if ($submission) {
             $data['submissions'] = [$this->formatSubmission($submission)];
             $this->loadFiles([$submission], $data);
+
+            // Load correction notes for this submission - order by latest first with detailed information
+            $data['correction_notes'] = $submission->correctionNotes
+                ->sortByDesc('created_at') // Newest first
+                ->map(function ($note) {
+                    return [
+                        'id' => $note->id,
+                        'notes' => $note->correction_notes,
+                        'file_name' => $note->file_name,
+                        'status' => $note->status,
+                        'status_label' => $this->formatCorrectionNoteStatus($note->status),
+                        'status_badge' => $note->status_badge,
+                        'admin_name' => $note->admin->name ?? 'Administrator',
+                        'created_at' => $note->created_at,
+                        'addressed_at' => $note->addressed_at,
+                        'is_pending' => $note->addressed_at === null,
+                        'has_file_been_replaced' => $note->hasFileBeenReplaced(),
+                        'current_file_name' => $note->getCurrentFileName(),
+                    ];
+                })->values()->toArray(); // Reset keys after sorting
 
             $data['requirement'] = [
                 'id' => $submission->requirement->id,
@@ -381,6 +420,18 @@ class Notification extends Component
                 $data['requirement']['program_display'] = $programData['program'];
             }
         }
+    }
+
+    protected function formatCorrectionNoteStatus($status)
+    {
+        return match($status) {
+            \App\Models\AdminCorrectionNote::STATUS_UPLOADED => 'Uploaded',
+            \App\Models\AdminCorrectionNote::STATUS_UNDER_REVIEW => 'Under Review',
+            \App\Models\AdminCorrectionNote::STATUS_REVISION_NEEDED => 'Revision Required',
+            \App\Models\AdminCorrectionNote::STATUS_REJECTED => 'Rejected',
+            \App\Models\AdminCorrectionNote::STATUS_APPROVED => 'Approved',
+            default => ucfirst($status),
+        };
     }
 
     protected function formatSubmission($submission)

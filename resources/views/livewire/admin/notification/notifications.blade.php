@@ -514,13 +514,10 @@
                                     {{-- Status Update and Review History (Always Visible) --}}
                                     <div class="p-5 border-t bg-gray-50">
 
-                                        {{-- Current Review Notes Display (for context) --}}
-                                        <div class="space-y-2 mb-6">
-                                            <p class="text-sm font-semibold text-gray-700">Current Review Notes</p>
-                                            <p class="text-sm text-gray-600 bg-white p-6 rounded-xl border border-gray-200 shadow-inner ">
-                                                {{ $submission['admin_notes'] ?? 'No notes provided for this status.' }}
-                                            </p>
-                                        </div>
+                                        {{-- Display correction notes specific to this submission --}}
+                                        @php
+                                            $submissionCorrectionNotes = $selectedNotificationData['correction_notes_by_submission'][$file['submission_id']] ?? [];
+                                        @endphp
 
                                         {{-- Status Update Form (Always Visible) --}}
                                         <form wire:submit.prevent="updateFileStatus('{{ $file['submission_id'] }}')" class="space-y-4">
@@ -546,9 +543,9 @@
 
                                                 {{-- Admin Notes Textarea --}}
                                                 <div class="w-full md:w-1/2 space-y-2">
-                                                    <label for="adminNotes-{{ $file['submission_id'] }}" class="block text-sm font-semibold text-gray-700">New Admin Notes (Optional)</label>
+                                                    <label for="adminNotes-{{ $file['submission_id'] }}" class="block text-sm font-semibold text-gray-700">Suggested Corrections (Optional)</label>
                                                     <textarea wire:model="adminNotes.{{ $file['submission_id'] }}" id="adminNotes-{{ $file['submission_id'] }}" rows="1"
-                                                        placeholder="Add notes for the submitter..."
+                                                        placeholder="Write correction notes for the submitter..."
                                                         class="w-full rounded-xl border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 text-sm py-2.5 px-4 bg-white resize-none"></textarea>
                                                     @error("adminNotes.{$file['submission_id']}")
                                                         <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
@@ -564,6 +561,66 @@
                                                 </button>
                                             </div>
                                         </form>
+
+                                        @if(count($submissionCorrectionNotes) > 0)
+                                        <div class=" pt-6 pb-2 rounded-xl">
+                                            <div class="flex items-center mb-6">
+                                                <h3 class="text-lg pl-3 font-semibold text-gray-900">Previous Correction Notes</h3>
+                                                <span class="ml-3 px-3 py-1 bg-blue-100 text-blue-700 text-sm font-semibold rounded-full">
+                                                    {{ count($submissionCorrectionNotes) }} notes
+                                                </span>
+                                            </div>
+
+                                            <div class="space-y-4">
+                                                @foreach($submissionCorrectionNotes as $note)
+                                                <div class="border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+                                                    <div class="bg-gray-50 px-5 py-3 border-b border-gray-200 flex justify-between items-center">
+                                                        <div class="flex items-center">
+                                                            <span class="text-sm font-semibold text-gray-700">
+                                                                Note from {{ $note['admin']['name'] ?? 'Admin' }}
+                                                            </span>
+                                                            <span class="ml-3 text-xs text-gray-500">
+                                                                {{ \Carbon\Carbon::parse($note['created_at'])->format('M d, Y g:i A') }}
+                                                            </span>
+                                                        </div>
+                                                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold
+                                                            @if($note['status'] === 'approved') bg-green-100 text-green-800
+                                                            @elseif($note['status'] === 'rejected') bg-red-100 text-red-800  
+                                                            @elseif($note['status'] === 'revision_needed') bg-yellow-100 text-yellow-800
+                                                            @elseif($note['status'] === 'under_review') bg-blue-100 text-blue-800
+                                                            @else bg-gray-100 text-gray-800 @endif">
+                                                            {{ $note['status_label'] }}
+                                                        </span>
+                                                    </div>
+                                                    
+                                                    <div class="p-5 bg-white">
+                                                        <div class="space-y-3">
+                                                            @if($note['file_name'])
+                                                            <div class="flex items-center text-sm text-gray-600">
+                                                                <i class="fa-regular fa-file mr-2 text-gray-500"></i>
+                                                                <span class="font-semibold">Original File:</span>
+                                                                <span class="ml-2 text-gray-700">{{ $note['file_name'] }}</span>
+                                                            </div>
+                                                            @endif
+                                                            
+                                                            <div class="bg-gray-50 p-4 rounded-xl border border-gray-200">
+                                                                <p class="text-sm text-gray-700 whitespace-pre-wrap">{{ $note['correction_notes'] }}</p>
+                                                            </div>
+                                                            
+                                                            @if($note['addressed_at'])
+                                                            <div class="flex items-center text-sm text-green-600">
+                                                                <i class="fa-regular fa-clock mr-2"></i>
+                                                                <span class="font-semibold">Addressed on:</span>
+                                                                <span class="ml-2">{{ \Carbon\Carbon::parse($note['addressed_at'])->format('M d, Y g:i A') }}</span>
+                                                            </div>
+                                                            @endif
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                @endforeach
+                                            </div>
+                                        </div>
+                                        @endif
                                     </div>
                                 </div>
                                 @endforeach
