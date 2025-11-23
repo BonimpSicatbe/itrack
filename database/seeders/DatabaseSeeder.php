@@ -22,15 +22,7 @@ class DatabaseSeeder extends Seeder
         Role::firstOrCreate(['name' => 'user']);
         Role::firstOrCreate(['name' => 'admin']);
 
-        // Seed semesters first
-        $this->call(SemesterSeeder::class);
-        
-        // Then seed academic programs
         $this->call(AcademicProgramsSeeder::class);
-        
-        // Then seed course assignments
-        $this->call(CourseAssignmentSeeder::class);
-        
         $this->call(RequirementTypeSeeder::class);
         
 
