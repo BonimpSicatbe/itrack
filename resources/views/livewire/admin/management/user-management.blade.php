@@ -75,7 +75,8 @@
             <tbody>
                 @forelse($users as $user)
                     <tr class="hover:bg-green-50 transition-colors duration-150 cursor-pointer"
-                        wire:click="showUser({{ $user->id }})">
+                        wire:click="showUser({{ $user->id }})" 
+                        wire:key="user-{{ $user->id }}">
                         <td class="whitespace-nowrap p-4">
                             <div class="flex items-center">
                                 <div class="h-10 w-10 flex-shrink-0">
