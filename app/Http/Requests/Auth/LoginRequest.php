@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
-use App\Models\User; // Add this import
+use App\Models\User;
 
 class LoginRequest extends FormRequest
 {
@@ -42,7 +42,7 @@ class LoginRequest extends FormRequest
     {
         $this->ensureIsNotRateLimited();
 
-        // First, find the user by email and check if they're active
+        // First, find the user by email
         $user = User::where('email', $this->string('email'))->first();
 
         // Check if user exists and is not active
@@ -51,6 +51,15 @@ class LoginRequest extends FormRequest
 
             throw ValidationException::withMessages([
                 'email' => 'Your account has been deactivated. Please contact administrator.',
+            ]);
+        }
+
+        // Check if user exists and email is not verified
+        if ($user && is_null($user->email_verified_at)) {
+            RateLimiter::hit($this->throttleKey());
+
+            throw ValidationException::withMessages([
+                'email' => 'Your email address is not verified. Please verify your email before logging in.',
             ]);
         }
 
