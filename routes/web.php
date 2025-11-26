@@ -57,7 +57,7 @@ Route::middleware(['auth', 'role:admin|super-admin'])
     ->group(function () {
         // Dashboard
         Route::get('/dashboard', function () {
-            return view('admin.dashboard', ['unreadCount' => Auth::user()->unreadNotifications->count()]);
+            return view('admin.dashboard', ['unreadCount' => Auth::user()->unreadNotifications->count() ?? 0]);
         })->name('dashboard');
 
         // Notifications

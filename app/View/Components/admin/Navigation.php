@@ -112,7 +112,7 @@ class Navigation extends Component
 
     public function render(): View|Closure|string
     {
-        return view('layouts.admin.navigation', [
+        return view('components.admin.navigation', [
             'navLinks' => $this->navLinks,
             'unreadCount' => $this->unreadCount
         ]);

@@ -33,20 +33,20 @@ class Navigation extends Component
             ['label' => Auth::user()->firstname . ' ' . Auth::user()->lastname, 'route' => 'profile.edit', 'icon' => 'user', 'is_profile' => true],
             ['label' => 'Logout', 'route' => 'logout', 'icon' => 'right-from-bracket'],
         ];
-        
+
         // Add logo configuration - different logos for each state
         $this->logos = [
             'collapsed' => asset('images/logo-1.png'),
-            'expanded' => asset('images/logo-title.png'), 
+            'expanded' => asset('images/logo-title.png'),
         ];
     }
 
     public function render(): View|Closure|string
     {
-        return view('layouts.user.navigation', [
+        return view('components.user.navigation', [
             'navLinks' => $this->navLink,
             'bottomNavLinks' => $this->bottomNavLink,
-            'logos' => $this->logos, 
+            'logos' => $this->logos,
         ]);
     }
 }
