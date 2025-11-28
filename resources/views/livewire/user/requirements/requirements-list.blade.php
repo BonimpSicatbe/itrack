@@ -8,7 +8,7 @@
                 <i class="fa-solid fa-clipboard-list text-white text-2xl"></i>
                 <h1 class="text-xl font-bold text-white">Course Requirements</h1>
             </div>
-            
+
             <!-- Right: Notification -->
             @livewire('user.dashboard.notification')
         </div>
@@ -96,7 +96,7 @@
                                         </div>
                                         <h3 class="font-bold text-gray-800 text-lg mb-2">{{ $course->course_code }}</h3>
                                         <p class="text-gray-600 text-sm mb-4 line-clamp-2">{{ $course->course_name }}</p>
-                                        
+
                                         @php
                                             $user = auth()->user();
                                             $requirementsCount = \App\Models\Requirement::where('semester_id', $activeSemester->id)
@@ -104,13 +104,13 @@
                                                 ->filter(function($requirement) use ($user, $activeSemester) {
                                                     // Use the new program-based assignment logic
                                                     $rawAssignedTo = $requirement->getRawOriginal('assigned_to');
-                                                    
+
                                                     if (is_string($rawAssignedTo)) {
                                                         $assignedTo = json_decode($rawAssignedTo, true);
                                                     } else {
                                                         $assignedTo = $requirement->assigned_to;
                                                     }
-                                                    
+
                                                     if (json_last_error() !== JSON_ERROR_NONE) {
                                                         $assignedTo = [];
                                                     }
@@ -127,11 +127,11 @@
 
                                                     // Check specific program assignment
                                                     $assignedProgramIds = array_map('intval', $programs);
-                                                    
+
                                                     if (empty($assignedProgramIds)) {
                                                         return false;
                                                     }
-                                                    
+
                                                     return \App\Models\CourseAssignment::where('professor_id', $user->id)
                                                         ->where('semester_id', $activeSemester->id)
                                                         ->whereHas('course', function($query) use ($assignedProgramIds) {
@@ -141,7 +141,7 @@
                                                 })
                                                 ->count();
                                         @endphp
-                                        
+
                                         <div class="text-xs text-gray-500 bg-gray-100 rounded-xl py-2 px-3">
                                             {{ $requirementsCount }} requirement(s)
                                         </div>
@@ -168,10 +168,10 @@
                                     $can_mark_done = $requirementData['can_mark_done'];
                                     $partnership_status = $requirementData['partnership_status'];
                                 @endphp
-                                
+
                                 <div class="collapse collapse-arrow bg-base-100 border-2 border-gray-300 shadow-sm hover:border-green-500">
                                     <input type="checkbox" name="requirements-list-item" class="h-full" />
-                                    
+
                                     {{-- Title / Collapse Button --}}
                                     <div class="collapse-title">
                                         <div class="flex flex-row items-center gap-8">
@@ -187,7 +187,7 @@
                                             </div>
                                             @if ($user_has_submitted)
                                                 <button wire:click="toggleMarkAsDone({{ $requirement->id }})"
-                                                    wire:target="toggleMarkAsDone({{ $requirement->id }})" 
+                                                    wire:target="toggleMarkAsDone({{ $requirement->id }})"
                                                     wire:loading.attr="disabled"
                                                     type="button"
                                                     class="btn btn-sm btn-outline z-1 rounded-full {{ $user_marked_done ? 'btn-warning' : ($can_mark_done ? 'btn-success' : 'btn-disabled') }}">
@@ -363,7 +363,7 @@
                                                             return $submission->course_id == $this->selectedCourse;
                                                         });
                                                     @endphp
-                                                    
+
                                                     @if ($courseSubmissions->count() > 0)
                                                         <div class="overflow-x-auto max-h-96 overflow-y-auto">
                                                             <table class="table w-full">
@@ -528,7 +528,7 @@
                                 $currentFolderData = collect($folderStructure)->firstWhere('folder.id', $selectedFolder);
                             }
                         @endphp
-                        
+
                         @if($currentFolderData && count($currentFolderData['children']) > 0)
                             <!-- Display Children Folders -->
                             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-6">
@@ -560,10 +560,10 @@
                                         $can_mark_done = $requirementData['can_mark_done'];
                                         $partnership_status = $requirementData['partnership_status'];
                                     @endphp
-                                    
+
                                     <div class="collapse collapse-arrow bg-base-100 border-2 border-gray-300 shadow-sm hover:border-green-500">
                                         <input type="checkbox" name="requirements-list-item" class="h-full" />
-                                        
+
                                         {{-- Title / Collapse Button --}}
                                         <div class="collapse-title">
                                             <div class="flex flex-row items-center gap-8">
@@ -579,7 +579,7 @@
                                                 </div>
                                                 @if ($user_has_submitted)
                                                     <button wire:click="toggleMarkAsDone({{ $requirement->id }})"
-                                                        wire:target="toggleMarkAsDone({{ $requirement->id }})" 
+                                                        wire:target="toggleMarkAsDone({{ $requirement->id }})"
                                                         wire:loading.attr="disabled"
                                                         type="button"
                                                         class="btn btn-sm btn-outline z-1 rounded-full {{ $user_marked_done ? 'btn-warning' : ($can_mark_done ? 'btn-success' : 'btn-disabled') }}">
@@ -770,7 +770,7 @@
                                                                 return $submission->course_id == $this->selectedCourse;
                                                             });
                                                         @endphp
-                                                        
+
                                                         @if ($courseSubmissions->count() > 0)
                                                             <div class="overflow-x-auto max-h-96 overflow-y-auto">
                                                                 <table class="table w-full">
@@ -918,7 +918,7 @@
                         @php
                             $course = $assignedCourses->firstWhere('id', $selectedCourse);
                         @endphp
-                        
+
                         @if($course)
                             <div class="bg-green-50 border border-green-200 rounded-xl p-4 mb-6">
                                 <h2 class="text-xl font-bold text-green-800">{{ $course->course_code }}</h2>
@@ -992,7 +992,7 @@
                     <p class="text-sm text-gray-600">
                         The current file will be removed and replaced with the new file. Your submission history will be preserved.
                     </p>
-                    
+
                     <!-- File Input -->
                     <div>
                         <input type="file" wire:model="replaceFile"

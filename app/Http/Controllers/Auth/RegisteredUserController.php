@@ -37,7 +37,7 @@ class RegisteredUserController extends Controller
             'middlename' => ['nullable', 'string', 'max:255'],
             'lastname' => ['required', 'string', 'max:255'],
             'extensionname' => ['nullable', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users', 'email')],
+            'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users', 'email'), 'regex:/^[A-Za-z0-9._%+-]+@cvsu\.edu\.ph$/i'],
             'college_id' => ['required', 'exists:colleges,id'],
             'position' => ['required', 'string', 'max:255'],
             'teaching_started_at' => ['required', 'date'],

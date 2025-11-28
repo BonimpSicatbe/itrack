@@ -42,7 +42,7 @@ class RequirementCreate extends Component
 
     // --- FILE PROPERTIES ---
     public $required_files = [];
-    
+
     // Map for quick lookup of a folder's children (ID => [child_ids])
     protected array $folderChildrenMap = [];
 
@@ -57,7 +57,7 @@ class RequirementCreate extends Component
         // Populate the map on mount for quick lookup
         $this->folderChildrenMap = $this->getFolderChildrenMap();
         $this->previousRequirementTypes = $this->selectedRequirementTypes;
-        
+
         // Get all existing requirement type IDs for the active semester
         $this->loadExistingRequirementTypeIds();
     }
@@ -113,7 +113,7 @@ class RequirementCreate extends Component
     {
         return Semester::where('is_active', true)->first();
     }
-    
+
     #[Computed]
     public function requirementTypes()
     {
@@ -135,7 +135,7 @@ class RequirementCreate extends Component
         if ($this->selectedCollege) {
             return Program::where('college_id', $this->selectedCollege)->get();
         }
-        
+
         return Program::all();
     }
 
@@ -166,10 +166,10 @@ class RequirementCreate extends Component
     {
         return [
             'otherRequirementName' => [
-                'required_if:isOtherSelected,true', 
-                'nullable', 
-                'string', 
-                'max:255', 
+                'required_if:isOtherSelected,true',
+                'nullable',
+                'string',
+                'max:255',
                 function ($attribute, $value, $fail) {
                     if ($this->isOtherSelected && !empty($value)) {
                         $activeSemester = $this->activeSemester;
@@ -185,7 +185,7 @@ class RequirementCreate extends Component
                 }
             ],
             'selectedRequirementTypes' => [
-                'nullable', 
+                'nullable',
                 'array',
                 function ($attribute, $value, $fail) {
                     if (!empty($value)) {
@@ -206,12 +206,12 @@ class RequirementCreate extends Component
             'isOtherSelected' => ['boolean'],
 
             'due' => ['required', 'date', 'after_or_equal:today'],
-            
+
             'selectedPrograms' => ['nullable', 'array'],
             'selectedPrograms.*' => ['exists:programs,id'],
-            
-            'required_files' => ['nullable', 'array', 'max:5'],
-            'required_files.*' => ['file', 'max:15360', 'mimes:pdf,doc,docx,xls,xlsx,ppt,pptx,jpg,jpeg,png,gif,txt,zip,rar,7z,mp4,avi,mkv,mp3,wav'],
+
+            'required_files' => ['nullable', 'array', 'max:5', 'mime:application/pdf,image/*'],
+            'required_files.*' => ['file', 'max:15360', 'mime:application/pdf,image/*'],
         ];
     }
 
@@ -228,20 +228,20 @@ class RequirementCreate extends Component
     {
         $this->selectAllPrograms = false;
     }
-    
+
     // --- REQUIREMENT SELECTION HOOKS ---
     public function updatedSelectedRequirementTypes($value)
     {
         // Get current and previous selection
         $currentSelection = $this->selectedRequirementTypes;
         $previousSelection = $this->previousRequirementTypes;
-        
+
         // Find what was just changed (added or removed)
         $added = array_diff($currentSelection, $previousSelection);
         $removed = array_diff($previousSelection, $currentSelection);
-        
+
         $finalSelection = $currentSelection;
-        
+
         // Handle folder selection/deselection
         foreach ($added as $addedId) {
             // If a folder was added, add all its children
@@ -249,18 +249,18 @@ class RequirementCreate extends Component
                 $finalSelection = array_merge($finalSelection, $this->folderChildrenMap[$addedId]);
             }
         }
-        
+
         foreach ($removed as $removedId) {
             // If a folder was removed, remove all its children
             if (isset($this->folderChildrenMap[$removedId])) {
                 $finalSelection = array_diff($finalSelection, $this->folderChildrenMap[$removedId]);
             }
         }
-        
+
         // Handle child selection/deselection affecting parent folder
         foreach ($this->folderChildrenMap as $folderId => $childIds) {
             $selectedChildren = array_intersect($childIds, $finalSelection);
-            
+
             if (count($selectedChildren) === count($childIds)) {
                 // All children are selected, so select the folder
                 if (!in_array($folderId, $finalSelection)) {
@@ -271,9 +271,9 @@ class RequirementCreate extends Component
                 $finalSelection = array_diff($finalSelection, [$folderId]);
             }
         }
-        
+
         $this->selectedRequirementTypes = array_values(array_unique($finalSelection));
-        
+
         // Update previous selection for next change
         $this->previousRequirementTypes = $this->selectedRequirementTypes;
 
@@ -286,7 +286,7 @@ class RequirementCreate extends Component
     {
         // Get all individual requirement IDs that are available (not created)
         $allAvailableIndividualIds = [];
-        
+
         foreach ($this->requirementTypes as $type) {
             if ($type->is_folder && $type->children->isNotEmpty()) {
                 foreach ($type->children as $child) {
@@ -308,12 +308,12 @@ class RequirementCreate extends Component
                 }
             }
         }
-        
+
         $allAvailableIndividualIds = array_unique($allAvailableIndividualIds);
-        
+
         // Get currently selected IDs that are available
         $currentlySelectedAvailable = array_intersect($this->selectedRequirementTypes, $allAvailableIndividualIds);
-        
+
         // Update Select All Requirements - true only if ALL available items are selected
         $this->selectAllRequirements = count($currentlySelectedAvailable) === count($allAvailableIndividualIds) && count($allAvailableIndividualIds) > 0;
 
@@ -345,7 +345,7 @@ class RequirementCreate extends Component
             // Add to selection
             $this->selectedPrograms[] = $programId;
         }
-        
+
         // Update select all programs state based on CURRENTLY VISIBLE programs
         $this->updateSelectAllProgramsState();
     }
@@ -353,7 +353,7 @@ class RequirementCreate extends Component
     public function updateSelectAllProgramsState()
     {
         $currentProgramIds = $this->programs->pluck('id')->toArray();
-        $this->selectAllPrograms = !empty($currentProgramIds) && 
+        $this->selectAllPrograms = !empty($currentProgramIds) &&
             count(array_intersect($this->selectedPrograms, $currentProgramIds)) === count($currentProgramIds);
     }
 
@@ -366,7 +366,7 @@ class RequirementCreate extends Component
             // Add to selection
             $this->selectedRequirementTypes[] = $requirementId;
         }
-        
+
         // Update the select all states
         $this->updateSelectAllStates();
     }
@@ -377,7 +377,7 @@ class RequirementCreate extends Component
         if ($value) {
             // Get all individual requirement IDs (including children and grandchildren) that are NOT created
             $allIndividualIds = [];
-            
+
             foreach ($this->requirementTypes as $type) {
                 if ($type->is_folder && $type->children->isNotEmpty()) {
                     // Add all children and grandchildren
@@ -403,13 +403,13 @@ class RequirementCreate extends Component
                     }
                 }
             }
-            
+
             $this->selectedRequirementTypes = array_values(array_unique($allIndividualIds));
         } else {
             // Deselect all
             $this->selectedRequirementTypes = [];
         }
-        
+
         // Update the select all states to reflect the current selection
         $this->updateSelectAllStates();
     }
@@ -424,7 +424,7 @@ class RequirementCreate extends Component
                 $availableMidtermIds = array_filter($midtermIds, function($id) {
                     return !in_array($id, $this->existingRequirementTypeIds);
                 });
-                
+
                 // Add available Midterm children to selection
                 $this->selectedRequirementTypes = array_values(array_unique(array_merge($this->selectedRequirementTypes, $availableMidtermIds)));
             } else {
@@ -445,7 +445,7 @@ class RequirementCreate extends Component
                 $availableFinalsIds = array_filter($finalsIds, function($id) {
                     return !in_array($id, $this->existingRequirementTypeIds);
                 });
-                
+
                 // Add available Finals children to selection
                 $this->selectedRequirementTypes = array_values(array_unique(array_merge($this->selectedRequirementTypes, $availableFinalsIds)));
             } else {
@@ -455,7 +455,7 @@ class RequirementCreate extends Component
             $this->updateSelectAllStates();
         }
     }
-    
+
     public function updatedIsOtherSelected($value)
     {
         if (!$value) {
@@ -468,7 +468,7 @@ class RequirementCreate extends Component
     public function updatedSelectAllPrograms($value)
     {
         $currentProgramIds = $this->programs->pluck('id')->toArray();
-        
+
         if ($value) {
             // Select only the currently visible/filtered programs
             $this->selectedPrograms = array_values(array_unique(array_merge($this->selectedPrograms, $currentProgramIds)));
@@ -476,7 +476,7 @@ class RequirementCreate extends Component
             // Deselect only the currently visible/filtered programs
             $this->selectedPrograms = array_values(array_diff($this->selectedPrograms, $currentProgramIds));
         }
-        
+
         // Update the state
         $this->updateSelectAllProgramsState();
     }
@@ -485,7 +485,7 @@ class RequirementCreate extends Component
     protected function getAssignedUsers($assignedData)
     {
         $users = collect();
-        
+
         // Get the active semester
         $activeSemester = $this->activeSemester;
         if (!$activeSemester) {
@@ -502,7 +502,7 @@ class RequirementCreate extends Component
                             });
                     })
                     ->get();
-        } 
+        }
         // If specific programs are selected
         elseif (!empty($assignedData['programs'])) {
             $users = User::where('is_active', true)
@@ -514,7 +514,7 @@ class RequirementCreate extends Component
                     })
                     ->get();
         }
-        
+
         // Remove duplicates and filter out admin users
         return $users->unique('id')->filter(function ($user) {
             return !in_array($user->role ?? 'user', ['admin', 'super-admin']);
@@ -574,7 +574,7 @@ class RequirementCreate extends Component
                 throw new \Exception('No active semester found. Please set an active semester first.');
             }
 
-            // 1. Prepare ASSIGNMENT DATA 
+            // 1. Prepare ASSIGNMENT DATA
             $assignedData = [
                 'programs' => $this->selectedPrograms,
                 'selectAllPrograms' => $this->selectAllPrograms,
@@ -606,7 +606,7 @@ class RequirementCreate extends Component
 
                             // Check if the child itself has children (nested folders)
                             $childWithRelations = RequirementType::with('children')->find($child->id);
-                            
+
                             if ($childWithRelations->children->isNotEmpty()) {
                                 // If the child has children, create requirements for THOSE grandchildren
                                 foreach ($childWithRelations->children as $grandchild) {
@@ -615,12 +615,12 @@ class RequirementCreate extends Component
                                         continue;
                                     }
 
-                                    // Format: "Grandchild Name + Child Name + Parent Name" 
+                                    // Format: "Grandchild Name + Child Name + Parent Name"
                                     // (e.g., "Question 1 TOS Midterm")
                                     $fullName = $type->name . ' ' . $child->name . ' ' . $grandchild->name;
-                                    
+
                                     $requirementsToCreate[] = [
-                                        'name' => $fullName, 
+                                        'name' => $fullName,
                                         'type_ids' => [$grandchild->id],
                                         'requirement_group' => $this->getRequirementGroup($grandchild->id, $child->id, $type->id),
                                     ];
@@ -629,20 +629,20 @@ class RequirementCreate extends Component
                                 // If the child has NO children, create requirement for the child
                                 // Format: "Child Name + Parent Name" (e.g., "TOS Midterm")
                                 $fullName = $type->name . ' ' . $child->name;
-                                
+
                                 $requirementsToCreate[] = [
-                                    'name' => $fullName, 
+                                    'name' => $fullName,
                                     'type_ids' => [$child->id],
                                     'requirement_group' => $this->getRequirementGroup($child->id, $type->id),
                                 ];
                             }
                         }
-                    } 
+                    }
                     // If this type has NO CHILDREN but has a PARENT (is a leaf node)
                     elseif ($type->parent_id && $type->children->isEmpty()) {
                         $parent = RequirementType::with('parent')->find($type->parent_id);
                         $grandparent = $parent->parent;
-                        
+
                         if ($grandparent) {
                             // Three levels: "Leaf + Parent + Grandparent" (e.g., "Question 1 TOS Midterm")
                             $fullName = $grandparent->name . ' ' . $parent->name . ' ' . $type->name;
@@ -650,7 +650,7 @@ class RequirementCreate extends Component
                             // Two levels: "Leaf + Parent" (e.g., "TOS Midterm")
                             $fullName = $parent->name . ' ' . $type->name;
                         }
-                        
+
                         $requirementsToCreate[] = [
                             'name' => $fullName,
                             'type_ids' => [$type->id],
@@ -698,7 +698,7 @@ class RequirementCreate extends Component
                     // Generate a unique filename to avoid conflicts
                     $fileName = time() . '_' . uniqid() . '_' . $file->getClientOriginalName();
                     $path = $file->storeAs('temp/requirements', $fileName, 'public');
-                    
+
                     $storedFiles[] = [
                         'path' => $path,
                         'original_name' => $file->getClientOriginalName(),
@@ -717,7 +717,7 @@ class RequirementCreate extends Component
                     $existingRequirement = Requirement::where('semester_id', $activeSemester->id)
                         ->whereJsonContains('requirement_type_ids', $data['type_ids'])
                         ->first();
-                    
+
                     if ($existingRequirement) {
                         Log::warning("Requirement with type IDs already exists", [
                             'type_ids' => $data['type_ids'],
@@ -728,9 +728,9 @@ class RequirementCreate extends Component
                 }
 
                 $requirement = Requirement::create([
-                    'name' => $data['name'], 
+                    'name' => $data['name'],
                     'due' => $this->due,
-                    'assigned_to' => $assignedData, 
+                    'assigned_to' => $assignedData,
                     'requirement_type_ids' => $data['type_ids'],
                     'requirement_group' => $data['requirement_group'],
                     'created_by' => Auth::id(),
@@ -746,12 +746,12 @@ class RequirementCreate extends Component
                             // Create a temporary copy for this requirement
                             $tempCopyPath = storage_path('app/public/temp/copy_' . uniqid() . '_' . $storedFile['original_name']);
                             copy($storedFile['full_path'], $tempCopyPath);
-                            
+
                             $requirement->addMedia($tempCopyPath)
                                 ->usingName($storedFile['name'])
                                 ->usingFileName($storedFile['original_name'])
                                 ->toMediaCollection('guides');
-                            
+
                             // Clean up the temporary copy after it's been processed
                             if (file_exists($tempCopyPath)) {
                                 unlink($tempCopyPath);
@@ -801,11 +801,11 @@ class RequirementCreate extends Component
             $this->isCreating = false;
 
             return redirect()->route('admin.requirements.index');
-            
+
         } catch (\Exception $e) {
             $this->isCreating = false;
             $this->showConfirmationModal = false;
-            
+
             // Clean up any stored files if error occurred
             if (isset($storedFiles) && !empty($storedFiles)) {
                 foreach ($storedFiles as $storedFile) {
@@ -814,7 +814,7 @@ class RequirementCreate extends Component
                     }
                 }
             }
-            
+
             Log::error('Requirement creation failed', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
             session()->flash('notification', [
                 'type' => 'error',
@@ -828,7 +828,7 @@ class RequirementCreate extends Component
     protected function copyMediaFromRequirement(Requirement $target, Requirement $source)
     {
         $mediaItems = $source->getMedia('guides');
-        
+
         foreach ($mediaItems as $mediaItem) {
             // This creates a new media record pointing to the same file
             $target->addMedia($mediaItem->getPath())

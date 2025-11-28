@@ -23,13 +23,13 @@ class RequirementsList extends Component
     public $showReplaceModal = false;
     public $submissionToReplace = null;
     public $replaceFile;
-    
+
     #[LivewireUrl(as: 'course', history: true, keep: false)]
     public $selectedCourse = null;
-    
+
     #[LivewireUrl(as: 'folder', history: true, keep: false)]
     public $selectedFolder = null;
-    
+
     #[LivewireUrl(as: 'subfolder', history: true, keep: false)]
     public $selectedSubFolder = null;
 
@@ -37,12 +37,12 @@ class RequirementsList extends Component
     public $organizedRequirements = [];
     public $folderRequirements = [];
     public $folderStructure = [];
-    
+
     // Properties for file upload and modals
     public $file;
     public $submissionNotes = '';
     public $activeTabs = [];
-    
+
     // Properties for delete modal
     public $showDeleteModal = false;
     public $submissionToDelete = null;
@@ -56,20 +56,20 @@ class RequirementsList extends Component
         }
 
         $this->activeSemester = Semester::getActiveSemester();
-        
+
         // Rest of the existing mount method...
         $request = request();
         $this->selectedCourse = $request->query('course', $this->selectedCourse);
         $this->selectedFolder = $request->query('folder', $this->selectedFolder);
         $this->selectedSubFolder = $request->query('subfolder', $this->selectedSubFolder);
-        
+
         \Log::info('RequirementsList mount with manual URL handling', [
             'selectedCourse' => $this->selectedCourse,
             'selectedFolder' => $this->selectedFolder,
             'selectedSubFolder' => $this->selectedSubFolder,
             'query_params' => $request->query()
         ]);
-        
+
         // Handle URL parameters for direct navigation from Pending page
         if ($this->selectedCourse) {
             if ($this->selectedSubFolder) {
@@ -79,7 +79,7 @@ class RequirementsList extends Component
                 // Check if this folder has children (sub-folders)
                 $folder = RequirementType::find($this->selectedFolder);
                 $hasChildren = $folder && $folder->children()->where('is_folder', true)->exists();
-                
+
                 if ($hasChildren) {
                     \Log::info('Folder has children, loading course requirements to show sub-folders');
                     // For parent folders with children, load course requirements to show the sub-folder grid
@@ -181,7 +181,7 @@ class RequirementsList extends Component
             'application/pdf',
             'text/plain',
         ];
-        
+
         return in_array($mimeType, $previewableMimes);
     }
 
@@ -207,14 +207,14 @@ class RequirementsList extends Component
     public function confirmDelete($submissionId)
     {
         $submission = SubmittedRequirement::find($submissionId);
-        
+
         // Check if requirement is marked as done for this course
         if ($submission) {
             $isMarkedDone = RequirementSubmissionIndicator::where('requirement_id', $submission->requirement_id)
                 ->where('user_id', Auth::id())
                 ->where('course_id', $this->selectedCourse)
                 ->exists();
-                
+
             if ($isMarkedDone) {
                 $this->dispatch('showNotification',
                     type: 'error',
@@ -223,7 +223,7 @@ class RequirementsList extends Component
                 return;
             }
         }
-        
+
         $this->submissionToDelete = $submissionId;
         $this->showDeleteModal = true;
     }
@@ -246,9 +246,9 @@ class RequirementsList extends Component
             if (!$this->submissionToDelete) {
                 return;
             }
-            
+
             $submission = SubmittedRequirement::findOrFail($this->submissionToDelete);
-            
+
             // Check if user can delete this submission
             if ($submission->user_id !== Auth::id()) {
                 $this->dispatch('showNotification',
@@ -257,7 +257,7 @@ class RequirementsList extends Component
                 );
                 return;
             }
-            
+
             // Check if submission can be deleted (not approved)
             if ($submission->status === SubmittedRequirement::STATUS_APPROVED) {
                 $this->dispatch('showNotification',
@@ -266,13 +266,13 @@ class RequirementsList extends Component
                 );
                 return;
             }
-            
+
             // Check if requirement is marked as done for this course
             $isMarkedDone = RequirementSubmissionIndicator::where('requirement_id', $submission->requirement_id)
                 ->where('user_id', Auth::id())
                 ->where('course_id', $this->selectedCourse)
                 ->exists();
-                
+
             if ($isMarkedDone) {
                 $this->dispatch('showNotification',
                     type: 'error',
@@ -280,18 +280,18 @@ class RequirementsList extends Component
                 );
                 return;
             }
-            
+
             // Delete associated file
             if ($submission->submissionFile) {
                 $submission->submissionFile->delete();
             }
-            
+
             // Delete the submission
             $submission->delete();
-            
+
             $this->showDeleteModal = false;
             $this->submissionToDelete = null;
-            
+
             // Reload requirements based on current view
             if ($this->selectedSubFolder) {
                 $this->loadSubFolderRequirements();
@@ -300,12 +300,12 @@ class RequirementsList extends Component
             } else {
                 $this->loadCourseRequirements();
             }
-            
+
             $this->dispatch('showNotification',
                 type: 'success',
                 content: 'Submission deleted successfully.'
             );
-            
+
         } catch (\Exception $e) {
             $this->dispatch('showNotification',
                 type: 'error',
@@ -326,7 +326,7 @@ class RequirementsList extends Component
 
         try {
             $requirement = Requirement::findOrFail($requirementId);
-            
+
             // Create the submission with course_id - REMOVE the explicit status
             $submittedRequirement = SubmittedRequirement::create([
                 'requirement_id' => $requirementId,
@@ -346,10 +346,10 @@ class RequirementsList extends Component
 
             // Reset form
             $this->reset(['file', 'submissionNotes']);
-            
+
             // Switch to submissions tab
             $this->setActiveTab($requirementId, 'submissions');
-            
+
             // Reload requirements to reflect changes
             if ($this->selectedSubFolder) {
                 $this->loadSubFolderRequirements();
@@ -358,13 +358,13 @@ class RequirementsList extends Component
             } else {
                 $this->loadCourseRequirements();
             }
-            
+
             // Show success message
-            $this->dispatch('showNotification', 
+            $this->dispatch('showNotification',
                 type: 'success',
                 content: 'Requirement submitted successfully!'
             );
-            
+
         } catch (\Exception $e) {
             $this->dispatch('showNotification',
                 type: 'error',
@@ -380,13 +380,13 @@ class RequirementsList extends Component
     private function isUserAssignedToRequirement($requirement, $user)
     {
         $rawAssignedTo = $requirement->getRawOriginal('assigned_to');
-        
+
         if (is_string($rawAssignedTo)) {
             $assignedTo = json_decode($rawAssignedTo, true);
         } else {
             $assignedTo = $requirement->assigned_to;
         }
-        
+
         if (json_last_error() !== JSON_ERROR_NONE) {
             $assignedTo = [];
         }
@@ -474,13 +474,13 @@ class RequirementsList extends Component
 
         // For partnership requirements (TOS/Examinations), check if all partners are submitted
         $allPartnersSubmitted = $requirement->areAllPartnersSubmitted(Auth::id(), $this->selectedCourse);
-        
+
         \Log::info("Requirement IS part of partnership, checking all partners submitted", [
             'requirement_id' => $requirementId,
             'all_partners_submitted' => $allPartnersSubmitted,
             'result' => $allPartnersSubmitted
         ]);
-        
+
         return $allPartnersSubmitted;
     }
 
@@ -494,7 +494,7 @@ class RequirementsList extends Component
         }
 
         $partners = $requirement->getPartnerRequirements($this->activeSemester->id);
-        
+
         // Only return partnership status if there are actual partners
         if ($partners->isEmpty()) {
             return null;
@@ -527,7 +527,7 @@ class RequirementsList extends Component
             ->where('user_id', $userId)
             ->where('course_id', $courseId)
             ->exists();
-            
+
         return $hasSubmission;
     }
 
@@ -556,7 +556,7 @@ class RequirementsList extends Component
 
         $userId = Auth::id();
         $user = Auth::user();
-        
+
         // Get all requirements for the active semester
         $allRequirements = Requirement::where('semester_id', $this->activeSemester->id)
             ->with(['userSubmissions' => function($query) use ($userId) {
@@ -576,7 +576,7 @@ class RequirementsList extends Component
         ->map(function ($requirement) use ($userId) {
             $userSubmitted = $this->hasUserSubmittedRequirement($requirement->id, $userId, $this->selectedCourse);
             $userMarkedDone = $this->hasUserMarkedDone($requirement->id, $userId, $this->selectedCourse);
-            
+
             // Create a data array instead of setting dynamic properties
             $requirementData = [
                 'requirement' => $requirement,
@@ -585,7 +585,7 @@ class RequirementsList extends Component
                 'can_mark_done' => $this->canMarkAsDone($requirement->id),
                 'partnership_status' => $this->getPartnershipStatus($requirement),
             ];
-            
+
             \Log::info("Processed requirement for course view", [
                 'requirement_id' => $requirement->id,
                 'name' => $requirement->name,
@@ -594,7 +594,7 @@ class RequirementsList extends Component
                 'user_marked_done' => $requirementData['user_marked_done'],
                 'can_mark_done' => $requirementData['can_mark_done']
             ]);
-            
+
             return $requirementData;
         });
 
@@ -615,37 +615,37 @@ class RequirementsList extends Component
 
         // Build the folder tree
         $rootFolders = $allFolders->where('parent_id', null);
-        
+
         $folderStructure = [];
-        
+
         foreach ($rootFolders as $rootFolder) {
             $folderData = [
                 'folder' => $rootFolder,
                 'requirements' => [],
                 'children' => []
             ];
-            
+
             // Check if this root folder has children
             $hasChildren = $rootFolder->children->where('is_folder', true)->isNotEmpty();
-            
+
             if ($hasChildren) {
                 // Folder has children - check each child folder for requirements
                 $hasRequirementsInChildren = false;
-                
+
                 foreach ($rootFolder->children->where('is_folder', true) as $childFolder) {
                     $childRequirements = $this->getRequirementsForFolder($requirements, $childFolder->id);
-                    
+
                     if (count($childRequirements) > 0) {
                         $hasRequirementsInChildren = true;
                         $childFolderData = [
                             'folder' => $childFolder,
                             'requirements' => $childRequirements
                         ];
-                        
+
                         $folderData['children'][] = $childFolderData;
                     }
                 }
-                
+
                 // Only add this root folder if it has children with requirements
                 if ($hasRequirementsInChildren) {
                     $folderStructure[] = $folderData;
@@ -653,7 +653,7 @@ class RequirementsList extends Component
             } else {
                 // Folder has no children - show requirements directly
                 $directRequirements = $this->getRequirementsForFolder($requirements, $rootFolder->id);
-                
+
                 // Only add this folder if it has direct requirements
                 if (count($directRequirements) > 0) {
                     $folderData['requirements'] = $directRequirements;
@@ -661,14 +661,14 @@ class RequirementsList extends Component
                 }
             }
         }
-        
+
         // Handle custom requirements (without requirement_type_ids or with empty array)
         $customRequirements = $requirements->filter(function($requirementData) {
             $requirement = $requirementData['requirement'];
-            return empty($requirement->requirement_type_ids) || 
+            return empty($requirement->requirement_type_ids) ||
                 (is_array($requirement->requirement_type_ids) && count($requirement->requirement_type_ids) === 0);
         });
-        
+
         // Only add custom folder if it has requirements
         if ($customRequirements->isNotEmpty()) {
             $folderStructure[] = [
@@ -682,7 +682,7 @@ class RequirementsList extends Component
                 'children' => []
             ];
         }
-        
+
         return $folderStructure;
     }
 
@@ -693,11 +693,11 @@ class RequirementsList extends Component
     {
         return $requirements->filter(function($requirementData) use ($folderId) {
             $requirement = $requirementData['requirement'];
-            if (empty($requirement->requirement_type_ids) || 
+            if (empty($requirement->requirement_type_ids) ||
                 (is_array($requirement->requirement_type_ids) && count($requirement->requirement_type_ids) === 0)) {
                 return false;
             }
-            
+
             return in_array($folderId, $requirement->requirement_type_ids);
         })->values()->all();
     }
@@ -714,7 +714,7 @@ class RequirementsList extends Component
 
         $userId = Auth::id();
         $user = Auth::user();
-        
+
         // Get all requirements for the active semester
         $allRequirements = Requirement::where('semester_id', $this->activeSemester->id)
             ->with(['userSubmissions' => function($query) use ($userId) {
@@ -733,27 +733,27 @@ class RequirementsList extends Component
             if (!$this->isUserAssignedToRequirement($requirement, $user)) {
                 return false;
             }
-            
+
             // Check if requirement belongs to the selected folder
-            if (!empty($requirement->requirement_type_ids) && 
-                is_array($requirement->requirement_type_ids) && 
+            if (!empty($requirement->requirement_type_ids) &&
+                is_array($requirement->requirement_type_ids) &&
                 count($requirement->requirement_type_ids) > 0) {
                 return in_array($this->selectedFolder, $requirement->requirement_type_ids);
             }
-            
+
             // For custom requirements (empty requirement_type_ids), check if we're in the custom folder
-            if (($this->selectedFolder === 'custom_requirements') && 
-                (empty($requirement->requirement_type_ids) || 
+            if (($this->selectedFolder === 'custom_requirements') &&
+                (empty($requirement->requirement_type_ids) ||
                  (is_array($requirement->requirement_type_ids) && count($requirement->requirement_type_ids) === 0))) {
                 return true;
             }
-            
+
             return false;
         })
         ->map(function ($requirement) use ($userId) {
             $userSubmitted = $this->hasUserSubmittedRequirement($requirement->id, $userId, $this->selectedCourse);
             $userMarkedDone = $this->hasUserMarkedDone($requirement->id, $userId, $this->selectedCourse);
-            
+
             return [
                 'requirement' => $requirement,
                 'user_has_submitted' => $userSubmitted || $userMarkedDone,
@@ -776,7 +776,7 @@ class RequirementsList extends Component
 
         $userId = Auth::id();
         $user = Auth::user();
-        
+
         // Get all requirements for the active semester
         $allRequirements = Requirement::where('semester_id', $this->activeSemester->id)
             ->with(['userSubmissions' => function($query) use ($userId) {
@@ -795,20 +795,20 @@ class RequirementsList extends Component
             if (!$this->isUserAssignedToRequirement($requirement, $user)) {
                 return false;
             }
-            
+
             // Check if requirement belongs to the selected sub-folder
-            if (!empty($requirement->requirement_type_ids) && 
-                is_array($requirement->requirement_type_ids) && 
+            if (!empty($requirement->requirement_type_ids) &&
+                is_array($requirement->requirement_type_ids) &&
                 count($requirement->requirement_type_ids) > 0) {
                 return in_array($this->selectedSubFolder, $requirement->requirement_type_ids);
             }
-            
+
             return false;
         })
         ->map(function ($requirement) use ($userId) {
             $userSubmitted = $this->hasUserSubmittedRequirement($requirement->id, $userId, $this->selectedCourse);
             $userMarkedDone = $this->hasUserMarkedDone($requirement->id, $userId, $this->selectedCourse);
-            
+
             return [
                 'requirement' => $requirement,
                 'user_has_submitted' => $userSubmitted || $userMarkedDone,
@@ -829,7 +829,7 @@ class RequirementsList extends Component
         }
 
         $userId = Auth::id();
-        
+
         return CourseAssignment::where('professor_id', $userId)
             ->where('semester_id', $this->activeSemester->id)
             ->with('course')
@@ -847,10 +847,10 @@ class RequirementsList extends Component
         try {
             $user = Auth::user();
             $requirement = Requirement::findOrFail($requirementId);
-            
+
             // Always do a fresh check instead of relying on cached properties
             $canMarkDone = $this->canMarkAsDone($requirementId);
-            
+
             \Log::info("Attempting to toggle mark as done - FRESH CHECK", [
                 'requirement_id' => $requirementId,
                 'requirement_name' => $requirement->name,
@@ -859,7 +859,7 @@ class RequirementsList extends Component
                 'user_has_submitted' => $this->hasUserSubmittedRequirement($requirementId, Auth::id(), $this->selectedCourse),
                 'is_part_of_partnership' => $requirement->isPartOfPartnership(),
             ]);
-            
+
             // Check if requirement can be marked as done (partnership validation)
             if (!$canMarkDone) {
                 if ($requirement->isPartOfPartnership()) {
@@ -875,39 +875,39 @@ class RequirementsList extends Component
                 }
                 return;
             }
-            
+
             // Check if already marked as done FOR THIS COURSE
             $existingIndicator = RequirementSubmissionIndicator::where('requirement_id', $requirementId)
                 ->where('user_id', $user->id)
                 ->where('course_id', $this->selectedCourse)
                 ->first();
-            
+
             if ($existingIndicator) {
                 // Toggle off - mark as undone (for all partners too if it's a partnership)
                 $this->markPartnershipAsUndone($requirement, $user->id);
-                
+
                 // NEW: Revert under_review submissions back to uploaded (only for under_review status)
                 $this->revertUnderReviewToUploaded($requirementId, $user->id);
-                
+
                 $message = 'Requirement marked as undone!';
-                
+
                 // Delete notification for admins
                 $this->deleteNotificationForRequirement($requirementId, $user->id);
-                
+
             } else {
                 // Toggle on - mark as done FOR THIS COURSE (and all partners if it's a partnership)
                 // REMOVED: The separate call to updateSubmissionsToUnderReview since it's now handled in markPartnershipAsDone
                 $this->markPartnershipAsDone($requirement, $user->id);
-                
+
                 $message = 'Requirement marked as done!';
-                
+
                 // Get ALL submissions for this requirement by this user FOR THIS COURSE
                 $submissions = SubmittedRequirement::where('requirement_id', $requirementId)
                     ->where('user_id', $user->id)
                     ->where('course_id', $this->selectedCourse)
                     ->with('media')
                     ->get();
-                
+
                 if ($submissions->count() > 0) {
                     // Notify all admins with ALL submissions FOR THIS COURSE
                     $admins = User::role('admin')->get();
@@ -916,7 +916,7 @@ class RequirementsList extends Component
                     }
                 }
             }
-            
+
             // Reload requirements to reflect changes
             if ($this->selectedSubFolder) {
                 $this->loadSubFolderRequirements();
@@ -925,18 +925,18 @@ class RequirementsList extends Component
             } else {
                 $this->loadCourseRequirements();
             }
-            
+
             $this->dispatch('showNotification',
                 type: 'success',
                 content: $message
             );
-            
+
         } catch (\Exception $e) {
             \Log::error("Failed to toggle mark as done", [
                 'requirement_id' => $requirementId,
                 'error' => $e->getMessage()
             ]);
-            
+
             $this->dispatch('showNotification',
                 type: 'error',
                 content: 'Failed to update status: ' . $e->getMessage()
@@ -955,7 +955,7 @@ class RequirementsList extends Component
             ->where('course_id', $this->selectedCourse)
             ->where('status', SubmittedRequirement::STATUS_UPLOADED)
             ->update(['status' => SubmittedRequirement::STATUS_UNDER_REVIEW]);
-        
+
         \Log::info("Updated submissions to under_review", [
             'requirement_id' => $requirementId,
             'user_id' => $userId,
@@ -977,7 +977,7 @@ class RequirementsList extends Component
             ->where('course_id', $this->selectedCourse)
             ->where('status', SubmittedRequirement::STATUS_UNDER_REVIEW)
             ->update(['status' => SubmittedRequirement::STATUS_UPLOADED]);
-        
+
         \Log::info("Reverted under_review submissions to uploaded", [
             'requirement_id' => $requirementId,
             'user_id' => $userId,
@@ -995,14 +995,14 @@ class RequirementsList extends Component
             // Get all partners including the main requirement
             $allRequirements = $requirement->getPartnerRequirements($this->activeSemester->id);
             $allRequirements->push($requirement);
-            
+
             foreach ($allRequirements as $partnerRequirement) {
                 // Check if already marked as done for this course
                 $existingIndicator = RequirementSubmissionIndicator::where('requirement_id', $partnerRequirement->id)
                     ->where('user_id', $userId)
                     ->where('course_id', $this->selectedCourse)
                     ->first();
-                
+
                 if (!$existingIndicator) {
                     RequirementSubmissionIndicator::create([
                         'requirement_id' => $partnerRequirement->id,
@@ -1010,7 +1010,7 @@ class RequirementsList extends Component
                         'course_id' => $this->selectedCourse,
                         'submitted_at' => now(),
                     ]);
-                    
+
                     \Log::info("Marked partner requirement as done", [
                         'main_requirement_id' => $requirement->id,
                         'partner_requirement_id' => $partnerRequirement->id,
@@ -1018,7 +1018,7 @@ class RequirementsList extends Component
                         'course_id' => $this->selectedCourse
                     ]);
                 }
-                
+
                 // NEW: Update all uploaded submissions to under_review for EACH partner requirement
                 $this->updateSubmissionsToUnderReview($partnerRequirement->id, $userId);
             }
@@ -1030,7 +1030,7 @@ class RequirementsList extends Component
                 'course_id' => $this->selectedCourse,
                 'submitted_at' => now(),
             ]);
-            
+
             // Update submissions to under_review for the single requirement
             $this->updateSubmissionsToUnderReview($requirement->id, $userId);
         }
@@ -1045,21 +1045,21 @@ class RequirementsList extends Component
             // Get all partners including the main requirement
             $allRequirements = $requirement->getPartnerRequirements($this->activeSemester->id);
             $allRequirements->push($requirement);
-            
+
             foreach ($allRequirements as $partnerRequirement) {
                 // Delete the indicator for this partner requirement
                 RequirementSubmissionIndicator::where('requirement_id', $partnerRequirement->id)
                     ->where('user_id', $userId)
                     ->where('course_id', $this->selectedCourse)
                     ->delete();
-                
+
                 // NEW: Revert under_review submissions back to uploaded for each partner
                 SubmittedRequirement::where('requirement_id', $partnerRequirement->id)
                     ->where('user_id', $userId)
                     ->where('course_id', $this->selectedCourse)
                     ->where('status', SubmittedRequirement::STATUS_UNDER_REVIEW)
                     ->update(['status' => SubmittedRequirement::STATUS_UPLOADED]);
-                    
+
                 \Log::info("Marked partner requirement as undone and reverted status", [
                     'main_requirement_id' => $requirement->id,
                     'partner_requirement_id' => $partnerRequirement->id,
@@ -1073,7 +1073,7 @@ class RequirementsList extends Component
                 ->where('user_id', $userId)
                 ->where('course_id', $this->selectedCourse)
                 ->delete();
-            
+
             // NEW: Revert under_review submissions back to uploaded
             SubmittedRequirement::where('requirement_id', $requirement->id)
                 ->where('user_id', $userId)
@@ -1091,29 +1091,29 @@ class RequirementsList extends Component
         try {
             // Get all admin users
             $admins = User::role('admin')->get();
-            
+
             foreach ($admins as $admin) {
                 // Get all notifications for this admin
                 $notifications = $admin->notifications()
                     ->where('type', 'App\Notifications\NewSubmissionNotification')
                     ->get();
-                
+
                 // Find notifications that match this requirement and user
                 foreach ($notifications as $notification) {
                     $data = $notification->data;
-                    
+
                     // Check if this notification is for the same requirement and user
-                    if (isset($data['requirement_id']) && 
+                    if (isset($data['requirement_id']) &&
                         $data['requirement_id'] == $requirementId &&
-                        isset($data['user_id']) && 
+                        isset($data['user_id']) &&
                         $data['user_id'] == $userId) {
-                        
+
                         // Delete the notification
                         $notification->delete();
                     }
                 }
             }
-            
+
             return true;
         } catch (\Exception $e) {
             \Log::error('Failed to delete notification: ' . $e->getMessage());
@@ -1131,9 +1131,9 @@ class RequirementsList extends Component
         }
 
         $user = Auth::user();
-        
+
         $allRequirements = Requirement::where('semester_id', $this->activeSemester->id)->get();
-        
+
         return $allRequirements->contains(function ($requirement) use ($user) {
             return $this->isUserAssignedToRequirement($requirement, $user);
         });
@@ -1147,7 +1147,7 @@ class RequirementsList extends Component
         if (!$this->selectedCourse) {
             return null;
         }
-        
+
         return $this->assignedCourses->firstWhere('id', $this->selectedCourse);
     }
 
@@ -1159,7 +1159,7 @@ class RequirementsList extends Component
         if (!$this->selectedFolder) {
             return null;
         }
-        
+
         // Handle custom folder
         if ($this->selectedFolder === 'custom_requirements') {
             return (object)[
@@ -1169,7 +1169,7 @@ class RequirementsList extends Component
                 'is_folder' => true
             ];
         }
-        
+
         return RequirementType::find($this->selectedFolder);
     }
 
@@ -1181,7 +1181,7 @@ class RequirementsList extends Component
         if (!$this->selectedSubFolder) {
             return null;
         }
-        
+
         return RequirementType::find($this->selectedSubFolder);
     }
 
@@ -1191,14 +1191,14 @@ class RequirementsList extends Component
     public function confirmReplace($submissionId)
     {
         $submission = SubmittedRequirement::find($submissionId);
-        
+
         // Check if requirement is marked as done for this course
         if ($submission) {
             $isMarkedDone = RequirementSubmissionIndicator::where('requirement_id', $submission->requirement_id)
                 ->where('user_id', Auth::id())
                 ->where('course_id', $this->selectedCourse)
                 ->exists();
-                
+
             if ($isMarkedDone) {
                 $this->dispatch('showNotification',
                     type: 'error',
@@ -1207,7 +1207,7 @@ class RequirementsList extends Component
                 return;
             }
         }
-        
+
         $this->submissionToReplace = $submissionId;
         $this->showReplaceModal = true;
         $this->replaceFile = null;
@@ -1236,9 +1236,9 @@ class RequirementsList extends Component
             if (!$this->submissionToReplace) {
                 return;
             }
-            
+
             $submission = SubmittedRequirement::findOrFail($this->submissionToReplace);
-            
+
             // Check if user can replace this submission
             if ($submission->user_id !== Auth::id()) {
                 $this->dispatch('showNotification',
@@ -1247,13 +1247,13 @@ class RequirementsList extends Component
                 );
                 return;
             }
-            
+
             // Check if requirement is marked as done for this course
             $isMarkedDone = RequirementSubmissionIndicator::where('requirement_id', $submission->requirement_id)
                 ->where('user_id', Auth::id())
                 ->where('course_id', $this->selectedCourse)
                 ->exists();
-                
+
             if ($isMarkedDone) {
                 $this->dispatch('showNotification',
                     type: 'error',
@@ -1261,12 +1261,12 @@ class RequirementsList extends Component
                 );
                 return;
             }
-            
+
             // Delete the old file
             if ($submission->submissionFile) {
                 $submission->submissionFile->delete();
             }
-            
+
             // Add the new file
             $submission
                 ->addMedia($this->replaceFile->getRealPath())
@@ -1288,11 +1288,11 @@ class RequirementsList extends Component
                     'submitted_at' => now(),
                 ]);
             }
-            
+
             $this->showReplaceModal = false;
             $this->submissionToReplace = null;
             $this->replaceFile = null;
-            
+
             // Reload requirements based on current view
             if ($this->selectedSubFolder) {
                 $this->loadSubFolderRequirements();
@@ -1301,12 +1301,12 @@ class RequirementsList extends Component
             } else {
                 $this->loadCourseRequirements();
             }
-            
+
             $this->dispatch('showNotification',
                 type: 'success',
                 content: 'File replaced successfully!'
             );
-            
+
         } catch (\Exception $e) {
             $this->dispatch('showNotification',
                 type: 'error',
