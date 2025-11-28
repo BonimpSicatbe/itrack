@@ -95,10 +95,7 @@ class RegisteredUserController extends Controller
 
             // optionally fire the Registered event
             // event(new Registered($user));
-
-            $route = $user->hasRole('admin') || $user->hasRole('super-admin') ? 'admin.dashboard' : 'user.dashboard';
-
-            return redirect()->route($route)->with('success', 'Registration successful!');
+            return redirect()->route('login')->with('success', 'Registration successful!');
         } catch (\Throwable $e) {
             // log the exception and return back with error
             Log::error('User registration failed', [

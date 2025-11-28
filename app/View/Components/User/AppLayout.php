@@ -1,6 +1,6 @@
 <?php
 
-namespace App\View\Components\user;
+namespace App\View\Components\User;
 
 use Closure;
 use Illuminate\Contracts\View\View;
@@ -21,6 +21,6 @@ class AppLayout extends Component
      */
     public function render(): View|Closure|string
     {
-        return view('layouts.user.app');
+        return view('components.user.app-layout');
     }
 }

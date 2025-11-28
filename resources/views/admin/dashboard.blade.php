@@ -12,7 +12,7 @@
             <div class="card bg-base-100 shadow rounded-xl">
                 <div class="card-body p-0">
                     <div class="collapse collapse-arrow">
-                        <input type="checkbox" name="dashboard-accordion" checked /> 
+                        <input type="checkbox" name="dashboard-accordion" checked />
                         <div class="collapse-title font-semibold text-xl px-6 py-4 hover:bg-base-200 text-gray-800">
                             Requirements
                         </div>

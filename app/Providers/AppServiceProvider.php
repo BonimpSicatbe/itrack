@@ -6,6 +6,8 @@ use Illuminate\Support\ServiceProvider;
 use Illuminate\Database\Eloquent\Builder;
 use App\Services\DueDateReminderService;
 use App\Services\MissingSubmissionService; // ADD THIS IMPORT
+use App\View\Components\Admin\Navigation;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Event;
 
 class AppServiceProvider extends ServiceProvider
@@ -25,6 +27,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // admin.navigation component
+        Blade::component('admin.navigation', Navigation::class);
+
         Builder::macro('search', function ($field, $string) {
             return $string ? $this->where($field, 'like', '%'.$string.'%') : $this;
         });
@@ -34,10 +39,10 @@ class AppServiceProvider extends ServiceProvider
             // Only run for authenticated users
             if (auth()->check()) {
                 $reminderService = app(DueDateReminderService::class);
-                
+
                 // Run on every request without rate limiting
                 $sentCount = $reminderService->checkAllReminders();
-                
+
                 // Optional: Log for debugging (remove in production)
                 if (app()->environment('local') && $sentCount > 0) {
                     \Log::info("Sent {$sentCount} due date reminders on request");
