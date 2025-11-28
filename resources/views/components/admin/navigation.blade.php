@@ -1,5 +1,3 @@
-@props(['navLinks' => [], 'unreadCount' => 0])
-
 <nav class="shadow-sm sticky top-0 z-50 bg-white"
      x-data="{
         unreadCount: {{ $unreadCount }},
