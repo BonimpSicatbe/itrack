@@ -24,18 +24,6 @@ class VerifyEmailController extends Controller
             event(new Verified($request->user()));
         }
 
-        // Decide admin vs user dashboard in a safe way:
-        $isAdmin = false;
-
-        if (method_exists($user, 'hasRole')) {
-            $isAdmin = $user->hasRole('admin') || $user->hasRole('super-admin');
-        } elseif (isset($user->is_admin)) {
-            // fallback if you use an `is_admin` boolean on the model
-            $isAdmin = (bool) $user->is_admin;
-        }
-
-        $route = $isAdmin ? 'admin.dashboard' : 'user.dashboard';
-
         return redirect()->intended(route($route, absolute: false) . '?verified=1');
     }
 }
