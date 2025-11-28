@@ -178,7 +178,7 @@
         <!-- Fixed Navigation -->
         <div class="fixed top-0 left-0 right-0 z-50">
             <div class="bg-white/80 backdrop-blur-md border-b border-white/20">
-                <x-admin.navigation :navLinks="$navLinks" :unreadCount="$unreadCount" />
+                <x-admin.navigation />
             </div>
         </div>
 
