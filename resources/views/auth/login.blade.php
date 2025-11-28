@@ -1,6 +1,6 @@
 <x-guest-layout>
     <div class="w-full h-full bg-cover bg-center min-h-screen min-w-screen"
-        style="background-image: url('{{ asset('images/cvsu-bg-image.jpg') }}');">
+        style="background-image: url('{{ asset('images/bg.png') }}');">
         {{-- login form --}}
         <div class="w-full h-full flex flex-col items-end justify-center min-h-screen p-4 md:p-12">
             <div class="flex items-center justify-center w-full sm:w-2/3 md:w-1/2 lg:w-1/3 bg-white shadow rounded-lg h-full max-w-md mx-auto">

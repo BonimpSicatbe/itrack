@@ -2,10 +2,9 @@
 
 namespace App\Livewire;
 
-use App\Http\Requests\Auth\LoginRequest;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
-use Livewire\Attributes\Validate;
+use Illuminate\Support\Facades\Log;
 use Livewire\Component;
 
 class RegisterUserController extends Component
@@ -19,6 +18,7 @@ class RegisterUserController extends Component
     public $position;
     public $teaching_started_at;
     public $password;
+    public $password_confirmation;
 
     public function rules()
     {
@@ -30,8 +30,23 @@ class RegisterUserController extends Component
             'email' => 'required|string|email|max:255|unique:users,email|regex:/^[A-Za-z0-9._%+-]+@cvsu\.edu\.ph$/i',
             'college_id' => 'required|exists:colleges,id',
             'position' => 'required|string|max:255',
-            'teaching_started_at' => 'required|date',
-            'password' => 'required|confirmed|string|min:8',
+            'teaching_started_at' => 'required|date|before_or_equal:today',
+            'password' => [
+                'required',
+                'confirmed',
+                'min:8',
+                'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&._])[A-Za-z\d@$!%*?&._]+$/'
+            ],
+        ];
+    }
+
+    public function messages()
+    {
+        return [
+            'password.regex' => 'The password must contain at least one uppercase letter, one lowercase letter, one number, and one special character.',
+            'password.confirmed' => ' ',
+            'teaching_started_at.before_or_equal' => 'The teaching start date cannot be in the future.',
+            'email.regex' => 'The email must be a valid CvSU email address (@cvsu.edu.ph).',
         ];
     }
 
@@ -39,39 +54,62 @@ class RegisterUserController extends Component
     public function updated($propertyName)
     {
         $this->validateOnly($propertyName);
+        
+        // Special handling for password confirmation
+        if ($propertyName === 'password_confirmation') {
+            $this->validateOnly('password');
+        }
     }
 
-    public function store(LoginRequest $request)
+    public function store()
     {
         $validated = $this->validate();
 
-        // $request->authenticate();
+        try {
+            // Create user
+            $user = User::create([
+                'firstname' => $validated['firstname'],
+                'middlename' => $validated['middlename'] ?? null,
+                'lastname' => $validated['lastname'],
+                'extensionname' => $validated['extensionname'] ?? null,
+                'email' => $validated['email'],
+                'college_id' => $validated['college_id'],
+                'position' => $validated['position'],
+                'teaching_started_at' => $validated['teaching_started_at'],
+                'teaching_ended_at' => null,
+                'password' => Hash::make($validated['password']),
+            ]);
 
-        // // $request->session()->regenerate();
+            // Assign default role
+            $user->assignRole('user');
 
-        $user = $request->user();
+            // Notify admin users about new registration
+            $adminUsers = User::role(['admin'])->get();
+            foreach ($adminUsers as $admin) {
+                try {
+                    $admin->notify(new \App\Notifications\NewRegisteredUserNotification($user));
+                } catch (\Throwable $e) {
+                    Log::error('Failed to notify admin about new user', [
+                        'admin_id' => $admin->id,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+            }
 
-        $user = User::create([
-            'firstname' => $validated['firstname'],
-            'middlename' => $validated['middlename'],
-            'lastname' => $validated['lastname'],
-            'extensionname' => $validated['extensionname'],
-            'email' => $validated['email'],
-            'college_id' => $validated['college_id'],
-            'position' => $validated['position'],
-            'teaching_started_at' => $validated['teaching_started_at'],
-            'password' => Hash::make($validated['password']),
-        ]);
+            Log::info('New user registered successfully', ['user_id' => $user->id, 'email' => $user->email]);
 
-        auth()->login($user);
+            // Redirect to login with success message - DON'T login automatically
+            return redirect()->route('login')->with('success', 'Registration successful! Please wait for admin approval before logging in.');
 
-        $isAdmin = method_exists($user, 'hasRole')
-            ? ($user->hasRole('admin') || $user->hasRole('super-admin'))
-            : ($user->is_admin ?? false);
-
-        $route = $isAdmin ? 'admin.dashboard' : 'user.dashboard';
-
-        return redirect()->intended(route($route))->with('success', 'Registration successful!');
+        } catch (\Exception $e) {
+            Log::error('Registration failed', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            $this->addError('email', 'Registration failed. Please try again.');
+            return;
+        }
     }
 
     public function render()
