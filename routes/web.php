@@ -1,12 +1,12 @@
 <?php
 
-use App\Http\Controllers\admin\RequirementController;
-use App\Http\Controllers\admin\SubmittedRequirementController;
+use App\Http\Controllers\Admin\RequirementController;
+use App\Http\Controllers\Admin\SubmittedRequirementController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\FileController;
 use App\Http\Controllers\FileManagerController;
-use App\Http\Controllers\admin\SemesterController;
+use App\Http\Controllers\Admin\SemesterController;
 use App\Http\Controllers\Admin\ManagementController;
 use App\Http\Controllers\Admin\ReportController;
 use Illuminate\Http\Request;
