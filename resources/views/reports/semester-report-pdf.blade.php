@@ -388,50 +388,39 @@
             padding: 5px 4px;
         }
 
-        /* Prepared by section */
-        .prepared-by {
-            margin-top: 30px;
-            text-align: right;
-            font-family: 'Arial', sans-serif;
-        }
-
-        .prepared-by-label {
-            font-size: 11px;
-            margin-bottom: 30px;
-            font-family: 'Arial', sans-serif;
-        }
-
-        .prepared-by-name {
-            font-size: 12px;
-            font-weight: bold;
-            margin-bottom: 2px;
-            font-family: 'Arial', sans-serif;
-        }
-
-        .prepared-by-position {
-            font-size: 11px;
-            font-family: 'Arial', sans-serif;
-        }
-
-        /* NEW: Approval sections */
-        .approval-sections {
-            display: table;
+        /* NEW: Right-aligned stacked approval sections */
+        .approval-sections-right {
             width: 100%;
             margin-top: 40px;
             font-family: 'Arial', sans-serif;
+            text-align: right;
         }
 
-        .approval-section {
-            display: table-cell;
-            width: 33.33%;
-            vertical-align: top;
-            padding: 0 15px;
+        .approval-item {
+            margin-bottom: 30px;
+            text-align: right;
+            width: 100%;
+            display: block;
+        }
+
+        .approval-item:last-child {
+            margin-bottom: 0;
         }
 
         .approval-label {
             font-size: 11px;
-            margin-bottom: 30px;
+            margin-bottom: 0;
             font-family: 'Arial', sans-serif;
+            font-weight: bold;
+            text-align: right;
+            width: 100%;
+            display: block;
+        }
+
+        .approval-spacing {
+            height: 25px; /* Space between label and name */
+            width: 100%;
+            display: block;
         }
 
         .approval-name {
@@ -439,11 +428,17 @@
             font-weight: bold;
             margin-bottom: 2px;
             font-family: 'Arial', sans-serif;
+            text-align: right;
+            width: 100%;
+            display: block;
         }
 
         .approval-position {
             font-size: 11px;
             font-family: 'Arial', sans-serif;
+            text-align: right;
+            width: 100%;
+            display: block;
         }
 
         /* NEW: Force table header to repeat on each page */
@@ -460,6 +455,15 @@
         /* Style for continuation rows (no longer needed to hide the first cell, but kept for context) */
         .continued-user-row {
             /* Removed the user-column specific styling as it's now explicitly an empty cell */
+        }
+
+        @media print {
+            .approval-sections-right {
+                page-break-inside: avoid !important;
+                page-break-before: avoid !important;
+                margin-top: 30px;
+                text-align: right;
+            }
         }
     </style>
 </head>
@@ -657,26 +661,28 @@
         </div>
     </div>
 
-    <div class="approval-sections">
-        <div class="approval-section">
-            <div class="prepared-by-label">Prepared by:</div>
-            <div class="prepared-by-name">{{ Auth::user()->firstname }} {{ $preparedByMiddleName }} {{ Auth::user()->lastname }} {{ Auth::user()->extensionname }}</div>
-            <div class="prepared-by-position">{{ Auth::user()->position ?? 'Administrator' }}</div>
+    <!-- Approval Sections aligned to the right -->
+    <div class="approval-sections-right">
+        <div class="approval-item">
+            <div class="approval-label">Prepared by:</div>
+            <div class="approval-spacing"></div>
+            <div class="approval-name">{{ Auth::user()->firstname }} {{ $preparedByMiddleName }} {{ Auth::user()->lastname }} {{ Auth::user()->extensionname }}</div>
+            <div class="approval-position">{{ Auth::user()->position ?? 'Administrator' }}</div>
         </div>
         
-        <div class="approval-section">
+        <div class="approval-item">
             <div class="approval-label">Noted by:</div>
+            <div class="approval-spacing"></div>
             <div class="approval-name">DR. MARIA S. SANTOS</div>
             <div class="approval-position">Dean, Graduate School</div>
         </div>
         
-        <div class="approval-section">
+        <div class="approval-item">
             <div class="approval-label">Checked by:</div>
+            <div class="approval-spacing"></div>
             <div class="approval-name">DR. JUAN R. CRUZ</div>
             <div class="approval-position">Quality Assurance Director</div>
         </div>
-    </div>
-
-    
+    </div> 
 </body>
 </html>
