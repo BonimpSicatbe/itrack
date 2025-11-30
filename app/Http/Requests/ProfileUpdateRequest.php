@@ -28,6 +28,7 @@ class ProfileUpdateRequest extends FormRequest
             'middlename' => ['nullable', 'string', 'max:255'],
             'lastname' => ['required', 'string', 'max:255'],
             'extensionname' => ['nullable', 'string', 'max:255'],
+            'position' => ['nullable', 'string', 'max:255'],
             'email' => [
                 'required',
                 'string',
@@ -37,7 +38,6 @@ class ProfileUpdateRequest extends FormRequest
                 Rule::unique(User::class)->ignore($this->user()->id),
             ],
             'teaching_started_at' => ['nullable', 'date'],
-            'teaching_ended_at' => ['nullable', 'date', 'after:teaching_started_at'],
         ];
     }
 
@@ -55,16 +55,16 @@ class ProfileUpdateRequest extends FormRequest
             'lastname.max' => 'The last name may not be greater than 255 characters.',
             'middlename.string' => 'The middle name must be a string.',
             'middlename.max' => 'The middle name may not be greater than 255 characters.',
-            'extensionname.string' => 'The extension name must be a string.',
-            'extensionname.max' => 'The extension name may not be greater than 255 characters.',
+            'extensionname.string' => 'The suffix must be a string.',
+            'extensionname.max' => 'The suffix may not be greater than 255 characters.',
+            'position.string' => 'The position must be a string.',
+            'position.max' => 'The position may not be greater than 255 characters.',
             'email.required' => 'The email field is required.',
             'email.email' => 'Please enter a valid email address.',
             'email.unique' => 'This email address is already taken.',
             'email.lowercase' => 'The email must be lowercase.',
             'email.max' => 'The email may not be greater than 255 characters.',
             'teaching_started_at.date' => 'The teaching start date must be a valid date.',
-            'teaching_ended_at.date' => 'The teaching end date must be a valid date.',
-            'teaching_ended_at.after' => 'The teaching end date must be after the teaching start date.',
         ];
     }
 
@@ -75,7 +75,6 @@ class ProfileUpdateRequest extends FormRequest
     {
         return [
             'teaching_started_at' => 'teaching started at',
-            'teaching_ended_at' => 'teaching ended at',
         ];
     }
 }

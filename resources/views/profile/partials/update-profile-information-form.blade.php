@@ -8,7 +8,7 @@
         @method('patch')
 
         <!-- Scrollable container for form fields -->
-        <div class="max-h-[60vh] overflow-y-auto pr-4 -mr-4 space-y-6">
+        <div class="max-h-[60vh] overflow-y-auto p-4 -mr-4 space-y-6">
             <div class="grid gap-6">
                 <!-- First Name Field -->
                 <div>
@@ -20,14 +20,14 @@
                             id="firstname" 
                             name="firstname" 
                             type="text" 
-                            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors duration-200 pr-10 "
+                            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors duration-200"
                             value="{{ old('firstname', $user->firstname) }}" 
                             required 
                             autofocus 
                             autocomplete="given-name"
                             placeholder="Enter your first name"
                         />
-                        <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
+                        <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
                             <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
                             </svg>
@@ -46,12 +46,12 @@
                             id="middlename" 
                             name="middlename" 
                             type="text" 
-                            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors duration-200 pr-10"
+                            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors duration-200"
                             value="{{ old('middlename', $user->middlename) }}" 
                             autocomplete="additional-name"
                             placeholder="Enter your middle name (optional)"
                         />
-                        <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
+                        <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
                             <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
                             </svg>
@@ -70,13 +70,13 @@
                             id="lastname" 
                             name="lastname" 
                             type="text" 
-                            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors duration-200 pr-10"
+                            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors duration-200"
                             value="{{ old('lastname', $user->lastname) }}" 
                             required 
                             autocomplete="family-name"
                             placeholder="Enter your last name"
                         />
-                        <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
+                        <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
                             <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
                             </svg>
@@ -85,28 +85,52 @@
                     <x-input-error class="mt-2" :messages="$errors->get('lastname')" />
                 </div>
 
-                <!-- Extension Name Field -->
+                <!-- Suffix Field -->
                 <div>
                     <label for="extensionname" class="block text-xs font-medium tracking-wide uppercase text-gray-700 mb-2">
-                        {{ __('Extension Name') }}
+                        {{ __('Suffix') }} <span class="text-gray-500 font-normal">(Sr., Jr., III, etc.)</span>
                     </label>
                     <div class="relative">
                         <input 
                             id="extensionname" 
                             name="extensionname" 
                             type="text" 
-                            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors duration-200 pr-10"
+                            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors duration-200"
                             value="{{ old('extensionname', $user->extensionname) }}" 
                             autocomplete="honorific-suffix"
                             placeholder="e.g., Jr., Sr., III (optional)"
                         />
-                        <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
+                        <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
                             <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
                             </svg>
                         </div>
                     </div>
                     <x-input-error class="mt-2" :messages="$errors->get('extensionname')" />
+                </div>
+
+                <!-- Position Field -->
+                <div>
+                    <label for="position" class="block text-xs font-medium tracking-wide uppercase text-gray-700 mb-2">
+                        {{ __('Position') }}
+                    </label>
+                    <div class="relative">
+                        <input 
+                            id="position" 
+                            name="position" 
+                            type="text" 
+                            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors duration-200"
+                            value="{{ old('position', $user->position) }}" 
+                            autocomplete="organization-title"
+                            placeholder="Enter your position (optional)"
+                        />
+                        <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                            <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                            </svg>
+                        </div>
+                    </div>
+                    <x-input-error class="mt-2" :messages="$errors->get('position')" />
                 </div>
 
                 <!-- Email Field -->
@@ -119,13 +143,13 @@
                             id="email" 
                             name="email" 
                             type="email" 
-                            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors duration-200 pr-10"
+                            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors duration-200"
                             value="{{ old('email', $user->email) }}" 
                             required 
                             autocomplete="username"
                             placeholder="Enter your email address"
                         />
-                        <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
+                        <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
                             <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207"/>
                             </svg>
@@ -178,40 +202,17 @@
                             id="teaching_started_at" 
                             name="teaching_started_at" 
                             type="date" 
-                            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors duration-200 pr-10"
+                            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors duration-200"
                             value="{{ old('teaching_started_at', $user->teaching_started_at ? $user->teaching_started_at->format('Y-m-d') : '') }}" 
                             autocomplete="off"
                         />
-                        <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
+                        <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
                             <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                             </svg>
                         </div>
                     </div>
                     <x-input-error class="mt-2" :messages="$errors->get('teaching_started_at')" />
-                </div>
-
-                <!-- Teaching Ended At Field -->
-                <div>
-                    <label for="teaching_ended_at" class="block text-xs font-medium tracking-wide uppercase text-gray-700 mb-2">
-                        {{ __('Teaching Ended At') }} <span class="text-gray-500 font-normal">(Optional)</span>
-                    </label>
-                    <div class="relative">
-                        <input 
-                            id="teaching_ended_at" 
-                            name="teaching_ended_at" 
-                            type="date" 
-                            class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors duration-200 pr-10"
-                            value="{{ old('teaching_ended_at', $user->teaching_ended_at ? $user->teaching_ended_at->format('Y-m-d') : '') }}" 
-                            autocomplete="off"
-                        />
-                        <div class="absolute inset-y-0 right-0 pr-3 flex items-center">
-                            <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                            </svg>
-                        </div>
-                    </div>
-                    <x-input-error class="mt-2" :messages="$errors->get('teaching_ended_at')" />
                 </div>
             </div>
         </div>

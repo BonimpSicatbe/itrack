@@ -13,16 +13,16 @@
 
             <!-- Tabs Navigation -->
             <div class="mt-4 lg:mt-0">
-                <nav class="flex gap-3">
+                <nav class="flex gap-2">
                     @foreach($tabs as $tabKey => $tab)
                         <a
                             href="{{ route('admin.management.index', ['tab' => $tabKey]) }}"
-                            class="px-4 py-2 rounded-xl text-sm font-semibold transition-colors duration-200 shadow-sm
+                            class="px-4 py-2.5 rounded-lg text-sm font-semibold transition-all duration-200 ease-in-out border
                                 {{ $activeTab === $tabKey 
-                                    ? 'bg-white text-1C7C54' 
-                                    : 'bg-white/20 hover:bg-white text-1C7C54' }}"
+                                    ? 'bg-white text-green-800 shadow-md border-transparent' 
+                                    : 'bg-transparent text-white border-white/50 hover:bg-white hover:text-green-700 hover:border-white hover:shadow-lg' }}"
                         >
-                            <i class="fa-solid fa-{{ $tab['icon'] }}"></i>
+                            <i class="fa-solid fa-{{ $tab['icon'] }} mr-2"></i>
                             {{ $tab['label'] }}
                         </a>
                     @endforeach
@@ -52,7 +52,7 @@
                     <div>
                         @livewire('admin.management.program-management')
                     </div>
-                @break  w
+                @break
                 @case('courses')
                     <div>
                         @livewire('admin.management.course-management')

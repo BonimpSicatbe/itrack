@@ -5,54 +5,44 @@
     </div>
 
     <!-- First Name -->
-    <fieldset class="fieldset">
-        <label class="fieldset-label">First name <span class="text-red-500">*</span></label>
-        <input class="input input-md w-full @error('firstname') input-error @enderror" type="text" wire:model.blur="firstname" placeholder="First name">
-        @error('firstname')
-            <span class="text-red-500 text-sm mt-1">{{ $message }}</span>
-        @enderror
-    </fieldset>
+    <div class="w-full">
+        <x-input-label for="firstname" :value="__('First name')" />
+        <x-text-input id="firstname" class="block mt-1 w-full" type="text" wire:model.blur="firstname" placeholder="First name" required autofocus />
+        <x-input-error :messages="$errors->get('firstname')" class="mt-2" />
+    </div>
 
     <!-- Middle Name -->
-    <fieldset class="fieldset">
-        <label class="fieldset-label">Middle name</label>
-        <input class="input input-md w-full @error('middlename') input-error @enderror" type="text" wire:model.blur="middlename" placeholder="Middle name">
-        @error('middlename')
-            <span class="text-red-500 text-sm mt-1">{{ $message }}</span>
-        @enderror
-    </fieldset>
+    <div class="w-full">
+        <x-input-label for="middlename" :value="__('Middle name')" />
+        <x-text-input id="middlename" class="block mt-1 w-full" type="text" wire:model.blur="middlename" placeholder="Middle name" />
+        <x-input-error :messages="$errors->get('middlename')" class="mt-2" />
+    </div>
 
     <!-- Last Name -->
-    <fieldset class="fieldset">
-        <label class="fieldset-label">Last name <span class="text-red-500">*</span></label>
-        <input class="input input-md w-full @error('lastname') input-error @enderror" type="text" wire:model.blur="lastname" placeholder="Last name">
-        @error('lastname')
-            <span class="text-red-500 text-sm mt-1">{{ $message }}</span>
-        @enderror
-    </fieldset>
+    <div class="w-full">
+        <x-input-label for="lastname" :value="__('Last name')" />
+        <x-text-input id="lastname" class="block mt-1 w-full" type="text" wire:model.blur="lastname" placeholder="Last name" required />
+        <x-input-error :messages="$errors->get('lastname')" class="mt-2" />
+    </div>
 
     <!-- Extension Name -->
-    <fieldset class="fieldset">
-        <label class="fieldset-label">Suffix (Sr., Jr. III., etc)</label>
-        <input class="input input-md w-full @error('extensionname') input-error @enderror" type="text" wire:model.blur="extensionname" placeholder="Suffix (Sr., Jr. III., etc)">
-        @error('extensionname')
-            <span class="text-red-500 text-sm mt-1">{{ $message }}</span>
-        @enderror
-    </fieldset>
+    <div class="w-full">
+        <x-input-label for="extensionname" :value="__('Suffix (Sr., Jr. III., etc)')" />
+        <x-text-input id="extensionname" class="block mt-1 w-full" type="text" wire:model.blur="extensionname" placeholder="Suffix (Sr., Jr. III., etc)" />
+        <x-input-error :messages="$errors->get('extensionname')" class="mt-2" />
+    </div>
 
     <!-- Email -->
-    <fieldset class="fieldset">
-        <label class="fieldset-label">Email <span class="text-red-500">*</span></label>
-        <input class="input input-md w-full @error('email') input-error @enderror" type="email" wire:model.blur="email" placeholder="user@cvsu.edu.ph">
-        @error('email')
-            <span class="text-red-500 text-sm mt-1">{{ $message }}</span>
-        @enderror
-    </fieldset>
+    <div class="w-full">
+        <x-input-label for="email" :value="__('Email')" />
+        <x-text-input id="email" class="block mt-1 w-full" type="email" wire:model.blur="email" placeholder="user@cvsu.edu.ph" required />
+        <x-input-error :messages="$errors->get('email')" class="mt-2" />
+    </div>
 
     <!-- College -->
-    <fieldset class="fieldset">
-        <label class="fieldset-label">Select College <span class="text-red-500">*</span></label>
-        <select class="select select-md w-full @error('college_id') select-error @enderror" wire:model.blur="college_id">
+    <div class="w-full">
+        <x-input-label for="college_id" :value="__('Select College')" />
+        <select id="college_id" class="block mt-1 w-full rounded-lg border-gray-300 shadow-xs focus:border-indigo-500 focus:ring-indigo-500 @error('college_id') border-red-500 @enderror" wire:model.blur="college_id">
             <option value="">Select College</option>
             @forelse($colleges ?? [] as $college)
                 <option value="{{ $college->id }}">{{ $college->name }}</option>
@@ -60,15 +50,13 @@
                 <option disabled>No colleges available</option>
             @endforelse
         </select>
-        @error('college_id')
-            <span class="text-red-500 text-sm mt-1">{{ $message }}</span>
-        @enderror
-    </fieldset>
+        <x-input-error :messages="$errors->get('college_id')" class="mt-2" />
+    </div>
 
     <!-- Position -->
-    <fieldset class="fieldset">
-        <label class="fieldset-label">Select Position <span class="text-red-500">*</span></label>
-        <select class="select select-md w-full @error('position') select-error @enderror" wire:model.blur="position">
+    <div class="w-full">
+        <x-input-label for="position" :value="__('Select Position')" />
+        <select id="position" class="block mt-1 w-full rounded-lg border-gray-300 shadow-xs focus:border-indigo-500 focus:ring-indigo-500 @error('position') border-red-500 @enderror" wire:model.blur="position">
             <option value="">Select Position</option>
             <option value="Associate Professor I">Associate Professor I</option>
             <option value="Associate Professor II">Associate Professor II</option>
@@ -78,57 +66,75 @@
             <option value="Associate Professor">Associate Professor</option>
             <option value="Professor">Professor</option>
         </select>
-        @error('position')
-            <span class="text-red-500 text-sm mt-1">{{ $message }}</span>
-        @enderror
-    </fieldset>
+        <x-input-error :messages="$errors->get('position')" class="mt-2" />
+    </div>
 
     <!-- Teaching Started At -->
-    <fieldset class="fieldset">
-        <label class="fieldset-label">Teaching Started At <span class="text-red-500">*</span></label>
-        <input class="input input-md w-full @error('teaching_started_at') input-error @enderror" max="{{ now()->toDateString() }}" type="date" wire:model.blur="teaching_started_at">
-        @error('teaching_started_at')
-            <span class="text-red-500 text-sm mt-1">{{ $message }}</span>
-        @enderror
-    </fieldset>
+    <div class="w-full">
+        <x-input-label for="teaching_started_at" :value="__('Teaching Started At')" />
+        <x-text-input id="teaching_started_at" class="block mt-1 w-full" type="date" wire:model.blur="teaching_started_at" max="{{ now()->toDateString() }}" required />
+        <x-input-error :messages="$errors->get('teaching_started_at')" class="mt-2" />
+    </div>
 
     <!-- Password -->
-    <fieldset class="fieldset">
-        <label class="fieldset-label">Password <span class="text-red-500">*</span></label>
-        <input class="input input-md w-full @error('password') input-error @enderror" type="password" wire:model.blur="password" placeholder="Password">
-        @error('password')
-            <span class="text-red-500 text-sm mt-1">{{ $message }}</span>
-        @enderror
-    </fieldset>
+    <div class="w-full relative">
+        <x-input-label for="password" :value="__('Password')" />
+        <div class="relative">
+            <x-text-input id="password" class="block mt-1 w-full pr-10" type="password" wire:model.blur="password" required autocomplete="new-password" />
+            <button type="button" 
+                class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-600 hover:text-gray-900 mt-1"
+                onclick="togglePassword('password')">
+                <svg id="eye-icon-password" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+            </button>
+        </div>
+        <x-input-error :messages="$errors->get('password')" class="mt-2" />
+    </div>
 
     <!-- Password Confirmation -->
-    <fieldset class="fieldset">
-        <label class="fieldset-label">Confirm Password <span class="text-red-500">*</span></label>
-        <input class="input input-md w-full @error('password_confirmation') input-error @enderror" type="password" wire:model.blur="password_confirmation" placeholder="Confirm Password">
+    <div class="w-full relative">
+        <x-input-label for="password_confirmation" :value="__('Confirm Password')" />
+        <div class="relative">
+            <x-text-input id="password_confirmation" class="block mt-1 w-full pr-10" type="password" wire:model.blur="password_confirmation" required autocomplete="new-password" />
+            <button type="button" 
+                class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-600 hover:text-gray-900 mt-1"
+                onclick="togglePassword('password_confirmation')">
+                <svg id="eye-icon-password_confirmation" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+            </button>
+        </div>
         <!-- Real-time password match indicator -->
         <div class="mt-2 text-xs">
             @if($password && $password_confirmation)
                 @if($password === $password_confirmation)
-                    <span class="text-green-600 font-medium">✓ Passwords match</span>
+                    <span class="text-green-600 font-medium">Passwords match</span>
                 @else
-                    <span class="text-red-600 font-medium">✗ Passwords do not match</span>
+                    <span class="text-red-600 font-medium">Passwords do not match</span>
                 @endif
             @endif
         </div>
-    </fieldset>
+    </div>
 
     <!-- Submit Button -->
     <div class="col-span-2 text-center w-full mt-4">
-        <button class="btn btn-md btn-success w-full md:w-1/2" type="submit" wire:loading.attr="disabled" wire:target="store">
-            <span wire:loading.remove wire:target="store">Register Account</span>
+        <button class="w-full md:w-1/2 bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg focus:outline-hidden focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 transition duration-150 ease-in-out" 
+                type="submit" 
+                wire:loading.attr="disabled" 
+                wire:target="store">
+            <span wire:loading.remove wire:target="store">REGISTER ACCOUNT</span>
             <span wire:loading wire:target="store">
                 <span class="loading loading-spinner loading-sm"></span>
                 Processing...
             </span>
         </button>
         
-        <div class="mt-4 text-center">
-            <a href="{{ route('login') }}" class="link link-primary text-sm">Already have an account? Login here</a>
+        <div class="mt-4 text-center text-sm">
+            Already have an account? 
+            <a href="{{ route('login') }}" class="underline text-green-600 hover:text-green-700 font-medium">Login here</a>
         </div>
     </div>
 
@@ -159,3 +165,18 @@
         </div>
     @endif
 </form>
+
+<script>
+    function togglePassword(fieldId) {
+        const passwordInput = document.getElementById(fieldId);
+        const eyeIcon = document.getElementById(`eye-icon-${fieldId}`);
+        
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            eyeIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"/>';
+        } else {
+            passwordInput.type = 'password';
+            eyeIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>';
+        }
+    }
+</script>

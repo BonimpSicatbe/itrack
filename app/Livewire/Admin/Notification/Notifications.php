@@ -17,6 +17,7 @@ class Notifications extends Component
     public $selectedNotificationData = null;
     public $activeTab = 'all';
     public $newRegisteredUser = null;
+    public $notificationNotFound = false;
 
     // Change to array properties to handle multiple files
     public $newStatus = [];
@@ -56,6 +57,7 @@ class Notifications extends Component
     {
         $this->selectedNotification = null;
         $this->selectedNotificationData = null;
+        $this->notificationNotFound = false;
         // Reset form data when tab changes
         $this->reset(['newStatus', 'adminNotes']);
     }
@@ -64,10 +66,16 @@ class Notifications extends Component
     {
         $id = urldecode($id);
         $this->selectedNotification = $id;
+        $this->notificationNotFound = false;
 
         $notification = DatabaseNotification::find($id);
 
-        // dd($notification->data);
+        if (!$notification) {
+            $this->notificationNotFound = true;
+            $this->selectedNotificationData = null;
+            $this->newRegisteredUser = null;
+            return;
+        }
 
         if ($notification->data['type'] === 'new_registered_user') {
             Log::info('Notification Data:', $notification->data);
@@ -619,7 +627,6 @@ class Notifications extends Component
         }
 
         try {
-            $user->sendEmailVerificationNotification();
             $user->markEmailAsVerified();
             $user->save();
 

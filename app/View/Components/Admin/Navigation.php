@@ -18,7 +18,8 @@ class Navigation extends Component
             ->whereIn('type', [
                 'App\Notifications\NewSubmissionNotification',
                 'App\Notifications\SubmissionStatusUpdated',
-                'App\Notifications\SemesterEndedWithMissingSubmissions' // ADD THIS
+                'App\Notifications\SemesterEndedWithMissingSubmissions',
+                'App\Notifications\NewRegisteredUserNotification',
             ])
             ->count();
         $this->navLinks = [
