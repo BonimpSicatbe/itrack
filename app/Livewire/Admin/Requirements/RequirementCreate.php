@@ -210,8 +210,8 @@ class RequirementCreate extends Component
             'selectedPrograms' => ['nullable', 'array'],
             'selectedPrograms.*' => ['exists:programs,id'],
 
-            'required_files' => ['nullable', 'array', 'max:5', 'mime:application/pdf,image/*'],
-            'required_files.*' => ['file', 'max:15360', 'mime:application/pdf,image/*'],
+            'required_files' => ['nullable', 'array', 'max:5'],
+            'required_files.*' => ['file', 'max:15360', 'mimes:pdf,jpg,jpeg,png,gif,bmp,webp'],
         ];
     }
 
