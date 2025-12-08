@@ -320,7 +320,7 @@ class RequirementsList extends Component
     public function submitRequirement($requirementId)
     {
         $this->validate([
-            'file' => 'required|file|max:10240',
+            'file' => 'required|file|max:10240|mimes:pdf,jpg,jpeg,png,gif',
             'submissionNotes' => 'nullable|string|max:500',
         ]);
 
@@ -334,7 +334,6 @@ class RequirementsList extends Component
                 'course_id' => $this->selectedCourse, // This is crucial - link to specific course
                 'submitted_at' => now(),
                 'admin_notes' => $this->submissionNotes,
-                // Remove this line: 'status' => SubmittedRequirement::STATUS_UNDER_REVIEW,
             ]);
 
             // Add the file
