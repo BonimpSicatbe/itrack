@@ -607,17 +607,10 @@
         </div>
         
         <div class="approval-item">
-            <div class="approval-label">Noted by:</div>
+            <div class="approval-label">Approved by:</div>
             <div class="approval-spacing"></div>
-            <div class="approval-name">DR. MARIA S. SANTOS</div>
-            <div class="approval-position">Dean, Graduate School</div>
-        </div>
-        
-        <div class="approval-item">
-            <div class="approval-label">Checked by:</div>
-            <div class="approval-spacing"></div>
-            <div class="approval-name">DR. JUAN R. CRUZ</div>
-            <div class="approval-position">Quality Assurance Director</div>
+            <div class="approval-name">Dr. Bettina Joyce P. Ilagan</div>
+            <div class="approval-position">Dean, Graduate School and Open Learning College</div>
         </div>
     </div>
 </body>
