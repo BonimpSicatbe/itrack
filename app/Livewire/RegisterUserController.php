@@ -35,7 +35,8 @@ class RegisterUserController extends Component
                 'required',
                 'confirmed',
                 'min:8',
-                'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&._])[A-Za-z\d@$!%*?&._]+$/'
+                // At least one uppercase, one lowercase, one digit, and one special character (!@#$%^&*()_+-=[]{}|;:,.<>?)
+                'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{}|;:,.<>?])[A-Za-z\d!@#$%^&*()_+\-=\[\]{}|;:,.<>?]+$/'
             ],
         ];
     }
@@ -50,12 +51,12 @@ class RegisterUserController extends Component
         ];
     }
 
-    // Real-time validation for specific fields
+    // LIVE VALIDATION (triggered on each keystroke)
     public function updated($propertyName)
     {
         $this->validateOnly($propertyName);
-        
-        // Special handling for password confirmation
+
+        // Validate both password + confirmation live
         if ($propertyName === 'password_confirmation') {
             $this->validateOnly('password');
         }
@@ -66,7 +67,6 @@ class RegisterUserController extends Component
         $validated = $this->validate();
 
         try {
-            // Create user
             $user = User::create([
                 'firstname' => $validated['firstname'],
                 'middlename' => $validated['middlename'] ?? null,
@@ -80,43 +80,38 @@ class RegisterUserController extends Component
                 'password' => Hash::make($validated['password']),
             ]);
 
-            // Assign default role
             $user->assignRole('user');
 
-            // Notify admin users about new registration
             $adminUsers = User::role(['admin'])->get();
+
             foreach ($adminUsers as $admin) {
                 try {
                     $admin->notify(new \App\Notifications\NewRegisteredUserNotification($user));
                 } catch (\Throwable $e) {
-                    Log::error('Failed to notify admin about new user', [
+                    Log::error('Failed to notify admin', [
                         'admin_id' => $admin->id,
                         'error' => $e->getMessage(),
                     ]);
                 }
             }
 
-            Log::info('New user registered successfully', ['user_id' => $user->id, 'email' => $user->email]);
-
-            // Redirect to login with success message - DON'T login automatically
-            return redirect()->route('login')->with('success', 'Registration successful! Please wait for admin approval before logging in.');
+            return redirect()->route('login')
+                ->with('success', 'Registration successful! Please wait for admin approval before logging in.');
 
         } catch (\Exception $e) {
             Log::error('Registration failed', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-            
+
             $this->addError('email', 'Registration failed. Please try again.');
-            return;
         }
     }
 
     public function render()
     {
-        $colleges = \App\Models\College::orderBy('name')->get();
         return view('livewire.register-user-controller', [
-            'colleges' => $colleges,
+            'colleges' => \App\Models\College::orderBy('name')->get(),
         ]);
     }
 }
