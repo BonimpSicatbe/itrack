@@ -12,7 +12,44 @@ class FileController extends Controller
     {
         abort_unless($submission->submissionFile, 404);
         
-        $filePath = $submission->getFilePath();
+        // If approved and has signed document, download signed version
+        if ($submission->status === 'approved' && $submission->has_signed_document) {
+            return $this->downloadSigned($submission);
+        }
+        
+        // Otherwise, download original file
+        return $this->downloadOriginal($submission);
+    }
+
+    public function preview($submission)
+    {
+        $submission = SubmittedRequirement::findOrFail($submission);
+        
+        // Get the file to preview
+        if ($submission->isApproved && $submission->has_signed_document) {
+            $media = $submission->getFirstMedia('signed_documents');
+        } else {
+            $media = $submission->getFirstMedia('submission_files');
+        }
+        
+        if (!$media) {
+            abort(404, 'File not found');
+        }
+        
+        $filePath = $media->getPath();
+        
+        if (!file_exists($filePath)) {
+            abort(404, 'File does not exist');
+        }
+        
+        return response()->file($filePath);
+    }
+
+    public function downloadOriginal(SubmittedRequirement $submission)
+    {
+        abort_unless($submission->submissionFile, 404);
+        
+        $filePath = $submission->getOriginalFilePath();
         abort_unless(file_exists($filePath), 404);
 
         return response()->download(
@@ -21,14 +58,57 @@ class FileController extends Controller
         );
     }
 
-    public function preview(SubmittedRequirement $submission)
+    public function previewOriginal($submission)
     {
-        abort_unless($submission->submissionFile, 404);
+        $submission = SubmittedRequirement::findOrFail($submission);
         
-        // Get the actual file path
-        $filePath = $submission->submissionFile->getPath();
+        $media = $submission->getFirstMedia('submission_files');
         
-        // For local files, use this instead of getUrl()
+        if (!$media) {
+            abort(404, 'Original file not found');
+        }
+        
+        $filePath = $media->getPath();
+        
+        if (!file_exists($filePath)) {
+            abort(404, 'File does not exist');
+        }
+        
+        return response()->file($filePath);
+    }
+
+    public function downloadSigned(SubmittedRequirement $submission)
+    {
+        if (!$submission->has_signed_document) {
+            abort(404, 'No signed document available');
+        }
+        
+        // Get the signed document from media collection
+        $media = $submission->getFirstMedia('signed_documents');
+        
+        if (!$media) {
+            abort(404, 'Signed document not found');
+        }
+        
+        return response()->download($media->getPath(), 'signed_' . $media->file_name);
+    }
+
+    public function previewSigned($submission)
+    {
+        $submission = SubmittedRequirement::findOrFail($submission);
+        
+        $media = $submission->getFirstMedia('signed_documents');
+        
+        if (!$media) {
+            abort(404, 'Signed document not found');
+        }
+        
+        $filePath = $media->getPath();
+        
+        if (!file_exists($filePath)) {
+            abort(404, 'File does not exist');
+        }
+        
         return response()->file($filePath);
     }
 
@@ -53,5 +133,9 @@ class FileController extends Controller
         abort_unless(file_exists($filePath), 404);
 
         return response()->file($filePath);
-    }
+    } 
+
+    
+
+    
 }

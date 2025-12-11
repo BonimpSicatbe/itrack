@@ -58,6 +58,11 @@
                         @livewire('admin.management.course-management')
                     </div>
                 @break
+                @case('signatories') <!-- New case -->
+                    <div>
+                        @livewire('admin.management.signatory-management')
+                    </div>
+                @break
             @endswitch
         </div>
     </div>

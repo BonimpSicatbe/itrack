@@ -17,10 +17,6 @@ Route::get('/', function () {
     return redirect()->route('register');
 });
 
-// Route::get('/', function () {
-//     return redirect()->route('login');
-// });
-
 // User routes
 Route::middleware(['auth', 'role:user'])
     ->prefix('user')
@@ -161,22 +157,45 @@ Route::middleware(['auth', 'role:admin|super-admin'])
         })->name('test');
     });
 
-// File download and preview routes
-Route::get('/file/download/{submission}', [FileController::class, 'download'])
-    ->name('file.download')
-    ->middleware('auth');
+// File download and preview routes - PUBLIC ROUTES
+Route::middleware('auth')->group(function () {
+    // ✅ Main routes that handle both original and signed files based on status
+    Route::get('/file/download/{submission}', [FileController::class, 'download'])
+        ->name('file.download');
 
-Route::get('/file/preview/{submission}', [FileController::class, 'preview'])
-    ->name('file.preview')
-    ->middleware('auth');
+    Route::get('/file/preview/{submission}', [FileController::class, 'preview'])
+        ->name('file.preview');
 
-Route::get('/guide/download/{media}', [FileController::class, 'downloadGuide'])
-    ->name('guide.download')
-    ->middleware('auth');
+    // ✅ NEW: Routes for ORIGINAL files (bypass signed document logic)
+    Route::get('/file/download-original/{submission}', [FileController::class, 'downloadOriginal'])
+        ->name('file.download.original');
 
-Route::get('/guide/preview/{media}', [FileController::class, 'previewGuide'])
-    ->name('guide.preview')
-    ->middleware('auth');
+    Route::get('/file/preview-original/{submission}', [FileController::class, 'previewOriginal'])
+        ->name('file.preview.original');
+
+    // ✅ NEW: Routes for SIGNED documents only
+    Route::get('/file/signed-download/{submission}', [FileController::class, 'downloadSigned'])
+        ->name('file.download.signed');
+
+    Route::get('/file/preview-signed/{submission}', [FileController::class, 'previewSigned'])
+        ->name('file.preview.signed');
+
+    // Guide routes
+    Route::get('/guide/download/{media}', [FileController::class, 'downloadGuide'])
+        ->name('guide.download');
+
+    Route::get('/guide/preview/{media}', [FileController::class, 'previewGuide'])
+        ->name('guide.preview');
+
+    // User file routes
+    Route::get('/user/files/{media}/preview', [UserController::class, 'preview'])
+        ->whereNumber('media')
+        ->name('user.file.preview');
+
+    Route::get('/user/files/{media}/download', [UserController::class, 'download'])
+        ->whereNumber('media')
+        ->name('user.file.download');
+});
 
 // Notification routes
 Route::middleware('auth')->group(function () {
@@ -192,20 +211,11 @@ Route::middleware('auth')->group(function () {
     })->name('notifications.markAsRead');
 });
 
-Route::get('/user/files/{media}/preview', [UserController::class, 'preview'])
-    ->whereNumber('media')
-    ->name('user.file.preview');
-
-Route::get('/user/files/{media}/download', [UserController::class, 'download'])
-    ->whereNumber('media')
-    ->name('user.file.download');
-
 // Profile routes
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
-    // Route::put('/password', [ProfileController::class, 'updatePassword'])->name('password.update');
 
     // Email verification
     Route::post('/email/verification-notification', function (Request $request) {

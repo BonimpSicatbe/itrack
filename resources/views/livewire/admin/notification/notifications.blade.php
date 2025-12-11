@@ -530,20 +530,51 @@
                             {{-- Submissions Section --}}
                             <div class="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
 
-                                {{-- Main Header --}}
-                                <div class="flex items-center mb-4">
-                                    <div class="rounded-xl mr-2">
-                                        <i class="fa-solid fa-folder-open text-green-700 text-2xl"></i>
+                                {{-- Main Header with View Full Submission Button --}}
+                                <div class="flex items-center justify-between mb-4">
+                                    <div class="flex items-center">
+                                        <div class="rounded-xl mr-2">
+                                            <i class="fa-solid fa-folder-open text-green-700 text-2xl"></i>
+                                        </div>
+                                        <h3 class="text-xl font-semibold text-gray-900">Submissions</h3>
+                                        @if (count($selectedNotificationData['files'] ?? []) > 0)
+                                            <span class="ml-3 px-3 py-1 bg-green-100 text-green-700 text-sm font-semibold rounded-full">
+                                                {{ count($selectedNotificationData['files'] ?? []) }} files
+                                            </span>
+                                        @endif
                                     </div>
-                                    <h3 class="text-xl font-semibold text-gray-900">Submissions</h3>
+
+                                    {{-- View Full Submission Button --}}
+                                    @if (isset($selectedNotificationData['submissions']) && count($selectedNotificationData['submissions']) > 0)
+                                        @php
+                                            $firstSubmission = $selectedNotificationData['submissions'][0];
+                                            $requirementId = $firstSubmission['requirement_id'] ?? ($selectedNotificationData['requirement']['id'] ?? null);
+                                            $userId = $firstSubmission['user_id'] ?? ($selectedNotificationData['submitter']['id'] ?? null);
+                                            $courseId = $firstSubmission['course']['id'] ?? ($selectedNotificationData['course']['id'] ?? null);
+                                        @endphp
+                                        
+                                        @if ($requirementId && $userId && $courseId)
+                                            <a href="{{ route('admin.submitted-requirements.requirement', [
+                                                'requirement_id' => $requirementId,
+                                                'user_id' => $userId,
+                                                'course_id' => $courseId,
+                                                'source' => 'notifications',
+                                                'page' => 1
+                                            ]) }}"
+                                               target="_blank"
+                                               class="inline-flex items-center px-4 py-2 border border-transparent rounded-xl text-sm font-semibold text-white bg-green-600 hover:bg-green-700 shadow-sm hover:shadow-md transition-all duration-200">
+                                                <i class="fa-solid fa-external-link-alt mr-2"></i>
+                                                View Full Submission
+                                            </a>
+                                        @endif
+                                    @endif
                                 </div>
 
                                 {{-- Submission Context Block (Submitted by and Program) --}}
                                 <div class="mb-6 pb-4 border-b border-gray-100">
                                     <p class="text-sm text-gray-600 mb-1">
                                         <span class="font-bold text-gray-700 mr-1">Submitted By:</span>
-                                        <span
-                                            class="font-semibold">{{ $selectedNotificationData['submitter']['name'] }}</span>
+                                        <span class="font-semibold">{{ $selectedNotificationData['submitter']['name'] }}</span>
                                         ({{ $selectedNotificationData['submitter']['email'] }})
                                     </p>
                                     @if (isset($selectedNotificationData['course']['program']))
@@ -559,6 +590,7 @@
 
                                 {{-- Files List --}}
                                 @if (count($selectedNotificationData['files'] ?? []))
+                                    {{-- Grid container for better layout --}}
                                     <div class="space-y-6">
                                         @foreach ($selectedNotificationData['files'] as $file)
                                             @php
@@ -579,14 +611,14 @@
                                                     'revision_needed' => 'bg-yellow-100 text-yellow-700 border-yellow-300',
                                                     default => 'bg-blue-100 text-blue-700 border-blue-300',
                                                 };
+                                                $isApproved = $file['is_approved'] ?? false;
                                             @endphp
 
                                             {{-- Submission Card --}}
                                             <div class="border border-gray-200 rounded-xl overflow-hidden shadow-md">
                                                 {{-- Submission Header/Context --}}
                                                 <div class="bg-green-700 px-5 py-3 border-b border-gray-200">
-                                                    <div
-                                                        class="flex flex-wrap justify-between items-center gap-2 text-sm text-white">
+                                                    <div class="flex flex-wrap justify-between items-center gap-2 text-sm text-white">
                                                         @if ($file['course'] ?? null)
                                                             <p class="font-medium flex items-center">
                                                                 <i class="fa-solid fa-book-open mr-2 text-white"></i>
@@ -600,6 +632,13 @@
                                                                 {{ $submission['reviewed_at']->format('M d, Y g:i A') }}
                                                             </p>
                                                         @endif
+                                                        {{-- ✅ Show Signed Document Status --}}
+                                                        @if ($submission['signed_document_path'] ?? false)
+                                                            <p class="font-medium flex items-center">
+                                                                <i class="fa-solid fa-signature mr-2 text-yellow-300"></i>
+                                                                Signed: {{ \Carbon\Carbon::parse($submission['signed_at'])->format('M d, Y') }}
+                                                            </p>
+                                                        @endif
                                                     </div>
                                                 </div>
 
@@ -607,7 +646,13 @@
                                                 <div class="p-5 flex items-center justify-between bg-white">
                                                     <div class="flex items-center space-x-4 min-w-0">
                                                         <div class="flex-shrink-0 p-3 bg-gray-100 rounded-xl shadow-inner">
-                                                            @switch($file['extension'])
+                                                            @php
+                                                                // Determine which file to show based on status
+                                                                $isApprovedWithSignature = $file['is_approved_with_signature'] ?? false;
+                                                                $fileExtension = $isApprovedWithSignature ? 'pdf' : $file['extension'];
+                                                            @endphp
+                                                            
+                                                            @switch($fileExtension)
                                                                 @case('pdf')
                                                                     <i class="fa-regular fa-file-pdf text-red-500 text-xl"></i>
                                                                 @break
@@ -624,11 +669,9 @@
 
                                                                 @case('jpg')
                                                                 @case('jpeg')
-
                                                                 @case('png')
                                                                 @case('gif')
-                                                                    <i
-                                                                        class="fa-regular fa-file-image text-purple-500 text-xl"></i>
+                                                                    <i class="fa-regular fa-file-image text-purple-500 text-xl"></i>
                                                                 @break
 
                                                                 @default
@@ -637,191 +680,91 @@
                                                         </div>
                                                         <div class="min-w-0">
                                                             <p class="text-sm font-semibold text-gray-900 truncate mb-1">
-                                                                {{ $file['name'] }}</p>
+                                                                {{ $isApprovedWithSignature ? 'SIGNED - ' . $file['name'] : $file['name'] }}
+                                                            </p>
                                                             <div class="flex items-center gap-3">
-                                                                <span
-                                                                    class="text-xs text-gray-500 font-semibold bg-gray-200 px-2 py-0.5 rounded-full">
-                                                                    {{ strtoupper($file['extension']) }} •
+                                                                <span class="text-xs text-gray-500 font-semibold bg-gray-200 px-2 py-0.5 rounded-full">
+                                                                    {{ $isApprovedWithSignature ? 'SIGNED PDF' : strtoupper($file['extension']) }} •
                                                                     {{ $file['size'] }}
                                                                 </span>
-                                                                <span
-                                                                    class="text-xs px-3 py-1 rounded-full {{ $statusColor }} font-semibold">
+                                                                <span class="text-xs px-3 py-1 rounded-full {{ $statusColor }} font-semibold">
                                                                     {{ $fileStatusLabel }}
                                                                 </span>
+                                                                @if($isApprovedWithSignature)
+                                                                <span class="text-xs px-2 py-0.5 bg-yellow-100 text-yellow-800 rounded-full font-semibold">
+                                                                    <i class="fa-solid fa-signature mr-1"></i>Signed
+                                                                </span>
+                                                                @endif
                                                             </div>
                                                         </div>
                                                     </div>
                                                     <div class="flex space-x-1 flex-shrink-0">
-                                                        <a href="{{ route('file.download', ['submission' => $file['submission_id'], 'file' => $file['id']]) }}"
+                                                        {{-- Always show signed document download for approved status --}}
+                                                        @if ($submission['status'] === 'approved' && $submission['signed_document_path'])
+                                                            <a href="{{ route('file.download.signed', ['submission' => $file['submission_id']]) }}"
+                                                                class="p-2 text-yellow-600 hover:text-yellow-700 hover:bg-yellow-100 rounded-lg transition-colors"
+                                                                title="Download Signed Version">
+                                                                <i class="fa-solid fa-file-signature"></i>
+                                                            </a>
+                                                            <a href="{{ route('file.preview.signed', ['submission' => $file['submission_id']]) }}"
+                                                                target="_blank"
+                                                                class="p-2 text-yellow-600 hover:text-yellow-700 hover:bg-yellow-100 rounded-lg transition-colors"
+                                                                title="Preview Signed Version">
+                                                                <i class="fa-solid fa-eye"></i>
+                                                            </a>
+                                                        @endif
+                                                        
+                                                        {{-- Always show original file buttons --}}
+                                                        <a href="{{ route('file.download.original', ['submission' => $file['submission_id']]) }}"
                                                             class="p-2 text-blue-500 hover:text-blue-700 hover:bg-blue-100 rounded-lg transition-colors"
-                                                            title="Download">
+                                                            title="Download Original">
                                                             <i class="fa-solid fa-download"></i>
                                                         </a>
                                                         @if ($file['is_previewable'])
-                                                            <a href="{{ route('file.preview', ['submission' => $file['submission_id'], 'file' => $file['id']]) }}"
+                                                            <a href="{{ route('file.preview.original', ['submission' => $file['submission_id']]) }}"
                                                                 target="_blank"
                                                                 class="p-2 text-green-600 hover:text-green-700 hover:bg-green-100 rounded-lg transition-colors"
-                                                                title="Preview">
+                                                                title="Preview Original">
                                                                 <i class="fa-solid fa-eye"></i>
                                                             </a>
                                                         @endif
                                                     </div>
                                                 </div>
 
-                                                {{-- Status Update and Review History (Always Visible) --}}
+                                                {{-- Current Review Notes Display (Removed status update form) --}}
+                                                @if ($submission['admin_notes'] ?? false)
                                                 <div class="p-5 border-t bg-gray-50">
-
-                                                    {{-- Current Review Notes Display (for context) --}}
-                                                    <div class="space-y-2 mb-6">
-                                                        <p class="text-sm font-semibold text-gray-700">Current Review Notes
-                                                        </p>
-                                                        <p
-                                                            class="text-sm text-gray-600 bg-white p-6 rounded-xl border border-gray-200 shadow-inner ">
+                                                    <div class="space-y-2">
+                                                        <p class="text-sm font-semibold text-gray-700">Current Review Notes</p>
+                                                        <p class="text-sm text-gray-600 bg-white p-6 rounded-xl border border-gray-200 shadow-inner">
                                                             {{ $submission['admin_notes'] ?? 'No notes provided for this status.' }}
                                                         </p>
                                                     </div>
-                                            {{-- Display correction notes specific to this submission --}}
-                                            @php
-                                                $submissionCorrectionNotes = $selectedNotificationData['correction_notes_by_submission'][$file['submission_id']] ?? [];
-                                            @endphp
-
-                                                    {{-- Status Update Form (Always Visible) --}}
-                                                    <form
-                                                        wire:submit.prevent="updateFileStatus('{{ $file['submission_id'] }}')"
-                                                        class="space-y-4">
-                                                        <h4 class="text-md font-bold text-gray-900 mb-4 border-b pb-2">
-                                                            Update Submission Status</h4>
-
-                                                        <div class="flex flex-col md:flex-row gap-4">
-                                                            {{-- Status Dropdown --}}
-                                                            <div class="w-full md:w-1/2 space-y-2">
-                                                                <label for="newStatus-{{ $file['submission_id'] }}"
-                                                                    class="block text-sm font-semibold text-gray-700">Select
-                                                                    New Status</label>
-                                                                <select
-                                                                    wire:model="newStatus.{{ $file['submission_id'] }}"
-                                                                    id="newStatus-{{ $file['submission_id'] }}"
-                                                                    class="w-full rounded-xl border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 text-sm py-2.5 px-4 bg-white">
-                                                                    <option value="">Select new status</option>
-                                                                    @foreach (\App\Models\SubmittedRequirement::statusesForReview() as $value => $label)
-                                                                        <option value="{{ $value }}">
-                                                                            {{ $label }}
-                                                                        </option>
-                                                                    @endforeach
-                                                                </select>
-                                                                @error("newStatus.{$file['submission_id']}")
-                                                                    <p class="text-red-500 text-xs mt-1">{{ $message }}
-                                                                    </p>
-                                                                @enderror
-                                                            </div>
-
-                                                    {{-- Admin Notes Textarea --}}
-                                                    <div class="w-full md:w-1/2 space-y-2">
-                                                        <label for="adminNotes-{{ $file['submission_id'] }}" class="block text-sm font-semibold text-gray-700">Suggested Corrections (Optional)</label>
-                                                        <textarea wire:model="adminNotes.{{ $file['submission_id'] }}" id="adminNotes-{{ $file['submission_id'] }}" rows="1"
-                                                            placeholder="Write correction notes for the submitter..."
-                                                            class="w-full rounded-xl border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500 text-sm py-2.5 px-4 bg-white resize-none"></textarea>
-                                                        @error("adminNotes.{$file['submission_id']}")
-                                                            <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                                                        @enderror
-                                                    </div>
                                                 </div>
-
-                                                {{-- Update Button --}}
-                                                <div class="flex justify-end">
-                                                    <button type="submit"
-                                                        class="px-5 py-2 border border-transparent rounded-xl text-sm font-semibold text-white bg-green-600 hover:bg-green-700 shadow-lg hover:shadow-xl transition-all duration-200">
-                                                        <i class="fa-solid fa-check mr-2"></i>Apply Status Update
-                                                    </button>
-                                                </div>
-                                            </form>
-
-                                            @if(count($submissionCorrectionNotes) > 0)
-                                            <div class=" pt-6 pb-2 rounded-xl">
-                                                <div class="flex items-center mb-6">
-                                                    <h3 class="text-lg pl-3 font-semibold text-gray-900">Previous Correction Notes</h3>
-                                                    <span class="ml-3 px-3 py-1 bg-blue-100 text-blue-700 text-sm font-semibold rounded-full">
-                                                        {{ count($submissionCorrectionNotes) }} notes
-                                                    </span>
-                                                </div>
-
-                                                <div class="space-y-4">
-                                                    @foreach($submissionCorrectionNotes as $note)
-                                                    <div class="border border-gray-200 rounded-xl overflow-hidden shadow-sm">
-                                                        <div class="bg-gray-50 px-5 py-3 border-b border-gray-200 flex justify-between items-center">
-                                                            <div class="flex items-center">
-                                                                <span class="text-sm font-semibold text-gray-700">
-                                                                    Note from {{ $note['admin']['name'] ?? 'Admin' }}
-                                                                </span>
-                                                                <span class="ml-3 text-xs text-gray-500">
-                                                                    {{ \Carbon\Carbon::parse($note['created_at'])->format('M d, Y g:i A') }}
-                                                                </span>
-                                                            </div>
-                                                            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold
-                                                                @if($note['status'] === 'approved') bg-green-100 text-green-800
-                                                                @elseif($note['status'] === 'rejected') bg-red-100 text-red-800
-                                                                @elseif($note['status'] === 'revision_needed') bg-yellow-100 text-yellow-800
-                                                                @elseif($note['status'] === 'under_review') bg-blue-100 text-blue-800
-                                                                @else bg-gray-100 text-gray-800 @endif">
-                                                                {{ $note['status_label'] }}
-                                                            </span>
-                                                        </div>
-
-                                                        <div class="p-5 bg-white">
-                                                            <div class="space-y-3">
-                                                                @if($note['file_name'])
-                                                                <div class="flex items-center text-sm text-gray-600">
-                                                                    <i class="fa-regular fa-file mr-2 text-gray-500"></i>
-                                                                    <span class="font-semibold">Original File:</span>
-                                                                    <span class="ml-2 text-gray-700">{{ $note['file_name'] }}</span>
-                                                                </div>
-                                                                @endif
-
-                                                                <div class="bg-gray-50 p-4 rounded-xl border border-gray-200">
-                                                                    <p class="text-sm text-gray-700 whitespace-pre-wrap">{{ $note['correction_notes'] }}</p>
-                                                                </div>
-
-                                                                @if($note['addressed_at'])
-                                                                <div class="flex items-center text-sm text-green-600">
-                                                                    <i class="fa-regular fa-clock mr-2"></i>
-                                                                    <span class="font-semibold">Addressed on:</span>
-                                                                    <span class="ml-2">{{ \Carbon\Carbon::parse($note['addressed_at'])->format('M d, Y g:i A') }}</span>
-                                                                </div>
-                                                                @endif
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    @endforeach
-                                                </div>
+                                                @endif
                                             </div>
-                                            @endif
+                                        @endforeach
+                                    </div>
+                                @else
+                                    {{-- No files message --}}
+                                    <div class="text-center py-12 bg-gray-50 rounded-xl">
+                                        <div class="bg-gray-100 rounded-xl p-8 inline-block">
+                                            <i class="fa-regular fa-file-excel text-gray-400 text-4xl mb-4"></i>
+                                            <p class="text-gray-600 text-sm font-semibold">No files submitted</p>
+                                            <p class="text-gray-500 text-xs mt-1">This submission doesn't contain any files</p>
                                         </div>
                                     </div>
-                                </div>
-                                @endforeach
+                                @endif
                             </div>
-                            @else
-                                {{-- No files message --}}
-                                <div class="text-center py-12 bg-gray-50 rounded-xl">
-                                    <div class="bg-gray-100 rounded-xl p-8 inline-block">
-                                        <i class="fa-regular fa-file-excel text-gray-400 text-4xl mb-4"></i>
-                                        <p class="text-gray-600 text-sm font-semibold">No files submitted</p>
-                                        <p class="text-gray-500 text-xs mt-1">This submission doesn't contain any files
-                                        </p>
-                                    </div>
-                                </div>
-                            @endif
-                        </div>
+                        @endif
                     @endif
-                @endif
+                </div>
             @endif
-            </div>
         @else
             <div class="h-full flex items-center justify-center p-6">
                 <div class="text-center rounded-xl p-12">
                     <h3 class="text-xl font-semibold text-gray-900 mb-3">No notification selected</h3>
-                    <p class="text-sm text-gray-500 font-semibold">Click on a notification from the list to view
-                        details</p>
+                    <p class="text-sm text-gray-500 font-semibold">Click on a notification from the list to view details</p>
                 </div>
             </div>
         @endif

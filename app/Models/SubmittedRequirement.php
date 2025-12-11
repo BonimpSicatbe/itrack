@@ -24,12 +24,16 @@ class SubmittedRequirement extends Model implements HasMedia
         'admin_notes',
         'reviewed_by',
         'reviewed_at',
-        'submitted_at'
+        'submitted_at',
+        'signed_document_path', // Added
+        'signed_at', // Added
+        'signatory_id', // Added
     ];
 
     protected $casts = [
         'reviewed_at' => 'datetime',
         'submitted_at' => 'datetime',
+        'signed_at' => 'datetime', // Added
     ];
 
     // Status Constants
@@ -91,12 +95,29 @@ class SubmittedRequirement extends Model implements HasMedia
     }
 
     /**
+     * The signatory who signed this document
+     */
+    public function signatory(): BelongsTo
+    {
+        return $this->belongsTo(Signatory::class);
+    }
+
+    /**
      * Media relationship for submission files
      */
     public function submissionFile(): MorphOne
     {
         return $this->morphOne(Media::class, 'model')
             ->where('collection_name', 'submission_files');
+    }
+
+    /**
+     * Media relationship for signed documents
+     */
+    public function signedDocument(): MorphOne
+    {
+        return $this->morphOne(Media::class, 'model')
+            ->where('collection_name', 'signed_documents');
     }
 
     /**
@@ -130,6 +151,24 @@ class SubmittedRequirement extends Model implements HasMedia
     public function scopeApproved($query)
     {
         return $query->where('status', self::STATUS_APPROVED);
+    }
+
+    /**
+     * Scope for signed documents
+     */
+    public function scopeSigned($query)
+    {
+        return $query->whereNotNull('signed_document_path')
+                    ->whereNotNull('signed_at');
+    }
+
+    /**
+     * Scope for approved submissions with signatures
+     */
+    public function scopeApprovedWithSignature($query)
+    {
+        return $query->where('status', self::STATUS_APPROVED)
+                    ->whereNotNull('signed_document_path');
     }
 
     /**
@@ -222,11 +261,21 @@ class SubmittedRequirement extends Model implements HasMedia
         $this->addMediaCollection('submission_files')
             ->singleFile()
             ->useDisk('public');
+
+        // Add collection for signed documents
+        $this->addMediaCollection('signed_documents')
+            ->singleFile()
+            ->useDisk('public');
     }
 
     public function getSubmissionFileAttribute()
     {
         return $this->submissionFile()->first();
+    }
+
+    public function getSignedDocumentAttribute()
+    {
+        return $this->signedDocument()->first();
     }
 
     public function addSubmissionFile($file)
@@ -241,7 +290,54 @@ class SubmittedRequirement extends Model implements HasMedia
         return $media;
     }
 
+    /**
+     * Add a signed document to the submission
+     */
+    public function addSignedDocument($filePath, $signatoryId = null)
+    {
+        $media = $this->addMedia($filePath)->toMediaCollection('signed_documents');
+        
+        $this->update([
+            'signed_document_path' => $media->getPath(),
+            'signed_at' => now(),
+            'signatory_id' => $signatoryId,
+        ]);
+        
+        return $media;
+    }
+
+    /**
+     * Remove signed document from submission
+     */
+    public function removeSignedDocument()
+    {
+        $this->clearMediaCollection('signed_documents');
+        
+        $this->update([
+            'signed_document_path' => null,
+            'signed_at' => null,
+            'signatory_id' => null,
+        ]);
+    }
+
     public function getFileUrl()
+    {
+        // If approved and has signed document, return signed version
+        if ($this->isApproved && $this->hasSignedDocument()) {
+            return $this->getSignedDocumentUrl();
+        }
+        
+        // Otherwise, return original file
+        $media = $this->getFirstMedia('submission_files');
+        
+        if (!$media) {
+            return null;
+        }
+        
+        return $media->getUrl();
+    }
+
+    public function getOriginalFileUrl()
     {
         $media = $this->getFirstMedia('submission_files');
         
@@ -252,9 +348,85 @@ class SubmittedRequirement extends Model implements HasMedia
         return $media->getUrl();
     }
 
+    public function getSignedDocumentUrl()
+    {
+        $media = $this->getFirstMedia('signed_documents');
+        
+        if (!$media) {
+            return null;
+        }
+        
+        return $media->getUrl();
+    }
+
+    /**
+     * Get the appropriate URL for preview (signed version if available)
+     */
+    public function getPreviewUrl()
+    {
+        // Always show signed version if it exists and submission is approved
+        if ($this->isApproved && $this->has_signed_document) {
+            return $this->getSignedDocumentUrl();
+        }
+        
+        // Otherwise, show original file
+        return $this->getOriginalFileUrl();
+    }
+
+    /**
+     * Get the preview URL for route generation
+     * This returns the route for file preview
+     */
+    public function getPreviewRouteUrl()
+    {
+        // Always show signed version if it exists and submission is approved
+        if ($this->isApproved && $this->has_signed_document) {
+            $media = $this->getFirstMedia('signed_documents');
+            if ($media) {
+                return route('file.preview.signed', ['submission' => $this->id]);
+            }
+        }
+        
+        // Otherwise, show original file
+        $media = $this->getFirstMedia('submission_files');
+        if ($media) {
+            return route('file.preview', ['submission' => $this->id]);
+        }
+        
+        return null;
+    }
+
     public function getFilePath()
     {
+        // If approved and has signed document, return signed version path
+        if ($this->isApproved && $this->hasSignedDocument()) {
+            return $this->getSignedDocumentPath();
+        }
+        
+        // Otherwise, return original file path
         $media = $this->getFirstMedia('submission_files');
+        
+        if (!$media) {
+            return null;
+        }
+        
+        return $media->getPath();
+    }
+
+    public function getOriginalFilePath()
+    {
+        $media = $this->getFirstMedia('submission_files');
+        
+        if (!$media) {
+            return null;
+        }
+        
+        return $media->getPath();
+    }
+
+    public function getSignedDocumentPath()
+    {
+        $media = $this->getFirstMedia('signed_documents');
         
         if (!$media) {
             return null;
@@ -268,6 +440,20 @@ class SubmittedRequirement extends Model implements HasMedia
         $media = $this->getFirstMedia('submission_files');
         if ($media) {
             $media->delete();
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Delete signed document
+     */
+    public function deleteSignedDocument()
+    {
+        $media = $this->getFirstMedia('signed_documents');
+        if ($media) {
+            $media->delete();
+            $this->removeSignedDocument();
             return true;
         }
         return false;
@@ -329,6 +515,11 @@ class SubmittedRequirement extends Model implements HasMedia
      */
     public function getFileExtension()
     {
+        // If approved and has signed document, return PDF extension
+        if ($this->isApproved && $this->hasSignedDocument()) {
+            return 'pdf';
+        }
+        
         $media = $this->getFirstMedia('submission_files');
         if (!$media) {
             return null;
@@ -338,11 +529,40 @@ class SubmittedRequirement extends Model implements HasMedia
     }
 
     /**
+     * Get original file extension
+     */
+    public function getOriginalFileExtension()
+    {
+        $media = $this->getFirstMedia('submission_files');
+        if (!$media) {
+            return null;
+        }
+        
+        return pathinfo($media->file_name, PATHINFO_EXTENSION);
+    }
+
+    /**
+     * Get signed document extension (always PDF)
+     */
+    public function getSignedDocumentExtension()
+    {
+        if ($this->has_signed_document) {
+            return 'pdf';
+        }
+        return null;
+    }
+
+    /**
      * Get appropriate Font Awesome icon class for file type
      */
     public function getFileIcon()
     {
-        $extension = $this->getFileExtension();
+        // If approved and has signed document, return PDF icon
+        if ($this->isApproved && $this->hasSignedDocument()) {
+            return 'fa-file-signature';
+        }
+        
+        $extension = $this->getOriginalFileExtension();
         if (!$extension) {
             return self::FILE_ICONS['default']['icon'];
         }
@@ -356,7 +576,12 @@ class SubmittedRequirement extends Model implements HasMedia
      */
     public function getFileIconColor()
     {
-        $extension = $this->getFileExtension();
+        // If approved and has signed document, return signature color
+        if ($this->isApproved && $this->hasSignedDocument()) {
+            return 'text-yellow-600';
+        }
+        
+        $extension = $this->getOriginalFileExtension();
         if (!$extension) {
             return self::FILE_ICONS['default']['color'];
         }
@@ -370,7 +595,7 @@ class SubmittedRequirement extends Model implements HasMedia
      */
     public function isImageFile()
     {
-        $extension = $this->getFileExtension();
+        $extension = $this->getOriginalFileExtension();
         if (!$extension) {
             return false;
         }
@@ -440,6 +665,11 @@ class SubmittedRequirement extends Model implements HasMedia
         return $this->status === self::STATUS_APPROVED;
     }
 
+    public function getHasSignedDocumentAttribute()
+    {
+        return !empty($this->signed_document_path) && $this->getFirstMedia('signed_documents');
+    }
+
     public function getIsRejectedAttribute()
     {
         return $this->status === self::STATUS_REJECTED;
@@ -486,18 +716,80 @@ class SubmittedRequirement extends Model implements HasMedia
         return $this->pendingCorrectionNotes()->exists();
     }
 
+    /* ========== HELPER METHODS ========== */
+
+    /**
+     * Get the appropriate file name based on status
+     */
+    public function getDisplayFileName()
+    {
+        if ($this->isApproved && $this->has_signed_document) {
+            $media = $this->getFirstMedia('submission_files');
+            $originalName = $media ? $media->name : 'Document';
+            return 'SIGNED - ' . $originalName;
+        }
+        
+        $media = $this->getFirstMedia('submission_files');
+        return $media ? $media->name : 'No file';
+    }
+
+    /**
+     * Get file size for display
+     */
+    public function getFileSize()
+    {
+        if ($this->isApproved && $this->has_signed_document) {
+            $media = $this->getFirstMedia('signed_documents');
+        } else {
+            $media = $this->getFirstMedia('submission_files');
+        }
+        
+        if (!$media) {
+            return '0 bytes';
+        }
+        
+        $bytes = $media->size;
+        if ($bytes >= 1073741824) {
+            return number_format($bytes / 1073741824, 2) . ' GB';
+        } elseif ($bytes >= 1048576) {
+            return number_format($bytes / 1048576, 2) . ' MB';
+        } elseif ($bytes >= 1024) {
+            return number_format($bytes / 1024, 2) . ' KB';
+        }
+        return $bytes . ' bytes';
+    }
+
+    /**
+     * Get the original file name (without SIGNED prefix)
+     */
+    public function getOriginalFileName()
+    {
+        $media = $this->getFirstMedia('submission_files');
+        return $media ? $media->name : 'No file';
+    }
+
+    /**
+     * Get the signed file name
+     */
+    public function getSignedFileName()
+    {
+        $media = $this->getFirstMedia('signed_documents');
+        return $media ? $media->name : null;
+    }
+
     /* ========== BOOT ========== */
 
     protected static function booted()
     {
         static::deleting(function ($model) {
             $model->deleteFile();
+            $model->deleteSignedDocument();
         });
 
         static::creating(function ($model) {
             $model->submitted_at = now();
             if (empty($model->status)) {
-                $model->status = self::STATUS_UPLOADED; // Changed to UPLOADED as default
+                $model->status = self::STATUS_UPLOADED;
             }
         });
 
@@ -505,6 +797,11 @@ class SubmittedRequirement extends Model implements HasMedia
             if ($model->isDirty('status')) {
                 $oldStatus = $model->getOriginal('status');
                 $newStatus = $model->status;
+
+                // Remove signed document if status changes from approved
+                if ($oldStatus === self::STATUS_APPROVED && $newStatus !== self::STATUS_APPROVED) {
+                    $model->removeSignedDocument();
+                }
 
                 // Log activity
                 if (class_exists('\Spatie\Activitylog\Traits\LogsActivity')) {

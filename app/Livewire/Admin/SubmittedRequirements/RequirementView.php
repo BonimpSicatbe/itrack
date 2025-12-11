@@ -43,6 +43,10 @@ class RequirementView extends Component
     public $showCorrectionNotesModal = false;
     public $correctionNotes = [];
 
+    public $showESignConfirmationModal = false;
+    public $pendingStatusUpdate = false;
+
+
     public function mount($requirement_id, $user_id = null, $course_id = null, $initialFileId = null)
     {
         $this->requirement_id = $requirement_id;
@@ -147,16 +151,26 @@ class RequirementView extends Component
                 $extension = strtolower(pathinfo($media->file_name, PATHINFO_EXTENSION));
                 $isPreviewable = in_array($extension, ['jpg', 'jpeg', 'png', 'gif', 'pdf', 'doc', 'docx', 'xls', 'xlsx']);
                 
+                // Use original file name for display
+                $displayFileName = $submission->getOriginalFileName();
+                
+                // Determine which URL to use for preview
+                $previewUrl = $submission->getPreviewRouteUrl();
+                
                 return [
                     'id' => $media->id,
                     'submission_id' => $submission->id,
-                    'name' => $media->name,
+                    'name' => $displayFileName, // Show original file name
                     'file_name' => $media->file_name,
-                    'url' => $media->getUrl(),
+                    'display_name' => $displayFileName,
+                    'url' => $previewUrl, // Use preview route URL
+                    'original_url' => route('file.preview', ['submission' => $submission->id]),
+                    'signed_url' => $submission->has_signed_document ? route('file.preview.signed', ['submission' => $submission->id]) : null,
                     'mime_type' => $media->mime_type,
                     'size' => $this->formatFileSize($media->size),
                     'created_at' => $media->created_at,
                     'extension' => $extension,
+                    'signed_extension' => $submission->has_signed_document ? 'pdf' : null,
                     'is_previewable' => $isPreviewable,
                     'status' => $submission->status,
                     'admin_notes' => $submission->admin_notes,
@@ -165,6 +179,10 @@ class RequirementView extends Component
                     'user' => $submission->user,
                     'course' => $submission->course,
                     'submitted_at' => $submission->submitted_at,
+                    'has_signed_document' => $submission->has_signed_document,
+                    'is_signed' => $submission->has_signed_document,
+                    'signatory' => $submission->signatory,
+                    'signed_at' => $submission->signed_at,
                 ];
             });
 
@@ -215,20 +233,43 @@ class RequirementView extends Component
         $this->selectedFile = collect($this->allFiles)->firstWhere('id', $fileId);
         
         if ($this->selectedFile) {
-            $this->fileUrl = route('file.preview', [
-                'submission' => $this->selectedFile['submission_id'],
-                'file' => $this->selectedFile['id']
-            ]);
+            // Use the correct preview URL
+            $this->fileUrl = $this->selectedFile['url'];
             
             // Determine file type for proper display
-            $this->isImage = str_starts_with($this->selectedFile['mime_type'], 'image/');
-            $this->isPdf = $this->selectedFile['mime_type'] === 'application/pdf';
-            $this->isOfficeDoc = in_array($this->selectedFile['extension'], ['doc', 'docx', 'xls', 'xlsx']);
-            $this->isPreviewable = $this->isImage || $this->isPdf || $this->isOfficeDoc;
+            // If signed document exists, always treat as PDF
+            if ($this->selectedFile['is_signed']) {
+                $this->isImage = false;
+                $this->isPdf = true;
+                $this->isOfficeDoc = false;
+                $this->isPreviewable = true;
+            } else {
+                $this->isImage = str_starts_with($this->selectedFile['mime_type'], 'image/');
+                $this->isPdf = $this->selectedFile['mime_type'] === 'application/pdf';
+                $this->isOfficeDoc = in_array($this->selectedFile['extension'], ['doc', 'docx', 'xls', 'xlsx']);
+                $this->isPreviewable = $this->isImage || $this->isPdf || $this->isOfficeDoc;
+            }
             
             // Set the current status and notes
             $this->selectedStatus = $this->selectedFile['status'];
             $this->adminNotes = $this->selectedFile['admin_notes'] ?? '';
+        }
+    }
+
+    // NEW METHOD: Handle the update button click
+    public function updateStatusButton()
+    {
+        if ($this->selectedStatus === 'approved') {
+            $this->confirmUpdate();
+        } else {
+            // Check if changing FROM approved status
+            $oldStatus = $this->selectedFile['status'] ?? '';
+            if ($oldStatus === 'approved') {
+                // Force page refresh when changing from approved
+                $this->updateStatusWithRefresh();
+            } else {
+                $this->updateStatus();
+            }
         }
     }
 
@@ -304,6 +345,58 @@ class RequirementView extends Component
                 content: 'Status updated successfully'
             );
         }
+
+        $this->pendingStatusUpdate = false;
+    }
+
+    /**
+     * Update status with page refresh (for status changes from approved)
+     */
+    public function updateStatusWithRefresh()
+    {
+        $submission = SubmittedRequirement::find($this->selectedFile['submission_id']);
+        
+        if ($submission) {
+            // Store old status for notification
+            $oldStatus = $submission->status;
+            
+            $submission->update([
+                'status' => $this->selectedStatus,
+                'admin_notes' => $this->adminNotes,
+                'reviewed_by' => auth()->id(),
+                'reviewed_at' => now(),
+            ]);
+
+            // CREATE CORRECTION NOTE
+            \App\Models\AdminCorrectionNote::create([
+                'submitted_requirement_id' => $submission->id,
+                'requirement_id' => $this->requirement_id,
+                'course_id' => $this->course_id,
+                'user_id' => $this->user_id,
+                'admin_id' => auth()->id(),
+                'correction_notes' => $this->adminNotes ?: 'No notes provided',
+                'file_name' => $this->selectedFile['file_name'],
+                'status' => $this->selectedStatus,
+            ]);
+            
+            // Send notification to user if status changed
+            if ($oldStatus !== $this->selectedStatus) {
+                $user = User::find($submission->user_id);
+                if ($user) {
+                    $user->notify(new SubmissionStatusUpdated($submission, $oldStatus, $this->selectedStatus));
+                }
+            }
+            
+            $this->dispatch('showNotification', 
+                type: 'success', 
+                content: 'Status updated successfully. Page will refresh.'
+            );
+            
+            // Force a page refresh to avoid display issues
+            $this->dispatch('refresh-page');
+        }
+
+        $this->pendingStatusUpdate = false;
     }
 
     protected function formatFileSize($bytes)
@@ -367,6 +460,74 @@ class RequirementView extends Component
             \App\Models\AdminCorrectionNote::STATUS_APPROVED => 'Approved',
             default => ucfirst($status),
         };
+    }
+
+    public function confirmUpdate()
+    {
+        // Store the pending update
+        $this->pendingStatusUpdate = true;
+        
+        // Show confirmation modal
+        $this->showESignConfirmationModal = true;
+        
+        // Debug log
+        \Log::info('confirmUpdate called', [
+            'showESignConfirmationModal' => $this->showESignConfirmationModal,
+            'pendingStatusUpdate' => $this->pendingStatusUpdate
+        ]);
+        
+        // Force Livewire to re-render
+        $this->dispatch('modal-should-show');
+    }
+
+    public function approveWithoutSignature()
+    {
+        // Close confirmation modal
+        $this->showESignConfirmationModal = false;
+        
+        // Proceed with normal update
+        $this->updateStatus();
+        
+        // Reset pending update
+        $this->pendingStatusUpdate = false;
+    }
+
+    public function openESignModal()
+    {
+        // Close confirmation modal
+        $this->showESignConfirmationModal = false;
+        
+        // Dispatch event to open e-sign modal
+        $this->dispatch('open-esign-modal', 
+            submissionId: $this->selectedFile['submission_id'],
+            fileUrl: $this->fileUrl,
+            fileExtension: $this->selectedFile['extension']
+        );
+    } 
+
+    #[On('signature-applied')]
+    public function refreshFiles($submissionId)
+    {
+        // Reload files to show the signed version
+        $this->loadFiles();
+        
+        // Reselect the signed file
+        if ($this->allFiles->isNotEmpty()) {
+            $signedFile = $this->allFiles->firstWhere('submission_id', $submissionId);
+            if ($signedFile) {
+                $this->selectFile($signedFile['id']);
+            }
+        }
+    }
+
+    /**
+     * Handle page refresh when status changes from approved
+     */
+    #[On('refresh-page')]
+    public function refreshPage()
+    {
+        // Reload the entire component
+        $this->loadFiles();
     }
 
     public function render()

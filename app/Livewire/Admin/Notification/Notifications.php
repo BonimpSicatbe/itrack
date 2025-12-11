@@ -7,8 +7,10 @@ use Livewire\Component;
 use App\Models\SubmittedRequirement;
 use App\Models\AdminCorrectionNote;
 use App\Models\User;
+use App\Models\Signatory;
 use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Support\Facades\Log;
+use App\Services\DocumentProcessorService;
 
 class Notifications extends Component
 {
@@ -19,9 +21,9 @@ class Notifications extends Component
     public $newRegisteredUser = null;
     public $notificationNotFound = false;
 
-    // Change to array properties to handle multiple files
-    public $newStatus = [];
-    public $adminNotes = [];
+    // Remove status update properties
+    // public $newStatus = [];
+    // public $adminNotes = [];
 
     public function mount()
     {
@@ -58,8 +60,6 @@ class Notifications extends Component
         $this->selectedNotification = null;
         $this->selectedNotificationData = null;
         $this->notificationNotFound = false;
-        // Reset form data when tab changes
-        $this->reset(['newStatus', 'adminNotes']);
     }
 
     public function selectNotification($id)
@@ -80,7 +80,6 @@ class Notifications extends Component
         if ($notification->data['type'] === 'new_registered_user') {
             Log::info('Notification Data:', $notification->data);
 
-            // Debug: Log the notification data
             if ($notification->unread()) {
                 $notification->markAsRead();
                 $this->dispatch('notification-read');
@@ -97,7 +96,6 @@ class Notifications extends Component
 
             $this->loadDetails($notification->data);
         } else if ($notification) {
-            // Debug: Log the notification data
             \Log::info('Notification Data:', $notification->data);
 
             if ($notification->unread()) {
@@ -115,9 +113,6 @@ class Notifications extends Component
 
             $this->loadDetails($notification->data);
         }
-
-        // Reset form data when selecting a new notification
-        $this->reset(['newStatus', 'adminNotes']);
     }
 
     protected function loadDetails($notificationData)
@@ -166,7 +161,7 @@ class Notifications extends Component
         else if ($notificationType === 'semester_ended_missing_submissions') {
             $this->loadSemesterEndedDetails($notificationData);
         }
-        else if ($notificationType === 'new_registered_user') { // Match the corrected type
+        else if ($notificationType === 'new_registered_user') {
             $this->loadNewRegisteredUserDetails($notificationData);
         }
         else {
@@ -301,7 +296,6 @@ class Notifications extends Component
                             'email' => $note->admin->email,
                         ] : null,
                         'addressed_at' => $note->addressed_at,
-                        // Remove the old 'is_pending' check since we don't have pending status anymore
                     ];
                 })->toArray();
             })->toArray();
@@ -310,7 +304,6 @@ class Notifications extends Component
         }
     }
 
-    // UPDATED THIS METHOD - Use SubmittedRequirement statuses instead
     protected function formatCorrectionNoteStatus($status)
     {
         return match($status) {
@@ -340,6 +333,9 @@ class Notifications extends Component
             'admin_notes' => $submission->admin_notes,
             'submitted_at' => $submission->submitted_at,
             'reviewed_at' => $submission->reviewed_at,
+            'signed_document_path' => $submission->signed_document_path,
+            'signed_at' => $submission->signed_at,
+            'signatory_id' => $submission->signatory_id,
             'course' => $submission->course ? [
                 'id' => $submission->course->id,
                 'course_code' => $submission->course->course_code,
@@ -356,6 +352,9 @@ class Notifications extends Component
                 'email' => $submission->reviewer->email,
             ] : null,
             'needs_review' => $submission->status === SubmittedRequirement::STATUS_UNDER_REVIEW,
+            'is_approved' => $submission->status === SubmittedRequirement::STATUS_APPROVED,
+            'user_id' => $submission->user_id,
+            'requirement_id' => $submission->requirement_id,
         ];
     }
 
@@ -367,20 +366,27 @@ class Notifications extends Component
             foreach ($submission->getMedia('submission_files') as $media) {
                 $extension = strtolower(pathinfo($media->file_name, PATHINFO_EXTENSION));
                 $isPreviewable = in_array($extension, ['jpg', 'jpeg', 'png', 'gif', 'pdf']);
+                
+                // Use signed document if approved and available
+                $signedMedia = $submission->getMedia('signed_documents')->first();
+                $isApproved = $submission->status === 'approved' && $signedMedia;
 
                 $files[] = [
                     'id' => $media->id,
-                    'name' => $media->name,
+                    'name' => $isApproved ? 'SIGNED - ' . $media->name : $media->name,
                     'file_name' => $media->file_name,
                     'url' => $media->getUrl(),
                     'mime_type' => $media->mime_type,
                     'size' => $this->formatFileSize($media->size),
                     'created_at' => $media->created_at,
-                    'extension' => $extension,
-                    'is_previewable' => $isPreviewable,
+                    'extension' => $isApproved ? 'pdf' : $extension,
+                    'is_previewable' => $isPreviewable || $isApproved,
                     'status' => $submission->status,
                     'admin_notes' => $submission->admin_notes,
                     'submission_id' => $submission->id,
+                    'is_approved' => $submission->status === SubmittedRequirement::STATUS_APPROVED,
+                    'is_approved_with_signature' => $isApproved,
+                    'has_signed_document' => (bool) $signedMedia,
                     'course' => $submission->course ? [
                         'id' => $submission->course->id,
                         'course_code' => $submission->course->course_code,
@@ -396,72 +402,6 @@ class Notifications extends Component
         }
 
         $this->selectedNotificationData['files'] = $files;
-    }
-
-    public function updateFileStatus($submissionId)
-    {
-        // Validate the specific submission's data
-        $this->validate([
-            "newStatus.{$submissionId}" => 'required|in:' . implode(',', array_keys(SubmittedRequirement::statusesForReview())),
-            "adminNotes.{$submissionId}" => 'nullable|string',
-        ]);
-
-        $submission = SubmittedRequirement::findOrFail($submissionId);
-
-        // Store old status for notification
-        $oldStatus = $submission->status;
-        $newStatus = $this->newStatus[$submissionId];
-        $adminNotes = $this->adminNotes[$submissionId] ?? null;
-
-        // Update the submission status (this goes to submitted_requirements table)
-        $submission->update([
-            'status' => $newStatus, // This saves to submitted_requirements.status
-            'admin_notes' => $adminNotes,
-            'reviewed_by' => auth()->id(),
-            'reviewed_at' => now(),
-        ]);
-
-        // ALWAYS CREATE CORRECTION NOTE - even when there are no admin notes
-        $firstMedia = $submission->getMedia('submission_files')->first();
-
-        AdminCorrectionNote::create([
-            'submitted_requirement_id' => $submission->id,
-            'requirement_id' => $submission->requirement_id,
-            'course_id' => $submission->course_id,
-            'user_id' => $submission->user_id,
-            'admin_id' => auth()->id(),
-            'correction_notes' => $adminNotes ?? 'No notes provided', // Use "No notes provided" when empty
-            'file_name' => $firstMedia ? $firstMedia->file_name : null,
-            'status' => $newStatus, // Store the actual file status here
-        ]);
-
-        // Send notification to user about status update
-        $user = \App\Models\User::find($submission->user_id);
-        if ($user) {
-            $user->notify(new \App\Notifications\SubmissionStatusUpdated($submission, $oldStatus, $newStatus));
-        }
-
-        // Reload the notification data to reflect changes
-        if ($this->selectedNotification) {
-            $notification = DatabaseNotification::find($this->selectedNotification);
-            if ($notification) {
-                $this->loadDetails($notification->data);
-            }
-        }
-
-        // Reset only the specific submission's form data
-        if (isset($this->newStatus[$submissionId])) {
-            unset($this->newStatus[$submissionId]);
-        }
-        if (isset($this->adminNotes[$submissionId])) {
-            unset($this->adminNotes[$submissionId]);
-        }
-
-        $this->dispatch('showNotification',
-            type: 'success',
-            content: 'Status updated successfully!',
-            duration: 3000
-        );
     }
 
     protected function formatFileSize($bytes)
@@ -489,7 +429,6 @@ class Notifications extends Component
         $this->loadNotifications();
         $this->selectedNotification = null;
         $this->selectedNotificationData = null;
-        $this->reset(['newStatus', 'adminNotes']);
 
         $this->dispatch('notifications-marked-read');
 
@@ -517,7 +456,6 @@ class Notifications extends Component
         $this->loadNotifications();
         $this->selectedNotification = null;
         $this->selectedNotificationData = null;
-        $this->reset(['newStatus', 'adminNotes']);
 
         $this->dispatch('notifications-marked-unread', count: $readNotifications->count());
 
@@ -537,12 +475,10 @@ class Notifications extends Component
             $notification->markAsUnread();
             $this->loadNotifications();
 
-            // Update the current notification data if it's the selected one
             if ($this->selectedNotification === $id) {
                 $this->selectedNotificationData['unread'] = true;
             }
 
-            // Add this dispatch to update the navigation count
             $this->dispatch('notification-unread');
 
             $this->dispatch('showNotification',
@@ -566,7 +502,6 @@ class Notifications extends Component
 
     protected function loadNewRegisteredUserDetails($notificationData)
     {
-        // Load new registered user details
         $this->selectedNotificationData['new_user'] = [
             'id' => $notificationData['user_id'] ?? null,
             'name' => $notificationData['user_name'] ?? $notificationData['name'] ?? 'Unknown User',
@@ -575,12 +510,10 @@ class Notifications extends Component
         ];
 
         $this->newRegisteredUser = User::where('id', $this->selectedNotificationData['new_user']['id'])->get();
-        // dd($this->newRegisteredUser->first()->id);
     }
 
     protected function loadSemesterEndedDetails($notificationData)
     {
-        // Load semester details - use null coalescing with safe defaults
         $semesterId = $notificationData['semester_id'] ?? null;
         if ($semesterId) {
             $semester = \App\Models\Semester::find($semesterId);
@@ -593,7 +526,6 @@ class Notifications extends Component
                     'is_active' => $semester->is_active,
                 ];
             } else {
-                // Fallback to data from notification if semester not found
                 $this->selectedNotificationData['semester'] = [
                     'id' => $semesterId,
                     'name' => $notificationData['semester_name'] ?? 'Unknown Semester',
@@ -604,7 +536,6 @@ class Notifications extends Component
             }
         }
 
-        // Load missing submissions data with safe defaults
         $this->selectedNotificationData['missing_submissions'] = [
             'total_count' => $notificationData['missing_submissions_count'] ?? 0,
             'submissions' => $notificationData['missing_submissions'] ?? [],
@@ -630,7 +561,6 @@ class Notifications extends Component
             $user->markEmailAsVerified();
             $user->save();
 
-            // Refresh local data shown in the component
             $this->newRegisteredUser = User::where('id', $user->id)->get();
             if (isset($this->selectedNotificationData['new_user'])) {
                 $this->selectedNotificationData['new_user']['verified_at'] = $user->email_verified_at;

@@ -103,7 +103,21 @@
                             <div class="space-y-2">
                                 @foreach($allFiles as $file)
                                     @php
-                                        $fileIcon = \App\Models\SubmittedRequirement::FILE_ICONS[$file['extension']] ?? \App\Models\SubmittedRequirement::FILE_ICONS['default'];
+                                        // Always show original file name
+                                        $displayName = $file['display_name'] ?? $file['name'];
+                                        
+                                        // Determine icon and color
+                                        if ($file['is_signed'] ?? false) {
+                                            // Signed document - show signature icon
+                                            $iconClass = 'fa-file-signature';
+                                            $iconColor = 'text-yellow-600';
+                                        } else {
+                                            // Original file - use extension-based icon
+                                            $fileIcon = \App\Models\SubmittedRequirement::FILE_ICONS[$file['extension']] ?? \App\Models\SubmittedRequirement::FILE_ICONS['default'];
+                                            $iconClass = $fileIcon['icon'];
+                                            $iconColor = $fileIcon['color'];
+                                        }
+                                        
                                         $submissionModel = App\Models\SubmittedRequirement::find($file['submission_id']);
                                         $statusBadgeClasses = $submissionModel ? $submissionModel->status_badge : 'bg-blue-100 text-blue-800';
                                     @endphp
@@ -113,13 +127,22 @@
                                                 'bg-white text-gray-700 shadow-sm border-2 border-green-600' : 
                                                 'shadow-md border border-gray-300' }}">
                                         <!-- File Icon -->
-                                        <div class="flex-shrink-0 w-9 h-9 flex items-center justify-center">
-                                            <i class="fa-solid {{ $fileIcon['icon'] }} text-base {{ $fileIcon['color'] }}"></i>
+                                        <div class="flex-shrink-0 w-9 h-9 flex items-center justify-center relative">
+                                            <i class="fa-solid {{ $iconClass }} text-base {{ $iconColor }}"></i>
+                                            @if($file['is_signed'] ?? false)
+                                                <div class="absolute -top-1 -right-1 w-4 h-4 bg-yellow-500 rounded-full flex items-center justify-center">
+                                                    <i class="fa-solid fa-check text-xs text-white"></i>
+                                                </div>
+                                            @endif
                                         </div>
+                                        
                                         <!-- File Info -->
                                         <div class="min-w-0 flex-1">
                                             <p class="font-semibold truncate text-sm {{ ($selectedFile && $selectedFile['id'] === $file['id']) ? 'text-gray-700' : 'text-gray-700' }}">
-                                                {{ $file['file_name'] }}
+                                                {{ $displayName }}
+                                                @if($file['is_signed'] ?? false)
+                                                    <span class="text-xs text-yellow-600 ml-1">(Signed)</span>
+                                                @endif
                                             </p>
                                             <div class="flex items-center gap-2 text-xs mt-2 {{ ($selectedFile && $selectedFile['id'] === $file['id']) ? 'text-gray-500' : 'text-gray-500' }}">
                                                 <i class="fa-solid fa-calendar"></i>
@@ -178,7 +201,11 @@
                     <i class="fa-solid fa-eye text-white text-xl"></i>
                     <h2 class="text-lg font-semibold text-white">
                         @if($selectedFile)
-                            File Preview
+                            @if($selectedFile['is_signed'] ?? false)
+                                Signed Document Preview
+                            @else
+                                File Preview
+                            @endif
                         @else
                             No File Selected
                         @endif
@@ -199,9 +226,10 @@
                         </select>
                         
                         <!-- Update Button -->
-                        <button wire:click="updateStatus" 
+                        <button 
+                            wire:click="updateStatusButton" 
                             class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-xl shadow-sm text-green-700 bg-white hover:bg-green-700 hover:text-white border border-white transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-700"
-                            title="Update both status and notes">
+                            title="Update status">
                             Update
                         </button>
                     </div>
@@ -214,7 +242,7 @@
                     <div class="flex-1 overflow-hidden">
                         @if($isImage)
                             <div class="p-6 w-full h-full flex items-center justify-center bg-white">
-                                <img src="{{ $fileUrl }}" alt="{{ $selectedFile['file_name'] }}" class="max-w-full max-h-full object-contain rounded-xl shadow-sm">
+                                <img src="{{ $fileUrl }}" alt="{{ $selectedFile['display_name'] }}" class="max-w-full max-h-full object-contain rounded-xl shadow-sm">
                             </div>
                         @elseif($isPdf)
                             <iframe src="{{ $fileUrl }}#toolbar=0&navpanes=0" class="w-full h-full border-0 bg-white"></iframe>
@@ -223,13 +251,35 @@
                         @else
                             <div class="text-center p-8 max-w-md bg-white rounded-xl shadow-sm h-full flex flex-col items-center justify-center">
                                 @php
-                                    $fileIcon = \App\Models\SubmittedRequirement::FILE_ICONS[$selectedFile['extension']] ?? \App\Models\SubmittedRequirement::FILE_ICONS['default'];
+                                    $iconClass = 'fa-file';
+                                    $iconColor = 'text-gray-400';
+                                    
+                                    if ($selectedFile['is_signed'] ?? false) {
+                                        $iconClass = 'fa-file-signature';
+                                        $iconColor = 'text-yellow-600';
+                                    } elseif (isset($selectedFile['extension'])) {
+                                        $fileIcon = \App\Models\SubmittedRequirement::FILE_ICONS[$selectedFile['extension']] ?? \App\Models\SubmittedRequirement::FILE_ICONS['default'];
+                                        $iconClass = $fileIcon['icon'];
+                                        $iconColor = $fileIcon['color'];
+                                    }
                                 @endphp
                                 <div class="mx-auto w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center mb-4">
-                                    <i class="fa-solid {{ $fileIcon['icon'] }} text-3xl {{ $fileIcon['color'] }}"></i>
+                                    <i class="fa-solid {{ $iconClass }} text-3xl {{ $iconColor }}"></i>
                                 </div>
-                                <h3 class="text-lg font-medium text-gray-900 mb-2">Preview unavailable</h3>
-                                <p class="text-sm text-gray-500 mb-4">This file type cannot be previewed in the browser</p>
+                                <h3 class="text-lg font-medium text-gray-900 mb-2">
+                                    @if($selectedFile['is_signed'] ?? false)
+                                        Signed Document
+                                    @else
+                                        Preview unavailable
+                                    @endif
+                                </h3>
+                                <p class="text-sm text-gray-500 mb-4">
+                                    @if($selectedFile['is_signed'] ?? false)
+                                        Signed document is available for download
+                                    @else
+                                        This file type cannot be previewed in the browser
+                                    @endif
+                                </p>
                                 <a href="{{ $fileUrl }}" target="_blank"
                                 class="inline-flex items-center px-4 py-2 border border-green-700 shadow-sm text-sm font-medium rounded-xl text-green-700 bg-white hover:bg-gray-50 transition-colors">
                                     <i class="fa-solid fa-download mr-2"></i>
@@ -374,5 +424,72 @@
                 </button>
             </div>
         </div>
+    </x-modal> 
+
+    <!-- E-Signature Confirmation Modal -->
+    <x-modal name="e-sign-confirmation-modal" :show="$showESignConfirmationModal" maxWidth="md">
+        <div class="bg-white rounded-xl shadow-lg">
+            <!-- Modal Header -->
+            <div class="px-6 py-4 border-b flex justify-between border-gray-200" style="background: linear-gradient(148deg,rgba(18, 67, 44, 1) 0%, rgba(30, 119, 77, 1) 54%, rgba(55, 120, 64, 1) 100%);">
+                <div class="flex items-center">
+                    <i class="fa-solid fa-signature text-white text-xl mr-3"></i>
+                    <h3 class="text-lg font-semibold text-white">Add E-Signature?</h3>
+                </div>
+                <!-- Cancel Button -->
+                <button wire:click="$set('showESignConfirmationModal', false)" 
+                    type="button"
+                    class="px-4 py-2 border border-gray-300 rounded-xl text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+                    Cancel
+                </button>
+            </div>
+            
+            <!-- Modal Body -->
+            <div class="p-6">
+                <div class="text-center mb-4">
+                    <div class="mx-auto w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mb-3">
+                        <i class="fa-solid fa-signature text-2xl text-green-600"></i>
+                    </div>
+                    <h3 class="text-lg font-medium text-gray-900 mb-2">
+                        Add Digital Signature?
+                    </h3>
+                    <p class="text-sm text-gray-500">
+                        Do you want to add an e-signature to this document before approving it?
+                    </p>
+                </div>
+                
+                <div class="flex items-center justify-center space-x-3 mt-6">
+                    <button wire:click="approveWithoutSignature" 
+                        type="button"
+                        class="px-4 py-2 border border-gray-300 rounded-xl text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+                        Approve Without Signature
+                    </button>
+                    <button wire:click="openESignModal" 
+                        type="button"
+                        class="px-4 py-2 bg-green-600 border border-transparent rounded-xl text-sm font-medium text-white hover:bg-green-700 transition-colors">
+                        Add E-Signature
+                    </button>
+                </div>
+            </div>
+        </div>
     </x-modal>
+
+    <!-- E-Signature Placement Modal -->
+    <livewire:admin.submitted-requirements.e-sign-modal 
+        :submission-id="$selectedFile['submission_id'] ?? null"
+        :file-url="$fileUrl ?? null"
+        :file-extension="$selectedFile['extension'] ?? null"
+        wire:key="esign-modal-{{ $selectedFile['id'] ?? 'none' }}"
+    />
+    
+    <!-- JavaScript for page refresh -->
+    <script>
+        document.addEventListener('livewire:initialized', () => {
+            @this.on('refresh-page', () => {
+                // Force a page reload when status changes from approved
+                setTimeout(() => {
+                    window.location.reload();
+                }, 500);
+            });
+        });
+    </script>
 </div>
