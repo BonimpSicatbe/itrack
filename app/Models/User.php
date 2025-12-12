@@ -77,6 +77,10 @@ class User extends Authenticatable implements HasMedia, MustVerifyEmail
 
     // ==================== COURSE RELATIONSHIPS ====================
 
+    public function signature() {
+        return $this->hasOne(Signature::class);
+    }
+
     public function assignments(): HasMany
     {
         return $this->hasMany(CourseAssignment::class, 'professor_id');

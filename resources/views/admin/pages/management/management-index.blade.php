@@ -4,7 +4,7 @@
         <!-- Fixed Header with Gradient -->
         <div class="rounded-xl p-5 shadow flex flex-col lg:flex-row lg:items-center lg:justify-between"
              style="background: linear-gradient(148deg,rgba(18, 67, 44, 1) 0%, rgba(30, 119, 77, 1) 54%, rgba(55, 120, 64, 1) 100%);">
-            
+
             <!-- Title -->
             <div class="flex items-center gap-3">
                 <i class="fa-solid fa-gears text-white text-xl"></i>
@@ -18,8 +18,8 @@
                         <a
                             href="{{ route('admin.management.index', ['tab' => $tabKey]) }}"
                             class="px-4 py-2.5 rounded-lg text-sm font-semibold transition-all duration-200 ease-in-out border
-                                {{ $activeTab === $tabKey 
-                                    ? 'bg-white text-green-800 shadow-md border-transparent' 
+                                {{ $activeTab === $tabKey
+                                    ? 'bg-white text-green-800 shadow-md border-transparent'
                                     : 'bg-transparent text-white border-white/50 hover:bg-white hover:text-green-700 hover:border-white hover:shadow-lg' }}"
                         >
                             <i class="fa-solid fa-{{ $tab['icon'] }} mr-2"></i>
@@ -56,6 +56,11 @@
                 @case('courses')
                     <div>
                         @livewire('admin.management.course-management')
+                    </div>
+                @break
+                @case('signatures')
+                    <div>
+                        @livewire('admin.management.signature-management')
                     </div>
                 @break
             @endswitch

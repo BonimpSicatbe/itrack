@@ -19,7 +19,7 @@ class SubmittedRequirement extends Model implements HasMedia
     protected $fillable = [
         'requirement_id',
         'user_id',
-        'course_id',    
+        'course_id',
         'status',
         'admin_notes',
         'reviewed_by',
@@ -33,7 +33,7 @@ class SubmittedRequirement extends Model implements HasMedia
     ];
 
     // Status Constants
-    const STATUS_UPLOADED = 'uploaded'; 
+    const STATUS_UPLOADED = 'uploaded';
     const STATUS_UNDER_REVIEW = 'under_review';
     const STATUS_REVISION_NEEDED = 'revision_needed';
     const STATUS_REJECTED = 'rejected';
@@ -232,34 +232,34 @@ class SubmittedRequirement extends Model implements HasMedia
     public function addSubmissionFile($file)
     {
         $media = $this->addMedia($file)->toMediaCollection('submission_files');
-        
+
         // Automatically update status to uploaded when file is added
         if ($this->status !== self::STATUS_UPLOADED) {
             $this->update(['status' => self::STATUS_UPLOADED]);
         }
-        
+
         return $media;
     }
 
     public function getFileUrl()
     {
         $media = $this->getFirstMedia('submission_files');
-        
+
         if (!$media) {
             return null;
         }
-        
+
         return $media->getUrl();
     }
 
     public function getFilePath()
     {
         $media = $this->getFirstMedia('submission_files');
-        
+
         if (!$media) {
             return null;
         }
-        
+
         return $media->getPath();
     }
 
@@ -277,15 +277,15 @@ class SubmittedRequirement extends Model implements HasMedia
     {
         // Check user ownership
         $isOwner = $user->id === $this->user_id;
-        
+
         // Check if file is from active semester
-        $isActiveSemester = $this->requirement && 
-                        $this->requirement->semester && 
+        $isActiveSemester = $this->requirement &&
+                        $this->requirement->semester &&
                         $this->requirement->semester->is_active;
-        
+
         // Check if file has uploaded status
         $isUploadedStatus = $this->status === self::STATUS_UPLOADED;
-        
+
         return $isOwner && $isActiveSemester && $isUploadedStatus;
     }
 
@@ -295,7 +295,7 @@ class SubmittedRequirement extends Model implements HasMedia
      */
     public function shouldBeMovedToUnderReview()
     {
-        return $this->status === self::STATUS_UPLOADED && 
+        return $this->status === self::STATUS_UPLOADED &&
                $this->isTrackedInSubmissionIndicator();
     }
 
@@ -318,7 +318,7 @@ class SubmittedRequirement extends Model implements HasMedia
         if (!$this->relationLoaded('submissionIndicator')) {
             return $this->submissionIndicator()->exists();
         }
-        
+
         return !is_null($this->submissionIndicator);
     }
 
@@ -333,7 +333,7 @@ class SubmittedRequirement extends Model implements HasMedia
         if (!$media) {
             return null;
         }
-        
+
         return pathinfo($media->file_name, PATHINFO_EXTENSION);
     }
 
@@ -346,7 +346,7 @@ class SubmittedRequirement extends Model implements HasMedia
         if (!$extension) {
             return self::FILE_ICONS['default']['icon'];
         }
-        
+
         $extension = strtolower($extension);
         return self::FILE_ICONS[$extension]['icon'] ?? self::FILE_ICONS['default']['icon'];
     }
@@ -360,7 +360,7 @@ class SubmittedRequirement extends Model implements HasMedia
         if (!$extension) {
             return self::FILE_ICONS['default']['color'];
         }
-        
+
         $extension = strtolower($extension);
         return self::FILE_ICONS[$extension]['color'] ?? self::FILE_ICONS['default']['color'];
     }
@@ -374,7 +374,7 @@ class SubmittedRequirement extends Model implements HasMedia
         if (!$extension) {
             return false;
         }
-        
+
         $imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'svg'];
         return in_array(strtolower($extension), $imageExtensions);
     }

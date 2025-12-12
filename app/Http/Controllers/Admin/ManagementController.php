@@ -15,6 +15,7 @@ class ManagementController extends Controller
             'colleges' => ['label' => 'Colleges', 'icon' => 'building-columns'],
             'programs' => ['label' => 'Programs', 'icon' => 'graduation-cap'],
             'courses' => ['label' => 'Courses', 'icon' => 'book'],
+            'signatures' => ['label' => 'E-Signatures', 'icon' => 'pen-nib'],
         ];
 
         $activeTab = $request->query('tab', 'semesters');
