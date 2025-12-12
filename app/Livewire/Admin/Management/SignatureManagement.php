@@ -28,16 +28,21 @@ class SignatureManagement extends Component
         ]);
 
         try {
-            $signature = Signature::create([
-                'user_id' => $this->signature_owner,
-                'file_path' => $this->e_signature->store('signatures', 'public'),
-            ]);
+            $user = User::findOrFail($this->signature_owner);
+
+            // Remove old signature if user already has one
+            $user->clearMediaCollection('signature');
+
+            // Attach new signature using Spatie Media Library
+            $user->addMedia($this->e_signature->getRealPath())
+                ->usingName('signature')
+                ->usingFileName('signature_' . time() . '.png')
+                ->toMediaCollection('signature', 'public');
 
             return redirect()->route('admin.management.index', ['tab' => 'signatures']);
         } catch (\Throwable $th) {
             dd($th->getMessage());
         }
-
     }
 
     public function render()

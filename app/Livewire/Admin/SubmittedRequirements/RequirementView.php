@@ -8,23 +8,25 @@ use App\Models\SubmittedRequirement;
 use App\Models\User;
 use App\Models\Course;
 use App\Notifications\SubmissionStatusUpdated;
+use Illuminate\Support\Facades\Auth;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Livewire\WithPagination;
 use Livewire\Attributes\Url;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class RequirementView extends Component
 {
     use WithPagination;
 
     public $requirement_id;
-    
+
     #[Url]
     public $user_id;
-    
+
     #[Url]
     public $course_id;
-    
+
     public $requirement;
     public $user;
     public $course;
@@ -46,33 +48,44 @@ class RequirementView extends Component
     public function mount($requirement_id, $user_id = null, $course_id = null, $initialFileId = null)
     {
         $this->requirement_id = $requirement_id;
-        
+
         // Get parameters from both route and query string
         $this->user_id = $user_id ?? request()->query('user_id');
         $this->course_id = $course_id ?? request()->query('course_id');
-        
+
         $this->requirement = Requirement::findOrFail($requirement_id);
-        
+
         // Load user and course if provided
         if ($this->user_id) {
             $this->user = User::find($this->user_id);
         }
-        
+
         if ($this->course_id) {
             $this->course = Course::find($this->course_id);
         }
-        
+
         $this->initialFileId = $initialFileId;
         $this->loadFiles();
+    }
+
+    public function downloadFile(SubmittedRequirement $submission)
+    {
+        $filePath = $submission->getFilePath();
+        abort_unless(file_exists($filePath), 404);
+
+        return response()->download(
+            $filePath,
+            $submission->submissionFile->file_name
+        );
     }
 
     public function getBackUrl()
     {
         $source = request()->query('source', 'overview');
-        
+
         // Get the current page from the query string, default to 1
         $page = request()->query('page', 1);
-        
+
         if ($source === 'requirement-category') {
             // Return to requirement category with context preserved
             return route('admin.submitted-requirements.index', [
@@ -82,7 +95,7 @@ class RequirementView extends Component
                 'page' => $page // Preserve pagination
             ]);
         }
-        
+
         // Default: return to overview with pagination preserved
         return route('admin.submitted-requirements.index', [
             'category' => 'overview',
@@ -92,7 +105,7 @@ class RequirementView extends Component
 
     public function formatStatus($status)
     {
-        return match($status) {
+        return match ($status) {
             'under_review' => 'Under Review',
             'revision_needed' => 'Revision Required',
             'rejected' => 'Rejected',
@@ -115,7 +128,7 @@ class RequirementView extends Component
 
         // Use JOIN to only get submissions that are marked as "done"
         $submissionIds = DB::table('submitted_requirements as sr')
-            ->join('requirement_submission_indicators as rsi', function($join) {
+            ->join('requirement_submission_indicators as rsi', function ($join) {
                 $join->on('sr.requirement_id', '=', 'rsi.requirement_id')
                     ->on('sr.user_id', '=', 'rsi.user_id')
                     ->on('sr.course_id', '=', 'rsi.course_id');
@@ -146,7 +159,7 @@ class RequirementView extends Component
             $mediaFiles = $submission->getMedia('submission_files')->map(function ($media) use ($submission) {
                 $extension = strtolower(pathinfo($media->file_name, PATHINFO_EXTENSION));
                 $isPreviewable = in_array($extension, ['jpg', 'jpeg', 'png', 'gif', 'pdf', 'doc', 'docx', 'xls', 'xlsx']);
-                
+
                 return [
                     'id' => $media->id,
                     'submission_id' => $submission->id,
@@ -187,7 +200,7 @@ class RequirementView extends Component
             $this->isPreviewable = false;
             $this->selectedStatus = '';
             $this->adminNotes = '';
-            
+
             \Log::info('No files found after filtering');
             return;
         }
@@ -213,19 +226,19 @@ class RequirementView extends Component
     public function selectFile($fileId)
     {
         $this->selectedFile = collect($this->allFiles)->firstWhere('id', $fileId);
-        
+
         if ($this->selectedFile) {
             $this->fileUrl = route('file.preview', [
                 'submission' => $this->selectedFile['submission_id'],
                 'file' => $this->selectedFile['id']
             ]);
-            
+
             // Determine file type for proper display
             $this->isImage = str_starts_with($this->selectedFile['mime_type'], 'image/');
             $this->isPdf = $this->selectedFile['mime_type'] === 'application/pdf';
             $this->isOfficeDoc = in_array($this->selectedFile['extension'], ['doc', 'docx', 'xls', 'xlsx']);
             $this->isPreviewable = $this->isImage || $this->isPdf || $this->isOfficeDoc;
-            
+
             // Set the current status and notes
             $this->selectedStatus = $this->selectedFile['status'];
             $this->adminNotes = $this->selectedFile['admin_notes'] ?? '';
@@ -242,28 +255,71 @@ class RequirementView extends Component
             ->exists();
 
         if (!$stillSubmitted) {
-            $this->dispatch('showNotification', 
-                type: 'error', 
+            $this->dispatch(
+                'showNotification',
+                type: 'error',
                 content: 'Cannot update status: This requirement is no longer marked as submitted.'
             );
-            
+
             // Reload files to reflect the current state
             $this->loadFiles();
             return;
         }
 
         $submission = SubmittedRequirement::find($this->selectedFile['submission_id']);
-        
+
+        // TODO Remove dd($submission->getMedia('submission_files')->where('model_id', $this->selectedFile['submission_id']));
+        // TODO Remove dd($submission);
+        // TODO Remove dd($this->selectedFile);
+
         if ($submission) {
-            // Store old status for notification
             $oldStatus = $submission->status;
-            
+
             $submission->update([
                 'status' => $this->selectedStatus,
                 'admin_notes' => $this->adminNotes,
                 'reviewed_by' => auth()->id(),
                 'reviewed_at' => now(),
             ]);
+
+            // ============= ADD E-SIGNATURE WHEN APPROVED ============= //
+            if ($this->selectedStatus === 'approved') {
+    try {
+        // Get the original uploaded submitted file
+        $media = $submission->getMedia('submission_files')->firstWhere('model_id', $this->selectedFile['submission_id']);
+
+        if (!$media) {
+            throw new \Exception("No uploaded file found for this submission.");
+        }
+
+        $originalFile = $media->getPath(); // Full REAL path to submitted file
+
+        // Get dean signature using Spatie
+        $signatureMedia = auth()->user()->getFirstMedia('signature');
+
+        if (!$signatureMedia) {
+            throw new \Exception("Dean has no uploaded signature.");
+        }
+
+        $signaturePath = $signatureMedia->getPath(); // REAL local disk path
+
+        // Apply signature
+        $signer = new \App\Services\FileSignatureService();
+        $signedFilePath = $signer->applySignature($originalFile, $signaturePath);
+
+        // Replace original file
+        copy($signedFilePath, $originalFile);
+
+    } catch (\Exception $e) {
+        $this->dispatch(
+            'showNotification',
+            type: 'error',
+            content: 'Failed to apply e-signature: ' . $e->getMessage()
+        );
+    }
+}
+
+            // ============= END E-SIGNATURE PROCESS ============= //
 
             // CREATE CORRECTION NOTE
             \App\Models\AdminCorrectionNote::create([
@@ -276,7 +332,7 @@ class RequirementView extends Component
                 'file_name' => $this->selectedFile['file_name'],
                 'status' => $this->selectedStatus,
             ]);
-            
+
             // Send notification to user if status changed
             if ($oldStatus !== $this->selectedStatus) {
                 $user = User::find($submission->user_id);
@@ -284,23 +340,23 @@ class RequirementView extends Component
                     $user->notify(new SubmissionStatusUpdated($submission, $oldStatus, $this->selectedStatus));
                 }
             }
-            
-            // Reload files to reflect changes
+
+            // Reload files
             $this->loadFiles();
-            
-            // Reselect the current file if it still exists
+
+            // Reselect current file if still exists
             if ($this->allFiles->isNotEmpty()) {
                 $currentFile = $this->allFiles->firstWhere('id', $this->selectedFile['id']);
                 if ($currentFile) {
                     $this->selectFile($currentFile['id']);
                 } else {
-                    // If current file no longer exists, select the first available file
                     $this->selectFile($this->allFiles->first()['id']);
                 }
             }
-            
-            $this->dispatch('showNotification', 
-                type: 'success', 
+
+            $this->dispatch(
+                'showNotification',
+                type: 'success',
                 content: 'Status updated successfully'
             );
         }
@@ -312,10 +368,10 @@ class RequirementView extends Component
         if (!is_numeric($bytes)) {
             return 'Unknown size';
         }
-        
+
         // Convert to integer to be safe
         $bytes = (int) $bytes;
-        
+
         if ($bytes >= 1073741824) {
             return number_format($bytes / 1073741824, 2) . ' GB';
         } elseif ($bytes >= 1048576) {
@@ -330,7 +386,7 @@ class RequirementView extends Component
     {
         if ($this->selectedFile) {
             $submissionId = $this->selectedFile['submission_id'];
-            
+
             $notes = \App\Models\AdminCorrectionNote::with(['admin'])
                 ->where('submitted_requirement_id', $submissionId)
                 ->orderBy('created_at', 'desc')
@@ -359,7 +415,7 @@ class RequirementView extends Component
 
     protected function formatCorrectionNoteStatus($status)
     {
-        return match($status) {
+        return match ($status) {
             \App\Models\AdminCorrectionNote::STATUS_UPLOADED => 'Uploaded',
             \App\Models\AdminCorrectionNote::STATUS_UNDER_REVIEW => 'Under Review',
             \App\Models\AdminCorrectionNote::STATUS_REVISION_NEEDED => 'Revision Required',

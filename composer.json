@@ -13,9 +13,11 @@
         "barryvdh/laravel-dompdf": "^3.1",
         "dompdf/dompdf": "^3.1",
         "elibyy/tcpdf-laravel": "^11.5",
+        "intervention/image": "^3.11",
         "laravel/framework": "^12.0",
         "laravel/tinker": "^2.10.1",
         "livewire/livewire": "^3.6",
+        "setasign/fpdi-fpdf": "^2.3",
         "spatie/laravel-medialibrary": "^11.13",
         "spatie/laravel-permission": "^6.19"
     },
