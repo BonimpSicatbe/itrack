@@ -4,33 +4,25 @@ namespace App\Services;
 
 use Smalot\PdfParser\Parser as PdfParser;
 use setasign\Fpdi\Fpdi;
+use setasign\Fpdi\Tcpdf\Fpdi as TcpdfFpdi;
 use Illuminate\Support\Facades\Log;
 use setasign\Fpdi\PdfReader\PageBoundaries;
+use TCPDF;
 
 class DocumentProcessorService
 {
     /**
      * Add signature to document with optional manual positioning
-     * 
-     * @param string $originalFilePath Path to the original document
-     * @param string $signatoryName Name of the signatory
-     * @param string $signatureImagePath Path to signature image
-     * @param float|null $xPosition Manual X position (points from left)
-     * @param float|null $yPosition Manual Y position (points from bottom for PDF)
-     * @param float $width Signature width in points (default: 60)
-     * @param float $height Signature height in points (default: 30)
-     * @param int $pageNumber Page number to place signature on (default: 1)
-     * @return string|null Path to signed document or null on failure
      */
     public function addSignatureToDocument(
         string $originalFilePath,
-        string $signatoryName,
         string $signatureImagePath,
         float $xPosition = null,
         float $yPosition = null,
         float $width = 60,
         float $height = 30,
-        int $pageNumber = 1
+        int $pageNumber = 1,
+        bool $useTcpdf = true
     ): ?string {
         $extension = strtolower(pathinfo($originalFilePath, PATHINFO_EXTENSION));
         
@@ -42,23 +34,33 @@ class DocumentProcessorService
         
         switch ($extension) {
             case 'pdf':
-                return $this->processPdfDocumentWithManualPositioning(
-                    $originalFilePath, 
-                    $signatoryName, 
-                    $signatureImagePath, 
-                    $xPosition,
-                    $yPosition,
-                    $width,
-                    $height,
-                    $pageNumber
-                );
+                if ($useTcpdf) {
+                    return $this->processPdfWithTcpdfFpdi(
+                        $originalFilePath, 
+                        $signatureImagePath, 
+                        $xPosition,
+                        $yPosition,
+                        $width,
+                        $height,
+                        $pageNumber
+                    );
+                } else {
+                    return $this->processPdfDocumentWithManualPositioning(
+                        $originalFilePath, 
+                        $signatureImagePath, 
+                        $xPosition,
+                        $yPosition,
+                        $width,
+                        $height,
+                        $pageNumber
+                    );
+                }
             case 'jpg':
             case 'jpeg':
             case 'png':
             case 'gif':
-                return $this->processImageDocumentWithManualPositioning(
+                return $this->processImageDocumentWithTcpdf(
                     $originalFilePath, 
-                    $signatoryName, 
                     $signatureImagePath, 
                     $xPosition,
                     $yPosition,
@@ -72,11 +74,11 @@ class DocumentProcessorService
     }
 
     /**
-     * Process PDF document with manual or auto positioning
+     * Process PDF document with TCPDF-FPDI for accurate positioning
+     * Updated to properly handle page selection
      */
-    protected function processPdfDocumentWithManualPositioning(
+    protected function processPdfWithTcpdfFpdi(
         string $pdfPath,
-        string $signatoryName,
         string $signatureImagePath,
         ?float $xPosition = null,
         ?float $yPosition = null,
@@ -85,9 +87,10 @@ class DocumentProcessorService
         int $pageNumber = 1
     ): ?string {
         try {
-            \Log::info("=== STARTING E-SIGNATURE PROCESS ===");
+            \Log::info("=== STARTING E-SIGNATURE PROCESS WITH TCPDF-FPDI ===");
             \Log::info("PDF: {$pdfPath}");
-            \Log::info("Signatory: {$signatoryName}");
+            \Log::info("Target Page: {$pageNumber}");
+            \Log::info("Position - X: {$xPosition}, Y: {$yPosition}, Width: {$width}, Height: {$height}");
             
             if (!file_exists($signatureImagePath)) {
                 \Log::error("Signature image not found at: {$signatureImagePath}");
@@ -99,11 +102,18 @@ class DocumentProcessorService
                 return null;
             }
 
-            // Create FPDI instance
-            $fpdi = new Fpdi();
+            // Create TCPDF-FPDI instance
+            $pdf = new TcpdfFpdi();
             
+            // Remove default header/footer
+            $pdf->setPrintHeader(false);
+            $pdf->setPrintFooter(false);
+            $pdf->SetAutoPageBreak(false, 0);
+
             // Set source file
-            $pageCount = $fpdi->setSourceFile($pdfPath);
+            $pageCount = $pdf->setSourceFile($pdfPath);
+            
+            \Log::info("Total pages in PDF: {$pageCount}");
             
             // Validate page number
             if ($pageNumber < 1 || $pageNumber > $pageCount) {
@@ -111,82 +121,62 @@ class DocumentProcessorService
                 $pageNumber = $pageCount;
             }
 
-            // If manual position is provided, use it directly
-            if ($xPosition !== null && $yPosition !== null) {
-                \Log::info("Using manual positioning - X: {$xPosition}, Y: {$yPosition}");
-                
-                $bestMatch = [
-                    'x' => $xPosition,
-                    'y' => $yPosition,
-                    'page' => $pageNumber
-                ];
-                
-            } else {
-                // Auto-detect position (original logic)
-                \Log::info("Auto-detecting signature position...");
-                $bestMatch = $this->findAutoSignaturePosition($pdfPath, $signatoryName, $pageNumber);
-            }
-
-            \Log::info("=== FINAL SIGNATURE POSITION ===");
-            \Log::info("Page: {$bestMatch['page']}");
-            \Log::info("Signature Position - X: {$bestMatch['x']}, Y: {$bestMatch['y']}");
-            \Log::info("Signature Dimensions - Width: {$width}, Height: {$height}");
-
             // Import all pages and add signature to the target page
             for ($currentPage = 1; $currentPage <= $pageCount; $currentPage++) {
-                $templateId = $fpdi->importPage($currentPage, PageBoundaries::MEDIA_BOX);
-                $size = $fpdi->getTemplateSize($templateId);
+                // Import page
+                $templateId = $pdf->importPage($currentPage);
+                $size = $pdf->getTemplateSize($templateId);
+                
+                // Handle both key naming conventions
+                $pageWidth = $size['w'] ?? $size['width'] ?? 595.28;
+                $pageHeight = $size['h'] ?? $size['height'] ?? 841.89;
+                $orientation = ($size['orientation'] ?? ($pageWidth > $pageHeight ? 'L' : 'P'));
                 
                 // Add page with same orientation and size
-                $fpdi->AddPage($size['orientation'], [$size['width'], $size['height']]);
-                $fpdi->useTemplate($templateId);
+                $pdf->AddPage($orientation, [$pageWidth, $pageHeight]);
+                $pdf->useTemplate($templateId);
                 
-                // Add signature to the target page
-                if ($currentPage == $bestMatch['page']) {
-                    $pageWidth = $size['width'];
-                    $pageHeight = $size['height'];
+                // Add signature ONLY to the target page
+                if ($currentPage == $pageNumber) {
+                    // Use the provided xPosition and yPosition directly
+                    // Ensure signature fits on page (safety check)
+                    $signatureX = max(10, min($xPosition, $pageWidth - $width - 10));
+                    $signatureY = max(10, min($yPosition, $pageHeight - $height - 10));
                     
-                    // Adjust coordinates for FPDI
-                    // FPDI coordinates: 0,0 is top-left, Y increases downward
-                    // PDF coordinates: 0,0 is bottom-left, Y increases upward
-                    
-                    $signatureX = $bestMatch['x'];
-                    $signatureY = $bestMatch['y'];
-                    
-                    // If Y coordinate is from bottom (PDF standard), convert to top-left
-                    if ($signatureY < $pageHeight) {
-                        // Assume Y is from bottom, convert to top-left
-                        $signatureY = $pageHeight - $signatureY - $height;
-                    }
-                    
-                    // Ensure signature fits on page
-                    $signatureX = max(10, min($signatureX, $pageWidth - $width - 10));
-                    $signatureY = max(10, min($signatureY, $pageHeight - $height - 10));
-                    
-                    \Log::info("Placing signature at - X: {$signatureX}, Y: {$signatureY} (page coords)");
+                    \Log::info("Placing signature on page {$pageNumber} at - X: {$signatureX}, Y: {$signatureY}");
                     \Log::info("Page dimensions - Width: {$pageWidth}, Height: {$pageHeight}");
                     
-                    // Add signature image
-                    $fpdi->Image(
+                    // Add signature image with TCPDF
+                    $pdf->Image(
                         $signatureImagePath,
                         $signatureX,
                         $signatureY,
                         $width,
                         $height,
-                        'PNG'
+                        'PNG',
+                        '',
+                        '',
+                        false,
+                        300,
+                        '',
+                        false,
+                        false,
+                        0,
+                        false,
+                        false,
+                        false
                     );
                     
-                    // Optional: Add signatory name text below signature
-                    $this->addSignatoryText($fpdi, $signatureX, $signatureY, $width, $height, $signatoryName);
+                    \Log::info("Signature added to page {$pageNumber}");
                 }
             }
             
             // Generate output filename
-            $outputFilename = 'signed_' . time() . '_' . basename($pdfPath);
+            $outputFilename = 'signed_tcpdf_' . time() . '_' . basename($pdfPath);
             $outputPath = storage_path('app/temp/' . $outputFilename);
             
             // Output PDF
-            $fpdi->Output($outputPath, 'F');
+            $pdf->Output($outputPath, 'F');
             
             // Verify file was created
             if (!file_exists($outputPath)) {
@@ -196,247 +186,22 @@ class DocumentProcessorService
             
             $fileSize = filesize($outputPath);
             \Log::info("Signed document saved: {$outputPath} ({$fileSize} bytes)");
-            \Log::info("=== E-SIGNATURE PROCESS COMPLETE ===");
+            \Log::info("=== TCPDF-FPDI E-SIGNATURE PROCESS COMPLETE ===");
             
             return $outputPath;
             
         } catch (\Exception $e) {
-            \Log::error('PDF signature processing failed: ' . $e->getMessage());
+            \Log::error('TCPDF-FPDI signature processing failed: ' . $e->getMessage());
             \Log::error('Stack trace: ' . $e->getTraceAsString());
             return null;
         }
     }
-    
-    /**
-     * Find automatic signature position by scanning text
-     */
-    protected function findAutoSignaturePosition(string $pdfPath, string $signatoryName, int $targetPage = 1): array
-    {
-        try {
-            $parser = new PdfParser();
-            $pdf = $parser->parseFile($pdfPath);
-            $pages = $pdf->getPages();
-            
-            $bestMatch = null;
-            $bestPage = $targetPage;
-            
-            // Search for the EXACT position of the signatory name
-            foreach ($pages as $pageIndex => $page) {
-                $currentPage = $pageIndex + 1;
-                
-                // Only search on target page if specified
-                if ($targetPage > 0 && $currentPage != $targetPage) {
-                    continue;
-                }
-                
-                \Log::info("=== Scanning Page {$currentPage} for '{$signatoryName}' ===");
-                
-                // Get detailed text data with coordinates
-                $data = $page->getDataTm();
-                
-                foreach ($data as $itemIndex => $item) {
-                    if (!is_array($item) || !isset($item[0]) || !is_string($item[0])) {
-                        continue;
-                    }
-                    
-                    $text = $item[0];
-                    $x = isset($item[1]) ? floatval($item[1]) : 0;
-                    $y = isset($item[2]) ? floatval($item[2]) : 0;
-                    
-                    // Log text near potential matches
-                    if (stripos($text, substr($signatoryName, 0, 5)) !== false) {
-                        \Log::info("Partial match found - Text: '{$text}', X: {$x}, Y: {$y}");
-                    }
-                    
-                    // Check for exact or partial name match
-                    if ($this->textContainsName($text, $signatoryName)) {
-                        \Log::info("FOUND NAME: '{$text}' at X: {$x}, Y: {$y}");
-                        
-                        // Calculate signature position (LEFT of the name)
-                        $signatureX = $x - 70; // Position signature 70 points left of the name
-                        $signatureY = $y; // Same Y level
-                        
-                        $bestMatch = [
-                            'x' => $signatureX,
-                            'y' => $signatureY,
-                            'text_x' => $x,
-                            'text_y' => $y,
-                            'text' => $text
-                        ];
-                        $bestPage = $currentPage;
-                        break 2; // Found best match, stop searching
-                    }
-                }
-            }
-            
-            // If exact name not found, look for signature lines or labels
-            if (!$bestMatch) {
-                \Log::info("Exact name not found, looking for signature fields...");
-                
-                foreach ($pages as $pageIndex => $page) {
-                    $currentPage = $pageIndex + 1;
-                    
-                    // Only search on target page if specified
-                    if ($targetPage > 0 && $currentPage != $targetPage) {
-                        continue;
-                    }
-                    
-                    $data = $page->getDataTm();
-                    
-                    foreach ($data as $item) {
-                        if (!is_array($item) || !isset($item[0]) || !is_string($item[0])) {
-                            continue;
-                        }
-                        
-                        $text = strtolower(trim($item[0]));
-                        $x = isset($item[1]) ? floatval($item[1]) : 0;
-                        $y = isset($item[2]) ? floatval($item[2]) : 0;
-                        
-                        // Look for signature-related text
-                        $signatureKeywords = [
-                            'signature', 'sign', 'signed', 'sign here', 
-                            'approved by', 'prepared by', 'noted by', 'submitted by',
-                            'signature:', 'signature of', 'signature line'
-                        ];
-                        
-                        foreach ($signatureKeywords as $keyword) {
-                            if (stripos($text, $keyword) !== false) {
-                                \Log::info("Found signature field: '{$text}' at X: {$x}, Y: {$y}");
-                                
-                                // Place signature to the right of the label
-                                $bestMatch = [
-                                    'x' => $x + 50, // Right of the label
-                                    'y' => $y,
-                                    'text_x' => $x,
-                                    'text_y' => $y,
-                                    'text' => $text
-                                ];
-                                $bestPage = $currentPage;
-                                break 3;
-                            }
-                        }
-                    }
-                }
-            }
-            
-            // Fallback: Place on target page, bottom right
-            if (!$bestMatch) {
-                \Log::info("No signature field found, using fallback position");
-                
-                // Get page dimensions for fallback positioning
-                $parser = new PdfParser();
-                $pdf = $parser->parseFile($pdfPath);
-                $pages = $pdf->getPages();
-                
-                if (isset($pages[$bestPage - 1])) {
-                    $page = $pages[$bestPage - 1];
-                    $data = $page->getDataTm();
-                    
-                    // Try to find max Y coordinate on page
-                    $maxY = 0;
-                    foreach ($data as $item) {
-                        if (is_array($item) && isset($item[2])) {
-                            $maxY = max($maxY, floatval($item[2]));
-                        }
-                    }
-                    
-                    $bestMatch = [
-                        'x' => 400, // Right side
-                        'y' => $maxY > 0 ? $maxY - 100 : 100, // Near bottom
-                    ];
-                } else {
-                    $bestMatch = ['x' => 400, 'y' => 100];
-                }
-            }
-            
-            return [
-                'x' => $bestMatch['x'],
-                'y' => $bestMatch['y'],
-                'page' => $bestPage
-            ];
-            
-        } catch (\Exception $e) {
-            \Log::error('Error finding signature position: ' . $e->getMessage());
-            return [
-                'x' => 400,
-                'y' => 100,
-                'page' => $targetPage
-            ];
-        }
-    }
-    
-    /**
-     * Add signatory name text below signature
-     */
-    protected function addSignatoryText($fpdi, $x, $y, $width, $height, $signatoryName): void
-    {
-        try {
-            // Set font for signatory name
-            $fpdi->SetFont('Helvetica', '', 8);
-            $fpdi->SetTextColor(0, 0, 0); // Black
-            
-            // Position text below signature
-            $textX = $x;
-            $textY = $y + $height + 2;
-            
-            // Add a line above the name
-            $lineY = $textY - 1;
-            $fpdi->SetDrawColor(0, 0, 0);
-            $fpdi->SetLineWidth(0.1);
-            $fpdi->Line($x, $lineY, $x + $width, $lineY);
-            
-            // Add the name
-            $fpdi->SetXY($textX, $textY);
-            $fpdi->Cell($width, 4, $signatoryName, 0, 0, 'C');
-            
-        } catch (\Exception $e) {
-            \Log::warning('Could not add signatory text: ' . $e->getMessage());
-        }
-    }
-    
-    /**
-     * Check if text contains the signatory name
-     */
-    protected function textContainsName(string $text, string $signatoryName): bool
-    {
-        // Clean the text
-        $cleanText = preg_replace('/[^a-zA-Z0-9\s]/', ' ', $text);
-        $cleanText = preg_replace('/\s+/', ' ', trim($cleanText));
-        
-        // Clean the name
-        $cleanName = preg_replace('/[^a-zA-Z0-9\s]/', ' ', $signatoryName);
-        $cleanName = preg_replace('/\s+/', ' ', trim($cleanName));
-        
-        // Split name into parts
-        $nameParts = explode(' ', $cleanName);
-        
-        // Check if ALL name parts are in the text (case-insensitive)
-        foreach ($nameParts as $part) {
-            if (strlen($part) > 2 && stripos($cleanText, $part) === false) {
-                return false;
-            }
-        }
-        
-        // Also check for full name match
-        if (stripos($cleanText, $cleanName) !== false) {
-            return true;
-        }
-        
-        // Check for last name only (common in signatures)
-        $lastName = end($nameParts);
-        if (strlen($lastName) > 2 && stripos($cleanText, $lastName) !== false) {
-            return true;
-        }
-        
-        return false;
-    }
 
     /**
-     * Process image document with manual positioning
+     * Process image document with TCPDF
      */
-    protected function processImageDocumentWithManualPositioning(
+    protected function processImageDocumentWithTcpdf(
         string $imagePath,
-        string $signatoryName,
         string $signatureImagePath,
         ?float $xPosition = null,
         ?float $yPosition = null,
@@ -444,7 +209,7 @@ class DocumentProcessorService
         float $height = 30
     ): ?string {
         try {
-            \Log::info("Processing image document for e-signature: {$imagePath}");
+            \Log::info("Processing image document with TCPDF: {$imagePath}");
             
             if (!file_exists($signatureImagePath)) {
                 \Log::error("Signature image not found");
@@ -463,25 +228,44 @@ class DocumentProcessorService
                 return null;
             }
             
-            list($imageWidth, $imageHeight) = $imageInfo;
+            list($imageWidthPx, $imageHeightPx) = $imageInfo;
             
-            // Create a new PDF and add the image to it
-            $fpdi = new Fpdi();
+            // Convert pixels to points (72 points per inch, assuming 96 DPI)
+            $pixelsPerPoint = 96 / 72;
+            $pdfWidth = $imageWidthPx / $pixelsPerPoint;
+            $pdfHeight = $imageHeightPx / $pixelsPerPoint;
             
-            // Convert pixels to points (1 inch = 72 points = 96 pixels typically)
-            $pointsPerPixel = 72 / 96;
-            $pdfWidth = $imageWidth * $pointsPerPixel;
-            $pdfHeight = $imageHeight * $pointsPerPixel;
-            
-            // Create a PDF with proportional dimensions
-            $fpdi->AddPage('P', [$pdfWidth, $pdfHeight]);
+            // Create a new TCPDF
+            $pdf = new TCPDF('P', 'pt', [$pdfWidth, $pdfHeight], true, 'UTF-8', false);
+            $pdf->setPrintHeader(false);
+            $pdf->setPrintFooter(false);
+            $pdf->SetAutoPageBreak(false, 0);
+            $pdf->AddPage();
             
             // Add the original image as background
-            $fpdi->Image($imagePath, 0, 0, $pdfWidth, $pdfHeight);
+            $pdf->Image(
+                $imagePath,
+                0,
+                0,
+                $pdfWidth,
+                $pdfHeight,
+                '',
+                '',
+                '',
+                false,
+                300,
+                '',
+                false,
+                false,
+                0,
+                false,
+                false,
+                false
+            );
             
             // Calculate signature position
             if ($xPosition !== null && $yPosition !== null) {
-                // Use manual position (convert from pixels to points if needed)
+                // Use manual position (already in points)
                 $signatureX = $xPosition;
                 $signatureY = $yPosition;
             } else {
@@ -497,22 +281,30 @@ class DocumentProcessorService
             \Log::info("Placing signature at - X: {$signatureX}, Y: {$signatureY}");
             
             // Add signature image
-            $fpdi->Image(
+            $pdf->Image(
                 $signatureImagePath,
                 $signatureX,
                 $signatureY,
                 $width,
                 $height,
-                'PNG'
+                'PNG',
+                '',
+                '',
+                false,
+                300,
+                '',
+                false,
+                false,
+                0,
+                false,
+                false,
+                false
             );
             
-            // Add signatory name text
-            $this->addSignatoryText($fpdi, $signatureX, $signatureY, $width, $height, $signatoryName);
-            
             // Save the PDF
-            $outputFilename = 'signed_' . time() . '_' . basename($imagePath, '.jpg') . '.pdf';
+            $outputFilename = 'signed_image_' . time() . '_' . basename($imagePath, '.jpg') . '.pdf';
             $outputPath = storage_path('app/temp/' . $outputFilename);
-            $fpdi->Output($outputPath, 'F');
+            $pdf->Output($outputPath, 'F');
             
             // Verify file was created
             if (!file_exists($outputPath)) {
@@ -531,7 +323,195 @@ class DocumentProcessorService
             return null;
         }
     }
+
+    /**
+     * Get PDF dimensions in points using TCPDF-FPDI
+     * Returns array with width, height, orientation, and page_count
+     */
+    public function getPdfDimensions(string $pdfPath): array
+    {
+        try {
+            if (!file_exists($pdfPath)) {
+                \Log::error("PDF file does not exist: {$pdfPath}");
+                return $this->getDefaultDimensions();
+            }
+            
+            $pdf = new TcpdfFpdi();
+            $pageCount = $pdf->setSourceFile($pdfPath);
+            
+            if ($pageCount === 0) {
+                \Log::error("Failed to read PDF or PDF is empty: {$pdfPath}");
+                return $this->getDefaultDimensions();
+            }
+            
+            // Get dimensions of the first page
+            $templateId = $pdf->importPage(1);
+            $size = $pdf->getTemplateSize($templateId);
+            
+            // Handle different return formats from getTemplateSize()
+            if (isset($size['width']) && isset($size['height'])) {
+                $width = (float)$size['width'];
+                $height = (float)$size['height'];
+                $orientation = isset($size['orientation']) ? $size['orientation'] : ($width > $height ? 'L' : 'P');
+            } elseif (isset($size['w']) && isset($size['h'])) {
+                $width = (float)$size['w'];
+                $height = (float)$size['h'];
+                $orientation = isset($size['orientation']) ? $size['orientation'] : ($width > $height ? 'L' : 'P');
+            } elseif (isset($size[0]) && isset($size[1])) {
+                $width = (float)$size[0];
+                $height = (float)$size[1];
+                $orientation = $width > $height ? 'L' : 'P';
+            } else {
+                \Log::warning("Unexpected size array format, using defaults");
+                return $this->getDefaultDimensions();
+            }
+            
+            // Validate dimensions are reasonable
+            if ($width < 10 || $height < 10 || $width > 10000 || $height > 10000) {
+                \Log::warning("Suspicious PDF dimensions: {$width}x{$height}, using defaults");
+                return $this->getDefaultDimensions();
+            }
+            
+            \Log::info("PDF dimensions determined:", [
+                'width' => $width,
+                'height' => $height,
+                'orientation' => $orientation,
+                'page_count' => $pageCount,
+                'pdf_path' => basename($pdfPath)
+            ]);
+            
+            return [
+                'width' => $width,
+                'height' => $height,
+                'orientation' => $orientation,
+                'page_count' => $pageCount
+            ];
+            
+        } catch (\Exception $e) {
+            \Log::error('Failed to get PDF dimensions: ' . $e->getMessage());
+            \Log::error('Stack trace: ' . $e->getTraceAsString());
+            return $this->getDefaultDimensions();
+        }
+    }
+
+    /**
+     * Get default dimensions (A4)
+     */
+    protected function getDefaultDimensions(): array
+    {
+        return [
+            'width' => 595.28,  // A4 width in points (210mm)
+            'height' => 841.89, // A4 height in points (297mm)
+            'orientation' => 'P',
+            'page_count' => 1
+        ];
+    }
+
+    /**
+     * Convert display pixels to PDF points
+     */
+    public function pixelsToPoints(float $pixels, float $dpi = 96): float
+    {
+        return ($pixels / $dpi) * 72;
+    }
     
+    /**
+     * Convert PDF points to display pixels
+     */
+    public function pointsToPixels(float $points, float $dpi = 96): float
+    {
+        return ($points / 72) * $dpi;
+    }
+
+    /**
+     * Process PDF with manual positioning (legacy FPDI method)
+     * Updated to handle page selection
+     */
+    protected function processPdfDocumentWithManualPositioning(
+        string $pdfPath,
+        string $signatureImagePath,
+        ?float $xPosition = null,
+        ?float $yPosition = null,
+        float $width = 60,
+        float $height = 30,
+        int $pageNumber = 1
+    ): ?string {
+        try {
+            \Log::info("=== USING LEGACY FPDI METHOD ===");
+            \Log::info("Target Page: {$pageNumber}");
+            
+            // Create FPDI instance
+            $fpdi = new Fpdi();
+            
+            // Set source file
+            $pageCount = $fpdi->setSourceFile($pdfPath);
+            
+            \Log::info("Total pages: {$pageCount}");
+            
+            // Validate page number
+            if ($pageNumber < 1 || $pageNumber > $pageCount) {
+                \Log::warning("Invalid page number {$pageNumber}, using last page instead");
+                $pageNumber = $pageCount;
+            }
+
+            // Import all pages and add signature to the target page
+            for ($currentPage = 1; $currentPage <= $pageCount; $currentPage++) {
+                $templateId = $fpdi->importPage($currentPage, PageBoundaries::MEDIA_BOX);
+                $size = $fpdi->getTemplateSize($templateId);
+                
+                // Add page with same orientation and size
+                $fpdi->AddPage($size['orientation'], [$size['width'], $size['height']]);
+                $fpdi->useTemplate($templateId);
+                
+                // Add signature to the target page
+                if ($currentPage == $pageNumber) {
+                    $pageWidth = $size['width'];
+                    $pageHeight = $size['height'];
+                    
+                    // FPDI coordinates: 0,0 is top-left, Y increases downward
+                    $signatureX = $xPosition;
+                    $signatureY = $pageHeight - $yPosition - $height; // Convert from bottom-left to top-left
+                    
+                    // Ensure signature fits on page
+                    $signatureX = max(10, min($signatureX, $pageWidth - $width - 10));
+                    $signatureY = max(10, min($signatureY, $pageHeight - $height - 10));
+                    
+                    \Log::info("Legacy FPDI - Placing signature on page {$pageNumber} at - X: {$signatureX}, Y: {$signatureY}");
+                    
+                    // Add signature image
+                    $fpdi->Image(
+                        $signatureImagePath,
+                        $signatureX,
+                        $signatureY,
+                        $width,
+                        $height,
+                        'PNG'
+                    );
+                    
+                    \Log::info("Signature added to page {$pageNumber}");
+                }
+            }
+            
+            // Generate output filename
+            $outputFilename = 'signed_fpdi_' . time() . '_' . basename($pdfPath);
+            $outputPath = storage_path('app/temp/' . $outputFilename);
+            
+            // Output PDF
+            $fpdi->Output($outputPath, 'F');
+            
+            if (!file_exists($outputPath)) {
+                \Log::error("Failed to create signed PDF with FPDI");
+                return null;
+            }
+            
+            return $outputPath;
+            
+        } catch (\Exception $e) {
+            \Log::error('Legacy FPDI processing failed: ' . $e->getMessage());
+            return null;
+        }
+    }
+
     /**
      * Quick method for manual positioning (simplified interface)
      */
@@ -554,13 +534,400 @@ class DocumentProcessorService
         
         return $this->addSignatureToDocument(
             originalFilePath: $originalFilePath,
-            signatoryName: $signatory->name,
             signatureImagePath: $signatory->signature_path,
             xPosition: $xPosition,
             yPosition: $yPosition,
             width: $width,
             height: $height,
-            pageNumber: $pageNumber
+            pageNumber: $pageNumber,
+            useTcpdf: true
         );
+    }
+
+    /**
+     * Simple TCPDF-only method for adding signatures
+     */
+    public function addSignatureWithSimpleTcpdf(
+        string $pdfPath,
+        string $signatureImagePath,
+        float $x,
+        float $y,
+        float $width,
+        float $height
+    ): ?string {
+        try {
+            // Create a simple TCPDF document
+            $pdf = new TCPDF('P', 'pt', 'A4', true, 'UTF-8', false);
+            $pdf->setPrintHeader(false);
+            $pdf->setPrintFooter(false);
+            $pdf->SetAutoPageBreak(false, 0);
+            $pdf->AddPage();
+            
+            // Add signature
+            $pdf->Image($signatureImagePath, $x, $y, $width, $height, 'PNG');
+            
+            $outputPath = storage_path('app/temp/simple_signed_' . time() . '.pdf');
+            $pdf->Output($outputPath, 'F');
+            
+            return file_exists($outputPath) ? $outputPath : null;
+            
+        } catch (\Exception $e) {
+            \Log::error('Simple TCPDF error: ' . $e->getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Get dimensions for a specific page in a PDF
+     * Useful when different pages have different sizes
+     */
+    public function getPdfPageDimensions(string $pdfPath, int $pageNumber = 1): array
+    {
+        try {
+            if (!file_exists($pdfPath)) {
+                \Log::error("PDF file does not exist: {$pdfPath}");
+                return $this->getDefaultDimensions();
+            }
+            
+            $pdf = new TcpdfFpdi();
+            $pageCount = $pdf->setSourceFile($pdfPath);
+            
+            if ($pageCount === 0) {
+                \Log::error("Failed to read PDF or PDF is empty: {$pdfPath}");
+                return $this->getDefaultDimensions();
+            }
+            
+            // Validate page number
+            if ($pageNumber < 1 || $pageNumber > $pageCount) {
+                \Log::warning("Invalid page number {$pageNumber}, using first page instead");
+                $pageNumber = 1;
+            }
+            
+            // Get dimensions of the specific page
+            $templateId = $pdf->importPage($pageNumber);
+            $size = $pdf->getTemplateSize($templateId);
+            
+            // Handle different return formats
+            if (isset($size['width']) && isset($size['height'])) {
+                $width = (float)$size['width'];
+                $height = (float)$size['height'];
+                $orientation = isset($size['orientation']) ? $size['orientation'] : ($width > $height ? 'L' : 'P');
+            } elseif (isset($size['w']) && isset($size['h'])) {
+                $width = (float)$size['w'];
+                $height = (float)$size['h'];
+                $orientation = isset($size['orientation']) ? $size['orientation'] : ($width > $height ? 'L' : 'P');
+            } elseif (isset($size[0]) && isset($size[1])) {
+                $width = (float)$size[0];
+                $height = (float)$size[1];
+                $orientation = $width > $height ? 'L' : 'P';
+            } else {
+                \Log::warning("Unexpected size array format, using defaults");
+                return $this->getDefaultDimensions();
+            }
+            
+            \Log::info("PDF page dimensions:", [
+                'page' => $pageNumber,
+                'width' => $width,
+                'height' => $height,
+                'orientation' => $orientation,
+                'total_pages' => $pageCount,
+                'pdf_path' => basename($pdfPath)
+            ]);
+            
+            return [
+                'width' => $width,
+                'height' => $height,
+                'orientation' => $orientation,
+                'page_count' => $pageCount
+            ];
+            
+        } catch (\Exception $e) {
+            \Log::error('Failed to get PDF page dimensions: ' . $e->getMessage());
+            \Log::error('Stack trace: ' . $e->getTraceAsString());
+            return $this->getDefaultDimensions();
+        }
+    }
+
+    /**
+     * Extract a specific page from PDF for preview purposes
+     */
+    public function extractPdfPage(string $pdfPath, int $pageNumber = 1): ?string
+    {
+        try {
+            if (!file_exists($pdfPath)) {
+                \Log::error("PDF file does not exist: {$pdfPath}");
+                return null;
+            }
+            
+            $pdf = new TcpdfFpdi();
+            $pageCount = $pdf->setSourceFile($pdfPath);
+            
+            if ($pageCount === 0) {
+                \Log::error("Failed to read PDF or PDF is empty: {$pdfPath}");
+                return null;
+            }
+            
+            // Validate page number
+            if ($pageNumber < 1 || $pageNumber > $pageCount) {
+                \Log::warning("Invalid page number {$pageNumber}, using first page instead");
+                $pageNumber = 1;
+            }
+            
+            // Import only the specified page
+            $templateId = $pdf->importPage($pageNumber);
+            $size = $pdf->getTemplateSize($templateId);
+            
+            $pageWidth = $size['w'] ?? $size['width'] ?? 595.28;
+            $pageHeight = $size['h'] ?? $size['height'] ?? 841.89;
+            $orientation = ($size['orientation'] ?? ($pageWidth > $pageHeight ? 'L' : 'P'));
+            
+            // Add page with same orientation and size
+            $pdf->AddPage($orientation, [$pageWidth, $pageHeight]);
+            $pdf->useTemplate($templateId);
+            
+            // Generate output filename
+            $outputFilename = 'page_' . $pageNumber . '_' . time() . '_' . basename($pdfPath);
+            $outputPath = storage_path('app/temp/' . $outputFilename);
+            
+            // Output PDF
+            $pdf->Output($outputPath, 'F');
+            
+            if (!file_exists($outputPath)) {
+                \Log::error("Failed to extract PDF page");
+                return null;
+            }
+            
+            \Log::info("Extracted page {$pageNumber} to: {$outputPath}");
+            return $outputPath;
+            
+        } catch (\Exception $e) {
+            \Log::error('Failed to extract PDF page: ' . $e->getMessage());
+            \Log::error('Stack trace: ' . $e->getTraceAsString());
+            return null;
+        }
+    }
+
+    /**
+     * Add signature to multiple pages
+     * Useful for signing all pages or specific multiple pages
+     */
+    public function addSignatureToMultiplePages(
+        string $originalFilePath,
+        string $signatureImagePath,
+        array $pages = [], // Array of page numbers to sign, empty means all pages
+        float $xPosition = null,
+        float $yPosition = null,
+        float $width = 60,
+        float $height = 30,
+        bool $useTcpdf = true
+    ): ?string {
+        try {
+            $extension = strtolower(pathinfo($originalFilePath, PATHINFO_EXTENSION));
+            
+            if ($extension !== 'pdf') {
+                \Log::warning("Multi-page signing only supported for PDF files");
+                return null;
+            }
+            
+            if (!file_exists($originalFilePath)) {
+                \Log::error("Original file not found: {$originalFilePath}");
+                return null;
+            }
+            
+            if (!file_exists($signatureImagePath)) {
+                \Log::error("Signature image not found: {$signatureImagePath}");
+                return null;
+            }
+            
+            // If no specific pages provided, sign all pages
+            $signAllPages = empty($pages);
+            
+            if ($useTcpdf) {
+                return $this->processPdfWithTcpdfFpdiMultiPage(
+                    $originalFilePath,
+                    $signatureImagePath,
+                    $pages,
+                    $xPosition,
+                    $yPosition,
+                    $width,
+                    $height,
+                    $signAllPages
+                );
+            } else {
+                return $this->processPdfDocumentWithManualPositioningMultiPage(
+                    $originalFilePath,
+                    $signatureImagePath,
+                    $pages,
+                    $xPosition,
+                    $yPosition,
+                    $width,
+                    $height,
+                    $signAllPages
+                );
+            }
+            
+        } catch (\Exception $e) {
+            \Log::error('Multi-page signing failed: ' . $e->getMessage());
+            \Log::error('Stack trace: ' . $e->getTraceAsString());
+            return null;
+        }
+    }
+
+    /**
+     * Process PDF with TCPDF-FPDI for multiple pages
+     */
+    protected function processPdfWithTcpdfFpdiMultiPage(
+        string $pdfPath,
+        string $signatureImagePath,
+        array $targetPages,
+        ?float $xPosition = null,
+        ?float $yPosition = null,
+        float $width = 60,
+        float $height = 30,
+        bool $signAllPages = false
+    ): ?string {
+        try {
+            $pdf = new TcpdfFpdi();
+            $pdf->setPrintHeader(false);
+            $pdf->setPrintFooter(false);
+            $pdf->SetAutoPageBreak(false, 0);
+
+            $pageCount = $pdf->setSourceFile($pdfPath);
+            
+            \Log::info("Multi-page signing - Total pages: {$pageCount}, Target pages: " . implode(',', $targetPages));
+            
+            // Process each page
+            for ($currentPage = 1; $currentPage <= $pageCount; $currentPage++) {
+                $templateId = $pdf->importPage($currentPage);
+                $size = $pdf->getTemplateSize($templateId);
+                
+                $pageWidth = $size['w'] ?? $size['width'] ?? 595.28;
+                $pageHeight = $size['h'] ?? $size['height'] ?? 841.89;
+                $orientation = ($size['orientation'] ?? ($pageWidth > $pageHeight ? 'L' : 'P'));
+                
+                $pdf->AddPage($orientation, [$pageWidth, $pageHeight]);
+                $pdf->useTemplate($templateId);
+                
+                // Check if we should sign this page
+                $shouldSign = $signAllPages || in_array($currentPage, $targetPages);
+                
+                if ($shouldSign) {
+                    // Use provided position or default to bottom right
+                    $signatureX = $xPosition ?? ($pageWidth - $width - 20);
+                    $signatureY = $yPosition ?? ($pageHeight - $height - 20);
+                    
+                    // Ensure signature fits on page
+                    $signatureX = max(10, min($signatureX, $pageWidth - $width - 10));
+                    $signatureY = max(10, min($signatureY, $pageHeight - $height - 10));
+                    
+                    \Log::info("Adding signature to page {$currentPage} at - X: {$signatureX}, Y: {$signatureY}");
+                    
+                    $pdf->Image(
+                        $signatureImagePath,
+                        $signatureX,
+                        $signatureY,
+                        $width,
+                        $height,
+                        'PNG',
+                        '',
+                        '',
+                        false,
+                        300,
+                        '',
+                        false,
+                        false,
+                        0,
+                        false,
+                        false,
+                        false
+                    );
+                }
+            }
+            
+            $outputFilename = 'signed_multi_' . time() . '_' . basename($pdfPath);
+            $outputPath = storage_path('app/temp/' . $outputFilename);
+            $pdf->Output($outputPath, 'F');
+            
+            if (!file_exists($outputPath)) {
+                \Log::error("Failed to create multi-page signed PDF");
+                return null;
+            }
+            
+            return $outputPath;
+            
+        } catch (\Exception $e) {
+            \Log::error('Multi-page TCPDF-FPDI processing failed: ' . $e->getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Process PDF with manual positioning for multiple pages
+     */
+    protected function processPdfDocumentWithManualPositioningMultiPage(
+        string $pdfPath,
+        string $signatureImagePath,
+        array $targetPages,
+        ?float $xPosition = null,
+        ?float $yPosition = null,
+        float $width = 60,
+        float $height = 30,
+        bool $signAllPages = false
+    ): ?string {
+        try {
+            $fpdi = new Fpdi();
+            $pageCount = $fpdi->setSourceFile($pdfPath);
+            
+            \Log::info("Multi-page legacy signing - Total pages: {$pageCount}");
+            
+            for ($currentPage = 1; $currentPage <= $pageCount; $currentPage++) {
+                $templateId = $fpdi->importPage($currentPage, PageBoundaries::MEDIA_BOX);
+                $size = $fpdi->getTemplateSize($templateId);
+                
+                $fpdi->AddPage($size['orientation'], [$size['width'], $size['height']]);
+                $fpdi->useTemplate($templateId);
+                
+                // Check if we should sign this page
+                $shouldSign = $signAllPages || in_array($currentPage, $targetPages);
+                
+                if ($shouldSign) {
+                    $pageWidth = $size['width'];
+                    $pageHeight = $size['height'];
+                    
+                    // Use provided position or default to bottom right
+                    $signatureX = $xPosition ?? ($pageWidth - $width - 20);
+                    $signatureY = $pageHeight - ($yPosition ?? 20) - $height;
+                    
+                    $signatureX = max(10, min($signatureX, $pageWidth - $width - 10));
+                    $signatureY = max(10, min($signatureY, $pageHeight - $height - 10));
+                    
+                    \Log::info("Legacy - Adding signature to page {$currentPage}");
+                    
+                    $fpdi->Image(
+                        $signatureImagePath,
+                        $signatureX,
+                        $signatureY,
+                        $width,
+                        $height,
+                        'PNG'
+                    );
+                }
+            }
+            
+            $outputFilename = 'signed_multi_fpdi_' . time() . '_' . basename($pdfPath);
+            $outputPath = storage_path('app/temp/' . $outputFilename);
+            $fpdi->Output($outputPath, 'F');
+            
+            if (!file_exists($outputPath)) {
+                \Log::error("Failed to create multi-page signed PDF with FPDI");
+                return null;
+            }
+            
+            return $outputPath;
+            
+        } catch (\Exception $e) {
+            \Log::error('Multi-page legacy FPDI processing failed: ' . $e->getMessage());
+            return null;
+        }
     }
 }

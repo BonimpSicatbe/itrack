@@ -25,12 +25,18 @@ class ESignModal extends Component
     public $signatories = [];
     public $selectedSignatory;
     
-    // Signature positioning - ALL AS SLIDERS
+    // Signature positioning
     public $signatureX = 100;
     public $signatureY = 100;
     public $signatureScale = 1.0;
     public $signatureOpacity = 1.0;
     public $signatureRotation = 0;
+    
+    // Page selection for multi-page PDFs
+    public $pageNumber = 1;
+    public $totalPages = 1;
+    public $showPageSelector = false;
+    public $currentPagePreview = 1;
     
     // Slider ranges
     public $minX = 0;
@@ -51,8 +57,11 @@ class ESignModal extends Component
     public $showPreview = false;
     public $isProcessing = false; 
 
-    public $pdfPointWidth = 595; // Default A4 width in points
-    public $pdfPointHeight = 842; // Default A4 height in points
+    public $pdfPointWidth = 595;
+    public $pdfPointHeight = 842;
+    
+    // Page dimensions array (for multi-page support)
+    public $pageDimensions = [];
     
     // Temporary signature file
     public $signatureImage;
@@ -82,42 +91,159 @@ class ESignModal extends Component
         $this->fileExtension = $fileExtension;
         $this->showModal = true;
         
+        // Reset dimensions
+        $this->documentWidth = 0;
+        $this->documentHeight = 0;
+        $this->pdfPointWidth = 0;
+        $this->pdfPointHeight = 0;
+        $this->pageDimensions = [];
+        
         // Get actual PDF dimensions for positioning
         $submission = SubmittedRequirement::find($submissionId);
-        if ($submission && $fileExtension === 'pdf') {
+        if ($submission && in_array($fileExtension, ['pdf', 'jpg', 'jpeg', 'png', 'gif'])) {
             $pdfPath = $submission->getOriginalFilePath();
+            
             if (file_exists($pdfPath)) {
-                $dimensions = $this->detectPdfDimensions($pdfPath);
-                $this->documentWidth = $dimensions['pixels']['width'];
-                $this->documentHeight = $dimensions['pixels']['height'];
+                $documentProcessor = app(DocumentProcessorService::class);
+                $dimensions = $documentProcessor->getPdfDimensions($pdfPath);
                 
-                // Store point dimensions for later use
-                $this->pdfPointWidth = $dimensions['points']['width'];
-                $this->pdfPointHeight = $dimensions['points']['height'];
+                // Get total pages
+                $this->totalPages = $dimensions['page_count'] ?? 1;
+                $this->showPageSelector = $this->totalPages > 1;
+                
+                // Store dimensions for all pages
+                for ($i = 1; $i <= $this->totalPages; $i++) {
+                    $this->pageDimensions[$i] = [
+                        'width' => $dimensions['width'],
+                        'height' => $dimensions['height']
+                    ];
+                }
+                
+                $this->pdfPointWidth = $dimensions['width'];
+                $this->pdfPointHeight = $dimensions['height'];
+                
+                // Apply margin correction
+                $viewerMarginCorrection = 0.95;
+                $pixelsPerPoint = 96 / 72;
+                $contentWidthPx = $this->pdfPointWidth * $pixelsPerPoint * $viewerMarginCorrection;
+                $contentHeightPx = $this->pdfPointHeight * $pixelsPerPoint * $viewerMarginCorrection;
+                
+                $this->documentWidth = $contentWidthPx;
+                $this->documentHeight = $contentHeightPx;
+                
+            } else {
+                $this->setDefaultDocumentDimensions();
             }
         } else {
-            // For images, use image dimensions
             $this->setDefaultDocumentDimensions();
         }
         
-        // Reset positioning
-        $this->signatureX = $this->documentWidth * 0.7; // Default to 70% from left
-        $this->signatureY = $this->documentHeight * 0.85; // Default to 85% from top (near bottom)
-        $this->signatureScale = 0.8; // Start with 80% scale
+        // Validate dimensions
+        $this->validateDimensions();
+        
+        // Set slider ranges
+        $this->updateSliderRangesWithMargin();
+        
+        // Adjust PDF viewer zoom
+        $this->adjustPdfViewer();
+        
+        // Set default signature position
+        $contentMarginX = ($this->documentWidth * 0.025);
+        $contentMarginY = ($this->documentHeight * 0.025);
+        
+        $this->signatureX = ($this->documentWidth / 2) - (50 * $this->signatureScale);
+        $this->signatureY = ($this->documentHeight / 2) - (20 * $this->signatureScale);
+        
+        $this->signatureX = max($contentMarginX, min($this->signatureX, $this->documentWidth - (100 * $this->signatureScale) - $contentMarginX));
+        $this->signatureY = max($contentMarginY, min($this->signatureY, $this->documentHeight - (40 * $this->signatureScale) - $contentMarginY));
+        
+        // Reset other properties
+        $this->signatureScale = 1.0;
         $this->signatureOpacity = 1.0;
         $this->signatureRotation = 0;
-        $this->zoomLevel = 1.0;
         $this->panX = 0;
         $this->panY = 0;
         $this->showPreview = false;
         $this->isDragging = false;
         $this->isResizing = false;
+        $this->currentPagePreview = 1;
+        $this->pageNumber = 1;
+    }
+
+    /**
+     * When page number changes, update the document dimensions
+     */
+    public function updatedPageNumber($value)
+    {
+        $this->pageNumber = (int)$value;
+        $this->currentPagePreview = $this->pageNumber;
         
-        // Set slider ranges based on document size
-        $this->minX = 0;
-        $this->maxX = $this->documentWidth - (100 * $this->signatureScale);
-        $this->minY = 0;
-        $this->maxY = $this->documentHeight - (40 * $this->signatureScale);
+        // Update document dimensions for the selected page
+        if (isset($this->pageDimensions[$this->pageNumber])) {
+            $dimensions = $this->pageDimensions[$this->pageNumber];
+            $this->pdfPointWidth = $dimensions['width'];
+            $this->pdfPointHeight = $dimensions['height'];
+            
+            // Convert to display pixels
+            $viewerMarginCorrection = 0.95;
+            $pixelsPerPoint = 96 / 72;
+            $contentWidthPx = $this->pdfPointWidth * $pixelsPerPoint * $viewerMarginCorrection;
+            $contentHeightPx = $this->pdfPointHeight * $pixelsPerPoint * $viewerMarginCorrection;
+            
+            $this->documentWidth = $contentWidthPx;
+            $this->documentHeight = $contentHeightPx;
+            
+            // Update slider ranges
+            $this->updateSliderRangesWithMargin();
+            
+            // Reset signature position to center of new page
+            $contentMarginX = ($this->documentWidth * 0.025);
+            $contentMarginY = ($this->documentHeight * 0.025);
+            
+            $this->signatureX = ($this->documentWidth / 2) - (50 * $this->signatureScale);
+            $this->signatureY = ($this->documentHeight / 2) - (20 * $this->signatureScale);
+            
+            $this->signatureX = max($contentMarginX, min($this->signatureX, $this->documentWidth - (100 * $this->signatureScale) - $contentMarginX));
+            $this->signatureY = max($contentMarginY, min($this->signatureY, $this->documentHeight - (40 * $this->signatureScale) - $contentMarginY));
+        }
+    }
+
+    protected function updateSliderRangesWithMargin()
+    {
+        if ($this->documentWidth <= 0 || $this->documentHeight <= 0) {
+            $this->documentWidth = 794;
+            $this->documentHeight = 1123;
+        }
+        
+        $baseWidthPx = 100;
+        $baseHeightPx = 40;
+        
+        $currentWidthPx = $baseWidthPx * $this->signatureScale;
+        $currentHeightPx = $baseHeightPx * $this->signatureScale;
+        
+        $contentMarginX = $this->documentWidth * 0.05;
+        $contentMarginY = $this->documentHeight * 0.05;
+        
+        $this->minX = $contentMarginX;
+        $this->maxX = max($this->minX, $this->documentWidth - $currentWidthPx - $contentMarginX);
+        $this->minY = $contentMarginY;
+        $this->maxY = max($this->minY, $this->documentHeight - $currentHeightPx - $contentMarginY);
+        
+        if ($this->signatureX < $this->minX) {
+            $this->signatureX = $this->minX;
+        }
+        
+        if ($this->signatureX > $this->maxX) {
+            $this->signatureX = $this->maxX;
+        }
+        
+        if ($this->signatureY < $this->minY) {
+            $this->signatureY = $this->minY;
+        }
+        
+        if ($this->signatureY > $this->maxY) {
+            $this->signatureY = $this->maxY;
+        }
     }
 
     public function updatedSignatoryId($value)
@@ -127,11 +253,8 @@ class ESignModal extends Component
 
     public function updatedSignatureScale()
     {
-        // When scale changes, update max X and Y to prevent signature going out of bounds
-        $this->maxX = max(0, $this->documentWidth - (60 * $this->signatureScale));
-        $this->maxY = max(0, $this->documentHeight - (30 * $this->signatureScale));
+        $this->updateSliderRangesWithMargin();
         
-        // Adjust current position if needed
         $this->signatureX = min($this->signatureX, $this->maxX);
         $this->signatureY = min($this->signatureY, $this->maxY);
     }
@@ -158,40 +281,33 @@ class ESignModal extends Component
             return;
         }
 
-        // Convert screen coordinates to document coordinates
         $docX = ($x - $this->panX) / $this->zoomLevel;
         $docY = ($y - $this->panY) / $this->zoomLevel;
         
         if ($this->isResizing) {
-            // Calculate new scale based on distance from center
-            $centerX = $this->signatureX + (60 * $this->signatureScale) / 2;
-            $centerY = $this->signatureY + (30 * $this->signatureScale) / 2;
+            $centerX = $this->signatureX + (100 * $this->signatureScale) / 2;
+            $centerY = $this->signatureY + (40 * $this->signatureScale) / 2;
             
             $distanceX = abs($docX - $centerX);
             $distanceY = abs($docY - $centerY);
             
-            // Use average distance for scaling
             $avgDistance = ($distanceX + $distanceY) / 2;
-            $baseDistance = (60 + 30) / 4; // Average of half width and half height
+            $baseDistance = (100 + 40) / 4;
             
-            $newScale = max(0.5, min(3.0, $avgDistance / $baseDistance));
+            $newScale = max(0.2, min(3.0, $avgDistance / $baseDistance));
             $this->signatureScale = round($newScale, 1);
             
-            // Update slider ranges when scale changes
             $this->updatedSignatureScale();
             
         } else if ($this->isDragging) {
-            // Update position
-            $signatureWidth = 60 * $this->signatureScale;
-            $signatureHeight = 30 * $this->signatureScale;
+            $signatureWidthPx = 100 * $this->signatureScale;
+            $signatureHeightPx = 40 * $this->signatureScale;
             
-            // Adjust for drag handle offset (handle is at -2px from edge)
-            $adjustedX = $docX - 8; // Half of handle width + border
-            $adjustedY = $docY - 8; // Half of handle height + border
+            $adjustedX = $docX - ($signatureWidthPx / 2);
+            $adjustedY = $docY - ($signatureHeightPx / 2);
             
-            // Update the slider values
-            $this->signatureX = max(0, min($adjustedX, $this->maxX));
-            $this->signatureY = max(0, min($adjustedY, $this->maxY));
+            $this->signatureX = max($this->minX, min($adjustedX, $this->maxX));
+            $this->signatureY = max($this->minY, min($adjustedY, $this->maxY));
         }
     }
 
@@ -207,9 +323,29 @@ class ESignModal extends Component
 
     public function resetZoom()
     {
-        $this->zoomLevel = 1.0;
+        if (in_array($this->fileExtension, ['pdf']) && $this->documentWidth > 0) {
+            $containerWidth = 600;
+            $this->zoomLevel = min(1.0, $containerWidth / $this->documentWidth);
+        } else {
+            $this->zoomLevel = 1.0;
+        }
+        
         $this->panX = 0;
         $this->panY = 0;
+    }
+
+    public function fitToWidth()
+    {
+        if (in_array($this->fileExtension, ['pdf'])) {
+            $containerWidth = 600;
+            
+            if ($this->documentWidth > 0) {
+                $this->zoomLevel = $containerWidth / $this->documentWidth;
+                $this->zoomLevel = max(0.25, min(3.0, $this->zoomLevel));
+                $this->panX = 0;
+                $this->panY = 0;
+            }
+        }
     }
 
     public function togglePreview()
@@ -217,10 +353,34 @@ class ESignModal extends Component
         $this->showPreview = !$this->showPreview;
     }
 
+    /**
+     * Navigate to previous page
+     */
+    public function previousPage()
+    {
+        if ($this->currentPagePreview > 1) {
+            $this->currentPagePreview--;
+        }
+    }
+
+    /**
+     * Navigate to next page
+     */
+    public function nextPage()
+    {
+        if ($this->currentPagePreview < $this->totalPages) {
+            $this->currentPagePreview++;
+        }
+    }
+
+    /**
+     * Apply signature to the selected page
+     */
     public function applySignature()
     {
         $this->validate([
             'signatoryId' => 'required|exists:signatories,id',
+            'pageNumber' => 'required|integer|min:1|max:' . $this->totalPages,
         ]);
 
         $this->isProcessing = true;
@@ -257,48 +417,41 @@ class ESignModal extends Component
                 throw new \Exception('Original document file not found.');
             }
             
-            // Convert preview coordinates (pixels, top-left origin) to PDF coordinates (points, bottom-left origin)
-            $pixelsPerPoint = 96 / 72; // Standard conversion
-            
-            // Get document dimensions in points
-            $pdfDimensions = $this->detectPdfDimensions($originalFilePath);
-            $pageWidthPoints = $pdfDimensions['points']['width'];
-            $pageHeightPoints = $pdfDimensions['points']['height'];
-            
-            // Convert preview coordinates to points
-            $pdfX = $this->signatureX / $pixelsPerPoint;
-            
-            // IMPORTANT: Convert Y coordinate from top-left origin to bottom-left origin
-            // Preview Y is from top, PDF Y is from bottom
-            $pdfY = ($this->documentHeight - $this->signatureY) / $pixelsPerPoint;
-            
-            // Convert signature dimensions from pixels to points
-            $signatureWidthPixels = 100 * $this->signatureScale; // Base width 100px
-            $signatureHeightPixels = 40 * $this->signatureScale; // Base height 40px
-            
-            $pdfWidth = $signatureWidthPixels / $pixelsPerPoint;
-            $pdfHeight = $signatureHeightPixels / $pixelsPerPoint;
-            
-            \Log::info('Applying signature with coordinates:', [
-                'preview_pixels' => ['x' => $this->signatureX, 'y' => $this->signatureY],
-                'pdf_points' => ['x' => $pdfX, 'y' => $pdfY, 'width' => $pdfWidth, 'height' => $pdfHeight],
-                'page_dimensions' => ['width' => $pageWidthPoints, 'height' => $pageHeightPoints],
-                'scale' => $this->signatureScale,
-                'document_pixels' => ['width' => $this->documentWidth, 'height' => $this->documentHeight]
-            ]);
-            
-            // Use DocumentProcessorService to add signature
+            // Get document processor service
             $documentProcessor = app(DocumentProcessorService::class);
             
+            // Convert display coordinates to PDF coordinates for the selected page
+            $pdfCoords = $this->convertDisplayToPdfCoordinates(
+                $this->signatureX,
+                $this->signatureY,
+                $this->signatureScale
+            );
+            
+            \Log::info('Applying signature to page:', [
+                'page_number' => $this->pageNumber,
+                'total_pages' => $this->totalPages,
+                'display_pixels' => [
+                    'x' => $this->signatureX, 
+                    'y' => $this->signatureY,
+                    'scale' => $this->signatureScale
+                ],
+                'pdf_points' => $pdfCoords,
+                'page_dimensions_points' => [
+                    'width' => $this->pdfPointWidth, 
+                    'height' => $this->pdfPointHeight
+                ]
+            ]);
+            
+            // Use DocumentProcessorService to add signature with TCPDF
             $signedDocumentPath = $documentProcessor->addSignatureToDocument(
                 originalFilePath: $originalFilePath,
-                signatoryName: $signatory->name,
                 signatureImagePath: $signatureImagePath,
-                xPosition: $pdfX,
-                yPosition: $pdfY,
-                width: $pdfWidth,
-                height: $pdfHeight,
-                pageNumber: 1
+                xPosition: $pdfCoords['x'],
+                yPosition: $pdfCoords['y'],
+                width: $pdfCoords['width'],
+                height: $pdfCoords['height'],
+                pageNumber: $this->pageNumber, // Use selected page number
+                useTcpdf: true
             );
             
             if (!$signedDocumentPath || !file_exists($signedDocumentPath)) {
@@ -311,7 +464,7 @@ class ESignModal extends Component
             // Update submission status to approved
             $submission->update([
                 'status' => 'approved',
-                'admin_notes' => ($submission->admin_notes ?? '') . "\n\n[Digitally signed by " . $signatory->name . "]",
+                'admin_notes' => ($submission->admin_notes ?? '') . "\n\n[Digitally signed by " . $signatory->name . " on page " . $this->pageNumber . "]",
                 'reviewed_by' => auth()->id(),
                 'reviewed_at' => now(),
             ]);
@@ -326,6 +479,7 @@ class ESignModal extends Component
                 'correction_notes' => $submission->admin_notes ?: 'Document approved with digital signature.',
                 'file_name' => $submission->getFirstMedia('submission_files')->file_name ?? 'Unknown',
                 'status' => 'approved',
+                'signed_page' => $this->pageNumber, // Store which page was signed
             ]);
             
             // Send notification
@@ -350,7 +504,7 @@ class ESignModal extends Component
             $this->dispatch('signature-applied', submissionId: $submission->id);
             $this->dispatch('showNotification', 
                 type: 'success', 
-                content: 'Document approved and digitally signed successfully!'
+                content: 'Document approved and digitally signed successfully on page ' . $this->pageNumber . '!'
             );
             
         } catch (\Exception $e) {
@@ -363,77 +517,112 @@ class ESignModal extends Component
         }
     }
 
+    protected function convertDisplayToPdfCoordinates(
+        float $displayX,
+        float $displayY,
+        float $displayScale
+    ): array {
+        if ($this->documentWidth <= 0 || $this->documentHeight <= 0) {
+            \Log::error("Invalid document dimensions: {$this->documentWidth}x{$this->documentHeight}");
+            $this->documentWidth = 794;
+            $this->documentHeight = 1123;
+            $this->pdfPointWidth = 595.28;
+            $this->pdfPointHeight = 841.89;
+        }
+        
+        $contentMarginXPx = $this->documentWidth * 0.05;
+        $contentMarginYPx = $this->documentHeight * 0.05;
+        
+        $contentDisplayX = $displayX - $contentMarginXPx;
+        $contentDisplayY = $displayY - $contentMarginYPx;
+        
+        $contentWidthPx = $this->documentWidth * 0.9;
+        $contentHeightPx = $this->documentHeight * 0.9;
+        
+        $scaleX = $this->pdfPointWidth / $contentWidthPx;
+        $scaleY = $this->pdfPointHeight / $contentHeightPx;
+        
+        $pdfX = max(0, $contentDisplayX * $scaleX);
+        $pdfY = max(0, $contentDisplayY * $scaleY);
+        
+        $baseWidthPx = 100;
+        $baseHeightPx = 40;
+        
+        $signatureWidthPx = $baseWidthPx * $displayScale;
+        $signatureHeightPx = $baseHeightPx * $displayScale;
+        
+        $signatureWidthPoints = $signatureWidthPx * $scaleX;
+        $signatureHeightPoints = $signatureHeightPx * $scaleY;
+        
+        $maxX = $this->pdfPointWidth - $signatureWidthPoints;
+        $maxY = $this->pdfPointHeight - $signatureHeightPoints;
+        
+        if ($pdfX > $maxX) {
+            $pdfX = max(0, $maxX);
+        }
+        
+        if ($pdfY > $maxY) {
+            $pdfY = max(0, $maxY);
+        }
+        
+        return [
+            'x' => $pdfX,
+            'y' => $pdfY,
+            'width' => $signatureWidthPoints,
+            'height' => $signatureHeightPoints
+        ];
+    }
+
     public function cancel()
     {
         $this->showModal = false;
         $this->resetExcept(['submissionId', 'fileUrl', 'fileExtension']);
     } 
 
-    public function debugSignatureLoading()
+    protected function setDefaultDocumentDimensions()
     {
-        if (!$this->selectedSignatory) {
-            \Log::info('No signatory selected');
-            return;
-        }
-        
-        \Log::info('Selected signatory:', ['id' => $this->selectedSignatory->id, 'name' => $this->selectedSignatory->name]);
-        
-        $signatureMedia = $this->selectedSignatory->getFirstMedia('signatures');
-        
-        if (!$signatureMedia) {
-            \Log::warning('No signature media found');
-            return;
-        }
-        
-        \Log::info('Signature media found:', [
-            'id' => $signatureMedia->id,
-            'file_name' => $signatureMedia->file_name,
-            'collection_name' => $signatureMedia->collection_name,
-            'disk' => $signatureMedia->disk,
-            'path' => $signatureMedia->getPath(),
-            'url' => $signatureMedia->getUrl(),
-            'exists' => file_exists($signatureMedia->getPath()) ? 'yes' : 'no'
-        ]);
-        
-        // Test direct access
-        $testPath = storage_path('app/public/' . $signatureMedia->id . '/' . $signatureMedia->file_name);
-        \Log::info('Alternative path:', ['path' => $testPath, 'exists' => file_exists($testPath) ? 'yes' : 'no']);
-    } 
+        $this->documentWidth = 794;
+        $this->documentHeight = 1123;
+        $this->pdfPointWidth = 595.28;
+        $this->pdfPointHeight = 841.89;
+        $this->totalPages = 1;
+    }
 
-    protected function detectPdfDimensions($pdfPath)
+    protected function validateDimensions()
     {
-        try {
-            $parser = new \Smalot\PdfParser\Parser();
-            $pdf = $parser->parseFile($pdfPath);
-            $pages = $pdf->getPages();
-            
-            if (count($pages) > 0) {
-                $page = $pages[0];
-                $details = $page->getDetails();
-                
-                // Get page dimensions (usually in points)
-                $width = isset($details['MediaBox'][2]) ? floatval($details['MediaBox'][2]) : 595; // Default A4 width
-                $height = isset($details['MediaBox'][3]) ? floatval($details['MediaBox'][3]) : 842; // Default A4 height
-                
-                // Convert points to pixels for display (72 points per inch, 96 pixels per inch)
-                $pixelsPerPoint = 96 / 72;
-                $pixelWidth = $width * $pixelsPerPoint;
-                $pixelHeight = $height * $pixelsPerPoint;
-                
-                return [
-                    'points' => ['width' => $width, 'height' => $height],
-                    'pixels' => ['width' => $pixelWidth, 'height' => $pixelHeight]
-                ];
-            }
-        } catch (\Exception $e) {
-            \Log::error('PDF dimension detection failed: ' . $e->getMessage());
+        $issues = [];
+        
+        if ($this->documentWidth <= 0) {
+            $issues[] = "documentWidth is {$this->documentWidth}";
         }
         
-        // Default to A4 if detection fails
-        return [
-            'points' => ['width' => 595, 'height' => 842],
-            'pixels' => ['width' => 794, 'height' => 1123] // A4 at 96 DPI
-        ];
+        if ($this->documentHeight <= 0) {
+            $issues[] = "documentHeight is {$this->documentHeight}";
+        }
+        
+        if ($this->pdfPointWidth <= 0) {
+            $issues[] = "pdfPointWidth is {$this->pdfPointWidth}";
+        }
+        
+        if ($this->pdfPointHeight <= 0) {
+            $issues[] = "pdfPointHeight is {$this->pdfPointHeight}";
+        }
+        
+        if (!empty($issues)) {
+            $this->setDefaultDocumentDimensions();
+        }
+    }
+
+    public function adjustPdfViewer()
+    {
+        if (in_array($this->fileExtension, ['pdf'])) {
+            $containerWidth = 800;
+            
+            if ($this->documentWidth > 0) {
+                $fitZoom = $containerWidth / $this->documentWidth;
+                $this->zoomLevel = max(0.5, min(2.0, $fitZoom));
+            }
+        }
     }
 
     public function render()

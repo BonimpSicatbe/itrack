@@ -8,6 +8,34 @@
                     <h3 class="text-lg font-semibold text-white">Place Digital Signature</h3>
                 </div>
                 <div class="flex items-center space-x-3">
+                    <!-- Page Navigation (only show for multi-page documents) -->
+                    @if($showPageSelector)
+                    <div class="flex items-center space-x-2 bg-white/20 rounded-lg px-3 py-1">
+                        <button wire:click="previousPage" 
+                            wire:loading.attr="disabled"
+                            class="p-1 text-white hover:bg-white/20 rounded {{ $currentPagePreview <= 1 ? 'opacity-50 cursor-not-allowed' : '' }}"
+                            title="Previous Page">
+                            <i class="fa-solid fa-chevron-left text-sm"></i>
+                        </button>
+                        <span class="text-white text-sm">
+                            Page 
+                            <select wire:model.live="currentPagePreview" 
+                                class="bg-transparent border-none text-white focus:ring-0 focus:border-none text-sm">
+                                @for($i = 1; $i <= $totalPages; $i++)
+                                    <option value="{{ $i }}" class="text-gray-800">{{ $i }}</option>
+                                @endfor
+                            </select>
+                            of {{ $totalPages }}
+                        </span>
+                        <button wire:click="nextPage" 
+                            wire:loading.attr="disabled"
+                            class="p-1 text-white hover:bg-white/20 rounded {{ $currentPagePreview >= $totalPages ? 'opacity-50 cursor-not-allowed' : '' }}"
+                            title="Next Page">
+                            <i class="fa-solid fa-chevron-right text-sm"></i>
+                        </button>
+                    </div>
+                    @endif
+                    
                     <!-- Zoom Controls -->
                     <div class="flex items-center space-x-1 bg-white/20 rounded-lg px-2 py-1">
                         <button wire:click="zoomOut" 
@@ -26,6 +54,11 @@
                             title="Reset Zoom">
                             <i class="fa-solid fa-expand text-sm"></i>
                         </button>
+                        <button wire:click="fitToWidth" 
+                            class="p-1 text-white hover:bg-white/20 rounded ml-2"
+                            title="Fit to Width">
+                            <i class="fa-solid fa-arrows-alt-h text-sm"></i>
+                        </button>
                     </div>
                     
                     <button wire:click="cancel" 
@@ -39,6 +72,39 @@
             <div class="flex-1 flex overflow-hidden">
                 <!-- Left Panel - Tools & Controls -->
                 <div class="w-64 border-r border-gray-200 bg-gray-50 p-4 flex flex-col">
+                    <!-- Page Selection for Signing -->
+                    @if($showPageSelector)
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            <i class="fa-solid fa-file-lines mr-1"></i>
+                            Select Page to Sign
+                        </label>
+                        <select wire:model.live="pageNumber" 
+                            class="w-full border-gray-300 rounded-lg shadow-sm text-sm focus:border-green-600 focus:ring-green-600">
+                            @for($i = 1; $i <= $totalPages; $i++)
+                                <option value="{{ $i }}">
+                                    Page {{ $i }}
+                                    @if($i == 1)
+                                        (First Page)
+                                    @elseif($i == $totalPages)
+                                        (Last Page)
+                                    @endif
+                                </option>
+                            @endfor
+                        </select>
+                        <p class="text-xs text-gray-500 mt-1">
+                            Signature will be placed on page {{ $pageNumber }}
+                        </p>
+                    </div>
+                    @else
+                    <div class="mb-6 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                        <p class="text-sm text-blue-700">
+                            <i class="fa-solid fa-info-circle mr-1"></i>
+                            Single-page document
+                        </p>
+                    </div>
+                    @endif
+                    
                     <!-- Signatory Selection -->
                     <div class="mb-6">
                         <label class="block text-sm font-medium text-gray-700 mb-2">
@@ -65,7 +131,7 @@
                                     X Position: {{ round($signatureX) }}px
                                 </label>
                                 <span class="text-xs text-gray-500">
-                                    {{ $minX }} - {{ $maxX }}px
+                                    {{ round($minX) }} - {{ round($maxX) }}px
                                 </span>
                             </div>
                             <input type="range" 
@@ -73,11 +139,7 @@
                                 min="{{ $minX }}" 
                                 max="{{ $maxX }}" 
                                 step="1"
-                                class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-green-600">
-                            <div class="flex justify-between text-xs text-gray-500 mt-1">
-                                <span>Left</span>
-                                <span>Right</span>
-                            </div>
+                                class="w-full h-2 bg-gradient-to-r from-gray-300 via-green-200 to-gray-300 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-green-600">
                         </div>
                         
                         <!-- Y Position Slider -->
@@ -88,7 +150,7 @@
                                     Y Position: {{ round($signatureY) }}px
                                 </label>
                                 <span class="text-xs text-gray-500">
-                                    {{ $minY }} - {{ $maxY }}px
+                                    {{ round($minY) }} - {{ round($maxY) }}px
                                 </span>
                             </div>
                             <input type="range" 
@@ -97,10 +159,6 @@
                                 max="{{ $maxY }}" 
                                 step="1"
                                 class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-green-600">
-                            <div class="flex justify-between text-xs text-gray-500 mt-1">
-                                <span>Top</span>
-                                <span>Bottom</span>
-                            </div>
                         </div>
                     </div>
 
@@ -150,10 +208,12 @@
                     <div class="mt-auto p-3 bg-gray-100 rounded-lg">
                         <p class="text-xs font-medium text-gray-700 mb-1">Document Info:</p>
                         <div class="grid grid-cols-2 gap-2 text-xs">
+                            <div class="text-gray-600">Page:</div>
+                            <div class="text-gray-800">{{ $pageNumber }} of {{ $totalPages }}</div>
                             <div class="text-gray-600">Width:</div>
-                            <div class="text-gray-800">{{ $documentWidth }}px</div>
+                            <div class="text-gray-800">{{ round($documentWidth) }}px</div>
                             <div class="text-gray-600">Height:</div>
-                            <div class="text-gray-800">{{ $documentHeight }}px</div>
+                            <div class="text-gray-800">{{ round($documentHeight) }}px</div>
                             <div class="text-gray-600">Signature X:</div>
                             <div class="text-gray-800">{{ round($signatureX) }}px</div>
                             <div class="text-gray-600">Signature Y:</div>
@@ -168,9 +228,33 @@
                     <div class="mt-4 text-center">
                         <p class="text-sm text-gray-600">
                             <i class="fa-solid fa-info-circle mr-1"></i>
-                            Drag the signature to position it, or use the sliders. Adjust size, opacity, and rotation.
+                            @if($showPageSelector)
+                                You are viewing page {{ $currentPagePreview }}. To sign a different page, select it from the "Select Page to Sign" dropdown.
+                            @else
+                                Single-page document. Drag the signature to position it, or use the sliders.
+                            @endif
                         </p>
+                        @if($showPageSelector && $currentPagePreview != $pageNumber)
+                        <p class="text-sm text-yellow-600 mt-1">
+                            <i class="fa-solid fa-exclamation-triangle mr-1"></i>
+                            You are viewing page {{ $currentPagePreview }} but signing page {{ $pageNumber }}.
+                        </p>
+                        @endif
                     </div>
+                    
+                    <!-- Document Dimensions Info -->
+                    <div class="mb-4 text-center">
+                        @if($showPageSelector)
+                        <div class="inline-flex items-center px-3 py-1 rounded-full bg-blue-100 text-blue-800 mb-2">
+                            <i class="fa-solid fa-file-lines mr-2"></i>
+                            Signing Page {{ $pageNumber }} of {{ $totalPages }}
+                        </div>
+                        @endif
+                        <div class="text-sm text-gray-600">
+                            Document: {{ round($documentWidth / ($zoomLevel > 0 ? $zoomLevel : 1)) }}px × {{ round($documentHeight / ($zoomLevel > 0 ? $zoomLevel : 1)) }}px
+                        </div>
+                    </div>
+                    
                     <div class="relative mx-auto" 
                         style="width: {{ $documentWidth * $zoomLevel }}px; height: {{ $documentHeight * $zoomLevel }}px;">
                         
@@ -180,15 +264,34 @@
                             
                             <!-- Document Preview -->
                             @if(in_array($fileExtension, ['pdf']))
-                                <iframe src="{{ $fileUrl }}#toolbar=0&navpanes=0&zoom={{ $zoomLevel * 100 }}" 
-                                    class="w-full h-full border-0 pointer-events-none"
-                                    style="transform: scale({{ $zoomLevel }}); transform-origin: 0 0;">
+                                @php
+                                    $iframeWidth = $documentWidth * $zoomLevel;
+                                    $iframeHeight = $documentHeight * $zoomLevel;
+                                    
+                                    // Add page parameter to PDF URL if multi-page
+                                    $pdfUrl = $fileUrl;
+                                    if ($showPageSelector) {
+                                        $pdfUrl .= '#page=' . $currentPagePreview;
+                                    }
+                                @endphp
+                                
+                                <iframe src="{{ $fileUrl }}?page={{ $currentPagePreview }}&toolbar=0&navpanes=0&zoom={{ $zoomLevel * 100 }}&view=FitH" 
+                                    class="w-full h-full border-0"
+                                    style="
+                                        width: {{ $iframeWidth }}px;
+                                        height: {{ $iframeHeight }}px;
+                                    ">
                                 </iframe>
+                                
                             @elseif(in_array($fileExtension, ['jpg', 'jpeg', 'png', 'gif']))
                                 <img src="{{ $fileUrl }}" 
                                     alt="Document"
                                     class="w-full h-full object-contain"
-                                    style="transform: scale({{ $zoomLevel }}); transform-origin: 0 0;">
+                                    style="
+                                        width: {{ $documentWidth * $zoomLevel }}px;
+                                        height: {{ $documentHeight * $zoomLevel }}px;
+                                        object-fit: contain;
+                                    ">
                             @else
                                 <div class="w-full h-full flex items-center justify-center bg-gray-50">
                                     <div class="text-center p-8">
@@ -199,20 +302,16 @@
                             @endif
                             
                             <!-- Signature Overlay -->
-                            @if($selectedSignatory)
+                            @if($selectedSignatory && $currentPagePreview == $pageNumber)
                                 @php
-                                    // Calculate actual signature dimensions based on scale
-                                    $signatureWidth = 100 * $signatureScale; // Base width 100px
-                                    $signatureHeight = 40 * $signatureScale; // Base height 40px (maintains 5:2 aspect ratio)
+                                    $signatureWidth = 100 * $signatureScale;
+                                    $signatureHeight = 40 * $signatureScale;
                                     
-                                    // Directly get the signature media URL
                                     $signatureMedia = $selectedSignatory->getFirstMedia('signatures');
                                     $signatureUrl = $signatureMedia ? $signatureMedia->getUrl() : null;
                                     
-                                    // Create a data URL for direct canvas rendering
                                     $signatureDataUrl = null;
                                     if ($signatureUrl && file_exists($signatureMedia->getPath())) {
-                                        // Get the actual file content and convert to data URL
                                         $imagePath = $signatureMedia->getPath();
                                         if (file_exists($imagePath)) {
                                             $imageData = file_get_contents($imagePath);
@@ -240,22 +339,17 @@
                                             transform: rotate({{ $signatureRotation }}deg);
                                         ">
                                         
-                                        <!-- Render signature directly using img tag -->
+                                        <!-- Render signature -->
                                         @if($signatureDataUrl)
                                             <img src="{{ $signatureDataUrl }}" 
                                                 alt="Signature"
                                                 class="w-full h-full object-contain pointer-events-none"
-                                                style="filter: drop-shadow(1px 1px 2px rgba(0,0,0,0.2));"
-                                                onload="console.log('Signature loaded successfully')"
-                                                onerror="console.error('Failed to load signature image')">
+                                                style="filter: drop-shadow(1px 1px 2px rgba(0,0,0,0.2));">
                                         @else
-                                            <!-- Fallback to URL method -->
                                             <img src="{{ $signatureUrl }}" 
                                                 alt="Signature"
                                                 class="w-full h-full object-contain pointer-events-none"
-                                                style="filter: drop-shadow(1px 1px 2px rgba(0,0,0,0.2));"
-                                                onload="console.log('Signature loaded from URL')"
-                                                onerror="console.error('Failed to load signature from URL')">
+                                                style="filter: drop-shadow(1px 1px 2px rgba(0,0,0,0.2));">
                                         @endif
                                             
                                         <!-- Drag Handle -->
@@ -266,7 +360,6 @@
                                             wire:mouseleave="stopInteractions"></div>
                                     </div>
                                 @else
-                                    <!-- Fallback if signature URL not found -->
                                     <div class="absolute border-2 border-dashed border-red-500 bg-red-50 flex items-center justify-center"
                                         style="
                                             left: {{ $signatureX * $zoomLevel }}px;
@@ -324,7 +417,11 @@
                             Processing...
                         @else
                             <i class="fa-solid fa-signature mr-2"></i>
-                            Apply Signature & Approve
+                            @if($showPageSelector)
+                                Sign Page {{ $pageNumber }} & Approve
+                            @else
+                                Apply Signature & Approve
+                            @endif
                         @endif
                     </button>
                 </div>
@@ -360,6 +457,9 @@
                     </div>
                     <div class="mt-4 text-sm text-gray-600 text-center">
                         This is how your signature will appear on the document.
+                        @if($showPageSelector)
+                            <br><span class="font-semibold">Page: {{ $pageNumber }}</span>
+                        @endif
                     </div>
                     <div class="mt-3 text-xs text-gray-500 text-center">
                         <p>Size: {{ round($signatureScale * 100) }}% • 
