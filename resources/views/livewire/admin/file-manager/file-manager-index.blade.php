@@ -463,9 +463,17 @@
                                 @forelse ($files as $media)
                                     @php
                                         $submittedRequirement = $media->model;
-                                        $extension     = strtolower(pathinfo($media->file_name, PATHINFO_EXTENSION));
-                                        $fileIcon      = SubmittedRequirement::FILE_ICONS[$extension]['icon'] ?? SubmittedRequirement::FILE_ICONS['default']['icon'];
-                                        $fileColor     = SubmittedRequirement::FILE_ICONS[$extension]['color'] ?? SubmittedRequirement::FILE_ICONS['default']['color'];
+                                        $isSigned = $submittedRequirement->status === 'approved' && $submittedRequirement->has_signed_document;
+                                        $extension = strtolower(pathinfo($media->file_name, PATHINFO_EXTENSION));
+                                        
+                                        // Use different icon/color for signed documents
+                                        if ($isSigned) {
+                                            $fileIcon = 'fa-file-signature';
+                                            $fileColor = 'text-yellow-600';
+                                        } else {
+                                            $fileIcon = SubmittedRequirement::FILE_ICONS[$extension]['icon'] ?? SubmittedRequirement::FILE_ICONS['default']['icon'];
+                                            $fileColor = SubmittedRequirement::FILE_ICONS[$extension]['color'] ?? SubmittedRequirement::FILE_ICONS['default']['color'];
+                                        }
 
                                         $isImage       = str_starts_with($media->mime_type, 'image/');
                                         $isPdf         = $media->mime_type === 'application/pdf';
@@ -484,6 +492,7 @@
                                         wire:click="selectFile('{{ $media->id }}')"
                                         ondblclick="window.open('{{ $fileUrl }}', '_blank')"
                                     >
+
                                         <!-- File Preview -->
                                         <div class="h-40 w-full bg-gray-50 flex items-center justify-center overflow-hidden rounded-t-2xl relative">
                                             @if ($isImage)
@@ -554,16 +563,25 @@
                                 @forelse ($files as $media)
                                     @php
                                         $submittedRequirement = $media->model;
+                                        $isSigned = $submittedRequirement->status === 'approved' && $submittedRequirement->has_signed_document;
                                         $extension = pathinfo($media->file_name, PATHINFO_EXTENSION);
                                         $extension = strtolower($extension);
-                                        $fileIcon = SubmittedRequirement::FILE_ICONS[$extension]['icon'] ?? SubmittedRequirement::FILE_ICONS['default']['icon'];
-                                        $fileColor = SubmittedRequirement::FILE_ICONS[$extension]['color'] ?? SubmittedRequirement::FILE_ICONS['default']['color'];
+                                        
+                                        // Use different icon/color for signed documents
+                                        if ($isSigned) {
+                                            $fileIcon = 'fa-file-signature';
+                                            $fileColor = 'text-yellow-600';
+                                        } else {
+                                            $fileIcon = SubmittedRequirement::FILE_ICONS[$extension]['icon'] ?? SubmittedRequirement::FILE_ICONS['default']['icon'];
+                                            $fileColor = SubmittedRequirement::FILE_ICONS[$extension]['color'] ?? SubmittedRequirement::FILE_ICONS['default']['color'];
+                                        }
                                         
                                         $fileUrl = route('file.preview', [
                                             'submission' => $media->model_id,
                                             'file' => $media->id
                                         ]);
                                     @endphp
+
                                     <div 
                                         wire:click="selectFile('{{ $media->id }}')"
                                         ondblclick="window.open('{{ $fileUrl }}', '_blank')"
@@ -574,6 +592,11 @@
                                             <div class="flex-shrink-0">
                                                 <div class="w-10 h-10 flex items-center justify-center">
                                                     <i class="fas text-2xl {{ $fileIcon }} {{ $fileColor }}"></i>
+                                                    @if($isSigned)
+                                                        <div class="absolute -top-1 -right-1 w-4 h-4 bg-yellow-500 rounded-full flex items-center justify-center">
+                                                            <i class="fas fa-check text-xs text-white"></i>
+                                                        </div>
+                                                    @endif
                                                 </div>
                                             </div>
                                             <div class="flex flex-col min-w-0">
@@ -603,11 +626,6 @@
                                                         Unknown
                                                     @endif
                                                 </span>
-                                                @if($media->model && $media->model->user && $media->model->user->college)
-                                                    <span class="text-xs text-gray-500 mt-1">
-                                                        {{ $media->model->user->college->name }}
-                                                    </span>
-                                                @endif
                                             </div>
                                         </div>
                                         
