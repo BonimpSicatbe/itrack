@@ -8,6 +8,7 @@ use App\Models\SubmittedRequirement;
 use App\Models\AdminCorrectionNote;
 use App\Models\User;
 use App\Models\Signatory;
+use App\Notifications\AccountVerified;
 use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Support\Facades\Log;
 use App\Services\DocumentProcessorService;
@@ -154,14 +155,11 @@ class Notifications extends Component
 
         if ($notificationType === 'submission_status_updated') {
             $this->loadStatusUpdateDetails($notificationData);
-        }
-        else if ($notificationType === 'semester_ended_missing_submissions') {
+        } else if ($notificationType === 'semester_ended_missing_submissions') {
             $this->loadSemesterEndedDetails($notificationData);
-        }
-        else if ($notificationType === 'new_registered_user') {
+        } else if ($notificationType === 'new_registered_user') {
             $this->loadNewRegisteredUserDetails($notificationData);
-        }
-        else {
+        } else {
             $this->loadNewSubmissionDetails($notificationData);
         }
     }
@@ -303,7 +301,7 @@ class Notifications extends Component
 
     protected function formatCorrectionNoteStatus($status)
     {
-        return match($status) {
+        return match ($status) {
             AdminCorrectionNote::STATUS_UPLOADED => 'Uploaded',
             AdminCorrectionNote::STATUS_UNDER_REVIEW => 'Under Review',
             AdminCorrectionNote::STATUS_REVISION_NEEDED => 'Revision Required',
@@ -315,7 +313,7 @@ class Notifications extends Component
 
     protected function formatSubmission($submission)
     {
-        $statusLabel = match($submission->status) {
+        $statusLabel = match ($submission->status) {
             SubmittedRequirement::STATUS_UNDER_REVIEW => 'Under Review',
             SubmittedRequirement::STATUS_REVISION_NEEDED => 'Revision Required',
             SubmittedRequirement::STATUS_REJECTED => 'Rejected',
@@ -363,7 +361,7 @@ class Notifications extends Component
             foreach ($submission->getMedia('submission_files') as $media) {
                 $extension = strtolower(pathinfo($media->file_name, PATHINFO_EXTENSION));
                 $isPreviewable = in_array($extension, ['jpg', 'jpeg', 'png', 'gif', 'pdf']);
-                
+
                 // Use signed document if approved and available
                 $signedMedia = $submission->getMedia('signed_documents')->first();
                 $isApproved = $submission->status === 'approved' && $signedMedia;
@@ -429,7 +427,8 @@ class Notifications extends Component
 
         $this->dispatch('notifications-marked-read');
 
-        $this->dispatch('showNotification',
+        $this->dispatch(
+            'showNotification',
             type: 'success',
             content: 'All notifications marked as read!',
             duration: 3000
@@ -456,7 +455,8 @@ class Notifications extends Component
 
         $this->dispatch('notifications-marked-unread', count: $readNotifications->count());
 
-        $this->dispatch('showNotification',
+        $this->dispatch(
+            'showNotification',
             type: 'success',
             content: 'All notifications marked as unread!',
             duration: 3000
@@ -478,7 +478,8 @@ class Notifications extends Component
 
             $this->dispatch('notification-unread');
 
-            $this->dispatch('showNotification',
+            $this->dispatch(
+                'showNotification',
                 type: 'success',
                 content: 'Notification marked as unread!',
                 duration: 3000
@@ -488,7 +489,7 @@ class Notifications extends Component
 
     public function formatStatus($status)
     {
-        return match($status) {
+        return match ($status) {
             'under_review' => 'Under Review',
             'revision_needed' => 'Revision Required',
             'rejected' => 'Rejected',
@@ -558,6 +559,9 @@ class Notifications extends Component
             $user->markEmailAsVerified();
             $user->save();
 
+            Log::info('Sending AccountVerified email', ['email' => $user->email]);
+            $user->notify(new AccountVerified());
+
             $this->newRegisteredUser = User::where('id', $user->id)->get();
             if (isset($this->selectedNotificationData['new_user'])) {
                 $this->selectedNotificationData['new_user']['verified_at'] = $user->email_verified_at;
@@ -570,7 +574,7 @@ class Notifications extends Component
             Log::error('Failed to verify user: ' . $e->getMessage(), ['user_id' => $userId]);
             $this->dispatch('showNotification', type: 'error', content: 'Failed to verify user.', duration: 3000);
         }
-    } 
+    }
 
     public function toggleCorrectionNote($fileIndex)
     {
@@ -583,7 +587,7 @@ class Notifications extends Component
             $this->expandedCorrectionFiles[] = $fileIndex;
             $expanded = true;
         }
-        
+
         // Dispatch event to update the UI
         $this->dispatch('correction-notes-toggled', [
             'fileIndex' => $fileIndex,
