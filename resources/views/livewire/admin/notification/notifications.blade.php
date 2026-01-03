@@ -403,6 +403,18 @@
                                     no longer available. It may have been deleted.</p>
                             </div>
                         @else
+                            {{-- Notification Message --}}
+                            <div class="bg-green-50 border border-green-200 rounded-xl p-4">
+                                <div class="flex">
+                                    <div class="flex-shrink-0">
+                                        <i class="fa-solid fa-info-circle text-green-600 mt-0.5"></i>
+                                    </div>
+                                    <div class="ml-3">
+                                        <p class="text-sm font-medium text-gray-800">{{ $selectedNotificationData['message'] }}</p>
+                                    </div>
+                                </div>
+                            </div>
+
                             {{-- Requirement Details --}}
                             <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-md">
                                 <!-- Header -->
@@ -527,25 +539,19 @@
                                 </div>
                             </div>
 
-                            {{-- Submissions Section --}}
-                            <div class="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
-
-                                {{-- Main Header with View Full Submission Button --}}
-                                <div class="flex items-center justify-between mb-4">
-                                    <div class="flex items-center">
-                                        <div class="rounded-xl mr-2">
-                                            <i class="fa-solid fa-folder-open text-green-700 text-2xl"></i>
+                            {{-- NEW: View Full Submission Button --}}
+                            @if (isset($selectedNotificationData['submissions']) && count($selectedNotificationData['submissions']) > 0)
+                                <div class="bg-gradient-to-r from-green-50 to-emerald-50 p-6 rounded-xl border border-green-200 shadow-sm">
+                                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                        <div>
+                                            <div class="flex items-center gap-2 mb-2">
+                                                <i class="fa-solid fa-external-link-alt text-green-700"></i>
+                                                <h3 class="text-lg font-semibold text-gray-800">Full Submission Details</h3>
+                                            </div>
+                                            <p class="text-sm text-gray-600">
+                                                View complete submission details including all files, review history, and admin notes.
+                                            </p>
                                         </div>
-                                        <h3 class="text-xl font-semibold text-gray-900">Submissions</h3>
-                                        @if (count($selectedNotificationData['files'] ?? []) > 0)
-                                            <span class="ml-3 px-3 py-1 bg-green-100 text-green-700 text-sm font-semibold rounded-full">
-                                                {{ count($selectedNotificationData['files'] ?? []) }} files
-                                            </span>
-                                        @endif
-                                    </div>
-
-                                    {{-- View Full Submission Button --}}
-                                    @if (isset($selectedNotificationData['submissions']) && count($selectedNotificationData['submissions']) > 0)
                                         @php
                                             $firstSubmission = $selectedNotificationData['submissions'][0];
                                             $requirementId = $firstSubmission['requirement_id'] ?? ($selectedNotificationData['requirement']['id'] ?? null);
@@ -561,38 +567,56 @@
                                                 'source' => 'notifications',
                                                 'page' => 1
                                             ]) }}"
-                                               target="_blank"
-                                               class="inline-flex items-center px-4 py-2 border border-transparent rounded-xl text-sm font-semibold text-white bg-green-600 hover:bg-green-700 shadow-sm hover:shadow-md transition-all duration-200">
+                                            target="_blank"
+                                            class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl hover:from-green-700 hover:to-emerald-700 transition-all duration-200 font-medium text-sm shadow-lg hover:shadow-xl transform hover:scale-[1.02] justify-center">
                                                 <i class="fa-solid fa-external-link-alt mr-2"></i>
                                                 View Full Submission
                                             </a>
                                         @endif
-                                    @endif
+                                    </div>
+                                </div>
+                            @endif
+
+                            {{-- Submissions Section --}}
+                            <div class="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
+                                {{-- Main Header --}}
+                                <div class="flex items-center mb-4">
+                                    <div class="rounded-xl mr-2">
+                                        <i class="fa-solid fa-folder-open text-green-700 text-2xl"></i>
+                                    </div>
+                                    <h3 class="text-xl font-semibold text-gray-900">Submitted Files</h3>
                                 </div>
 
-                                {{-- Submission Context Block (Submitted by and Program) --}}
-                                <div class="mb-6 pb-4 border-b border-gray-100">
-                                    <p class="text-sm text-gray-600 mb-1">
-                                        <span class="font-bold text-gray-700 mr-1">Submitted By:</span>
-                                        <span class="font-semibold">{{ $selectedNotificationData['submitter']['name'] }}</span>
-                                        ({{ $selectedNotificationData['submitter']['email'] }})
-                                    </p>
-                                    @if (isset($selectedNotificationData['course']['program']))
-                                        <p class="text-sm text-gray-600">
-                                            <span class="font-bold text-gray-700 mr-1">Program:</span>
-                                            <span class="font-semibold">
-                                                {{ $selectedNotificationData['course']['program']['program_code'] }} -
-                                                {{ $selectedNotificationData['course']['program']['program_name'] }}
-                                            </span>
-                                        </p>
-                                    @endif
+                                {{-- Submission Information --}}
+                                <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6">
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div class="space-y-2">
+                                            <p class="text-sm font-semibold text-blue-700">Submitted By</p>
+                                            <div class="bg-white p-3 rounded-xl border border-blue-200 text-sm text-gray-700 flex items-center">
+                                                <i class="fa-solid fa-user-check text-blue-600 mr-2"></i>
+                                                {{ $selectedNotificationData['submitter']['name'] ?? 'N/A' }}
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="space-y-2">
+                                            <p class="text-sm font-semibold text-blue-700">Program</p>
+                                            <div class="bg-white p-3 rounded-xl border border-blue-200 text-sm text-gray-700 flex items-center">
+                                                <i class="fa-solid fa-graduation-cap text-blue-600 mr-2"></i>
+                                                @if (isset($selectedNotificationData['course']['program']))
+                                                    {{ $selectedNotificationData['course']['program']['program_code'] }} - 
+                                                    {{ $selectedNotificationData['course']['program']['program_name'] }}
+                                                @else
+                                                    No program assigned
+                                                @endif
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
 
                                 {{-- Files List --}}
                                 @if (count($selectedNotificationData['files'] ?? []))
-                                    {{-- Grid container for better layout --}}
-                                    <div class="space-y-6">
-                                        @foreach ($selectedNotificationData['files'] as $file)
+                                    <div class="space-y-4">
+                                        @foreach ($selectedNotificationData['files'] as $fileIndex => $file)
                                             @php
                                                 $submission = collect(
                                                     $selectedNotificationData['submissions'] ?? [],
@@ -612,137 +636,196 @@
                                                     default => 'bg-blue-100 text-blue-700 border-blue-300',
                                                 };
                                                 $isApproved = $file['is_approved'] ?? false;
+                                                $correctionNotes = $selectedNotificationData['correction_notes_by_submission'][$file['submission_id']] ?? [];
                                             @endphp
 
-                                            {{-- Submission Card --}}
-                                            <div class="border border-gray-200 rounded-xl overflow-hidden shadow-md">
-                                                {{-- Submission Header/Context --}}
-                                                <div class="bg-green-700 px-5 py-3 border-b border-gray-200">
-                                                    <div class="flex flex-wrap justify-between items-center gap-2 text-sm text-white">
-                                                        @if ($file['course'] ?? null)
-                                                            <p class="font-medium flex items-center">
-                                                                <i class="fa-solid fa-book-open mr-2 text-white"></i>
-                                                                Course: {{ $file['course']['course_code'] }} -
-                                                                {{ $file['course']['course_name'] }}
-                                                            </p>
-                                                        @endif
-                                                        @if ($submission['reviewed_at'] ?? null)
-                                                            <p class="font-medium flex items-center">
-                                                                Reviewed:
-                                                                {{ $submission['reviewed_at']->format('M d, Y g:i A') }}
-                                                            </p>
-                                                        @endif
-                                                        {{-- ✅ Show Signed Document Status --}}
-                                                        @if ($submission['signed_document_path'] ?? false)
-                                                            <p class="font-medium flex items-center">
-                                                                <i class="fa-solid fa-signature mr-2 text-yellow-300"></i>
-                                                                Signed: {{ \Carbon\Carbon::parse($submission['signed_at'])->format('M d, Y') }}
-                                                            </p>
-                                                        @endif
-                                                    </div>
-                                                </div>
-
-                                                {{-- File Detail (More compact) --}}
-                                                <div class="p-5 flex items-center justify-between bg-white">
-                                                    <div class="flex items-center space-x-4 min-w-0">
-                                                        <div class="flex-shrink-0 p-3 bg-gray-100 rounded-xl shadow-inner">
+                                            {{-- File Card --}}
+                                            <div class="border border-gray-200 rounded-xl px-4 pt-4 shadow-sm hover:shadow-md transition-shadow duration-200">
+                                                {{-- File Header --}}
+                                                <div class="flex justify-between items-center mb-4">
+                                                    <div class="flex items-center">
+                                                        <div class="flex items-center justify-center w-10 h-10 bg-green-50 rounded-lg mr-3">
                                                             @php
-                                                                // Determine which file to show based on status
                                                                 $isApprovedWithSignature = $file['is_approved_with_signature'] ?? false;
                                                                 $fileExtension = $isApprovedWithSignature ? 'pdf' : $file['extension'];
                                                             @endphp
                                                             
                                                             @switch($fileExtension)
                                                                 @case('pdf')
-                                                                    <i class="fa-regular fa-file-pdf text-red-500 text-xl"></i>
+                                                                    <i class="fa-regular fa-file-pdf text-red-500"></i>
                                                                 @break
 
                                                                 @case('doc')
                                                                 @case('docx')
-                                                                    <i class="fa-regular fa-file-word text-blue-500 text-xl"></i>
+                                                                    <i class="fa-regular fa-file-word text-blue-500"></i>
                                                                 @break
 
                                                                 @case('xls')
                                                                 @case('xlsx')
-                                                                    <i class="fa-regular fa-file-excel text-green-500 text-xl"></i>
+                                                                    <i class="fa-regular fa-file-excel text-green-500"></i>
                                                                 @break
 
                                                                 @case('jpg')
                                                                 @case('jpeg')
                                                                 @case('png')
                                                                 @case('gif')
-                                                                    <i class="fa-regular fa-file-image text-purple-500 text-xl"></i>
+                                                                    <i class="fa-regular fa-file-image text-purple-500"></i>
                                                                 @break
 
                                                                 @default
-                                                                    <i class="fa-regular fa-file text-gray-500 text-xl"></i>
+                                                                    <i class="fa-regular fa-file text-green-600"></i>
                                                             @endswitch
                                                         </div>
-                                                        <div class="min-w-0">
-                                                            <p class="text-sm font-semibold text-gray-900 truncate mb-1">
+                                                        <div>
+                                                            <h4 class="font-semibold text-gray-900">
                                                                 {{ $isApprovedWithSignature ? 'SIGNED - ' . $file['name'] : $file['name'] }}
-                                                            </p>
-                                                            <div class="flex items-center gap-3">
-                                                                <span class="text-xs text-gray-500 font-semibold bg-gray-200 px-2 py-0.5 rounded-full">
-                                                                    {{ $isApprovedWithSignature ? 'SIGNED PDF' : strtoupper($file['extension']) }} •
-                                                                    {{ $file['size'] }}
-                                                                </span>
-                                                                <span class="text-xs px-3 py-1 rounded-full {{ $statusColor }} font-semibold">
-                                                                    {{ $fileStatusLabel }}
-                                                                </span>
-                                                                @if($isApprovedWithSignature)
-                                                                <span class="text-xs px-2 py-0.5 bg-yellow-100 text-yellow-800 rounded-full font-semibold">
-                                                                    <i class="fa-solid fa-signature mr-1"></i>Signed
-                                                                </span>
-                                                                @endif
-                                                            </div>
+                                                            </h4>
+                                                            <p class="text-xs text-gray-500">{{ $file['file_name'] }}</p>
                                                         </div>
                                                     </div>
-                                                    <div class="flex space-x-1 flex-shrink-0">
-                                                        {{-- Always show signed document download for approved status --}}
-                                                        @if ($submission['status'] === 'approved' && $submission['signed_document_path'])
-                                                            <a href="{{ route('file.download.signed', ['submission' => $file['submission_id']]) }}"
-                                                                class="p-2 text-yellow-600 hover:text-yellow-700 hover:bg-yellow-100 rounded-lg transition-colors"
-                                                                title="Download Signed Version">
-                                                                <i class="fa-solid fa-file-signature"></i>
+                                                    <div class="flex items-center space-x-3">
+                                                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold {{ $statusColor }} border">
+                                                            {{ $fileStatusLabel }}
+                                                            @if($isApprovedWithSignature)
+                                                                <i class="fa-solid fa-signature ml-1 text-yellow-600"></i>
+                                                            @endif
+                                                        </span>
+                                                        <div class="flex space-x-2">
+                                                            
+                                                            {{-- Always show original file buttons --}}
+                                                            <a href="{{ route('file.download.original', ['submission' => $file['submission_id']]) }}"
+                                                                class="flex items-center px-3 py-1.5 text-xs font-semibold text-green-700 bg-green-50 hover:bg-green-100 rounded-lg transition-colors duration-200"
+                                                                title="Download Original">
+                                                                <i class="fa-solid fa-download mr-1"></i> Download
                                                             </a>
-                                                            <a href="{{ route('file.preview.signed', ['submission' => $file['submission_id']]) }}"
+                                                            @if ($file['is_previewable'])
+                                                                <a href="{{ route('file.preview.original', ['submission' => $file['submission_id']]) }}" 
                                                                 target="_blank"
-                                                                class="p-2 text-yellow-600 hover:text-yellow-700 hover:bg-yellow-100 rounded-lg transition-colors"
-                                                                title="Preview Signed Version">
-                                                                <i class="fa-solid fa-eye"></i>
-                                                            </a>
-                                                        @endif
-                                                        
-                                                        {{-- Always show original file buttons --}}
-                                                        <a href="{{ route('file.download.original', ['submission' => $file['submission_id']]) }}"
-                                                            class="p-2 text-blue-500 hover:text-blue-700 hover:bg-blue-100 rounded-lg transition-colors"
-                                                            title="Download Original">
-                                                            <i class="fa-solid fa-download"></i>
-                                                        </a>
-                                                        @if ($file['is_previewable'])
-                                                            <a href="{{ route('file.preview.original', ['submission' => $file['submission_id']]) }}"
-                                                                target="_blank"
-                                                                class="p-2 text-green-600 hover:text-green-700 hover:bg-green-100 rounded-lg transition-colors"
+                                                                class="flex items-center px-3 py-1.5 text-xs font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors duration-200"
                                                                 title="Preview Original">
-                                                                <i class="fa-solid fa-eye"></i>
-                                                            </a>
-                                                        @endif
+                                                                    <i class="fa-solid fa-eye mr-1"></i> Preview
+                                                                </a>
+                                                            @endif
+                                                        </div>
                                                     </div>
                                                 </div>
 
-                                                {{-- Current Review Notes Display (Removed status update form) --}}
-                                                @if ($submission['admin_notes'] ?? false)
-                                                <div class="p-5 border-t bg-gray-50">
-                                                    <div class="space-y-2">
-                                                        <p class="text-sm font-semibold text-gray-700">Current Review Notes</p>
-                                                        <p class="text-sm text-gray-600 bg-white p-6 rounded-xl border border-gray-200 shadow-inner">
-                                                            {{ $submission['admin_notes'] ?? 'No notes provided for this status.' }}
+                                                {{-- File Details --}}
+                                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm mb-4">
+                                                    <div class="space-y-1">
+                                                        <p class="text-xs font-semibold text-gray-500">File Size</p>
+                                                        <p class="text-gray-700">{{ $file['size'] }}</p>
+                                                    </div>
+                                                    <div class="space-y-1">
+                                                        <p class="text-xs font-semibold text-gray-500">Submitted</p>
+                                                        <p class="text-gray-700">{{ \Carbon\Carbon::parse($file['created_at'])->format('M d, Y g:i A') }}</p>
+                                                    </div>
+                                                    <div class="space-y-1">
+                                                        <p class="text-xs font-semibold text-gray-500">File Type</p>
+                                                        <p class="text-gray-700">
+                                                            {{ $isApprovedWithSignature ? 'SIGNED PDF' : strtoupper($file['extension']) }}
                                                         </p>
                                                     </div>
                                                 </div>
+
+                                                {{-- Feedback & Correction History Section (Collapsible) --}}
+                                                @if(count($correctionNotes) > 0 || ($submission['admin_notes'] ?? false))
+                                                    <div class="border-t border-gray-200 pt-4">
+                                                        {{-- Section Header with Expand/Collapse --}}
+                                                        <div class="flex items-center justify-between mb-4">
+                                                            <div class="flex items-center">
+                                                                <i class="fa-solid fa-message-pen text-blue-600 text-lg mr-2"></i>
+                                                                <h5 class="text-sm font-semibold text-gray-900">Feedback & Correction History</h5>
+                                                                @if(count($correctionNotes) > 0)
+                                                                    <span class="bg-blue-100 text-blue-800 text-xs px-2 py-0.5 rounded-full ml-2">
+                                                                        {{ count($correctionNotes) }} entries
+                                                                    </span>
+                                                                @endif
+                                                            </div>
+                                                            <button 
+                                                                wire:click="toggleCorrectionNote('{{ $fileIndex }}')"
+                                                                class="text-sm font-medium text-blue-600 hover:text-blue-800 px-2 py-1 rounded-lg hover:bg-blue-50 transition-colors duration-200"
+                                                                type="button">
+                                                                <i class="fa-solid fa-chevron-down mr-1"></i> Show
+                                                            </button>
+                                                        </div>
+                                                        
+                                                        {{-- Collapsible Content --}}
+                                                        <div class="correction-notes-content pb-4 {{ in_array($fileIndex, $expandedCorrectionFiles) ? '' : 'hidden' }}" 
+                                                            data-file-index="{{ $fileIndex }}">
+
+                                                            {{-- Correction Notes Timeline --}}
+                                                            @if(count($correctionNotes) > 0)
+                                                                <div class="space-y-2">
+                                                                    @foreach($correctionNotes as $note)
+                                                                        <div class="border border-gray-200 rounded-lg p-3">
+                                                                            <div class="flex items-start">
+                                                                                <div class="flex-shrink-0 mr-3">
+                                                                                    <div class="flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 text-blue-600 text-xs font-semibold">
+                                                                                        {{ $loop->iteration }}
+                                                                                    </div>
+                                                                                </div>
+                                                                                <div class="flex-1 pb-4">
+                                                                                    <div class="flex justify-between items-start mb-1">
+                                                                                        <span class="text-xs font-semibold text-gray-800">
+                                                                                            Feedback from {{ $note['admin']['name'] ?? 'Administrator' }}
+                                                                                        </span>
+                                                                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold 
+                                                                                            @if($note['status'] === 'approved') bg-green-100 text-green-800
+                                                                                            @elseif($note['status'] === 'rejected') bg-red-100 text-red-800
+                                                                                            @elseif($note['status'] === 'revision_needed') bg-yellow-100 text-yellow-800
+                                                                                            @else bg-blue-100 text-blue-800 @endif">
+                                                                                            {{ $note['status_label'] }}
+                                                                                        </span>
+                                                                                    </div>
+                                                                                    <p class="text-xs text-gray-600 mb-2">
+                                                                                        <i class="fa-regular fa-clock mr-1"></i>
+                                                                                        {{ \Carbon\Carbon::parse($note['created_at'])->format('M j, Y g:i A') }}
+                                                                                    </p>
+                                                                                    <div class="bg-gray-50 p-2 rounded border border-gray-200">
+                                                                                        <p class="text-xs text-gray-700">{{ $note['correction_notes'] }}</p>
+                                                                                    </div>
+                                                                                    @if($note['file_name'])
+                                                                                        <p class="text-xs text-gray-500 mt-2">
+                                                                                            <i class="fa-regular fa-file mr-1"></i>
+                                                                                            Original file: {{ $note['file_name'] }}
+                                                                                        </p>
+                                                                                    @endif
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                    @endforeach
+                                                                </div>
+                                                            @endif
+                                                        </div>
+                                                    </div>
                                                 @endif
                                             </div>
+
+                                            <script>
+                                                // Initialize correction notes toggle
+                                                document.addEventListener('livewire:initialized', function () {
+                                                    Livewire.on('correction-notes-toggled', function (data) {
+                                                        const button = document.querySelector(`button[wire\\:click="toggleCorrectionNote('${data.fileIndex}')"]`);
+                                                        const content = document.querySelector(`.correction-notes-content[data-file-index="${data.fileIndex}"]`);
+                                                        
+                                                        if (button && content) {
+                                                            const icon = button.querySelector('i');
+                                                            if (data.expanded) {
+                                                                content.classList.remove('hidden');
+                                                                icon.classList.remove('fa-chevron-down');
+                                                                icon.classList.add('fa-chevron-up');
+                                                                button.innerHTML = '<i class="fa-solid fa-chevron-up mr-1"></i> Hide';
+                                                            } else {
+                                                                content.classList.add('hidden');
+                                                                icon.classList.remove('fa-chevron-up');
+                                                                icon.classList.add('fa-chevron-down');
+                                                                button.innerHTML = '<i class="fa-solid fa-chevron-down mr-1"></i> Show';
+                                                            }
+                                                        }
+                                                    });
+                                                });
+                                            </script>
                                         @endforeach
                                     </div>
                                 @else

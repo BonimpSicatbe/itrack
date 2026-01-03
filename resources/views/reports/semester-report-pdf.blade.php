@@ -471,7 +471,13 @@
 <body>
     @php
         $pageNumber = 1;
-        $totalPages = 1; // This would need to be calculated based on content
+        $totalPages = 1; 
+
+        use App\Models\Signatory;
+        $deanSignatory = Signatory::where('position', 'like', '%dean%')
+            ->where('is_active', true)
+            ->first();
+
     @endphp
 
     <div class="header">
@@ -673,9 +679,13 @@
         <div class="approval-item">
             <div class="approval-label">Approved by:</div>
             <div class="approval-spacing"></div>
-            <div class="approval-name">Dr. Bettina Joyce P. Ilagan</div>
-            <div class="approval-position">Dean, Graduate School and Open Learning College</div>
+            <div class="approval-name">
+                {{ $deanSignatory->name ?? 'Dr. Bettina Joyce P. Ilagan' }}
+            </div>
+            <div class="approval-position">
+                {{ $deanSignatory->position ?? 'Dean, Graduate School and Open Learning College' }}
+            </div>
         </div>
-    </div> 
+    </div>
 </body>
 </html>

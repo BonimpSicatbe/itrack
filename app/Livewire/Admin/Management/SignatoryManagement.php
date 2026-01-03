@@ -20,6 +20,7 @@ class SignatoryManagement extends Component
     
     public $editId = null;
     public $isEditing = false;
+    public $showModal = false;
     public $showDeleteModal = false;
     public $deleteId = null;
 
@@ -45,6 +46,12 @@ class SignatoryManagement extends Component
         return view('livewire.admin.management.signatory-management', [
             'signatories' => $signatories
         ]);
+    }
+
+    public function openModal()
+    {
+        $this->resetForm();
+        $this->showModal = true;
     }
 
     public function save()
@@ -86,7 +93,7 @@ class SignatoryManagement extends Component
             session()->flash('success', 'Signatory added successfully!');
         }
 
-        $this->resetForm();
+        $this->closeModal();
     }
 
     public function edit($id)
@@ -97,6 +104,7 @@ class SignatoryManagement extends Component
         $this->name = $signatory->name;
         $this->position = $signatory->position;
         $this->is_active = $signatory->is_active;
+        $this->showModal = true;
     }
 
     public function toggleActive($id)
@@ -144,6 +152,12 @@ class SignatoryManagement extends Component
         session()->flash('success', 'Signatory deleted successfully!');
     }
 
+    public function closeModal()
+    {
+        $this->showModal = false;
+        $this->resetForm();
+    }
+
     public function resetForm()
     {
         $this->reset([
@@ -162,10 +176,5 @@ class SignatoryManagement extends Component
         }
         
         $this->resetErrorBag();
-    }
-
-    public function cancel()
-    {
-        $this->resetForm();
     }
 }

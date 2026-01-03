@@ -12,13 +12,6 @@
         $activeSemester = \App\Models\Semester::where('is_active', true)->first();
     @endphp
 
-    @if($activeSemester)
-        <div class="mb-3 text-sm text-gray-600 bg-blue-50 px-3 py-2 rounded-lg">
-            <i class="fa-solid fa-calendar-check mr-2"></i>
-            Active Semester: {{ $activeSemester->name }}
-        </div>
-    @endif
-
     {{-- List --}}
     @if($recentSubmissions->count() > 0)
         <div class="space-y-3 max-h-96 overflow-y-auto">

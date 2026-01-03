@@ -515,7 +515,12 @@
 
 <body>
     @php
-        $formattedPreparedByMiddleName = Auth::user()->middlename ? substr(trim(Auth::user()->middlename), 0, 1) . '.' : '';
+        $formattedPreparedByMiddleName = Auth::user()->middlename ? substr(trim(Auth::user()->middlename), 0, 1) . '.' : ''; 
+
+        use App\Models\Signatory;
+        $deanSignatory = Signatory::where('position', 'like', '%dean%')
+            ->where('is_active', true)
+            ->first();
     @endphp
 
     <div class="header">
@@ -721,8 +726,12 @@
         <div class="approval-item">
             <div class="approval-label">Approved by:</div>
             <div class="approval-spacing"></div>
-            <div class="approval-name">Dr. Bettina Joyce P. Ilagan</div>
-            <div class="approval-position">Dean, Graduate School and Open Learning College</div>
+            <div class="approval-name">
+                {{ $deanSignatory->name ?? 'Dr. Bettina Joyce P. Ilagan' }}
+            </div>
+            <div class="approval-position">
+                {{ $deanSignatory->position ?? 'Dean, Graduate School and Open Learning College' }}
+            </div>
         </div>
     </div>
 </body>

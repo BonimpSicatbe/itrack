@@ -464,7 +464,6 @@ class ESignModal extends Component
             // Update submission status to approved
             $submission->update([
                 'status' => 'approved',
-                'admin_notes' => ($submission->admin_notes ?? '') . "\n\n[Digitally signed by " . $signatory->name . " on page " . $this->pageNumber . "]",
                 'reviewed_by' => auth()->id(),
                 'reviewed_at' => now(),
             ]);

@@ -24,6 +24,7 @@ class Notification extends Component
     public $hasUnreadNotifications = false;
 
     public $notificationIdFromUrl = null;
+    public $expandedCorrectionNotes = [];
 
     public function mount(): void
     {
@@ -255,8 +256,6 @@ class Notification extends Component
                             'status_badge' => $note->status_badge,
                             'admin_name' => $note->admin->name ?? 'Administrator',
                             'created_at' => $note->created_at,
-                            'addressed_at' => $note->addressed_at,
-                            'is_pending' => $note->addressed_at === null,
                             'has_file_been_replaced' => $note->hasFileBeenReplaced(),
                             'current_file_name' => $note->getCurrentFileName(),
                         ];
@@ -364,8 +363,6 @@ class Notification extends Component
                         'status_badge' => $note->status_badge,
                         'admin_name' => $note->admin->name ?? 'Administrator',
                         'created_at' => $note->created_at,
-                        'addressed_at' => $note->addressed_at,
-                        'is_pending' => $note->addressed_at === null,
                         'has_file_been_replaced' => $note->hasFileBeenReplaced(),
                         'current_file_name' => $note->getCurrentFileName(),
                     ];
@@ -482,7 +479,7 @@ class Notification extends Component
                     'id' => $media->id,
                     'name' => $media->name,
                     'file_name' => $media->file_name,
-                    'url' => $media->getUrl(),
+                    'url' => $media->getUrl(), // Keep this for direct access if needed
                     'mime_type' => $media->mime_type,
                     'size' => $this->formatFileSize($media->size),
                     'created_at' => $media->created_at,
@@ -490,7 +487,7 @@ class Notification extends Component
                     'is_previewable' => $isPreviewable,
                     'status' => $submission->status,
                     'admin_notes' => $submission->admin_notes,
-                    'submission_id' => $submission->id,
+                    'submission_id' => $submission->id, // This is crucial for the route
                     'course' => $submission->course ? [
                         'id' => $submission->course->id,
                         'course_code' => $submission->course->course_code,
@@ -565,6 +562,30 @@ class Notification extends Component
             $this->dispatch('notification-unread');
             
             session()->flash('message', 'Notification marked as unread!');
+        }
+    }
+
+    public function toggleCorrectionNote($noteId)
+    {
+        if (isset($this->expandedCorrectionNotes[$noteId])) {
+            unset($this->expandedCorrectionNotes[$noteId]);
+        } else {
+            $this->expandedCorrectionNotes[$noteId] = true;
+        }
+    }
+
+    public function toggleAllCorrectionNotes()
+    {
+        if (!empty($this->expandedCorrectionNotes)) {
+            // Collapse all
+            $this->expandedCorrectionNotes = [];
+        } else {
+            // Expand all - add all note IDs
+            if (isset($this->selectedNotificationData['correction_notes'])) {
+                foreach ($this->selectedNotificationData['correction_notes'] as $note) {
+                    $this->expandedCorrectionNotes[$note['id']] = true;
+                }
+            }
         }
     }
 
@@ -664,6 +685,7 @@ class Notification extends Component
         
         return null;
     }
+
     public function submitRequirement()
     {
         // Get the requirement ID from the selected notification data

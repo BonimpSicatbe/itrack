@@ -19,7 +19,7 @@
             <p class="text-sm text-gray-600">Manage signatures and signatory information. Only one signatory can be active at a time.</p>
         </div>
         <button 
-            wire:click="resetForm"
+            wire:click="openModal"
             class="mt-3 md:mt-0 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2"
         >
             <i class="fa-solid fa-plus"></i>
@@ -31,7 +31,7 @@
     @php
         $activeSignatory = App\Models\Signatory::where('is_active', true)->first();
     @endphp
-    @if($activeSignatory && !$isEditing)
+    @if($activeSignatory)
         <div class="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
             <div class="flex items-center gap-3">
                 <i class="fa-solid fa-circle-info text-yellow-600"></i>
@@ -43,118 +43,6 @@
         </div>
     @endif
 
-    <!-- Form -->
-    <div class="bg-gray-50 p-6 rounded-lg mb-6 border">
-        <h4 class="font-medium text-gray-700 mb-4">
-            {{ $isEditing ? 'Edit Signatory' : 'Add New Signatory' }}
-        </h4>
-        
-        <form wire:submit.prevent="save">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <!-- Name -->
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Name *</label>
-                    <input 
-                        type="text" 
-                        wire:model="name"
-                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                        placeholder="Enter signatory name"
-                    >
-                    @error('name') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
-                </div>
-
-                <!-- Position -->
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Position *</label>
-                    <input 
-                        type="text" 
-                        wire:model="position"
-                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                        placeholder="e.g., Dean, Director, etc."
-                    >
-                    @error('position') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
-                </div>
-
-                <!-- Signature Upload -->
-                <div class="md:col-span-2">
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Signature Image</label>
-                    <input 
-                        type="file" 
-                        wire:model="signature"
-                        accept="image/*"
-                        class="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                    >
-                    <p class="text-xs text-gray-500 mt-1">Upload signature image (PNG, JPG, max 2MB)</p>
-                    @error('signature') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
-                    
-                    <!-- Show current signature if editing -->
-                    @if($isEditing && $editId)
-                        @php
-                            $signatory = App\Models\Signatory::find($editId);
-                        @endphp
-                        @if($signatory && $signatory->has_signature)
-                            <div class="mt-2">
-                                <p class="text-sm text-gray-600">Current Signature:</p>
-                                <img src="{{ $signatory->signature_url }}" class="mt-1 h-20 border rounded">
-                            </div>
-                        @endif
-                    @endif
-                    
-                    @if($signature)
-                        <div class="mt-2">
-                            <p class="text-sm text-gray-600">Preview (new):</p>
-                            <img src="{{ $signature->temporaryUrl() }}" class="mt-1 h-20 border rounded">
-                        </div>
-                    @endif
-                </div>
-
-                <!-- Active Status -->
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                    <div class="flex items-center mt-2">
-                        <input 
-                            type="checkbox" 
-                            wire:model="is_active"
-                            id="is_active"
-                            class="h-4 w-4 text-green-600 rounded focus:ring-green-500"
-                            {{ $activeSignatory && !$isEditing ? 'disabled' : '' }}
-                        >
-                        <label for="is_active" class="ml-2 text-sm text-gray-700">
-                            Active 
-                            @if($activeSignatory && !$isEditing)
-                                <span class="text-xs text-yellow-600">(An active signatory already exists)</span>
-                            @endif
-                        </label>
-                    </div>
-                    @if($activeSignatory && !$isEditing)
-                        <p class="text-xs text-gray-500 mt-1">
-                            To activate this signatory, first deactivate the current active signatory or edit it.
-                        </p>
-                    @endif
-                </div>
-            </div>
-
-            <!-- Form Actions -->
-            <div class="flex gap-2">
-                <button 
-                    type="submit"
-                    class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-                >
-                    {{ $isEditing ? 'Update Signatory' : 'Save Signatory' }}
-                </button>
-                @if($isEditing)
-                    <button 
-                        type="button"
-                        wire:click="cancel"
-                        class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
-                    >
-                        Cancel
-                    </button>
-                @endif
-            </div>
-        </form>
-    </div>
-
     <!-- Signatories List -->
     <div class="bg-white rounded-lg border overflow-hidden">
         <div class="overflow-x-auto">
@@ -163,8 +51,8 @@
                     <tr>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Position</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Signature</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Signature</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                     </tr>
                 </thead>
@@ -179,17 +67,6 @@
                                 {{ $signatory->position }}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                @if($signatory->has_signature)
-                                    <img 
-                                        src="{{ $signatory->signature_url }}" 
-                                        alt="Signature" 
-                                        class="h-10 w-auto object-contain"
-                                    >
-                                @else
-                                    <span class="text-gray-400 text-sm">No signature</span>
-                                @endif
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
                                 <button 
                                     wire:click="toggleActive({{ $signatory->id }})"
                                     class="px-3 py-1 text-xs rounded-full transition-colors {{ $signatory->is_active ? 'bg-green-100 text-green-800 hover:bg-green-200' : 'bg-gray-100 text-gray-800 hover:bg-gray-200' }}"
@@ -198,21 +75,30 @@
                                     {{ $signatory->is_active ? '✓ Active' : 'Inactive' }}
                                 </button>
                             </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                @if($signatory->has_signature)
+                                    <img src="{{ $signatory->signature_url }}" class="h-12 border rounded" alt="Signature">
+                                @else
+                                    <span class="text-gray-400 text-sm">No signature</span>
+                                @endif
+                            </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                 <div class="flex gap-2">
                                     <button 
                                         wire:click="edit({{ $signatory->id }})"
-                                        class="text-blue-600 hover:text-blue-900 transition-colors"
+                                        class="px-3 py-1 bg-blue-100 text-blue-700 hover:bg-blue-200 rounded-lg transition-colors flex items-center gap-1"
                                         title="Edit"
                                     >
-                                        <i class="fa-solid fa-pen-to-square"></i>
+                                        <i class="fa-solid fa-pen-to-square text-xs"></i>
+                                        Edit
                                     </button>
                                     <button 
                                         wire:click="deleteConfirm({{ $signatory->id }})"
-                                        class="text-red-600 hover:text-red-900 transition-colors"
+                                        class="px-3 py-1 bg-red-100 text-red-700 hover:bg-red-200 rounded-lg transition-colors flex items-center gap-1"
                                         title="Delete"
                                     >
-                                        <i class="fa-solid fa-trash"></i>
+                                        <i class="fa-solid fa-trash text-xs"></i>
+                                        Delete
                                     </button>
                                 </div>
                             </td>
@@ -237,10 +123,166 @@
         @endif
     </div>
 
+    <!-- Add/Edit Signatory Modal -->
+    @if($showModal)
+        <x-modal name="signatory-modal" :show="$showModal" maxWidth="2xl">
+            <div class="p-6">
+                <!-- Modal Header -->
+                <div class="flex items-center justify-between mb-6">
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900">
+                            {{ $isEditing ? 'Edit Signatory' : 'Add New Signatory' }}
+                        </h3>
+                        <p class="text-sm text-gray-600 mt-1">Fill in the details below</p>
+                    </div>
+                    <button 
+                        wire:click="closeModal"
+                        class="text-gray-400 hover:text-gray-500 transition-colors"
+                    >
+                        <i class="fa-solid fa-times text-lg"></i>
+                    </button>
+                </div>
+
+                <!-- Active Signatory Warning -->
+                @php
+                    $activeSignatory = App\Models\Signatory::where('is_active', true)->first();
+                @endphp
+                @if($activeSignatory && !$isEditing)
+                    <div class="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-circle-info text-yellow-600"></i>
+                            <p class="text-sm text-yellow-700">
+                                <span class="font-medium">Active Signatory: {{ $activeSignatory->name }}</span><br>
+                                Only one signatory can be active at a time. New signatories will be added as inactive.
+                            </p>
+                        </div>
+                    </div>
+                @endif
+
+                <!-- Form -->
+                <form wire:submit.prevent="save">
+                    <div class="space-y-4">
+                        <!-- Name -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Name *</label>
+                            <input 
+                                type="text" 
+                                wire:model="name"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                placeholder="Enter signatory name"
+                                autofocus
+                            >
+                            @error('name') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                        </div>
+
+                        <!-- Position -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Position *</label>
+                            <input 
+                                type="text" 
+                                wire:model="position"
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                placeholder="e.g., Dean, Director, etc."
+                            >
+                            @error('position') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                        </div>
+
+                        <!-- Signature Upload -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Signature Image</label>
+                            <div class="border-2 border-dashed border-gray-300 rounded-lg p-4">
+                                <input 
+                                    type="file" 
+                                    wire:model="signature"
+                                    accept="image/*"
+                                    class="w-full"
+                                    id="signature-upload"
+                                >
+                                <p class="text-xs text-gray-500 mt-2">Upload signature image (PNG, JPG, max 2MB)</p>
+                                @error('signature') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+                            </div>
+                            
+                            <!-- Show current signature if editing -->
+                            @if($isEditing && $editId)
+                                @php
+                                    $signatory = App\Models\Signatory::find($editId);
+                                @endphp
+                                @if($signatory && $signatory->has_signature)
+                                    <div class="mt-3">
+                                        <p class="text-sm text-gray-600 mb-1">Current Signature:</p>
+                                        <div class="flex items-center gap-3">
+                                            <img src="{{ $signatory->signature_url }}" class="h-20 border rounded">
+                                            <div class="text-xs text-gray-500">
+                                                This will be replaced if you upload a new signature.
+                                            </div>
+                                        </div>
+                                    </div>
+                                @endif
+                            @endif
+                            
+                            @if($signature)
+                                <div class="mt-3">
+                                    <p class="text-sm text-gray-600 mb-1">New Signature Preview:</p>
+                                    <img src="{{ $signature->temporaryUrl() }}" class="h-20 border rounded">
+                                </div>
+                            @endif
+                        </div>
+
+                        <!-- Active Status -->
+                        <div class="pt-2">
+                            <div class="flex items-center">
+                                <input 
+                                    type="checkbox" 
+                                    wire:model="is_active"
+                                    id="is_active"
+                                    class="h-4 w-4 text-green-600 rounded focus:ring-green-500"
+                                    {{ $activeSignatory && !$isEditing ? 'disabled' : '' }}
+                                >
+                                <label for="is_active" class="ml-2 text-sm font-medium text-gray-700">
+                                    Set as Active Signatory
+                                    @if($activeSignatory && !$isEditing)
+                                        <span class="text-xs text-yellow-600 ml-1">(Not available)</span>
+                                    @endif
+                                </label>
+                            </div>
+                            @if($activeSignatory && !$isEditing)
+                                <p class="text-xs text-gray-500 mt-1 ml-6">
+                                    There is already an active signatory ({{ $activeSignatory->name }}). 
+                                    You must deactivate it first or edit it to change the active status.
+                                </p>
+                            @else
+                                <p class="text-xs text-gray-500 mt-1 ml-6">
+                                    Only one signatory can be active at a time. Activating this will deactivate others.
+                                </p>
+                            @endif
+                        </div>
+                    </div>
+
+                    <!-- Form Actions -->
+                    <div class="flex justify-end gap-3 pt-6 mt-6 border-t">
+                        <button 
+                            type="button"
+                            wire:click="closeModal"
+                            class="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                        >
+                            Cancel
+                        </button>
+                        <button 
+                            type="submit"
+                            class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                        >
+                            {{ $isEditing ? 'Update Signatory' : 'Save Signatory' }}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </x-modal>
+    @endif
+
     <!-- Delete Confirmation Modal -->
     @if($showDeleteModal)
-        <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div class="bg-white rounded-lg p-6 max-w-md w-full">
+        <x-modal name="delete-modal" :show="$showDeleteModal" maxWidth="sm">
+            <div class="p-6">
                 <div class="flex items-center gap-3 mb-4">
                     <div class="p-2 bg-red-100 rounded-full">
                         <i class="fa-solid fa-triangle-exclamation text-red-600"></i>
@@ -263,6 +305,6 @@
                     </button>
                 </div>
             </div>
-        </div>
+        </x-modal>
     @endif
 </div>

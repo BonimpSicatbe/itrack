@@ -387,12 +387,14 @@
                                             {{ $fileStatusLabel }}
                                         </span>
                                         <div class="flex space-x-2">
-                                            <a href="{{ $file['url'] }}" 
+                                            {{-- Download button with correct route --}}
+                                            <a href="{{ route('file.download', ['submission' => $file['submission_id']]) }}" 
                                                 class="flex items-center px-3 py-1.5 text-xs font-semibold text-green-700 bg-green-50 hover:bg-green-100 rounded-lg transition-colors duration-200">
                                                 <i class="fa-solid fa-download mr-1"></i> Download
                                             </a>
                                             @if($file['is_previewable'])
-                                            <a href="{{ $file['url'] }}" target="_blank"
+                                            {{-- Preview button with correct route --}}
+                                            <a href="{{ route('file.preview', ['submission' => $file['submission_id']]) }}" target="_blank"
                                                 class="flex items-center px-3 py-1.5 text-xs font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors duration-200">
                                                 <i class="fa-solid fa-eye mr-1"></i> Preview
                                             </a>
@@ -425,67 +427,126 @@
                     {{-- Correction Feedback Section (Moved after Files) --}}
                     @if(isset($selectedNotificationData['correction_notes']) && count($selectedNotificationData['correction_notes']))
                     <div class="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
-                        <div class="flex items-center mb-6">
-                            <i class="fa-solid fa-message-pen text-blue-600 text-2xl mr-3"></i>
-                            <h3 class="text-xl font-semibold text-gray-900">Feedback & Correction History</h3>
-                            <span class="bg-blue-100 text-blue-800 text-sm px-3 py-1 rounded-full ml-3">
-                                {{ count($selectedNotificationData['correction_notes']) }} entries
-                            </span>
+                        {{-- Section Header with Expand/Collapse Controls --}}
+                        <div class="flex items-center justify-between mb-6">
+                            <div class="flex items-center">
+                                <i class="fa-solid fa-message-pen text-blue-600 text-2xl mr-3"></i>
+                                <h3 class="text-xl font-semibold text-gray-900">Feedback & Correction History</h3>
+                                <span class="bg-blue-100 text-blue-800 text-sm px-3 py-1 rounded-full ml-3">
+                                    {{ count($selectedNotificationData['correction_notes']) }} entries
+                                </span>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <button 
+                                    wire:click="toggleAllCorrectionNotes"
+                                    class="text-sm font-medium text-blue-600 hover:text-blue-800 px-3 py-1.5 rounded-lg hover:bg-blue-50 transition-colors duration-200"
+                                    title="{{ empty($expandedCorrectionNotes) ? 'Expand All' : 'Collapse All' }}"
+                                >
+                                    <i class="fa-solid fa-{{ empty($expandedCorrectionNotes) ? 'expand' : 'compress' }} mr-1.5"></i>
+                                    {{ empty($expandedCorrectionNotes) ? 'Expand All' : 'Collapse All' }}
+                                </button>
+                            </div>
                         </div>
                         
                         {{-- Timeline-style correction notes --}}
-                        <div class="space-y-4">
+                        <div class="space-y-3">
                             @foreach($selectedNotificationData['correction_notes'] as $index => $note)
-                                <div class="border border-gray-200 rounded-xl overflow-hidden transition-all duration-200 hover:shadow-md">
-                                    {{-- Note Header --}}
-                                    <div class="bg-gradient-to-r from-gray-50 to-white px-5 py-4 border-b border-gray-200 flex justify-between items-center">
+                                @php
+                                    $isExpanded = isset($expandedCorrectionNotes[$note['id']]);
+                                    $isLast = $loop->last;
+                                @endphp
+                                
+                                <div class="border border-gray-200 rounded-xl overflow-hidden transition-all duration-200 hover:shadow-md {{ $isLast ? 'mb-0' : 'mb-2' }}">
+                                    {{-- Note Header (Always Visible) --}}
+                                    <div class="bg-gradient-to-r from-gray-50 to-white px-5 py-4 border-b border-gray-200 flex justify-between items-center cursor-pointer"
+                                        wire:click="toggleCorrectionNote('{{ $note['id'] }}')">
                                         <div class="flex items-center space-x-4">
-                                            <div class="flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 text-blue-600 font-semibold text-sm">
-                                                {{ count($selectedNotificationData['correction_notes']) - $index }}
+                                            <div class="flex-shrink-0">
+                                                <div class="flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 text-blue-600 font-semibold text-sm">
+                                                    {{ count($selectedNotificationData['correction_notes']) - $index }}
+                                                </div>
                                             </div>
-                                            <div>
-                                                <span class="text-sm font-semibold text-gray-800">
-                                                    Feedback from {{ $note['admin_name'] }}
-                                                </span>
-                                                <span class="block text-xs text-gray-500 mt-1">
-                                                    {{ \Carbon\Carbon::parse($note['created_at'])->format('M j, Y g:i A') }}
-                                                </span>
+                                            <div class="flex-1 min-w-0">
+                                                <div class="flex items-center">
+                                                    <span class="text-sm font-semibold text-gray-800 truncate">
+                                                        Feedback from {{ $note['admin_name'] }}
+                                                    </span>
+                                                </div>
+                                                <div class="flex items-center text-xs text-gray-500 mt-1">
+                                                    <i class="fa-regular fa-clock mr-1.5"></i>
+                                                    <span>{{ \Carbon\Carbon::parse($note['created_at'])->format('M j, Y g:i A') }}</span>
+                                                </div>
                                             </div>
                                         </div>
-                                        <span class="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold {{ $note['status_badge'] }}">
-                                            {{ $note['status_label'] }}
-                                        </span>
+                                        <div class="flex items-center space-x-3 ml-4">
+                                            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold {{ $note['status_badge'] }}">
+                                                {{ $note['status_label'] }}
+                                            </span>
+                                            <div class="text-gray-400">
+                                                <i class="fa-solid fa-chevron-{{ $isExpanded ? 'up' : 'down' }} transition-transform duration-200"></i>
+                                            </div>
+                                        </div>
                                     </div>
                                     
-                                    {{-- Note Content --}}
-                                    <div class="p-5 bg-white">
+                                    {{-- Collapsible Note Content --}}
+                                    @if($isExpanded)
+                                    <div class="p-5 bg-white animate-fade-in">
                                         <div class="space-y-4">
                                             {{-- File Information --}}
                                             @if($note['file_name'])
                                                 <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
                                                     <div class="flex items-center space-x-3">
-                                                        <i class="fa-regular fa-file text-gray-500"></i>
-                                                        <div>
-                                                            <span class="text-sm font-semibold text-gray-700">Original File</span>
-                                                            <p class="text-sm text-gray-600">{{ $note['file_name'] }}</p>
+                                                        <div class="flex-shrink-0">
+                                                            <i class="fa-regular fa-file text-gray-500 text-lg"></i>
+                                                        </div>
+                                                        <div class="min-w-0">
+                                                            <span class="text-sm font-semibold text-gray-700 block">Original File</span>
+                                                            <p class="text-sm text-gray-600 truncate">{{ $note['file_name'] }}</p>
                                                         </div>
                                                     </div>
                                                     @if($note['has_file_been_replaced'])
-                                                        <div class="flex items-center space-x-2 text-green-600">
+                                                        <div class="flex items-center space-x-2 text-green-600 ml-4">
                                                             <i class="fa-solid fa-arrow-right text-xs"></i>
-                                                            <span class="text-sm font-semibold">Updated</span>
-                                                            <span class="text-xs bg-green-100 px-2 py-1 rounded">{{ $note['current_file_name'] }}</span>
+                                                            <span class="text-sm font-semibold whitespace-nowrap">Updated</span>
+                                                            <span class="text-xs bg-green-100 px-2 py-1 rounded truncate max-w-xs">
+                                                                {{ $note['current_file_name'] }}
+                                                            </span>
                                                         </div>
                                                     @endif
                                                 </div>
                                             @endif
                                             
                                             {{-- Correction Notes --}}
-                                            <div class="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                                                <p class="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">{{ $note['notes'] }}</p>
+                                            <div class="space-y-3">
+                                                <div class="flex items-center text-sm font-semibold text-gray-700">
+                                                    <i class="fa-solid fa-comment-dots text-blue-500 mr-2"></i>
+                                                    <span>Correction Notes:</span>
+                                                </div>
+                                                <div class="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                                                    <p class="text-sm text-gray-700 leading-relaxed">
+                                                        {{ $note['notes'] }}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            
+                                            {{-- Status Information --}}
+                                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                                                <div class="space-y-1">
+                                                    <p class="text-xs font-semibold text-gray-500">Current Status</p>
+                                                    <div class="flex items-center">
+                                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold {{ $note['status_badge'] }}">
+                                                            {{ $note['status_label'] }}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                <div class="space-y-1">
+                                                    <p class="text-xs font-semibold text-gray-500">Reviewer</p>
+                                                    <p class="text-sm text-gray-700">{{ $note['admin_name'] }}</p>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
+                                    @endif
                                 </div>
                             @endforeach
                         </div>
@@ -497,7 +558,7 @@
                             <i class="fa-solid fa-comment-dots text-yellow-600 mt-0.5 mr-3 text-lg"></i>
                             <div class="flex-1">
                                 <h4 class="text-sm font-semibold text-yellow-800 mb-2">Admin Feedback</h4>
-                                <p class="text-sm text-yellow-700 whitespace-pre-wrap">{{ $selectedNotificationData['submissions'][0]['admin_notes'] }}</p>
+                                <p class="text-sm text-yellow-700">{{ $selectedNotificationData['submissions'][0]['admin_notes'] }}</p>
                             </div>
                         </div>
                     </div>

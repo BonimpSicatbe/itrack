@@ -20,10 +20,7 @@ class Notifications extends Component
     public $activeTab = 'all';
     public $newRegisteredUser = null;
     public $notificationNotFound = false;
-
-    // Remove status update properties
-    // public $newStatus = [];
-    // public $adminNotes = [];
+    public $expandedCorrectionFiles = [];
 
     public function mount()
     {
@@ -573,6 +570,25 @@ class Notifications extends Component
             Log::error('Failed to verify user: ' . $e->getMessage(), ['user_id' => $userId]);
             $this->dispatch('showNotification', type: 'error', content: 'Failed to verify user.', duration: 3000);
         }
+    } 
+
+    public function toggleCorrectionNote($fileIndex)
+    {
+        if (in_array($fileIndex, $this->expandedCorrectionFiles)) {
+            // Remove from array (collapse)
+            $this->expandedCorrectionFiles = array_diff($this->expandedCorrectionFiles, [$fileIndex]);
+            $expanded = false;
+        } else {
+            // Add to array (expand)
+            $this->expandedCorrectionFiles[] = $fileIndex;
+            $expanded = true;
+        }
+        
+        // Dispatch event to update the UI
+        $this->dispatch('correction-notes-toggled', [
+            'fileIndex' => $fileIndex,
+            'expanded' => $expanded
+        ]);
     }
 
     public function render()

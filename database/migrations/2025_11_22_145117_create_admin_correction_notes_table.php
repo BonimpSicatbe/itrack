@@ -17,8 +17,7 @@ return new class extends Migration
             $table->foreignId('admin_id')->constrained('users')->onDelete('cascade');
             $table->text('correction_notes');
             $table->string('file_name')->nullable()->comment('Original file name when note was created');
-            $table->string('status')->default('pending')->comment('pending, addressed, resolved');
-            $table->timestamp('addressed_at')->nullable();
+            $table->string('status')->comment('uploaded, under_review, revision_needed, rejected, approved');
             $table->timestamps();
 
             // Updated composite indexes

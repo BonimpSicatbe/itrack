@@ -252,7 +252,7 @@ class RequirementView extends Component
             
             // Set the current status and notes
             $this->selectedStatus = $this->selectedFile['status'];
-            $this->adminNotes = $this->selectedFile['admin_notes'] ?? '';
+            $this->adminNotes = '';
         }
     }
 

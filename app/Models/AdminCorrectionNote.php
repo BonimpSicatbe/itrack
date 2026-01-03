@@ -19,11 +19,11 @@ class AdminCorrectionNote extends Model
         'correction_notes',
         'file_name',
         'status',
-        'addressed_at',
+        // Removed: 'addressed_at'
     ];
 
     protected $casts = [
-        'addressed_at' => 'datetime',
+        // Removed: 'addressed_at' => 'datetime',
     ];
 
     // Status constants - matching SubmittedRequirement statuses

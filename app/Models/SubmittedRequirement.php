@@ -775,6 +775,15 @@ class SubmittedRequirement extends Model implements HasMedia
     {
         $media = $this->getFirstMedia('signed_documents');
         return $media ? $media->name : null;
+    } 
+
+    /**
+     * Check if submission has a signed document
+     * (Method version of the accessor for consistency)
+     */
+    public function hasSignedDocument(): bool
+    {
+        return !empty($this->signed_document_path) && $this->getFirstMedia('signed_documents');
     }
 
     /* ========== BOOT ========== */
@@ -836,5 +845,5 @@ class SubmittedRequirement extends Model implements HasMedia
                 $model->moveToUnderReview();
             }
         });
-    }
+    } 
 }

@@ -226,7 +226,9 @@
 
                         <!-- Status Dropdown -->
                         <select wire:model="selectedStatus"
-                            class="border-gray-300 rounded-xl shadow-sm text-sm text-gray-700 focus:border-green-700 focus:ring-green-700 bg-white">
+                            @if($selectedFile && $selectedFile['status'] === 'approved') disabled @endif
+                            class="border-gray-300 rounded-xl shadow-sm text-sm text-gray-700 focus:border-green-700 focus:ring-green-700 bg-white
+                                @if($selectedFile && $selectedFile['status'] === 'approved') opacity-50 cursor-not-allowed @endif">
                             @foreach ($statusOptions as $value => $label)
                                 <option value="{{ $value }}"
                                     {{ $selectedFile['status'] === $value ? 'selected' : '' }}>
@@ -235,18 +237,25 @@
                             @endforeach
                         </select>
 
-                        {{-- @dd(Auth::user()->signature->file_path) --}}
-
-                        <button type="button" wire:click="downloadFile({{ $selectedFile['id'] }})"
-                            class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-xl shadow-sm text-orange-500 bg-white hover:bg-orange-500 hover:text-white border border-white transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500"><i
-                                class="fa-solid fa-download"></i> Download File</button>
-
                         <!-- Update Button -->
                         <button 
                             wire:click="updateStatusButton" 
-                            class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-xl shadow-sm text-green-700 bg-white hover:bg-green-700 hover:text-white border border-white transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-700"
-                            title="Update status">
+                            @if($selectedFile && $selectedFile['status'] === 'approved') disabled @endif
+                            class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-xl shadow-sm text-green-700 bg-white border border-white transition-colors focus:outline-none
+                                @if($selectedFile && $selectedFile['status'] === 'approved') 
+                                    opacity-50 cursor-not-allowed 
+                                @else 
+                                    hover:bg-green-700 hover:text-white focus:ring-2 focus:ring-offset-2 focus:ring-green-700 
+                                @endif"
+                            title="@if($selectedFile && $selectedFile['status'] === 'approved') File is already approved @else Update status @endif">
                             Update
+                        </button>
+
+                        {{-- @dd(Auth::user()->signature->file_path) --}}
+
+                        <button type="button" wire:click="downloadFile({{ $selectedFile['id'] }})"
+                            class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-xl shadow-sm text-orange-500 bg-white border-white transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500"><i
+                                class="fa-solid fa-download"></i> Download
                         </button>
                     </div>
                 @endif
@@ -312,8 +321,12 @@
                     <div class="border-t border-gray-200 bg-white flex-shrink-0">
                         <div class="px-2 py-2">
                             <div class="flex gap-2">
-                                <textarea wire:model="adminNotes" rows="1" placeholder="Write correction notes for the submitter...."
-                                    class="flex-1 px-3 py-2 border border-gray-300 rounded-xl shadow-sm focus:border-green-700 focus:ring focus:ring-green-700 focus:ring-opacity-50 text-sm text-gray-700 placeholder-gray-400"></textarea>
+                                <textarea 
+                                    wire:model="adminNotes" 
+                                    rows="1" 
+                                    placeholder="Write correction notes for the submitter...."
+                                    class="flex-1 px-3 py-2 border border-gray-300 rounded-xl shadow-sm focus:border-green-700 focus:ring focus:ring-green-700 focus:ring-opacity-50 text-sm text-gray-700 placeholder-gray-400">
+                                </textarea>
                                 <!-- View Notes Button -->
                                 <button type="button" wire:click="loadCorrectionNotes"
                                     class="inline-flex items-center px-3 py-2 border border-green-600 text-sm font-medium rounded-lg text-green-600 bg-white hover:bg-green-50 transition-colors self-start flex-shrink-0">
@@ -409,7 +422,7 @@
                                         @endif
 
                                         <div class="bg-gray-50 p-3 rounded-lg border border-gray-200">
-                                            <p class="text-sm text-gray-700 whitespace-pre-wrap">
+                                            <p class="text-sm text-gray-700">
                                                 {{ $note['correction_notes'] }}</p>
                                         </div>
 

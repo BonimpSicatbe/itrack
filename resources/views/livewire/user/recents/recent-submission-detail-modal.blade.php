@@ -221,7 +221,7 @@
                                                     
                                                     {{-- Correction Notes --}}
                                                     <div class="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                                                        <p class="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">{{ $note['correction_notes'] }}</p>
+                                                        <p class="text-sm text-gray-700 leading-relaxed">{{ $note['correction_notes'] }}</p>
                                                     </div>
                                                 </div>
                                             </div>
