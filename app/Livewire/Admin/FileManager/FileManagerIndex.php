@@ -761,7 +761,7 @@ class FileManagerIndex extends Component
     }
 
     /**
-     * SIMPLIFIED: Get actual media files with submission indicators
+     * Get actual media files with submission indicators
      */
     public function getFiles()
     {
@@ -790,25 +790,55 @@ class FileManagerIndex extends Component
             return new \Illuminate\Pagination\LengthAwarePaginator([], 0, $this->viewMode === 'grid' ? 24 : 10);
         }
 
-        // Now get media files for these submissions
+        // Get all submissions first to check for signed documents
+        $submissions = SubmittedRequirement::whereIn('id', function($query) use ($submissionIds) {
+                $query->select('submitted_requirements.id')
+                    ->from('submitted_requirements')
+                    ->join('requirement_submission_indicators', function($join) {
+                        $join->on('submitted_requirements.requirement_id', '=', 'requirement_submission_indicators.requirement_id')
+                            ->on('submitted_requirements.user_id', '=', 'requirement_submission_indicators.user_id')
+                            ->on('submitted_requirements.course_id', '=', 'requirement_submission_indicators.course_id');
+                    })
+                    ->whereIn('requirement_submission_indicators.id', $submissionIds);
+            })
+            ->with(['media', 'user', 'requirement', 'course.program'])
+            ->get();
+
+        // Collect media files - prioritize signed documents for approved submissions
+        $mediaItems = collect();
+        
+        foreach ($submissions as $submission) {
+            // If submission is approved and has signed document, get signed document
+            if ($submission->status === 'approved' && $submission->has_signed_document) {
+                $signedMedia = $submission->getFirstMedia('signed_documents');
+                if ($signedMedia) {
+                    $mediaItems->push($signedMedia);
+                    continue; // Skip original files for approved+signed submissions
+                }
+            }
+            
+            // Otherwise, get original submission files
+            $originalMedia = $submission->getMedia('submission_files');
+            foreach ($originalMedia as $media) {
+                $mediaItems->push($media);
+            }
+        }
+
+        // If no media found, return empty paginator
+        if ($mediaItems->isEmpty()) {
+            return new \Illuminate\Pagination\LengthAwarePaginator([], 0, $this->viewMode === 'grid' ? 24 : 10);
+        }
+
+        // Create query from collected media items
+        $mediaIds = $mediaItems->pluck('id');
+        
         $query = Media::query()
             ->with([
                 'model.user', 
                 'model.requirement', 
                 'model.course.program'
             ])
-            ->whereHasMorph('model', [SubmittedRequirement::class], function($q) use ($submissionIds) {
-                $q->whereIn('id', function($subQuery) use ($submissionIds) {
-                    $subQuery->select('submitted_requirements.id')
-                        ->from('submitted_requirements')
-                        ->join('requirement_submission_indicators', function($join) {
-                            $join->on('submitted_requirements.requirement_id', '=', 'requirement_submission_indicators.requirement_id')
-                                ->on('submitted_requirements.user_id', '=', 'requirement_submission_indicators.user_id')
-                                ->on('submitted_requirements.course_id', '=', 'requirement_submission_indicators.course_id');
-                        })
-                        ->whereIn('requirement_submission_indicators.id', $submissionIds);
-                });
-            })
+            ->whereIn('id', $mediaIds)
             ->orderBy('created_at', 'desc');
 
         // Apply search if at files level

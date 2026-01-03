@@ -172,7 +172,7 @@ class DocumentProcessorService
             }
             
             // Generate output filename
-            $outputFilename = 'signed_tcpdf_' . time() . '_' . basename($pdfPath);
+            $outputFilename = 'signed_' . basename($pdfPath);
             $outputPath = storage_path('app/temp/' . $outputFilename);
             
             // Output PDF
@@ -302,7 +302,7 @@ class DocumentProcessorService
             );
             
             // Save the PDF
-            $outputFilename = 'signed_image_' . time() . '_' . basename($imagePath, '.jpg') . '.pdf';
+            $outputFilename = 'signed_' . basename($imagePath, '.jpg') . '.pdf';
             $outputPath = storage_path('app/temp/' . $outputFilename);
             $pdf->Output($outputPath, 'F');
             
@@ -493,7 +493,7 @@ class DocumentProcessorService
             }
             
             // Generate output filename
-            $outputFilename = 'signed_fpdi_' . time() . '_' . basename($pdfPath);
+            $outputFilename = 'signed_' . basename($pdfPath);
             $outputPath = storage_path('app/temp/' . $outputFilename);
             
             // Output PDF

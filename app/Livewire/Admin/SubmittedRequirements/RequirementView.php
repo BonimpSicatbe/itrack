@@ -256,7 +256,6 @@ class RequirementView extends Component
         }
     }
 
-    // NEW METHOD: Handle the update button click
     public function updateStatusButton()
     {
         if ($this->selectedStatus === 'approved') {
@@ -528,6 +527,37 @@ class RequirementView extends Component
     {
         // Reload the entire component
         $this->loadFiles();
+    } 
+
+    public function downloadFile($fileId)
+    {
+        // Find the file in allFiles
+        $file = collect($this->allFiles)->firstWhere('id', $fileId);
+        
+        if (!$file) {
+            $this->dispatch('showNotification', 
+                type: 'error', 
+                content: 'File not found'
+            );
+            return;
+        }
+
+        // Find the submission
+        $submission = SubmittedRequirement::find($file['submission_id']);
+        
+        if (!$submission) {
+            $this->dispatch('showNotification', 
+                type: 'error', 
+                content: 'Submission not found'
+            );
+            return;
+        }
+
+        // Generate the download URL
+        $url = route('file.download', ['submission' => $submission->id]);
+        
+        // Dispatch event to open download in new tab
+        $this->dispatch('open-download', url: $url);
     }
 
     public function render()

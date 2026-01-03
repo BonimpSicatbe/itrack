@@ -524,6 +524,12 @@
                     window.location.reload();
                 }, 500);
             });
+        }); 
+
+        document.addEventListener('livewire:initialized', () => {
+            @this.on('open-download', (event) => {
+                window.open(event.url, '_blank');
+            });
         });
     </script>
 </div>
