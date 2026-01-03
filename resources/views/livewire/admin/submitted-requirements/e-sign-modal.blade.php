@@ -5,7 +5,13 @@
             <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between" style="background: linear-gradient(148deg,rgba(18, 67, 44, 1) 0%, rgba(30, 119, 77, 1) 54%, rgba(55, 120, 64, 1) 100%);">
                 <div class="flex items-center">
                     <i class="fa-solid fa-signature text-white text-xl mr-3"></i>
-                    <h3 class="text-lg font-semibold text-white">Place Digital Signature</h3>
+                    <h3 class="text-lg font-semibold text-white">
+                        @if($isResigning)
+                            Re-sign Document
+                        @else
+                            Place Digital Signature
+                        @endif
+                    </h3>
                 </div>
                 <div class="flex items-center space-x-3">
                     <!-- Page Navigation (only show for multi-page documents) -->

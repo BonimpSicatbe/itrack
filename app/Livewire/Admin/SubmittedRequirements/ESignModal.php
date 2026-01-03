@@ -8,6 +8,7 @@ use App\Models\Signatory;
 use App\Services\DocumentProcessorService;
 use Livewire\Attributes\On;
 use Livewire\WithFileUploads;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 class ESignModal extends Component
 {
@@ -16,6 +17,7 @@ class ESignModal extends Component
     public $submissionId;
     public $fileUrl;
     public $fileExtension;
+    public $isResigning = false; // New property to track if re-signing
     
     // Modal state
     public $showModal = false;
@@ -84,11 +86,12 @@ class ESignModal extends Component
     }
 
     #[On('open-esign-modal')]
-    public function openModal($submissionId, $fileUrl, $fileExtension)
+    public function openModal($submissionId, $fileUrl, $fileExtension, $isResigning = false)
     {
         $this->submissionId = $submissionId;
         $this->fileUrl = $fileUrl;
         $this->fileExtension = $fileExtension;
+        $this->isResigning = $isResigning;
         $this->showModal = true;
         
         // Reset dimensions
@@ -98,41 +101,101 @@ class ESignModal extends Component
         $this->pdfPointHeight = 0;
         $this->pageDimensions = [];
         
-        // Get actual PDF dimensions for positioning
+        // Get the submission
         $submission = SubmittedRequirement::find($submissionId);
-        if ($submission && in_array($fileExtension, ['pdf', 'jpg', 'jpeg', 'png', 'gif'])) {
-            $pdfPath = $submission->getOriginalFilePath();
-            
-            if (file_exists($pdfPath)) {
-                $documentProcessor = app(DocumentProcessorService::class);
-                $dimensions = $documentProcessor->getPdfDimensions($pdfPath);
+        
+        if ($submission) {
+            // For re-signing, get the original file from media table
+            if ($this->isResigning) {
+                $originalMedia = $submission->getFirstMedia('submission_files');
                 
-                // Get total pages
-                $this->totalPages = $dimensions['page_count'] ?? 1;
-                $this->showPageSelector = $this->totalPages > 1;
-                
-                // Store dimensions for all pages
-                for ($i = 1; $i <= $this->totalPages; $i++) {
-                    $this->pageDimensions[$i] = [
-                        'width' => $dimensions['width'],
-                        'height' => $dimensions['height']
-                    ];
+                if ($originalMedia) {
+                    $originalFilePath = $originalMedia->getPath();
+                    
+                    \Log::info('Re-signing: Original file found', [
+                        'media_id' => $originalMedia->id,
+                        'file_name' => $originalMedia->file_name,
+                        'file_path' => $originalFilePath,
+                        'exists' => file_exists($originalFilePath)
+                    ]);
+                    
+                    if (file_exists($originalFilePath) && in_array($originalMedia->extension, ['pdf', 'jpg', 'jpeg', 'png', 'gif'])) {
+                        $documentProcessor = app(DocumentProcessorService::class);
+                        $dimensions = $documentProcessor->getPdfDimensions($originalFilePath);
+                        
+                        // Get total pages
+                        $this->totalPages = $dimensions['page_count'] ?? 1;
+                        $this->showPageSelector = $this->totalPages > 1;
+                        
+                        // Store dimensions for all pages
+                        for ($i = 1; $i <= $this->totalPages; $i++) {
+                            $this->pageDimensions[$i] = [
+                                'width' => $dimensions['width'],
+                                'height' => $dimensions['height']
+                            ];
+                        }
+                        
+                        $this->pdfPointWidth = $dimensions['width'];
+                        $this->pdfPointHeight = $dimensions['height'];
+                        
+                        // Apply margin correction
+                        $viewerMarginCorrection = 0.95;
+                        $pixelsPerPoint = 96 / 72;
+                        $contentWidthPx = $this->pdfPointWidth * $pixelsPerPoint * $viewerMarginCorrection;
+                        $contentHeightPx = $this->pdfPointHeight * $pixelsPerPoint * $viewerMarginCorrection;
+                        
+                        $this->documentWidth = $contentWidthPx;
+                        $this->documentHeight = $contentHeightPx;
+                        
+                    } else {
+                        $this->setDefaultDocumentDimensions();
+                    }
+                } else {
+                    \Log::error('Re-signing: No original media found for submission', [
+                        'submission_id' => $submissionId,
+                        'collection_name' => 'submission_files'
+                    ]);
+                    $this->setDefaultDocumentDimensions();
                 }
-                
-                $this->pdfPointWidth = $dimensions['width'];
-                $this->pdfPointHeight = $dimensions['height'];
-                
-                // Apply margin correction
-                $viewerMarginCorrection = 0.95;
-                $pixelsPerPoint = 96 / 72;
-                $contentWidthPx = $this->pdfPointWidth * $pixelsPerPoint * $viewerMarginCorrection;
-                $contentHeightPx = $this->pdfPointHeight * $pixelsPerPoint * $viewerMarginCorrection;
-                
-                $this->documentWidth = $contentWidthPx;
-                $this->documentHeight = $contentHeightPx;
-                
             } else {
-                $this->setDefaultDocumentDimensions();
+                // Regular signing - use existing logic
+                if (in_array($fileExtension, ['pdf', 'jpg', 'jpeg', 'png', 'gif'])) {
+                    $pdfPath = $submission->getOriginalFilePath();
+                    
+                    if (file_exists($pdfPath)) {
+                        $documentProcessor = app(DocumentProcessorService::class);
+                        $dimensions = $documentProcessor->getPdfDimensions($pdfPath);
+                        
+                        // Get total pages
+                        $this->totalPages = $dimensions['page_count'] ?? 1;
+                        $this->showPageSelector = $this->totalPages > 1;
+                        
+                        // Store dimensions for all pages
+                        for ($i = 1; $i <= $this->totalPages; $i++) {
+                            $this->pageDimensions[$i] = [
+                                'width' => $dimensions['width'],
+                                'height' => $dimensions['height']
+                            ];
+                        }
+                        
+                        $this->pdfPointWidth = $dimensions['width'];
+                        $this->pdfPointHeight = $dimensions['height'];
+                        
+                        // Apply margin correction
+                        $viewerMarginCorrection = 0.95;
+                        $pixelsPerPoint = 96 / 72;
+                        $contentWidthPx = $this->pdfPointWidth * $pixelsPerPoint * $viewerMarginCorrection;
+                        $contentHeightPx = $this->pdfPointHeight * $pixelsPerPoint * $viewerMarginCorrection;
+                        
+                        $this->documentWidth = $contentWidthPx;
+                        $this->documentHeight = $contentHeightPx;
+                        
+                    } else {
+                        $this->setDefaultDocumentDimensions();
+                    }
+                } else {
+                    $this->setDefaultDocumentDimensions();
+                }
             }
         } else {
             $this->setDefaultDocumentDimensions();
@@ -411,7 +474,25 @@ class ESignModal extends Component
             }
             
             // Get the original file path
-            $originalFilePath = $submission->getOriginalFilePath();
+            $originalFilePath = null;
+            
+            if ($this->isResigning) {
+                // For re-signing, get the original file from media table
+                $originalMedia = $submission->getFirstMedia('submission_files');
+                if (!$originalMedia) {
+                    throw new \Exception('Original document file not found in media library.');
+                }
+                $originalFilePath = $originalMedia->getPath();
+                
+                \Log::info('Re-signing: Using original file from media', [
+                    'media_id' => $originalMedia->id,
+                    'file_name' => $originalMedia->file_name,
+                    'file_path' => $originalFilePath
+                ]);
+            } else {
+                // For regular signing, use the getOriginalFilePath method
+                $originalFilePath = $submission->getOriginalFilePath();
+            }
             
             if (!$originalFilePath || !file_exists($originalFilePath)) {
                 throw new \Exception('Original document file not found.');
@@ -428,6 +509,7 @@ class ESignModal extends Component
             );
             
             \Log::info('Applying signature to page:', [
+                'is_resigning' => $this->isResigning,
                 'page_number' => $this->pageNumber,
                 'total_pages' => $this->totalPages,
                 'display_pixels' => [
@@ -466,6 +548,7 @@ class ESignModal extends Component
                 'status' => 'approved',
                 'reviewed_by' => auth()->id(),
                 'reviewed_at' => now(),
+                'signed_at' => now(),
             ]);
             
             // Create correction note
@@ -475,7 +558,7 @@ class ESignModal extends Component
                 'course_id' => $submission->course_id,
                 'user_id' => $submission->user_id,
                 'admin_id' => auth()->id(),
-                'correction_notes' => $submission->admin_notes ?: 'Document approved with digital signature.',
+                'correction_notes' => $this->isResigning ? 'Document re-signed with digital signature.' : 'Document approved with digital signature.',
                 'file_name' => $submission->getFirstMedia('submission_files')->file_name ?? 'Unknown',
                 'status' => 'approved',
                 'signed_page' => $this->pageNumber, // Store which page was signed
@@ -498,12 +581,18 @@ class ESignModal extends Component
             
             $this->isProcessing = false;
             $this->showModal = false;
+            $this->isResigning = false; // Reset re-signing flag
             
             // Emit event to refresh parent component
             $this->dispatch('signature-applied', submissionId: $submission->id);
+            
+            $message = $this->isResigning 
+                ? 'Document re-signed successfully on page ' . $this->pageNumber . '!'
+                : 'Document approved and digitally signed successfully on page ' . $this->pageNumber . '!';
+            
             $this->dispatch('showNotification', 
                 type: 'success', 
-                content: 'Document approved and digitally signed successfully on page ' . $this->pageNumber . '!'
+                content: $message
             );
             
         } catch (\Exception $e) {
@@ -575,6 +664,7 @@ class ESignModal extends Component
     public function cancel()
     {
         $this->showModal = false;
+        $this->isResigning = false;
         $this->resetExcept(['submissionId', 'fileUrl', 'fileExtension']);
     } 
 

@@ -226,9 +226,7 @@
 
                         <!-- Status Dropdown -->
                         <select wire:model="selectedStatus"
-                            @if($selectedFile && $selectedFile['status'] === 'approved') disabled @endif
-                            class="border-gray-300 rounded-xl shadow-sm text-sm text-gray-700 focus:border-green-700 focus:ring-green-700 bg-white
-                                @if($selectedFile && $selectedFile['status'] === 'approved') opacity-50 cursor-not-allowed @endif">
+                            class="border-gray-300 rounded-xl shadow-sm text-sm text-gray-700 focus:border-green-700 focus:ring-green-700 bg-white">
                             @foreach ($statusOptions as $value => $label)
                                 <option value="{{ $value }}"
                                     {{ $selectedFile['status'] === $value ? 'selected' : '' }}>
@@ -237,25 +235,26 @@
                             @endforeach
                         </select>
 
-                        <!-- Update Button -->
-                        <button 
-                            wire:click="updateStatusButton" 
-                            @if($selectedFile && $selectedFile['status'] === 'approved') disabled @endif
-                            class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-xl shadow-sm text-green-700 bg-white border border-white transition-colors focus:outline-none
-                                @if($selectedFile && $selectedFile['status'] === 'approved') 
-                                    opacity-50 cursor-not-allowed 
-                                @else 
-                                    hover:bg-green-700 hover:text-white focus:ring-2 focus:ring-offset-2 focus:ring-green-700 
-                                @endif"
-                            title="@if($selectedFile && $selectedFile['status'] === 'approved') File is already approved @else Update status @endif">
-                            Update
-                        </button>
-
-                        {{-- @dd(Auth::user()->signature->file_path) --}}
+                        <!-- Update/Re-sign Button -->
+                        @if($selectedFile['status'] === 'approved')
+                            <button 
+                                wire:click="updateStatusButton" 
+                                class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-xl shadow-sm text-yellow-700 bg-white border border-white transition-colors hover:bg-yellow-700 hover:text-white focus:ring-2 focus:ring-offset-2 focus:ring-yellow-700"
+                                title="Re-sign document">
+                                <i class="fa-solid fa-signature mr-2"></i> Re-sign
+                            </button>
+                        @else
+                            <button 
+                                wire:click="updateStatusButton" 
+                                class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-xl shadow-sm text-green-700 bg-white border border-white transition-colors hover:bg-green-700 hover:text-white focus:ring-2 focus:ring-offset-2 focus:ring-green-700"
+                                title="Update status">
+                                Update
+                            </button>
+                        @endif
 
                         <button type="button" wire:click="downloadFile({{ $selectedFile['id'] }})"
-                            class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-xl shadow-sm text-orange-500 bg-white border-white transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500"><i
-                                class="fa-solid fa-download"></i> Download
+                            class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-xl shadow-sm text-orange-500 bg-white border border-white transition-colors hover:bg-orange-500 hover:text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500">
+                            <i class="fa-solid fa-download mr-2"></i> Download
                         </button>
                     </div>
                 @endif
@@ -460,7 +459,7 @@
         </div>
     </x-modal> 
 
-    <!-- E-Signature Confirmation Modal -->
+    <!-- E-Signature Confirmation Modal (First Time Signing) -->
     <x-modal name="e-sign-confirmation-modal" :show="$showESignConfirmationModal" maxWidth="md">
         <div class="bg-white rounded-xl shadow-lg">
             <!-- Modal Header -->
@@ -501,6 +500,49 @@
                         type="button"
                         class="px-4 py-2 bg-green-600 border border-transparent rounded-xl text-sm font-medium text-white hover:bg-green-700 transition-colors">
                         Add E-Signature
+                    </button>
+                </div>
+            </div>
+        </div>
+    </x-modal>
+
+    <!-- Re-sign Confirmation Modal (For Already Approved Documents) -->
+    <x-modal name="resign-confirmation-modal" :show="$showResignConfirmationModal" maxWidth="md">
+        <div class="bg-white rounded-xl shadow-lg">
+            <!-- Modal Header -->
+            <div class="px-6 py-4 border-b flex justify-between border-gray-200" style="background: linear-gradient(148deg,rgba(18, 67, 44, 1) 0%, rgba(30, 119, 77, 1) 54%, rgba(55, 120, 64, 1) 100%);">
+                <div class="flex items-center">
+                    <i class="fa-solid fa-signature text-white text-xl mr-3"></i>
+                    <h3 class="text-lg font-semibold text-white">Re-sign Document?</h3>
+                </div>
+                <!-- Cancel Button -->
+                <button wire:click="$set('showResignConfirmationModal', false)" 
+                    type="button"
+                    class="px-4 py-2 border border-gray-300 rounded-xl text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+                    Cancel
+                </button>
+            </div>
+            
+            <!-- Modal Body -->
+            <div class="p-6">
+                <div class="text-center mb-4">
+                    <div class="mx-auto w-16 h-16 rounded-full bg-yellow-100 flex items-center justify-center mb-3">
+                        <i class="fa-solid fa-signature text-2xl text-yellow-600"></i>
+                    </div>
+                    <h3 class="text-lg font-medium text-gray-900 mb-2">
+                        Re-sign Document?
+                    </h3>
+                    <p class="text-sm text-gray-500">
+                        This document is already approved. Do you want to add a new signature?
+                        <br><span class="font-semibold">Note:</span> The original file will be used for re-signing.
+                    </p>
+                </div>
+                
+                <div class="flex items-center justify-center space-x-3 mt-6">
+                    <button wire:click="openResignModal" 
+                        type="button"
+                        class="px-4 py-2 bg-yellow-600 border border-transparent rounded-xl text-sm font-medium text-white hover:bg-yellow-700 transition-colors">
+                        Yes, Re-sign Document
                     </button>
                 </div>
             </div>

@@ -44,7 +44,9 @@ class RequirementView extends Component
     public $correctionNotes = [];
 
     public $showESignConfirmationModal = false;
+    public $showResignConfirmationModal = false; // New modal for re-signing
     public $pendingStatusUpdate = false;
+    public $isResigning = false; // Flag to track if we're re-signing
 
 
     public function mount($requirement_id, $user_id = null, $course_id = null, $initialFileId = null)
@@ -157,6 +159,9 @@ class RequirementView extends Component
                 // Determine which URL to use for preview
                 $previewUrl = $submission->getPreviewRouteUrl();
                 
+                // Get original file URL for re-signing
+                $originalFileUrl = route('file.preview.original', ['submission' => $submission->id]);
+                
                 return [
                     'id' => $media->id,
                     'submission_id' => $submission->id,
@@ -164,7 +169,7 @@ class RequirementView extends Component
                     'file_name' => $media->file_name,
                     'display_name' => $displayFileName,
                     'url' => $previewUrl, // Use preview route URL
-                    'original_url' => route('file.preview', ['submission' => $submission->id]),
+                    'original_url' => $originalFileUrl, // Store original file URL for re-signing
                     'signed_url' => $submission->has_signed_document ? route('file.preview.signed', ['submission' => $submission->id]) : null,
                     'mime_type' => $media->mime_type,
                     'size' => $this->formatFileSize($media->size),
@@ -259,7 +264,13 @@ class RequirementView extends Component
     public function updateStatusButton()
     {
         if ($this->selectedStatus === 'approved') {
-            $this->confirmUpdate();
+            if ($this->selectedFile['status'] === 'approved') {
+                // File is already approved, show re-sign confirmation
+                $this->confirmReSign();
+            } else {
+                // File is being approved for the first time
+                $this->confirmUpdate();
+            }
         } else {
             // Check if changing FROM approved status
             $oldStatus = $this->selectedFile['status'] ?? '';
@@ -479,6 +490,23 @@ class RequirementView extends Component
         $this->dispatch('modal-should-show');
     }
 
+    public function confirmReSign()
+    {
+        // Set re-signing flag
+        $this->isResigning = true;
+        
+        // Show re-sign confirmation modal
+        $this->showResignConfirmationModal = true;
+        
+        \Log::info('confirmReSign called', [
+            'showResignConfirmationModal' => $this->showResignConfirmationModal,
+            'isResigning' => $this->isResigning
+        ]);
+        
+        // Force Livewire to re-render
+        $this->dispatch('modal-should-show');
+    }
+
     public function approveWithoutSignature()
     {
         // Close confirmation modal
@@ -496,19 +524,46 @@ class RequirementView extends Component
         // Close confirmation modal
         $this->showESignConfirmationModal = false;
         
+        // Reset re-signing flag (in case it was set)
+        $this->isResigning = false;
+        
         // Dispatch event to open e-sign modal
         $this->dispatch('open-esign-modal', 
             submissionId: $this->selectedFile['submission_id'],
             fileUrl: $this->fileUrl,
-            fileExtension: $this->selectedFile['extension']
+            fileExtension: $this->selectedFile['extension'],
+            isResigning: false
         );
-    } 
+    }
+
+    public function openResignModal()
+    {
+        // Close confirmation modal
+        $this->showResignConfirmationModal = false;
+        
+        // Set re-signing flag
+        $this->isResigning = true;
+        
+        // For re-signing, use the original file URL
+        $originalFileUrl = $this->selectedFile['original_url'];
+        
+        // Dispatch event to open e-sign modal with re-signing flag
+        $this->dispatch('open-esign-modal', 
+            submissionId: $this->selectedFile['submission_id'],
+            fileUrl: $originalFileUrl, // Use original file for re-signing
+            fileExtension: $this->selectedFile['extension'],
+            isResigning: true
+        );
+    }
 
     #[On('signature-applied')]
     public function refreshFiles($submissionId)
     {
         // Reload files to show the signed version
         $this->loadFiles();
+        
+        // Reset re-signing flag
+        $this->isResigning = false;
         
         // Reselect the signed file
         if ($this->allFiles->isNotEmpty()) {
