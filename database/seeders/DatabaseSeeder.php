@@ -33,9 +33,9 @@ class DatabaseSeeder extends Seeder
         $admin = User::create([
             'firstname' => 'Dan Lloyd',
             'middlename' => 'P',
-            'lastname' => 'Rosada',
+            'lastname' => 'Rosarda',
             'extensionname' => '',
-            'email' => 'danlloyd.rosada@cvsu.edu.ph',
+            'email' => 'danlloyd.rosarda@cvsu.edu.ph',
             'college_id' => '1',
             'position' => 'MIS Officer',
             'teaching_started_at' => '2020-01-15',
