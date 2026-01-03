@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Spatie\MediaLibrary\HasMedia;
@@ -41,7 +40,7 @@ class Signatory extends Model implements HasMedia
         $this->addMediaCollection('signatures')
             ->singleFile()
             ->useDisk('public')
-            ->acceptsMimeTypes(['image/jpeg', 'image/png', 'image/gif']);
+            ->acceptsMimeTypes(['image/jpeg', 'image/png', 'image/gif', 'image/webp']);
     }
 
     /**
@@ -54,12 +53,32 @@ class Signatory extends Model implements HasMedia
     }
 
     /**
-     * Get signature URL
+     * Get signature URL with fallback
      */
     public function getSignatureUrlAttribute(): ?string
     {
         $media = $this->getFirstMedia('signatures');
-        return $media ? $media->getUrl() : null;
+        
+        if (!$media) {
+            return null;
+        }
+        
+        // Return a route URL instead of direct storage URL
+        return route('admin.signatory.signature.preview', $this->id);
+    }
+
+    /**
+     * Get signature download URL
+     */
+    public function getSignatureDownloadUrlAttribute(): ?string
+    {
+        $media = $this->getFirstMedia('signatures');
+        
+        if (!$media) {
+            return null;
+        }
+        
+        return route('admin.signatory.signature.download', $this->id);
     }
 
     /**
@@ -80,11 +99,17 @@ class Signatory extends Model implements HasMedia
     }
 
     /**
-     * Add signature media
+     * Add signature media with proper handling
      */
     public function addSignature($file)
     {
-        return $this->addMedia($file)->toMediaCollection('signatures');
+        // Delete existing signature first
+        $this->deleteSignature();
+        
+        // Add new signature with optimized settings
+        return $this->addMedia($file)
+            ->usingFileName(md5(time()) . '.' . $file->getClientOriginalExtension())
+            ->toMediaCollection('signatures');
     }
 
     /**
@@ -93,5 +118,18 @@ class Signatory extends Model implements HasMedia
     public function deleteSignature()
     {
         $this->clearMediaCollection('signatures');
+    }
+
+    /**
+     * Boot method to handle model events
+     */
+    protected static function boot()
+    {
+        parent::boot();
+
+        // When deleting a signatory, also delete associated media
+        static::deleting(function ($signatory) {
+            $signatory->deleteSignature();
+        });
     }
 }

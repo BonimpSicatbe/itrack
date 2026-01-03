@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\SubmittedRequirement;
+use App\Models\Signatory;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Illuminate\Support\Facades\Storage;
 
@@ -135,7 +136,64 @@ class FileController extends Controller
         return response()->file($filePath);
     } 
 
-    
+    /**
+     * Preview signatory signature
+     */
+    public function previewSignature($signatoryId)
+    {
+        $signatory = Signatory::findOrFail($signatoryId);
+        
+        if (!$signatory->has_signature) {
+            abort(404, 'Signature not found');
+        }
+        
+        $media = $signatory->getFirstMedia('signatures');
+        
+        if (!$media) {
+            abort(404, 'Signature media not found');
+        }
+        
+        // Check if the file exists
+        if (!Storage::disk($media->disk)->exists($media->getPathRelativeToRoot())) {
+            abort(404, 'Signature file not found');
+        }
+        
+        $path = $media->getPath();
+        $mime = $media->mime_type;
+        
+        // For images, return as inline content
+        if (str_starts_with($mime, 'image/')) {
+            return response()->file($path, [
+                'Content-Type' => $mime,
+                'Content-Disposition' => 'inline; filename="' . $media->file_name . '"'
+            ]);
+        }
+        
+        // For other file types, download
+        return response()->download($path, $media->file_name);
+    }
 
+    /**
+     * Download signatory signature
+     */
+    public function downloadSignature($signatoryId)
+    {
+        $signatory = Signatory::findOrFail($signatoryId);
+        
+        if (!$signatory->has_signature) {
+            abort(404, 'Signature not found');
+        }
+        
+        $media = $signatory->getFirstMedia('signatures');
+        
+        if (!$media) {
+            abort(404, 'Signature media not found');
+        }
+        
+        return response()->download(
+            $media->getPath(),
+            $signatory->name . '_signature.' . pathinfo($media->file_name, PATHINFO_EXTENSION)
+        );
+    }
     
 }

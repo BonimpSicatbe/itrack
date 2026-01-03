@@ -126,6 +126,15 @@ Route::middleware(['auth', 'role:admin|super-admin'])
             ]);
         })->name('submitted-requirements.requirement-context');
 
+        // Signatory signature routes
+        Route::get('/signatory/{signatory}/signature-preview', [FileController::class, 'previewSignature'])
+            ->name('signatory.signature.preview')
+            ->whereNumber('signatory');
+
+        Route::get('/signatory/{signatory}/signature-download', [FileController::class, 'downloadSignature'])
+            ->name('signatory.signature.download')
+            ->whereNumber('signatory');
+
         Route::get('/users/{user}/preview-report', [UserController::class, 'previewUserReport'])->name('users.preview-report');
         Route::get('/users/{user}/report', [UserController::class, 'downloadUserReport'])->name('users.report');
 
@@ -133,6 +142,11 @@ Route::middleware(['auth', 'role:admin|super-admin'])
             // Main management dashboard
             Route::get('/', [ManagementController::class, 'index'])
                 ->name('management.index');
+            
+            // Add signatory management route
+            Route::get('/signatories', function () {
+                return view('admin.pages.management.signatory-management');
+            })->name('management.signatories');
         });
 
         Route::get('/test', function () {
