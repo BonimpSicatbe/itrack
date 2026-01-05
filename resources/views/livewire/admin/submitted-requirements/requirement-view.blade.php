@@ -226,33 +226,38 @@
 
                         <!-- Status Dropdown -->
                         <select wire:model="selectedStatus"
-                            class="border-gray-300 rounded-xl shadow-sm text-sm text-gray-700 focus:border-green-700 focus:ring-green-700 bg-white">
+                            wire:key="status-select-{{ $selectedFile['id'] ?? 'none' }}"
+                            @if($selectedFile && $selectedFile['status'] === 'approved') disabled @endif
+                            class="border-gray-300 rounded-xl shadow-sm text-sm text-gray-700 focus:border-green-700 focus:ring-green-700 bg-white
+                                @if($selectedFile && $selectedFile['status'] === 'approved') bg-gray-100 cursor-not-allowed opacity-70 @endif">
                             @foreach ($statusOptions as $value => $label)
-                                <option value="{{ $value }}"
-                                    {{ $selectedFile['status'] === $value ? 'selected' : '' }}>
+                                <option value="{{ $value }}" {{ $selectedFile && $selectedFile['status'] === $value ? 'selected' : '' }}>
                                     {{ $label }}
                                 </option>
                             @endforeach
                         </select>
 
                         <!-- Update/Re-sign Button -->
-                        @if($selectedFile['status'] === 'approved')
+                        @if($selectedFile && $selectedFile['status'] === 'approved')
                             <button 
-                                wire:click="updateStatusButton" 
+                                wire:click="confirmReSign()" 
+                                wire:key="resign-button-{{ $selectedFile['id'] ?? 'none' }}"
                                 class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-xl shadow-sm text-yellow-700 bg-white border border-white transition-colors hover:bg-yellow-700 hover:text-white focus:ring-2 focus:ring-offset-2 focus:ring-yellow-700"
                                 title="Re-sign document">
                                 <i class="fa-solid fa-signature mr-2"></i> Re-sign
                             </button>
-                        @else
+                        @elseif($selectedFile)
                             <button 
-                                wire:click="updateStatusButton" 
+                                wire:click="updateStatusButton()" 
+                                wire:key="update-button-{{ $selectedFile['id'] ?? 'none' }}"
                                 class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-xl shadow-sm text-green-700 bg-white border border-white transition-colors hover:bg-green-700 hover:text-white focus:ring-2 focus:ring-offset-2 focus:ring-green-700"
                                 title="Update status">
                                 Update
                             </button>
                         @endif
 
-                        <button type="button" wire:click="downloadFile({{ $selectedFile['id'] }})"
+                        <button type="button" wire:click="downloadFile({{ $selectedFile['id'] ?? 'null' }})"
+                            wire:key="download-button-{{ $selectedFile['id'] ?? 'none' }}"
                             class="inline-flex items-center px-4 py-2 text-sm font-medium rounded-xl shadow-sm text-orange-500 bg-white border border-white transition-colors hover:bg-orange-500 hover:text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500">
                             <i class="fa-solid fa-download mr-2"></i> Download
                         </button>
@@ -550,28 +555,34 @@
     </x-modal>
 
     <!-- E-Signature Placement Modal -->
-    <livewire:admin.submitted-requirements.e-sign-modal 
-        :submission-id="$selectedFile['submission_id'] ?? null"
-        :file-url="$fileUrl ?? null"
-        :file-extension="$selectedFile['extension'] ?? null"
-        wire:key="esign-modal-{{ $selectedFile['id'] ?? 'none' }}"
-    />
+    @if($selectedFile)
+        <livewire:admin.submitted-requirements.e-sign-modal 
+            :submission-id="$selectedFile['submission_id']"
+            :file-url="$fileUrl"
+            :file-extension="$selectedFile['extension']"
+            wire:key="esign-modal-{{ $selectedFile['id'] }}"
+        />
+    @endif
     
-    <!-- JavaScript for page refresh -->
+    <!-- JavaScript for page refresh and download -->
     <script>
         document.addEventListener('livewire:initialized', () => {
+            // Refresh page event
             @this.on('refresh-page', () => {
-                // Force a page reload when status changes from approved
                 setTimeout(() => {
                     window.location.reload();
                 }, 500);
             });
-        }); 
 
-        document.addEventListener('livewire:initialized', () => {
+            // Open download event
             @this.on('open-download', (event) => {
                 window.open(event.url, '_blank');
             });
+        });
+
+        // Fix for Livewire event listeners after DOM updates
+        document.addEventListener('livewire:navigated', () => {
+            // Reinitialize any custom event listeners if needed
         });
     </script>
 </div>

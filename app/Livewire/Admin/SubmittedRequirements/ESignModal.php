@@ -74,14 +74,13 @@ class ESignModal extends Component
         $this->fileUrl = $fileUrl;
         $this->fileExtension = $fileExtension;
         
-        // Load active signatories
-        $this->signatories = Signatory::where('is_active', true)
+        // Load only the active signatory (there should be only one)
+        $this->selectedSignatory = Signatory::where('is_active', true)
             ->with('media')
-            ->get();
+            ->first(); // Get the first (and only) active signatory
             
-        if ($this->signatories->isNotEmpty()) {
-            $this->signatoryId = $this->signatories->first()->id;
-            $this->selectedSignatory = $this->signatories->first();
+        if ($this->selectedSignatory) {
+            $this->signatoryId = $this->selectedSignatory->id;
         }
     }
 
@@ -307,11 +306,6 @@ class ESignModal extends Component
         if ($this->signatureY > $this->maxY) {
             $this->signatureY = $this->maxY;
         }
-    }
-
-    public function updatedSignatoryId($value)
-    {
-        $this->selectedSignatory = Signatory::with('media')->find($value);
     }
 
     public function updatedSignatureScale()

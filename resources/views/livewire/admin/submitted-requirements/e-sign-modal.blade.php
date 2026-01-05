@@ -14,33 +14,6 @@
                     </h3>
                 </div>
                 <div class="flex items-center space-x-3">
-                    <!-- Page Navigation (only show for multi-page documents) -->
-                    @if($showPageSelector)
-                    <div class="flex items-center space-x-2 bg-white/20 rounded-lg px-3 py-1">
-                        <button wire:click="previousPage" 
-                            wire:loading.attr="disabled"
-                            class="p-1 text-white hover:bg-white/20 rounded {{ $currentPagePreview <= 1 ? 'opacity-50 cursor-not-allowed' : '' }}"
-                            title="Previous Page">
-                            <i class="fa-solid fa-chevron-left text-sm"></i>
-                        </button>
-                        <span class="text-white text-sm">
-                            Page 
-                            <select wire:model.live="currentPagePreview" 
-                                class="bg-transparent border-none text-white focus:ring-0 focus:border-none text-sm">
-                                @for($i = 1; $i <= $totalPages; $i++)
-                                    <option value="{{ $i }}" class="text-gray-800">{{ $i }}</option>
-                                @endfor
-                            </select>
-                            of {{ $totalPages }}
-                        </span>
-                        <button wire:click="nextPage" 
-                            wire:loading.attr="disabled"
-                            class="p-1 text-white hover:bg-white/20 rounded {{ $currentPagePreview >= $totalPages ? 'opacity-50 cursor-not-allowed' : '' }}"
-                            title="Next Page">
-                            <i class="fa-solid fa-chevron-right text-sm"></i>
-                        </button>
-                    </div>
-                    @endif
                     
                     <!-- Zoom Controls -->
                     <div class="flex items-center space-x-1 bg-white/20 rounded-lg px-2 py-1">
@@ -111,20 +84,30 @@
                     </div>
                     @endif
                     
-                    <!-- Signatory Selection -->
+                    <!-- Signatory -->
                     <div class="mb-6">
                         <label class="block text-sm font-medium text-gray-700 mb-2">
                             <i class="fa-solid fa-user-pen mr-1"></i>
-                            Select Signatory
+                            Signatory
                         </label>
-                        <select wire:model="signatoryId" 
-                            class="w-full border-gray-300 rounded-lg shadow-sm text-sm focus:border-green-600 focus:ring-green-600">
-                            @foreach($signatories as $signatory)
-                                <option value="{{ $signatory->id }}">
-                                    {{ $signatory->name }} - {{ $signatory->position }}
-                                </option>
-                            @endforeach
-                        </select>
+                        @if($selectedSignatory)
+                            <div class="p-3 bg-green-50 border border-green-200 rounded-lg">
+                                <div>
+                                    <p class="text-sm font-semibold text-gray-900">{{ $selectedSignatory->name }}</p>
+                                    <p class="text-xs text-gray-600">{{ $selectedSignatory->position }}</p>
+                                </div>
+                            </div>
+                        @else
+                            <div class="p-3 bg-red-50 border border-red-200 rounded-lg">
+                                <p class="text-sm text-red-700 flex items-center">
+                                    <i class="fa-solid fa-exclamation-triangle mr-2"></i>
+                                    No active signatory found
+                                </p>
+                                <p class="text-xs text-red-600 mt-1">
+                                    Please activate a signatory in the system settings first.
+                                </p>
+                            </div>
+                        @endif
                     </div>
 
                     <!-- X and Y Position Sliders -->
@@ -182,32 +165,6 @@
                                 step="0.1"
                                 class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-green-600">
                         </div>
-                        
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">
-                                <i class="fa-solid fa-adjust mr-1"></i>
-                                Opacity: {{ round($signatureOpacity * 100) }}%
-                            </label>
-                            <input type="range" 
-                                wire:model.live="signatureOpacity"
-                                min="0.3" 
-                                max="1.0" 
-                                step="0.1"
-                                class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-green-600">
-                        </div>
-                        
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">
-                                <i class="fa-solid fa-rotate mr-1"></i>
-                                Rotation: {{ $signatureRotation }}°
-                            </label>
-                            <input type="range" 
-                                wire:model.live="signatureRotation"
-                                min="-45" 
-                                max="45" 
-                                step="1"
-                                class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-green-600">
-                        </div>
                     </div>
 
                     <!-- Position Info -->
@@ -231,13 +188,13 @@
                 <!-- Right Panel - Document Preview -->
                 <div class="flex-1 p-4 bg-gray-100 overflow-auto">                    
                     <!-- Instructions -->
-                    <div class="mt-4 text-center">
+                    <div class="mt-4 text-center mb-5">
                         <p class="text-sm text-gray-600">
                             <i class="fa-solid fa-info-circle mr-1"></i>
                             @if($showPageSelector)
-                                You are viewing page {{ $currentPagePreview }}. To sign a different page, select it from the "Select Page to Sign" dropdown.
+                                To sign a different page, select it from the "Select Page to Sign" dropdown.
                             @else
-                                Single-page document. Drag the signature to position it, or use the sliders.
+                                Single-page document. Use the sliders to position the signature.
                             @endif
                         </p>
                         @if($showPageSelector && $currentPagePreview != $pageNumber)
@@ -246,19 +203,6 @@
                             You are viewing page {{ $currentPagePreview }} but signing page {{ $pageNumber }}.
                         </p>
                         @endif
-                    </div>
-                    
-                    <!-- Document Dimensions Info -->
-                    <div class="mb-4 text-center">
-                        @if($showPageSelector)
-                        <div class="inline-flex items-center px-3 py-1 rounded-full bg-blue-100 text-blue-800 mb-2">
-                            <i class="fa-solid fa-file-lines mr-2"></i>
-                            Signing Page {{ $pageNumber }} of {{ $totalPages }}
-                        </div>
-                        @endif
-                        <div class="text-sm text-gray-600">
-                            Document: {{ round($documentWidth / ($zoomLevel > 0 ? $zoomLevel : 1)) }}px × {{ round($documentHeight / ($zoomLevel > 0 ? $zoomLevel : 1)) }}px
-                        </div>
                     </div>
                     
                     <div class="relative mx-auto" 
@@ -399,14 +343,7 @@
             </div>
 
             <!-- Modal Footer -->
-            <div class="px-6 py-4 border-t border-gray-200 bg-gray-50 flex justify-between">
-                <div>
-                    <button wire:click="togglePreview" 
-                        class="px-4 py-2 border border-gray-300 rounded-xl text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
-                        <i class="fa-solid fa-eye mr-1"></i>
-                        {{ $showPreview ? 'Hide' : 'Show' }} Preview
-                    </button>
-                </div>
+            <div class="px-6 py-4 border-t border-gray-200 bg-gray-50 flex justify-end">
                 
                 <div class="flex space-x-3">
                     <button wire:click="cancel" 
