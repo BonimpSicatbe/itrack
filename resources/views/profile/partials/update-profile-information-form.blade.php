@@ -16,14 +16,14 @@
                         {{ __('First Name') }}
                     </label>
                     <div class="relative">
-                        <input 
-                            id="firstname" 
-                            name="firstname" 
-                            type="text" 
+                        <input
+                            id="firstname"
+                            name="firstname"
+                            type="text"
                             class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors duration-200"
-                            value="{{ old('firstname', $user->firstname) }}" 
-                            required 
-                            autofocus 
+                            value="{{ old('firstname', $user->firstname) }}"
+                            required
+                            autofocus
                             autocomplete="given-name"
                             placeholder="Enter your first name"
                         />
@@ -42,12 +42,12 @@
                         {{ __('Middle Name') }}
                     </label>
                     <div class="relative">
-                        <input 
-                            id="middlename" 
-                            name="middlename" 
-                            type="text" 
+                        <input
+                            id="middlename"
+                            name="middlename"
+                            type="text"
                             class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors duration-200"
-                            value="{{ old('middlename', $user->middlename) }}" 
+                            value="{{ old('middlename', $user->middlename) }}"
                             autocomplete="additional-name"
                             placeholder="Enter your middle name (optional)"
                         />
@@ -66,13 +66,13 @@
                         {{ __('Last Name') }}
                     </label>
                     <div class="relative">
-                        <input 
-                            id="lastname" 
-                            name="lastname" 
-                            type="text" 
+                        <input
+                            id="lastname"
+                            name="lastname"
+                            type="text"
                             class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors duration-200"
-                            value="{{ old('lastname', $user->lastname) }}" 
-                            required 
+                            value="{{ old('lastname', $user->lastname) }}"
+                            required
                             autocomplete="family-name"
                             placeholder="Enter your last name"
                         />
@@ -91,12 +91,12 @@
                         {{ __('Suffix') }} <span class="text-gray-500 font-normal">(Sr., Jr., III, etc.)</span>
                     </label>
                     <div class="relative">
-                        <input 
-                            id="extensionname" 
-                            name="extensionname" 
-                            type="text" 
+                        <input
+                            id="extensionname"
+                            name="extensionname"
+                            type="text"
                             class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors duration-200"
-                            value="{{ old('extensionname', $user->extensionname) }}" 
+                            value="{{ old('extensionname', $user->extensionname) }}"
                             autocomplete="honorific-suffix"
                             placeholder="e.g., Jr., Sr., III (optional)"
                         />
@@ -115,12 +115,12 @@
                         {{ __('Position') }}
                     </label>
                     <div class="relative">
-                        <input 
-                            id="position" 
-                            name="position" 
-                            type="text" 
+                        <input
+                            id="position"
+                            name="position"
+                            type="text"
                             class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors duration-200"
-                            value="{{ old('position', $user->position) }}" 
+                            value="{{ old('position', $user->position) }}"
                             autocomplete="organization-title"
                             placeholder="Enter your position (optional)"
                         />
@@ -139,15 +139,16 @@
                         {{ __('Email') }}
                     </label>
                     <div class="relative">
-                        <input 
-                            id="email" 
-                            name="email" 
-                            type="email" 
+                        <input
+                            id="email"
+                            name="email"
+                            type="email"
                             class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors duration-200"
-                            value="{{ old('email', $user->email) }}" 
-                            required 
+                            value="{{ old('email', $user->email) }}"
+                            required
                             autocomplete="username"
                             placeholder="Enter your email address"
+                            readonly
                         />
                         <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
                             <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -173,8 +174,8 @@
                                         <p>{{ __('Your email address is unverified.') }}</p>
                                     </div>
                                     <div class="mt-3">
-                                        <button 
-                                            form="send-verification" 
+                                        <button
+                                            form="send-verification"
                                             class="text-sm font-medium text-yellow-800 underline hover:text-yellow-900 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 rounded"
                                         >
                                             {{ __('Click here to re-send the verification email.') }}
@@ -198,13 +199,14 @@
                         {{ __('Teaching Started At') }}
                     </label>
                     <div class="relative">
-                        <input 
-                            id="teaching_started_at" 
-                            name="teaching_started_at" 
-                            type="date" 
+                        <input
+                            id="teaching_started_at"
+                            name="teaching_started_at"
+                            type="date"
                             class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors duration-200"
-                            value="{{ old('teaching_started_at', $user->teaching_started_at ? $user->teaching_started_at->format('Y-m-d') : '') }}" 
+                            value="{{ old('teaching_started_at', $user->teaching_started_at ? $user->teaching_started_at->format('Y-m-d') : '') }}"
                             autocomplete="off"
+                            readonly
                         />
                         <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
                             <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -240,8 +242,8 @@
                     </div>
                 @endif
             </div>
-            
-            <button 
+
+            <button
                 type="submit"
                 class="inline-flex items-center px-5 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded-xl transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
             >
